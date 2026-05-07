@@ -1,0 +1,25 @@
+# Ignorer les fichiers vidéo lourds par défaut
+# Pour les ajouter quand même: git add -f fichier.mp4
+rush/**/*.mp4
+rush/**/*.mov
+rush/**/*.avi
+rush/**/*.mkv
+rush/**/*.wav
+rush/**/*.mp3
+
+# Garder la structure des dossiers
+!rush/.gitkeep
+!exports/.gitkeep
+!projets/.gitkeep
+
+# Exports (fichiers générés)
+exports/**/*.mp4
+exports/**/*.mov
+
+# Garder les SRT (légers, utiles)
+!exports/**/*.srt
+
+# Python
+__pycache__/
+*.pyc
+.whisper_cache/
