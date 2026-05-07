@@ -1,71 +1,146 @@
-# Workflow Montage Vidéo
+# Workflow Montage Vidéo — Louis
 
-## Comment ça marche en 4 étapes
+## Vue d'ensemble
 
 ```
-1. Tu remplis un brief  →  2. Tu push les rush  →  3. Je lance les scripts  →  4. Tu récupères les exports dans CapCut
+Rush horizontal  →  Analyse IA  →  Choix extrait + hook  →  Montage final 9:16
 ```
 
 ---
 
-## Étape 1 — Préparer un nouveau projet
+## Format de sortie
 
-Copie le template de brief et remplis-le :
+| Paramètre | Valeur |
+|-----------|--------|
+| Format | Vertical 9:16 |
+| Résolution | 1080 × 1920 |
+| Durée cible | 30 – 45 s (max 50 s) |
+| Vidéo | Zoom 150% centré, bandes noires haut & bas |
+| Hook | Times New Roman, haut — bande noire |
+| Sous-titres | Times New Roman, dans la vidéo, bas |
+| Phrase fixe | Times New Roman, bas — bande noire |
 
-```bash
-cp briefs/TEMPLATE_BRIEF.md briefs/NOM_PROJET.md
-# Édite le fichier avec les infos du projet
-```
+---
 
-## Étape 2 — Envoyer les rush
-
-```bash
-mkdir -p rush/NOM_PROJET/
-# Copie tes fichiers vidéo dans ce dossier
-# (ils ne seront PAS poussés sur Git, trop lourds)
-# → Envoie-les via un lien Drive dans le brief
-```
-
-## Étape 3 — Installation (première fois seulement)
+## Étape 0 — Installation (une seule fois)
 
 ```bash
 cd video-editing/
 bash scripts/setup.sh
 ```
 
-## Étape 4 — Lancer le montage
+---
 
-### Tout automatiser d'un coup
+## Étape 1 — Déposer le rush
+
 ```bash
-python3 scripts/process.py --projet NOM_PROJET --tout
+mkdir -p rush/NOM_PROJET/
+# Copie ton fichier vidéo dans ce dossier
+# (les .mp4/.mov ne sont PAS poussés sur Git — trop lourds)
+# → indique le lien Drive dans le brief si tu veux garder une trace
 ```
 
-### Options à la carte
+---
+
+## Étape 2 — Analyser le rush
+
 ```bash
-# Couper les silences uniquement
-python3 scripts/process.py --projet NOM_PROJET --silences
-
-# Générer les sous-titres uniquement
-python3 scripts/process.py --projet NOM_PROJET --sous-titres
-
-# Créer un Short depuis le timestamp 2min30
-python3 scripts/process.py --projet NOM_PROJET --short --short-debut 00:02:30 --short-duree 55
-
-# Tout faire + incruster sous-titres dans la vidéo
-python3 scripts/process.py --projet NOM_PROJET --tout --brule-sous-titres
+python3 scripts/analyze_rush.py --projet NOM_PROJET
 ```
 
-### Assembler plusieurs clips dans l'ordre
-```bash
-python3 scripts/concat.py --projet NOM_PROJET --clips intro.mp4 contenu.mp4 outro.mp4
+**Ce que ça fait :**
+- Transcrit tout le rush avec Whisper
+- Score chaque extrait (contenu, rythme, mots-clés, début accrocheur)
+- Propose les **5 meilleurs candidats** avec timestamps, texte nettoyé et suggestions de hook
+- Sauvegarde `exports/NOM_PROJET/NOM_PROJET_analyse.json` et `_transcription.txt`
+
+**Exemple de sortie :**
+```
+EXTRAIT #1  ★★★★  (Score: 84/100)
+Timestamps : 00:01:23 → 00:02:01  (38s)
+Rythme     : 3.2 mots/sec  ✓ Début accrocheur
+
+TEXTE NETTOYÉ :
+> La plupart des entrepreneurs qui s'expatrient font une erreur
+> fondamentale au niveau fiscal. Ils pensent que le simple fait
+> de partir suffit, mais en réalité...
+
+SUGGESTIONS HOOK :
+  → "La plupart des entrepreneurs expatriés..."
+  → "L'erreur fiscale que personne ne voit..."
 ```
 
-## Étape 5 — Récupérer les exports
+---
 
-Les fichiers traités se trouvent dans `exports/NOM_PROJET/` :
-- `NOM_PROJET_FINAL_16x9.mp4` → Importe dans CapCut pour finitions
-- `NOM_PROJET_SHORT_9x16.mp4` → Prêt à publier ou finir dans CapCut
-- `NOM_PROJET_subtitles.srt` → Importe dans CapCut (Texte → Importer SRT)
+## Étape 3 — Monter la vidéo finale
+
+```bash
+python3 scripts/louis_format.py \
+  --projet NOM_PROJET \
+  --extrait 1 \
+  --hook "L'erreur fiscale que font tous les expatriés"
+```
+
+**Options disponibles :**
+
+```bash
+# Timestamps manuels (sans passer par l'analyse)
+python3 scripts/louis_format.py \
+  --projet NOM_PROJET \
+  --fichier rush.mp4 \
+  --debut 00:01:23 --fin 00:02:01 \
+  --hook "TON HOOK"
+
+# Variante de la phrase du bas
+python3 scripts/louis_format.py \
+  --projet NOM_PROJET \
+  --extrait 2 \
+  --hook "TON HOOK" \
+  --phrase-bas "(Il accompagne les entrepreneurs lors de leur expatriation)"
+
+# Test rapide sans sous-titres (plus rapide)
+python3 scripts/louis_format.py \
+  --projet NOM_PROJET \
+  --extrait 1 \
+  --hook "TON HOOK" \
+  --sans-sous-titres
+
+# Nom de fichier de sortie personnalisé
+python3 scripts/louis_format.py \
+  --projet NOM_PROJET \
+  --extrait 1 \
+  --hook "TON HOOK" \
+  --sortie erreur-fiscale-v2
+```
+
+---
+
+## Étape 4 — Récupérer les exports
+
+Dans `exports/NOM_PROJET/` :
+
+| Fichier | Usage |
+|---------|-------|
+| `NOM_PROJET_FINAL_9x16.mp4` | Prêt à publier sur Instagram, TikTok, Shorts |
+| `NOM_PROJET_subtitles.srt` | Sous-titres séparés (si besoin d'éditer) |
+| `NOM_PROJET_transcription.txt` | Transcription complète du rush |
+| `NOM_PROJET_analyse.json` | Données de l'analyse (pour relancer le montage) |
+
+---
+
+## Ce que les scripts font automatiquement
+
+| Étape | Outil | Détail |
+|-------|-------|--------|
+| Transcription | Whisper AI (small) | ~95% précision en français |
+| Nettoyage | Regex | Supprime euh, heu, bah, ben, répétitions |
+| Extraction | FFmpeg | Découpe précise du segment |
+| Zoom 150% | FFmpeg | scale → crop centre → pad noir |
+| Audio | FFmpeg loudnorm | Standard YouTube -16 LUFS |
+| Sous-titres | FFmpeg + ASS | Times New Roman, ombre 60%, position précise |
+| Hook | FFmpeg drawtext | Times New Roman, bande noire haut |
+| Phrase fixe | FFmpeg drawtext | Times New Roman, bande noire bas |
+| Export | libx264 CRF 20 | 1080×1920, yuv420p, faststart |
 
 ---
 
@@ -73,48 +148,48 @@ Les fichiers traités se trouvent dans `exports/NOM_PROJET/` :
 
 ```
 video-editing/
-├── briefs/          ← Tes briefs de projet (.md)
-├── rush/            ← Tes fichiers bruts (non synchronisés sur Git)
-│   └── NOM_PROJET/
-├── exports/         ← Fichiers traités (MP4 non sync, SRT synchronisés)
-│   └── NOM_PROJET/
+├── WORKFLOW.md               ← Ce fichier
+├── briefs/
+│   ├── LOUIS_BRIEF_TEMPLATE.md   ← Template de brief
+│   └── [projets].md              ← Tes briefs
+├── rush/
+│   └── [projet]/                 ← Fichiers bruts (non synchronisés Git)
+├── exports/
+│   └── [projet]/
+│       ├── *_FINAL_9x16.mp4      ← Livrable final
+│       ├── *_subtitles.srt       ← Sous-titres (synchronisés Git)
+│       ├── *_transcription.txt   ← Transcription
+│       └── *_analyse.json        ← Données d'analyse
 └── scripts/
-    ├── setup.sh     ← Installation des outils
-    ├── process.py   ← Pipeline principal
-    └── concat.py    ← Assemblage de clips
+    ├── setup.sh              ← Installation des outils
+    ├── analyze_rush.py       ← Analyse + proposition d'extraits
+    ├── louis_format.py       ← Pipeline montage 9:16 Louis
+    ├── process.py            ← Pipeline général (autres projets)
+    └── concat.py             ← Assemblage de clips
 ```
 
 ---
 
-## Ce que les scripts font automatiquement
-
-| Fonction | Outil | Qualité |
-|----------|-------|---------|
-| Couper les silences | FFmpeg silencedetect | Silences > 1.5s par défaut |
-| Transcription sous-titres | Whisper AI (base) | ~95% précision en français |
-| Normalisation audio | FFmpeg loudnorm | Standard YouTube -16 LUFS |
-| Short 9:16 | FFmpeg crop+scale | 1080×1920 |
-| Assemblage clips | FFmpeg concat | Sans re-encodage (rapide) |
-
----
-
-## Importer dans CapCut
-
-1. **Vidéo traitée** → Importer le MP4 depuis `exports/` comme clip de base
-2. **Sous-titres SRT** → `Texte` → `Sous-titres automatiques` → `Importer` → choisir le `.srt`
-3. Ajouter musique, transitions, effets visuels dans CapCut
-
----
-
-## En cas de problème
+## Dépannage
 
 ```bash
 # Vérifier FFmpeg
 ffmpeg -version
 
 # Vérifier Whisper
-python3 -c "import whisper; print('OK')"
+python3 -c "import whisper; print('Whisper OK')"
 
-# Voir l'aide complète
-python3 scripts/process.py --help
+# Lister les polices Times disponibles
+fc-list | grep -i times
+
+# Aide complète
+python3 scripts/analyze_rush.py --help
+python3 scripts/louis_format.py --help
+```
+
+**Times New Roman non trouvée ?**
+```bash
+sudo apt-get install ttf-mscorefonts-installer
+# ou
+sudo apt-get install fonts-liberation
 ```
