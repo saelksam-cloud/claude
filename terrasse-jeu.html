@@ -491,57 +491,85 @@
         ║       alt="Château La Coste">            ║
         ╚══════════════════════════════════════════╝
       -->
-      <svg class="logo-crest" width="92" height="70" viewBox="0 0 92 70"
-           xmlns="http://www.w3.org/2000/svg" fill="none">
-        <!-- Finial / ornement supérieur -->
-        <rect x="44" y="0" width="4" height="7" fill="rgba(247,243,235,.7)"/>
-        <rect x="40" y="2" width="12" height="3" fill="rgba(247,243,235,.7)"/>
-        <rect x="43" y="5" width="6" height="2" fill="rgba(247,243,235,.55)"/>
+      <!-- SVG fidèle au logo Château La Coste : cadre double, L†C, 1682, tours rondes -->
+      <svg class="logo-crest" width="104" height="82" viewBox="0 0 104 82"
+           xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <style>
+            .lk { fill:none; stroke:rgba(247,243,235,.72); }
+            .lf { fill:rgba(247,243,235,.72); }
+            .lg { fill:rgba(247,243,235,.48); }
+            .ld { fill:rgba(50,12,20,.5); stroke:rgba(247,243,235,.38); stroke-width:.5; }
+          </style>
+        </defs>
 
-        <!-- Cadre héraldique extérieur -->
-        <rect x="6" y="7" width="80" height="54" rx="1"
-              stroke="rgba(247,243,235,.45)" stroke-width="1"/>
-        <rect x="9" y="10" width="74" height="48" rx="1"
-              stroke="rgba(247,243,235,.25)" stroke-width=".5"/>
+        <!-- ① Croix finiale au sommet -->
+        <line x1="52" y1="0" x2="52" y2="9"  class="lk" stroke-width="1.2"/>
+        <line x1="47" y1="3.5" x2="57" y2="3.5" class="lk" stroke-width="1.2"/>
 
-        <!-- Château central — corps -->
-        <rect x="34" y="24" width="24" height="24" fill="rgba(247,243,235,.22)" stroke="rgba(247,243,235,.5)" stroke-width=".7"/>
-        <!-- Porte arrondie -->
-        <rect x="41" y="36" width="10" height="12" fill="rgba(60,16,24,.6)" stroke="rgba(247,243,235,.35)" stroke-width=".5"/>
-        <path d="M41 40 Q46 34 51 40" stroke="rgba(247,243,235,.5)" stroke-width=".6" fill="rgba(60,16,24,.4)"/>
-        <!-- Fenêtre centrale -->
-        <rect x="44" y="27" width="4" height="5" fill="rgba(60,16,24,.5)" stroke="rgba(247,243,235,.35)" stroke-width=".5"/>
+        <!-- ② Cadre extérieur + cadre intérieur (double bordure) -->
+        <rect x="3"   y="10" width="98" height="68" class="lk" stroke-width=".95"/>
+        <rect x="6.5" y="13" width="91" height="62" class="lk" stroke-width=".42"/>
 
-        <!-- Tour gauche -->
-        <rect x="20" y="26" width="14" height="22" fill="rgba(247,243,235,.18)" stroke="rgba(247,243,235,.45)" stroke-width=".7"/>
-        <!-- Merlons tour gauche -->
-        <rect x="20" y="22" width="3" height="5" fill="rgba(247,243,235,.45)"/>
-        <rect x="25" y="21" width="3" height="6" fill="rgba(247,243,235,.45)"/>
-        <rect x="30" y="22" width="3" height="5" fill="rgba(247,243,235,.45)"/>
-        <!-- Fenêtre tour gauche -->
-        <rect x="25" y="30" width="4" height="5" fill="rgba(60,16,24,.45)" stroke="rgba(247,243,235,.3)" stroke-width=".4"/>
+        <!-- ③ Ornement L  †  C dans la bande supérieure du cadre -->
+        <text x="13"  y="24" class="lf" font-family="Georgia,'Times New Roman',serif"
+              font-size="9.5" font-style="italic">L</text>
 
-        <!-- Tour droite -->
-        <rect x="58" y="26" width="14" height="22" fill="rgba(247,243,235,.18)" stroke="rgba(247,243,235,.45)" stroke-width=".7"/>
+        <!-- dague / croix au centre -->
+        <line x1="52" y1="15" x2="52" y2="26" class="lk" stroke-width=".85"/>
+        <line x1="48" y1="18.5" x2="56" y2="18.5" class="lk" stroke-width=".85"/>
+        <line x1="49" y1="23"   x2="55" y2="23"   class="lk" stroke-width=".5"/>
+
+        <text x="88"  y="24" class="lf" font-family="Georgia,'Times New Roman',serif"
+              font-size="9.5" font-style="italic" text-anchor="middle">C</text>
+
+        <!-- Fine ligne séparatrice sous L†C -->
+        <line x1="7" y1="27" x2="97" y2="27" class="lk" stroke-width=".38"/>
+
+        <!-- ④ "1  6  8  2" — aux 4 coins de l'espace central -->
+        <text x="13" y="42" class="lg" font-family="Georgia,serif" font-size="7.5">1</text>
+        <text x="35" y="42" class="lg" font-family="Georgia,serif" font-size="7.5">6</text>
+        <text x="63" y="42" class="lg" font-family="Georgia,serif" font-size="7.5">8</text>
+        <text x="85" y="42" class="lg" font-family="Georgia,serif" font-size="7.5">2</text>
+
+        <!-- ⑤ Château — tours cylindriques + corps central + porte en arc -->
+
+        <!-- Tour gauche : corps rectangulaire + dôme arrondi -->
+        <path d="M10 78 L10 50 A11 11 0 0 1 32 50 L32 78"
+              class="lk" stroke-width=".9" fill="rgba(247,243,235,.06)"/>
+        <!-- Merlons tour gauche (3 merlons sur la courbe) -->
+        <rect x="10" y="44" width="4.5" height="7" rx=".3" class="lf" opacity=".55"/>
+        <rect x="17" y="42" width="4.5" height="9" rx=".3" class="lf" opacity=".55"/>
+        <rect x="24" y="44" width="4.5" height="7" rx=".3" class="lf" opacity=".55"/>
+        <!-- Fenêtre arrondie tour gauche -->
+        <path d="M16 60 L16 67 A5 5 0 0 0 26 67 L26 60" class="ld"/>
+
+        <!-- Corps central (plus bas que les tours) -->
+        <rect x="32" y="54" width="40" height="24"
+              class="lk" stroke-width=".85" fill="rgba(247,243,235,.05)"/>
+        <!-- Merlons corps central (6 merlons) -->
+        <rect x="32" y="47" width="4.5" height="8" rx=".3" class="lf" opacity=".55"/>
+        <rect x="38.5" y="47" width="4.5" height="8" rx=".3" class="lf" opacity=".55"/>
+        <rect x="45"   y="47" width="4.5" height="8" rx=".3" class="lf" opacity=".55"/>
+        <rect x="51.5" y="47" width="4.5" height="8" rx=".3" class="lf" opacity=".55"/>
+        <rect x="58"   y="47" width="4.5" height="8" rx=".3" class="lf" opacity=".55"/>
+        <rect x="64.5" y="47" width="4.5" height="8" rx=".3" class="lf" opacity=".55"/>
+        <!-- Porte en arc (grande, occupe la moitié basse du corps) -->
+        <path d="M40 78 L40 66 A12 10 0 0 1 64 66 L64 78"
+              class="ld" stroke-width=".7"/>
+
+        <!-- Tour droite : miroir de la gauche -->
+        <path d="M72 78 L72 50 A11 11 0 0 1 94 50 L94 78"
+              class="lk" stroke-width=".9" fill="rgba(247,243,235,.06)"/>
         <!-- Merlons tour droite -->
-        <rect x="58" y="22" width="3" height="5" fill="rgba(247,243,235,.45)"/>
-        <rect x="63" y="21" width="3" height="6" fill="rgba(247,243,235,.45)"/>
-        <rect x="68" y="22" width="3" height="5" fill="rgba(247,243,235,.45)"/>
+        <rect x="72" y="44" width="4.5" height="7" rx=".3" class="lf" opacity=".55"/>
+        <rect x="78.5" y="42" width="4.5" height="9" rx=".3" class="lf" opacity=".55"/>
+        <rect x="85" y="44" width="4.5" height="7" rx=".3" class="lf" opacity=".55"/>
         <!-- Fenêtre tour droite -->
-        <rect x="63" y="30" width="4" height="5" fill="rgba(60,16,24,.45)" stroke="rgba(247,243,235,.3)" stroke-width=".4"/>
+        <path d="M78 60 L78 67 A5 5 0 0 0 88 67 L88 60" class="ld"/>
 
-        <!-- "1682" aux quatre coins du cadre intérieur -->
-        <text x="13"  y="17" font-family="Georgia,serif" font-size="5" fill="rgba(247,243,235,.55)" letter-spacing=".5">1</text>
-        <text x="74"  y="17" font-family="Georgia,serif" font-size="5" fill="rgba(247,243,235,.55)">6</text>
-        <text x="13"  y="55" font-family="Georgia,serif" font-size="5" fill="rgba(247,243,235,.55)">8</text>
-        <text x="74"  y="55" font-family="Georgia,serif" font-size="5" fill="rgba(247,243,235,.55)">2</text>
-
-        <!-- Ligne séparatrice bas du cadre -->
-        <line x1="14" y1="61" x2="78" y2="61" stroke="rgba(184,144,72,.5)" stroke-width=".6"/>
-
-        <!-- Croix / étoile decorative flancs -->
-        <text x="11" y="38" font-family="Georgia,serif" font-size="7" fill="rgba(247,243,235,.3)">✦</text>
-        <text x="73" y="38" font-family="Georgia,serif" font-size="7" fill="rgba(247,243,235,.3)">✦</text>
+        <!-- Fine ligne or en bas du cadre -->
+        <line x1="7" y1="79" x2="97" y2="79" stroke="rgba(184,144,72,.45)" stroke-width=".5" fill="none"/>
       </svg>
 
       <div class="logo-name-row">Château &nbsp; La Coste</div>
