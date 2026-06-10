@@ -6,314 +6,389 @@
   <title>La Terrasse — Château La Coste</title>
   <style>
     /* ══════════════════════════════════════════════════════════
-       VARIABLES — DA inspirée Château La Coste
-       Sobre, naturel, pierre, vigne, lumière provençale
+       DESIGN SYSTEM — inspiré de la DA de Château La Coste
+       Sobre · naturel · provence · galerie d'art
     ══════════════════════════════════════════════════════════ */
+    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap');
+
     :root {
-      --creme:       #F6F1E8;
-      --creme-dark:  #EDE4D2;
-      --creme-mid:   #E2D8C4;
-      --olive:       #636E36;
-      --olive-dark:  #474E27;
-      --bordeaux:    #6E2535;
-      --bx-deep:     #4E1825;
-      --bx-light:    #8C3348;
-      --gold:        #B08A34;
-      --gold-light:  #CCA84E;
-      --stone:       #B8A48A;
-      --stone-dark:  #9A8870;
-      --stone-light: #D4C8B0;
-      --text-dark:   #1A1008;
-      --text-mid:    #524030;
-      --water-col:   rgba(130,195,230,0.65);
+      /* Fond */
+      --bg:        #F7F3EB;
+      --bg-alt:    #EDE7DA;
+      --bg-dark:   #E2D9C8;
+
+      /* Textes */
+      --ink:       #1A130A;
+      --ink-mid:   #5A4A38;
+      --ink-light: #9A8870;
+
+      /* Accents */
+      --wine:      #5A1E2A;
+      --wine-deep: #3C1018;
+      --wine-soft: #7C3040;
+      --gold:      #907028;
+      --gold-soft: #B89048;
+      --olive:     #4E5828;
+      --olive-dark:#363E1C;
+      --stone:     #B0A088;
+      --stone-soft:#D0C4B0;
+
+      /* Eau */
+      --water:     rgba(110,180,220,.55);
+      --water-str: rgba(110,180,220,.75);
     }
 
+    /* ── RESET ─────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     html, body {
       min-height: 100%;
-      background: var(--creme);
-      color: var(--text-dark);
-      font-family: 'Georgia', 'Times New Roman', serif;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: 'Cormorant Garamond', 'Georgia', serif;
       overflow-x: hidden;
       -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
     }
 
-    /* ══════════════════════════════════════════════════════════
-       HEADER
-    ══════════════════════════════════════════════════════════ */
+    /* Fallback sans Google Fonts */
+    @supports not (font-family: 'Cormorant Garamond') {
+      html, body { font-family: 'Georgia', serif; }
+    }
+
+    /* ── HEADER ─────────────────────────────── */
     header {
       width: 100%;
-      background: var(--bordeaux);
-      padding: 20px 24px 16px;
+      background: var(--wine-deep);
+      padding: 22px 24px 18px;
       text-align: center;
       position: relative;
-      border-bottom: 3px solid var(--gold);
     }
+
+    /* Fine ligne or en haut */
     header::before {
       content: '';
-      display: block;
-      height: 3px;
-      background: repeating-linear-gradient(
-        90deg,
-        var(--gold) 0, var(--gold) 10px,
-        var(--bordeaux) 10px, var(--bordeaux) 20px
-      );
       position: absolute; top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold-soft), transparent);
     }
+    /* Fine ligne or en bas */
+    header::after {
+      content: '';
+      position: absolute; bottom: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    }
+
     .chateau-icon {
-      width: 56px; height: 42px;
-      display: block; margin: 0 auto 6px;
+      width: 48px; height: 36px;
+      display: block; margin: 0 auto 8px;
       image-rendering: pixelated;
+      opacity: .92;
     }
-    header h1 {
-      color: var(--creme);
-      font-size: 1.15rem;
-      font-weight: normal;
-      letter-spacing: .16em;
+
+    .header-eyebrow {
+      font-family: 'Courier New', monospace;
+      font-size: .6rem;
+      letter-spacing: .35em;
       text-transform: uppercase;
+      color: var(--gold-soft);
+      margin-bottom: 4px;
     }
-    header h1 span {
+
+    header h1 {
+      color: var(--bg);
+      font-size: 1.55rem;
+      font-weight: 300;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      line-height: 1.2;
+    }
+
+    header h1 em {
       display: block;
-      color: var(--gold-light);
-      font-size: .68rem;
-      letter-spacing: .28em;
+      font-style: italic;
+      font-weight: 300;
+      font-size: .82rem;
+      letter-spacing: .22em;
+      color: var(--stone-soft);
       margin-top: 3px;
     }
 
-    /* ══════════════════════════════════════════════════════════
-       BARRE DE PROGRESSION
-    ══════════════════════════════════════════════════════════ */
+    /* ── BARRE DE PROGRESSION ─────────────── */
     .progress-bar {
       width: 100%;
-      background: var(--bx-deep);
-      padding: 9px 24px;
+      background: var(--wine-deep);
+      padding: 8px 24px 10px;
       display: flex; align-items: center; justify-content: center;
-      border-bottom: 2px solid var(--gold);
       gap: 0;
+      border-bottom: 1px solid rgba(144,112,40,.3);
     }
+
     .step-dot {
-      width: 26px; height: 26px;
-      border: 2px solid var(--stone);
-      background: var(--bx-deep);
+      width: 24px; height: 24px;
+      border: 1px solid var(--stone);
+      background: transparent;
       display: flex; align-items: center; justify-content: center;
-      font-family: 'Courier New', monospace; font-size: .68rem;
+      font-family: 'Courier New', monospace; font-size: .62rem;
       color: var(--stone); flex-shrink: 0;
       transition: all .3s;
     }
-    .step-dot.active { background: var(--gold); border-color: var(--gold-light); color: var(--text-dark); }
-    .step-dot.done   { background: var(--olive); border-color: var(--olive-dark); color: var(--creme); }
-    .step-dot.done   { font-size: 0; }
-    .step-dot.done::after { content: '✓'; font-size: .72rem; }
-    .step-line { width: 44px; height: 2px; background: var(--stone); opacity: .35; flex-shrink: 0; transition: all .3s; }
-    .step-line.done { background: var(--olive); opacity: .7; }
+    .step-dot.active {
+      border-color: var(--gold-soft);
+      color: var(--gold-soft);
+      background: rgba(144,112,40,.12);
+    }
+    .step-dot.done {
+      background: var(--olive);
+      border-color: var(--olive);
+      color: var(--bg);
+      font-size: 0;
+    }
+    .step-dot.done::after { content: '✓'; font-size: .62rem; }
 
-    /* ══════════════════════════════════════════════════════════
-       PAGES
-    ══════════════════════════════════════════════════════════ */
-    .page { display: none; flex-direction: column; align-items: center; width: 100%; padding-bottom: 56px; }
-    .page.active { display: flex; animation: fadeUp .4s ease both; }
+    .step-line {
+      width: 40px; height: 1px;
+      background: var(--stone); opacity: .3;
+      flex-shrink: 0; transition: all .3s;
+    }
+    .step-line.done { background: var(--olive); opacity: .6; }
+
+    /* ── PAGES ──────────────────────────────── */
+    .page { display: none; flex-direction: column; align-items: center; width: 100%; padding-bottom: 60px; }
+    .page.active { display: flex; animation: fadeUp .45s ease both; }
+
     @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(16px); }
+      from { opacity: 0; transform: translateY(14px); }
       to   { opacity: 1; transform: translateY(0); }
     }
 
-    /* ══════════════════════════════════════════════════════════
+    /* ══════════════════════════════════════════
        PAGE 1 — AVIS GOOGLE
-    ══════════════════════════════════════════════════════════ */
+    ══════════════════════════════════════════ */
     .review-wrap {
-      width: 100%; max-width: 420px;
-      padding: 32px 28px 0;
+      width: 100%; max-width: 400px;
+      padding: 40px 28px 0;
       text-align: center;
     }
 
-    /* Illustration pixel art fontaine — inspirée de la photo */
-    .fountain-illo { display: block; margin: 0 auto 26px; image-rendering: pixelated; }
+    /* Séparateur fin */
+    .thin-rule {
+      width: 40px; height: 1px;
+      background: var(--gold);
+      margin: 0 auto 28px;
+      opacity: .6;
+    }
+
+    /* Illustration fontaine — style gravure fine */
+    .fountain-illo { display: block; margin: 0 auto 28px; }
+
+    .review-eyebrow {
+      font-family: 'Courier New', monospace;
+      font-size: .6rem; letter-spacing: .3em;
+      text-transform: uppercase; color: var(--stone);
+      margin-bottom: 14px;
+    }
 
     .review-title {
-      font-size: 1.3rem;
-      font-weight: normal;
-      color: var(--bordeaux);
-      letter-spacing: .04em;
-      line-height: 1.4;
-      margin-bottom: 10px;
+      font-size: 1.7rem; font-weight: 300;
+      color: var(--ink); line-height: 1.35;
+      margin-bottom: 14px;
+      font-style: italic;
     }
+
     .review-body {
-      font-size: .88rem;
-      color: var(--text-mid);
-      line-height: 1.9;
-      margin-bottom: 30px;
+      font-size: .95rem; font-weight: 300;
+      color: var(--ink-mid); line-height: 2;
+      margin-bottom: 34px;
     }
 
     /* Bouton Google */
     .btn-google {
       display: flex; align-items: center; justify-content: center; gap: 10px;
-      width: 100%; max-width: 320px; margin: 0 auto;
-      padding: 17px 22px;
-      background: var(--bordeaux); color: var(--creme);
+      width: 100%; max-width: 300px; margin: 0 auto;
+      padding: 14px 22px;
+      background: var(--wine); color: var(--bg);
       font-family: 'Courier New', monospace;
-      font-size: .84rem; letter-spacing: .12em; text-transform: uppercase;
+      font-size: .7rem; letter-spacing: .2em; text-transform: uppercase;
       border: none; cursor: pointer; text-decoration: none;
-      box-shadow: 4px 4px 0 var(--bx-deep);
-      transition: transform .12s, box-shadow .12s;
+      transition: background .2s, transform .12s;
     }
-    .btn-google:hover  { transform: translate(-2px,-2px); box-shadow: 6px 6px 0 var(--bx-deep); }
-    .btn-google:active { transform: translate(2px,2px);   box-shadow: 1px 1px 0 var(--bx-deep); }
-    .btn-google .star  { color: var(--gold-light); }
+    .btn-google:hover  { background: var(--wine-soft); }
+    .btn-google:active { transform: scale(.98); }
+    .btn-google .star  { color: var(--gold-soft); font-size: .9rem; }
 
     /* Section "J'ai terminé" */
     #doneSection {
-      width: 100%; max-width: 320px;
-      margin: 18px auto 0;
-      opacity: 0; pointer-events: none; transform: translateY(6px);
+      width: 100%; max-width: 300px;
+      margin: 20px auto 0;
+      opacity: 0; pointer-events: none;
+      transform: translateY(6px);
       transition: opacity .5s, transform .5s;
     }
     #doneSection.visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
 
     .or-sep {
-      display: flex; align-items: center; gap: 10px;
+      display: flex; align-items: center; gap: 12px;
       color: var(--stone); font-family: 'Courier New', monospace;
-      font-size: .67rem; letter-spacing: .12em;
-      margin: 0 0 12px;
+      font-size: .58rem; letter-spacing: .18em; text-transform: uppercase;
+      margin: 0 0 14px;
     }
-    .or-sep::before, .or-sep::after { content: ''; flex: 1; height: 1px; background: var(--stone); opacity: .45; }
+    .or-sep::before, .or-sep::after {
+      content: ''; flex: 1; height: 1px;
+      background: var(--stone-soft);
+    }
 
     .btn-done {
-      display: block; width: 100%; padding: 15px 20px;
-      background: var(--olive); color: var(--creme);
+      display: block; width: 100%; padding: 14px 20px;
+      background: transparent; color: var(--olive);
       font-family: 'Courier New', monospace;
-      font-size: .84rem; letter-spacing: .12em; text-transform: uppercase;
-      border: none; cursor: pointer;
-      box-shadow: 4px 4px 0 var(--olive-dark);
-      transition: transform .12s, box-shadow .12s;
+      font-size: .7rem; letter-spacing: .2em; text-transform: uppercase;
+      border: 1px solid var(--olive); cursor: pointer;
+      transition: background .2s, color .2s;
     }
-    .btn-done::before { content: '▸  '; color: var(--gold-light); }
-    .btn-done:hover  { transform: translate(-2px,-2px); box-shadow: 6px 6px 0 var(--olive-dark); }
-    .btn-done:active { transform: translate(2px,2px);   box-shadow: 1px 1px 0 var(--olive-dark); }
+    .btn-done:hover { background: var(--olive); color: var(--bg); }
 
     .review-note {
-      margin-top: 26px;
-      font-size: .67rem; color: var(--stone);
+      margin-top: 28px;
+      font-size: .72rem; color: var(--stone);
       font-family: 'Courier New', monospace;
-      letter-spacing: .04em; line-height: 1.8;
+      letter-spacing: .04em; line-height: 1.85;
+      font-style: normal;
     }
 
-    /* ══════════════════════════════════════════════════════════
-       PAGE 2 — LE JEU (fontaine / slot)
-    ══════════════════════════════════════════════════════════ */
+    /* ══════════════════════════════════════════
+       PAGE 2 — JEU
+    ══════════════════════════════════════════ */
     .game-wrap {
-      width: 100%; max-width: 420px;
-      padding: 24px 24px 0;
+      width: 100%; max-width: 400px;
+      padding: 36px 24px 0;
       text-align: center;
     }
 
-    .game-tagline { font-size: .88rem; color: var(--text-mid); line-height: 1.8; margin-bottom: 28px; }
-    .game-tagline strong { display: block; font-size: 1rem; color: var(--bordeaux); margin-bottom: 2px; }
+    .game-eyebrow {
+      font-family: 'Courier New', monospace;
+      font-size: .6rem; letter-spacing: .3em;
+      text-transform: uppercase; color: var(--stone);
+      margin-bottom: 10px;
+    }
 
-    /* ─── SCÈNE FONTAINE ─── */
+    .game-title {
+      font-size: 1.5rem; font-weight: 300;
+      font-style: italic;
+      color: var(--ink); line-height: 1.4;
+      margin-bottom: 6px;
+    }
+
+    .game-sub {
+      font-size: .9rem; font-weight: 300;
+      color: var(--ink-mid); line-height: 1.9;
+      margin-bottom: 32px;
+    }
+
+    /* ── SCÈNE FONTAINE ── */
     .fountain-stage {
+      width: 100%; max-width: 310px;
+      margin: 0 auto 30px;
       position: relative;
-      width: 100%;
-      max-width: 320px;
-      margin: 0 auto 28px;
     }
 
-    /* Bord pierre pixel-art — toute la scène */
-    .stone-frame {
+    /* Cadre principal */
+    .slot-frame {
       position: relative;
-      background: var(--creme-dark);
-      border: 4px solid var(--stone-dark);
-      box-shadow:
-        4px 4px 0 var(--stone-dark),
-        inset 0 0 0 2px var(--stone-light);
-      padding: 0;
+      border: 1px solid var(--stone);
+      background: var(--bg);
       overflow: hidden;
     }
 
-    /* Haut : canal d'eau + décoration fontaine */
-    .fountain-top {
-      background: var(--bordeaux);
-      padding: 10px 16px 0;
-      display: flex;
-      align-items: flex-end;
-      justify-content: center;
-      gap: 0;
-      position: relative;
-      height: 52px;
-      overflow: hidden;
-      border-bottom: 3px solid var(--gold);
+    /* Ligne or fine en haut et bas du cadre */
+    .slot-frame::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      z-index: 3;
+    }
+    .slot-frame::after {
+      content: '';
+      position: absolute; bottom: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      z-index: 3;
     }
 
-    /* Icône fontaine pixel */
-    .fountain-spout {
-      position: absolute;
-      top: 4px; left: 50%;
+    /* Zone eau / fontaine au-dessus du slot */
+    .fountain-head {
+      background: var(--wine-deep);
+      height: 58px;
+      display: flex; align-items: flex-end; justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Filets d'eau CSS animés */
+    .water-streams {
+      position: absolute; bottom: 0; left: 50%;
+      transform: translateX(-50%);
+      display: flex; gap: 7px;
+    }
+    .ws {
+      width: 2px;
+      background: linear-gradient(to bottom,
+        transparent 0%,
+        var(--water) 35%,
+        var(--water-str) 80%,
+        transparent 100%);
+      border-radius: 1px;
+      animation: streamFall var(--dur,.7s) linear infinite var(--del,0s);
+    }
+    @keyframes streamFall {
+      0%   { height: 0;    opacity: 0; transform: translateY(-8px); }
+      20%  { opacity: 1; }
+      80%  { opacity: .9; }
+      100% { height: 58px; opacity: 0; transform: translateY(0); }
+    }
+
+    /* Icône mini-fontaine dans le bandeau haut */
+    .fountain-cap {
+      position: absolute; top: 6px; left: 50%;
       transform: translateX(-50%);
       z-index: 2;
     }
 
-    /* Filets d'eau — générés en CSS */
-    .water-streams {
-      position: absolute;
-      bottom: 0; left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      gap: 6px;
-      height: 100%;
-      align-items: flex-end;
-    }
-    .ws {
-      width: 3px;
-      background: linear-gradient(to bottom, transparent 0%, var(--water-col) 40%, rgba(130,195,230,0.9) 100%);
-      animation: streamFall var(--dur, .7s) linear infinite var(--del, 0s);
-      border-radius: 2px;
-    }
-    @keyframes streamFall {
-      0%   { height: 0;    opacity: 0; }
-      15%  { opacity: 1; }
-      85%  { opacity: .9; }
-      100% { height: 52px; opacity: 0; }
-    }
-
-    /* Fenêtre du slot (bassin) */
+    /* Zone d'affichage de l'item */
     .slot-window {
-      height: 168px;
+      height: 178px;
+      display: flex; align-items: center; justify-content: center;
       overflow: hidden;
       position: relative;
-      background: var(--creme);
-      display: flex; align-items: center; justify-content: center;
-      cursor: default;
+      background: var(--bg);
     }
 
-    /* Reflet eau sur les côtés du slot */
+    /* Reflets latéraux de l'eau */
     .slot-window::before, .slot-window::after {
       content: '';
-      position: absolute; top: 0; width: 6px; height: 100%;
-      background: linear-gradient(to right, rgba(130,195,230,.12), transparent);
+      position: absolute; top: 0;
+      width: 4px; height: 100%;
+      background: linear-gradient(to right, rgba(110,180,220,.1), transparent);
       z-index: 1;
     }
     .slot-window::before { left: 0; }
     .slot-window::after  { right: 0; transform: scaleX(-1); }
 
-    /* Item affiché dans la fenêtre */
+    /* Item courant */
     #slotItem {
-      width: 100%; height: 168px;
+      width: 100%; height: 178px;
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
-      gap: 8px;
-      padding: 12px 16px;
-      transition: background-color .15s ease;
+      gap: 10px; padding: 16px 20px;
     }
 
-    #slotItem.drop-in {
-      animation: dropIn .22s ease-out both;
-    }
-    #slotItem.drop-out {
-      animation: dropOut .14s ease-in both;
-    }
+    #slotItem.drop-in  { animation: dropIn .24s ease-out both; }
+    #slotItem.drop-out { animation: dropOut .14s ease-in both; }
 
     @keyframes dropIn {
-      from { transform: translateY(-22px); opacity: 0; }
+      from { transform: translateY(-24px); opacity: 0; }
       to   { transform: translateY(0);     opacity: 1; }
     }
     @keyframes dropOut {
@@ -321,158 +396,143 @@
       to   { transform: translateY(18px); opacity: 0; }
     }
 
-    .si-icon  { font-size: 3.2rem; line-height: 1; display: block; }
+    .si-icon {
+      font-size: 3rem; line-height: 1; display: block;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,.15));
+    }
+
     .si-label {
       font-family: 'Courier New', monospace;
-      font-size: .78rem;
-      font-weight: bold;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      text-align: center;
-      line-height: 1.4;
+      font-size: .72rem; font-weight: bold;
+      letter-spacing: .10em; text-transform: uppercase;
+      text-align: center; line-height: 1.45;
       max-width: 200px;
     }
 
-    /* État initial "?" */
-    .si-idle .si-icon  { font-size: 2.8rem; opacity: .35; }
-    .si-idle .si-label { font-size: .72rem; opacity: .4; font-weight: normal; letter-spacing: .2em; }
-
-    /* Bas : bassin en pierre */
+    /* Zone bassin / fond pierre */
     .fountain-basin {
-      background: var(--creme-mid);
-      height: 18px;
-      border-top: 3px solid var(--stone-dark);
-      position: relative;
-      overflow: hidden;
+      height: 16px;
+      background: var(--bg-dark);
+      border-top: 1px solid var(--stone);
+      position: relative; overflow: hidden;
     }
-    /* Ondulations eau dans le bassin */
     .fountain-basin::after {
       content: '';
-      position: absolute;
-      top: 4px; left: -100%;
-      width: 300%;
-      height: 6px;
+      position: absolute; top: 5px; left: -100%;
+      width: 300%; height: 4px;
       background: repeating-linear-gradient(
         90deg,
         transparent 0, transparent 8px,
-        rgba(130,195,230,.3) 8px, rgba(130,195,230,.3) 14px
+        rgba(110,180,220,.18) 8px, rgba(110,180,220,.18) 14px
       );
-      animation: ripple 2s linear infinite;
+      animation: ripple 3s linear infinite;
     }
     @keyframes ripple { to { left: 0%; } }
 
-    /* Bordures latérales pierre (décoratives) */
-    .stone-side {
-      position: absolute; top: 0; width: 16px; height: 100%;
-      background: var(--stone-dark);
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: space-around;
-      padding: 8px 0;
-    }
-    .stone-side.left  { left: -20px; }
-    .stone-side.right { right: -20px; }
-    .stone-side::before {
-      content: '';
-      display: block; width: 8px; height: 8px;
-      background: var(--stone-light);
-    }
-    .stone-side::after {
-      content: '';
-      display: block; width: 8px; height: 8px;
-      background: var(--stone-light);
-    }
-
-    /* ─── BOUTON SPIN ─── */
+    /* ── BOUTON TENTER MA CHANCE ── */
     .btn-spin {
       display: block; margin: 0 auto;
-      padding: 16px 40px;
-      background: var(--bordeaux); color: var(--creme);
+      padding: 15px 44px;
+      background: var(--wine); color: var(--bg);
       font-family: 'Courier New', monospace;
-      font-size: .92rem; letter-spacing: .16em; text-transform: uppercase;
-      border: none; cursor: pointer; position: relative;
-      box-shadow: 4px 4px 0 var(--bx-deep), inset 0 2px 0 var(--bx-light);
-      transition: transform .12s, box-shadow .12s;
+      font-size: .72rem; letter-spacing: .22em; text-transform: uppercase;
+      border: none; cursor: pointer;
+      transition: background .2s, transform .12s;
     }
-    .btn-spin::before { content: '▸'; position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--gold-light); font-size: 11px; }
-    .btn-spin::after  { content: '◂'; position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--gold-light); font-size: 11px; }
-    .btn-spin:hover:not(:disabled) { transform: translate(-2px,-2px); box-shadow: 6px 6px 0 var(--bx-deep), inset 0 2px 0 var(--bx-light); }
-    .btn-spin:active:not(:disabled){ transform: translate(2px,2px);   box-shadow: 2px 2px 0 var(--bx-deep); }
-    .btn-spin:disabled { opacity: .4; cursor: not-allowed; }
+    .btn-spin:hover:not(:disabled) { background: var(--wine-soft); }
+    .btn-spin:active:not(:disabled){ transform: scale(.98); }
+    .btn-spin:disabled { opacity: .38; cursor: not-allowed; }
 
-    /* ─── RÉSULTAT ─── */
+    /* ── RÉSULTAT ── */
     #winnerReveal {
-      display: none; margin-top: 22px;
+      display: none; margin-top: 28px;
       text-align: center; padding: 0 4px;
     }
     #winnerReveal.show { display: block; animation: fadeUp .5s ease both; }
 
-    .winner-badge {
-      display: inline-block;
-      background: var(--bordeaux); color: var(--creme);
-      font-family: 'Courier New', monospace;
-      font-size: .6rem; letter-spacing: .22em; text-transform: uppercase;
-      padding: 5px 14px; margin-bottom: 12px;
+    .winner-line {
+      width: 40px; height: 1px;
+      background: var(--gold); opacity: .6;
+      margin: 0 auto 18px;
     }
+
+    .winner-eyebrow {
+      font-family: 'Courier New', monospace;
+      font-size: .58rem; letter-spacing: .3em;
+      text-transform: uppercase; color: var(--stone);
+      margin-bottom: 10px;
+    }
+
     .winner-prize {
-      font-size: 1.3rem; color: var(--bordeaux);
-      font-weight: bold; line-height: 1.3;
-      margin-bottom: 6px;
+      font-size: 1.45rem; font-weight: 300;
+      font-style: italic;
+      color: var(--wine); line-height: 1.3;
+      margin-bottom: 8px;
     }
-    .winner-prize.no-win { color: var(--text-mid); font-size: 1rem; }
+    .winner-prize.no-win { color: var(--ink-mid); font-size: 1.1rem; }
+
     .winner-sub {
-      font-size: .78rem; color: var(--text-mid);
+      font-size: .78rem; font-weight: 300;
+      color: var(--ink-mid); line-height: 1.75;
+      margin-bottom: 22px;
       font-family: 'Courier New', monospace;
-      letter-spacing: .06em; margin-bottom: 18px;
-      line-height: 1.65;
+      letter-spacing: .06em;
     }
 
     .btn-present {
-      display: block; width: 100%; max-width: 300px;
-      margin: 0 auto; padding: 15px 20px;
-      background: var(--olive); color: var(--creme);
+      display: block; width: 100%; max-width: 290px;
+      margin: 0 auto; padding: 14px 20px;
+      background: var(--olive); color: var(--bg);
       font-family: 'Courier New', monospace;
-      font-size: .84rem; letter-spacing: .12em; text-transform: uppercase;
+      font-size: .7rem; letter-spacing: .2em; text-transform: uppercase;
       border: none; cursor: pointer;
-      box-shadow: 4px 4px 0 var(--olive-dark);
-      transition: transform .12s, box-shadow .12s;
+      transition: background .2s, transform .12s;
     }
-    .btn-present:hover  { transform: translate(-2px,-2px); box-shadow: 6px 6px 0 var(--olive-dark); }
-    .btn-present:active { transform: translate(2px,2px);   box-shadow: 1px 1px 0 var(--olive-dark); }
-    .btn-present:disabled { opacity: .7; cursor: default; transform: none; box-shadow: none; }
+    .btn-present:hover  { background: var(--olive-dark); }
+    .btn-present:active { transform: scale(.98); }
+    .btn-present:disabled { opacity: .6; cursor: default; }
 
     /* Déjà joué */
     #alreadyPlayed {
       display: none;
-      background: var(--creme-dark); border: 3px solid var(--stone);
-      padding: 28px 24px; margin: 28px 20px 0;
-      text-align: center; max-width: 360px;
+      border: 1px solid var(--stone-soft);
+      padding: 28px 24px; margin: 32px 20px 0;
+      text-align: center; max-width: 340px;
     }
     #alreadyPlayed.show { display: block; animation: fadeUp .4s ease both; }
-    #alreadyPlayed .ap-icon { font-size: 2rem; display: block; margin-bottom: 10px; }
-    #alreadyPlayed p { font-size: .87rem; color: var(--text-mid); font-family: 'Courier New', monospace; line-height: 1.65; }
+    #alreadyPlayed .ap-icon { font-size: 1.8rem; display: block; margin-bottom: 10px; }
+    #alreadyPlayed p {
+      font-size: .85rem; font-weight: 300;
+      color: var(--ink-mid); line-height: 1.8;
+      font-family: 'Courier New', monospace;
+      letter-spacing: .04em;
+    }
 
-    /* Légal */
+    /* Mention légale */
     .legal {
-      margin-top: 20px; font-size: .66rem; color: var(--stone);
-      font-family: 'Courier New', monospace; letter-spacing: .04em;
-      line-height: 1.75; padding: 0 16px;
+      margin-top: 22px;
+      font-size: .62rem; color: var(--stone);
+      font-family: 'Courier New', monospace;
+      letter-spacing: .05em; line-height: 1.85;
+      padding: 0 16px;
     }
 
-    /* Séparateur */
+    /* Filet décoratif */
     .divider {
-      width: 100%; max-width: 280px; height: 12px; margin: 16px auto;
-      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='12'%3E%3Crect x='14' y='4' width='4' height='4' fill='%23B08A34' opacity='.55'/%3E%3Crect x='4' y='6' width='8' height='2' fill='%23B8A48A' opacity='.45'/%3E%3Crect x='20' y='6' width='8' height='2' fill='%23B8A48A' opacity='.45'/%3E%3C/svg%3E") repeat-x center;
+      width: 40px; height: 1px;
+      background: var(--gold); opacity: .5;
+      margin: 20px auto;
     }
 
-    /* Confetti */
+    /* Confetti canvas */
     #confettiCanvas { position: fixed; inset: 0; pointer-events: none; z-index: 99; }
 
-    /* Responsive */
+    /* ── RESPONSIVE ── */
     @media (max-width: 360px) {
-      .slot-window { height: 148px; }
-      #slotItem { height: 148px; }
+      .slot-window { height: 155px; }
+      #slotItem { height: 155px; }
       .si-icon { font-size: 2.6rem; }
-      .btn-spin { padding: 14px 28px; font-size: .84rem; }
+      .btn-spin { padding: 14px 32px; }
     }
   </style>
 </head>
@@ -485,30 +545,31 @@
   <!-- ── HEADER ── -->
   <header>
     <svg class="chateau-icon" viewBox="0 0 64 48" xmlns="http://www.w3.org/2000/svg" style="image-rendering:pixelated;">
-      <rect x="2"  y="14" width="10" height="26" fill="#EDE4D2"/>
-      <rect x="52" y="14" width="10" height="26" fill="#EDE4D2"/>
-      <rect x="2"  y="10" width="3"  height="6"  fill="#EDE4D2"/>
-      <rect x="7"  y="10" width="3"  height="6"  fill="#EDE4D2"/>
-      <rect x="52" y="10" width="3"  height="6"  fill="#EDE4D2"/>
-      <rect x="57" y="10" width="3"  height="6"  fill="#EDE4D2"/>
-      <rect x="12" y="22" width="40" height="18" fill="#EDE4D2"/>
-      <rect x="16" y="14" width="32" height="10" fill="#EDE4D2"/>
-      <rect x="16" y="10" width="4"  height="6"  fill="#EDE4D2"/>
-      <rect x="22" y="10" width="4"  height="6"  fill="#EDE4D2"/>
-      <rect x="28" y="10" width="4"  height="6"  fill="#EDE4D2"/>
-      <rect x="34" y="10" width="4"  height="6"  fill="#EDE4D2"/>
-      <rect x="40" y="10" width="4"  height="6"  fill="#EDE4D2"/>
-      <rect x="26" y="30" width="12" height="10" fill="#6E2535"/>
-      <rect x="29" y="28" width="6"  height="2"  fill="#6E2535"/>
-      <rect x="4"  y="18" width="6"  height="4"  fill="#B08A34"/>
-      <rect x="54" y="18" width="6"  height="4"  fill="#B08A34"/>
-      <rect x="16" y="24" width="6"  height="4"  fill="#B08A34"/>
-      <rect x="42" y="24" width="6"  height="4"  fill="#B08A34"/>
-      <rect x="0"  y="40" width="64" height="4"  fill="#636E36"/>
-      <rect x="0"  y="36" width="4"  height="4"  fill="#636E36"/>
-      <rect x="60" y="36" width="4"  height="4"  fill="#636E36"/>
+      <rect x="2"  y="14" width="10" height="26" fill="#EDE7DA"/>
+      <rect x="52" y="14" width="10" height="26" fill="#EDE7DA"/>
+      <rect x="2"  y="10" width="3"  height="6"  fill="#EDE7DA"/>
+      <rect x="7"  y="10" width="3"  height="6"  fill="#EDE7DA"/>
+      <rect x="52" y="10" width="3"  height="6"  fill="#EDE7DA"/>
+      <rect x="57" y="10" width="3"  height="6"  fill="#EDE7DA"/>
+      <rect x="12" y="22" width="40" height="18" fill="#EDE7DA"/>
+      <rect x="16" y="14" width="32" height="10" fill="#EDE7DA"/>
+      <rect x="16" y="10" width="4"  height="6"  fill="#EDE7DA"/>
+      <rect x="22" y="10" width="4"  height="6"  fill="#EDE7DA"/>
+      <rect x="28" y="10" width="4"  height="6"  fill="#EDE7DA"/>
+      <rect x="34" y="10" width="4"  height="6"  fill="#EDE7DA"/>
+      <rect x="40" y="10" width="4"  height="6"  fill="#EDE7DA"/>
+      <rect x="26" y="30" width="12" height="10" fill="#5A1E2A"/>
+      <rect x="29" y="28" width="6"  height="2"  fill="#5A1E2A"/>
+      <rect x="4"  y="18" width="6"  height="4"  fill="#907028"/>
+      <rect x="54" y="18" width="6"  height="4"  fill="#907028"/>
+      <rect x="16" y="24" width="6"  height="4"  fill="#907028"/>
+      <rect x="42" y="24" width="6"  height="4"  fill="#907028"/>
+      <rect x="0"  y="40" width="64" height="4"  fill="#4E5828"/>
+      <rect x="0"  y="36" width="4"  height="4"  fill="#4E5828"/>
+      <rect x="60" y="36" width="4"  height="4"  fill="#4E5828"/>
     </svg>
-    <h1>La Terrasse <span>Château La Coste · Provence</span></h1>
+    <p class="header-eyebrow">Château La Coste · Provence</p>
+    <h1>La Terrasse <em>Restaurant & Terrasse</em></h1>
   </header>
 
   <!-- ── PROGRESS ── -->
@@ -520,79 +581,86 @@
     <div class="step-dot" id="dot3">3</div>
   </div>
 
-  <!-- ════════════════════════════════════════
+  <!-- ══════════════════════════════════════════
        PAGE 1 — AVIS GOOGLE
-  ════════════════════════════════════════ -->
+  ══════════════════════════════════════════ -->
   <div class="page active" id="pageReview">
     <div class="review-wrap">
 
-      <!-- Fontaine pixel art (inspirée de la photo) -->
-      <svg class="fountain-illo" width="220" height="104" viewBox="0 0 220 104"
-           xmlns="http://www.w3.org/2000/svg" style="image-rendering:pixelated;">
-        <!-- Sol herbe -->
-        <rect x="0"   y="92"  width="220" height="12" fill="#636E36" opacity=".28"/>
-        <!-- Arbres -->
-        <rect x="0"   y="18"  width="18"  height="74" fill="#636E36" opacity=".45"/>
-        <rect x="0"   y="8"   width="22"  height="14" fill="#474E27" opacity=".6"/>
-        <rect x="202" y="18"  width="18"  height="74" fill="#636E36" opacity=".45"/>
-        <rect x="198" y="8"   width="22"  height="14" fill="#474E27" opacity=".6"/>
-        <!-- Parasol gauche -->
-        <rect x="24"  y="28"  width="32"  height="4"  fill="#6E2535" opacity=".7"/>
-        <rect x="38"  y="32"  width="4"   height="50" fill="#9A8870" opacity=".7"/>
-        <!-- Parasol droit -->
-        <rect x="164" y="28"  width="32"  height="4"  fill="#636E36" opacity=".7"/>
-        <rect x="178" y="32"  width="4"   height="50" fill="#9A8870" opacity=".7"/>
-        <!-- Chaise turquoise -->
-        <rect x="28"  y="58"  width="20"  height="22" fill="#5BA4A4"/>
-        <rect x="26"  y="56"  width="24"  height="4"  fill="#4A9090"/>
-        <rect x="28"  y="78"  width="4"   height="10" fill="#4A9090"/>
-        <rect x="44"  y="78"  width="4"   height="10" fill="#4A9090"/>
-        <!-- Chaise jaune -->
-        <rect x="172" y="58"  width="20"  height="22" fill="#E8C840"/>
-        <rect x="170" y="56"  width="24"  height="4"  fill="#D4B430"/>
-        <rect x="172" y="78"  width="4"   height="10" fill="#D4B430"/>
-        <rect x="188" y="78"  width="4"   height="10" fill="#D4B430"/>
-        <!-- FONTAINE CENTRALE -->
+      <!-- Illustration fontaine — style gravure fine, inspirée de la photo -->
+      <svg class="fountain-illo" width="200" height="96"
+           viewBox="0 0 200 96" xmlns="http://www.w3.org/2000/svg"
+           style="image-rendering:pixelated; opacity:.82;">
+        <!-- Fond ciel provençal -->
+        <rect width="200" height="96" fill="#F7F3EB"/>
+        <!-- Sol -->
+        <rect x="0" y="86" width="200" height="10" fill="#E2D9C8"/>
+        <!-- Ligne horizon -->
+        <rect x="0" y="86" width="200" height="1"  fill="#B0A088"/>
+        <!-- Arbres pin parasol gauche -->
+        <rect x="4"  y="10" width="4"  height="76" fill="#5A4A38" opacity=".25"/>
+        <rect x="0"  y="6"  width="12" height="8"  fill="#4E5828" opacity=".55"/>
+        <rect x="2"  y="2"  width="8"  height="6"  fill="#363E1C" opacity=".5"/>
+        <!-- Arbres pin parasol droite -->
+        <rect x="192" y="10" width="4" height="76" fill="#5A4A38" opacity=".25"/>
+        <rect x="188" y="6"  width="12" height="8" fill="#4E5828" opacity=".55"/>
+        <rect x="190" y="2"  width="8"  height="6" fill="#363E1C" opacity=".5"/>
+        <!-- Parasols terrasse -->
+        <rect x="20" y="22" width="28" height="3" fill="#5A1E2A" opacity=".6"/>
+        <rect x="32" y="25" width="3"  height="48" fill="#9A8870" opacity=".5"/>
+        <rect x="152" y="22" width="28" height="3" fill="#4E5828" opacity=".55"/>
+        <rect x="165" y="25" width="3"  height="48" fill="#9A8870" opacity=".5"/>
+        <!-- FONTAINE CENTRALE (gravure fine) -->
         <!-- Bassin -->
-        <rect x="76"  y="78"  width="68"  height="14" fill="#D4C4A8"/>
-        <rect x="72"  y="72"  width="76"  height="8"  fill="#E0D0B8"/>
-        <!-- Colonne -->
-        <rect x="106" y="42"  width="8"   height="32" fill="#D4C4A8"/>
-        <!-- Vasque haute -->
-        <rect x="96"  y="36"  width="28"  height="8"  fill="#C8B898"/>
-        <rect x="94"  y="34"  width="32"  height="4"  fill="#D4C4A8"/>
-        <!-- Pot de fleurs -->
-        <rect x="106" y="24"  width="8"   height="12" fill="#B05A40"/>
-        <rect x="104" y="22"  width="12"  height="4"  fill="#A05030"/>
-        <!-- Feuillage -->
-        <rect x="104" y="14"  width="4"   height="10" fill="#636E36"/>
-        <rect x="112" y="12"  width="4"   height="12" fill="#636E36"/>
-        <rect x="108" y="10"  width="4"   height="6"  fill="#474E27"/>
-        <!-- Eau fontaine -->
-        <rect x="109" y="42"  width="2"   height="8"  fill="#82C3E6" opacity=".9"/>
-        <rect x="86"  y="68"  width="4"   height="4"  fill="#82C3E6" opacity=".5"/>
-        <rect x="130" y="68"  width="4"   height="4"  fill="#82C3E6" opacity=".5"/>
-        <!-- Table pierre -->
-        <rect x="58"  y="54"  width="40"  height="5"  fill="#D4C4A8"/>
-        <rect x="70"  y="59"  width="16"  height="22" fill="#C8B898"/>
-        <rect x="62"  y="79"  width="32"  height="4"  fill="#C0A888"/>
-        <!-- Verre vin -->
-        <rect x="74"  y="44"  width="8"   height="2"  fill="#F6F1E8"/>
-        <rect x="72"  y="46"  width="12"  height="6"  fill="#8C3348" opacity=".85"/>
-        <rect x="74"  y="52"  width="8"   height="1"  fill="#F6F1E8"/>
-        <rect x="77"  y="53"  width="2"   height="4"  fill="#F6F1E8"/>
-        <rect x="74"  y="57"  width="8"   height="1"  fill="#F6F1E8"/>
+        <rect x="68" y="72" width="64" height="14" fill="#D4C4A8"/>
+        <rect x="64" y="68" width="72" height="6"  fill="#DDD0B8"/>
+        <rect x="62" y="66" width="76" height="3"  fill="#E2D4BC"/>
+        <!-- Colonne fine -->
+        <rect x="98" y="40" width="4"  height="28" fill="#C8B898"/>
+        <!-- Vasque -->
+        <rect x="88" y="34" width="24" height="8"  fill="#C0B090"/>
+        <rect x="86" y="32" width="28" height="3"  fill="#D4C4A8"/>
+        <!-- Pot -->
+        <rect x="96" y="20" width="8"  height="14" fill="#A05030" opacity=".8"/>
+        <rect x="94" y="18" width="12" height="4"  fill="#8A4028" opacity=".8"/>
+        <!-- Végétation fine -->
+        <rect x="94" y="10" width="3"  height="10" fill="#4E5828" opacity=".7"/>
+        <rect x="103" y="8" width="3"  height="12" fill="#4E5828" opacity=".7"/>
+        <rect x="99"  y="6" width="2"  height="6"  fill="#363E1C" opacity=".7"/>
+        <!-- Eau qui coule (filet fin) -->
+        <rect x="99" y="40" width="2"  height="8"  fill="#6EB4DC" opacity=".7"/>
+        <rect x="80" y="62" width="3"  height="3"  fill="#6EB4DC" opacity=".4"/>
+        <rect x="117" y="62" width="3" height="3"  fill="#6EB4DC" opacity=".4"/>
+        <!-- Chaises colorées (petites, style gravure) -->
+        <rect x="30" y="54" width="16" height="18" fill="#5BA4A4" opacity=".7"/>
+        <rect x="28" y="52" width="20" height="3"  fill="#4A9090" opacity=".7"/>
+        <rect x="154" y="54" width="16" height="18" fill="#E8C840" opacity=".7"/>
+        <rect x="152" y="52" width="20" height="3"  fill="#D4B430" opacity=".7"/>
+        <!-- Table centrale -->
+        <rect x="54" y="52" width="34" height="4"  fill="#C8B898"/>
+        <rect x="64" y="56" width="14" height="20" fill="#C0B090"/>
+        <rect x="56" y="74" width="30" height="3"  fill="#B8A888"/>
+        <!-- Verre à vin (silhouette fine) -->
+        <rect x="68" y="42" width="6"  height="1"  fill="#F7F3EB"/>
+        <rect x="66" y="43" width="10" height="8"  fill="#7C3040" opacity=".7"/>
+        <rect x="68" y="51" width="6"  height="1"  fill="#F7F3EB"/>
+        <rect x="70" y="52" width="2"  height="3"  fill="#F7F3EB"/>
+        <rect x="68" y="55" width="6"  height="1"  fill="#F7F3EB"/>
         <!-- Table droite -->
-        <rect x="122" y="54"  width="40"  height="5"  fill="#D4C4A8"/>
-        <rect x="134" y="59"  width="16"  height="22" fill="#C8B898"/>
-        <rect x="126" y="79"  width="32"  height="4"  fill="#C0A888"/>
-        <!-- Soleil -->
-        <rect x="190" y="4"   width="10"  height="10" fill="#B08A34" opacity=".65"/>
-        <rect x="186" y="8"   width="4"   height="4"  fill="#B08A34" opacity=".35"/>
-        <rect x="200" y="8"   width="4"   height="4"  fill="#B08A34" opacity=".35"/>
+        <rect x="112" y="52" width="34" height="4" fill="#C8B898"/>
+        <rect x="122" y="56" width="14" height="20" fill="#C0B090"/>
+        <rect x="114" y="74" width="30" height="3" fill="#B8A888"/>
+        <!-- Soleil fin -->
+        <rect x="178" y="4"  width="8" height="8"  fill="#907028" opacity=".5"/>
+        <rect x="174" y="7"  width="4" height="3"  fill="#907028" opacity=".3"/>
+        <rect x="182" y="7"  width="4" height="3"  fill="#907028" opacity=".3"/>
+        <rect x="178" y="1"  width="8" height="3"  fill="#907028" opacity=".25"/>
       </svg>
 
-      <h2 class="review-title">Merci d'être venu à La&nbsp;Terrasse.</h2>
+      <div class="thin-rule"></div>
+
+      <p class="review-eyebrow">La Terrasse · Château La Coste</p>
+      <h2 class="review-title">Merci d'être venu partager ce moment.</h2>
       <p class="review-body">
         Votre passage compte pour nous.<br>
         Si vous souhaitez partager votre expérience,<br>
@@ -609,88 +677,87 @@
       <div id="doneSection">
         <div class="or-sep">ou revenez ici ensuite</div>
         <button class="btn-done" onclick="goToGame()">
-          J'ai terminé — accéder au jeu
+          J'ai terminé — découvrir mon attention
         </button>
       </div>
 
       <p class="review-note">
-        Merci pour votre retour. Tentez votre chance<br>
-        pour découvrir votre attention du jour.<br><br>
-        Le jeu est indépendant de toute note ou contenu d'avis.
+        Le jeu est indépendant de toute note ou contenu d'avis.<br>
+        Votre retour est libre et ne conditionne pas le résultat.
       </p>
 
     </div>
   </div>
 
-  <!-- ════════════════════════════════════════
-       PAGE 2 — JEU : FONTAINE & DÉFILEMENT
-  ════════════════════════════════════════ -->
+  <!-- ══════════════════════════════════════════
+       PAGE 2 — JEU : FONTAINE / DÉFILEMENT
+  ══════════════════════════════════════════ -->
   <div class="page" id="pageGame">
 
     <div id="alreadyPlayed">
       <span class="ap-icon">🍃</span>
-      <p>Vous avez déjà participé aujourd'hui.<br>Revenez nous voir demain !</p>
+      <p>Vous avez déjà participé aujourd'hui.<br>Revenez nous voir demain.</p>
     </div>
 
     <div id="gameSection" class="game-wrap">
-      <p class="game-tagline">
-        <strong>Merci pour votre retour.</strong>
-        Tentez votre chance pour découvrir votre attention du jour.
+
+      <p class="game-eyebrow">La Terrasse · Attention du jour</p>
+      <h2 class="game-title">Tentez votre chance.</h2>
+      <p class="game-sub">
+        Merci pour votre retour.<br>
+        Découvrez votre attention du jour.
       </p>
 
-      <!-- ─── Scène de la fontaine ─── -->
+      <!-- ─── Fontaine / slot ─── -->
       <div class="fountain-stage">
-        <div class="stone-frame">
+        <div class="slot-frame">
 
-          <!-- Haut : tête de fontaine + eau animée -->
-          <div class="fountain-top">
-            <!-- Fontaine pixel art mini -->
-            <svg class="fountain-spout" width="60" height="36"
-                 viewBox="0 0 60 36" xmlns="http://www.w3.org/2000/svg"
+          <!-- Tête de fontaine (eau animée) -->
+          <div class="fountain-head">
+            <!-- Petite fontaine SVG pixel -->
+            <svg class="fountain-cap" width="52" height="34"
+                 viewBox="0 0 52 34" xmlns="http://www.w3.org/2000/svg"
                  style="image-rendering:pixelated;">
-              <!-- Col de fontaine -->
-              <rect x="26" y="8"  width="8"  height="20" fill="#D4C4A8"/>
-              <!-- Vasque -->
-              <rect x="18" y="4"  width="24" height="6"  fill="#C8B898"/>
-              <rect x="16" y="2"  width="28" height="4"  fill="#D4C4A8"/>
-              <!-- Fleur/déco top -->
-              <rect x="26" y="0"  width="8"  height="4"  fill="#B05A40"/>
-              <rect x="28" y="16" width="4"  height="4"  fill="#82C3E6" opacity=".8"/>
+              <rect x="22" y="8"  width="8"  height="18" fill="#C8B898" opacity=".9"/>
+              <rect x="14" y="4"  width="24" height="6"  fill="#B8A888" opacity=".9"/>
+              <rect x="12" y="2"  width="28" height="3"  fill="#C8B898" opacity=".9"/>
+              <rect x="22" y="0"  width="8"  height="4"  fill="#A05030" opacity=".8"/>
+              <rect x="24" y="18" width="4"  height="4"  fill="#6EB4DC" opacity=".8"/>
             </svg>
 
-            <!-- Filets d'eau CSS animés -->
+            <!-- 5 filets d'eau animés -->
             <div class="water-streams">
-              <div class="ws" style="--dur:.65s; --del:0s;   height:0;"></div>
-              <div class="ws" style="--dur:.70s; --del:.18s; height:0;"></div>
-              <div class="ws" style="--dur:.60s; --del:.35s; height:0;"></div>
-              <div class="ws" style="--dur:.68s; --del:.08s; height:0;"></div>
-              <div class="ws" style="--dur:.72s; --del:.28s; height:0;"></div>
+              <div class="ws" style="--dur:.68s; --del:.00s"></div>
+              <div class="ws" style="--dur:.72s; --del:.16s"></div>
+              <div class="ws" style="--dur:.62s; --del:.32s"></div>
+              <div class="ws" style="--dur:.70s; --del:.08s"></div>
+              <div class="ws" style="--dur:.65s; --del:.24s"></div>
             </div>
           </div>
 
-          <!-- Fenêtre : item défilant -->
+          <!-- Fenêtre affichant le lot en cours -->
           <div class="slot-window">
             <div id="slotItem">
               <span class="si-icon" id="siIcon">💧</span>
-              <span class="si-label" id="siLabel" style="letter-spacing:.22em;opacity:.45">votre lot</span>
+              <span class="si-label" id="siLabel"
+                    style="opacity:.32;letter-spacing:.28em">votre lot</span>
             </div>
           </div>
 
-          <!-- Bas : bassin pierre avec ondulations -->
+          <!-- Bassin avec ondulations -->
           <div class="fountain-basin"></div>
 
-        </div><!-- /stone-frame -->
+        </div><!-- /slot-frame -->
       </div><!-- /fountain-stage -->
 
-      <!-- Bouton lancer -->
       <button id="spinBtn" class="btn-spin" onclick="startSpin()">
         Tenter ma chance
       </button>
 
-      <!-- Résultat -->
+      <!-- Résultat inline -->
       <div id="winnerReveal">
-        <div class="divider"></div>
-        <div class="winner-badge">✦ Votre attention du jour ✦</div>
+        <div class="winner-line"></div>
+        <p class="winner-eyebrow">Votre attention du jour</p>
         <div id="winnerPrize" class="winner-prize"></div>
         <div id="winnerSub"   class="winner-sub"></div>
         <button id="presentBtn" class="btn-present" onclick="handlePresent()">
@@ -698,7 +765,10 @@
         </button>
       </div>
 
-      <p class="legal">Dans la limite des stocks disponibles. Un gain par personne et par jour.</p>
+      <p class="legal">
+        Dans la limite des stocks disponibles.<br>
+        Un gain par personne et par jour.
+      </p>
     </div>
 
   </div>
@@ -707,28 +777,28 @@
 
 <script>
 /* ================================================================
-   CONFIGURATION — à modifier uniquement ici
+   CONFIGURATION
 ================================================================ */
 
-/** Lien direct Google Review */
+/** Lien Google Review — remplacer par l'URL courte Google My Business */
 const GOOGLE_REVIEW_URL = "https://www.google.com/maps?cid=7655344166233586966";
 
-const COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24 h
-const STORAGE_KEY = "terrasse_lacostegame_v2";
+const COOLDOWN_MS = 24 * 60 * 60 * 1000;
+const STORAGE_KEY = "terrasse_lacostegame_v3";
 
 /**
  * Lots et probabilités (somme = 100).
- * bg  = couleur de fond de l'item dans la fontaine.
- * col = couleur du texte.
+ * bg  = couleur de fond dans la fenêtre fontaine.
+ * col = couleur du texte/icône.
  */
 const PRIZES = [
-  { label: "Merci pour votre participation",  weight: 10, win: false, icon: "🌿", bg: "#C4B49A", col: "#F6F1E8" },
-  { label: "Un café offert",                  weight: 24, win: true,  icon: "☕", bg: "#5C3D2E", col: "#F6F1E8" },
-  { label: "Un thé glacé offert",             weight: 24, win: true,  icon: "🧊", bg: "#3A7A98", col: "#F6F1E8" },
-  { label: "Un verre de vin offert",          weight: 21, win: true,  icon: "🍷", bg: "#6E2535", col: "#F6F1E8" },
-  { label: "Un cookie offert",                weight: 16, win: true,  icon: "🍪", bg: "#A88030", col: "#F6F1E8" },
-  { label: "Une demi-bouteille de vin",        weight:  4, win: true,  icon: "🍾", bg: "#474E27", col: "#F6F1E8" },
-  { label: "Grand lot : une bouteille de vin", weight:  1, win: true,  icon: "🏆", bg: "#3B1825", col: "#CCA84E" },
+  { label: "Merci pour votre participation",  weight: 10, win: false, icon: "🌿", bg: "#C4B49A", col: "#F7F3EB" },
+  { label: "Un café offert",                  weight: 24, win: true,  icon: "☕", bg: "#3C2010", col: "#F7F3EB" },
+  { label: "Un thé glacé offert",             weight: 24, win: true,  icon: "🧊", bg: "#2A5870", col: "#F7F3EB" },
+  { label: "Un verre de vin offert",          weight: 21, win: true,  icon: "🍷", bg: "#5A1E2A", col: "#F7F3EB" },
+  { label: "Un cookie offert",                weight: 16, win: true,  icon: "🍪", bg: "#7A5018", col: "#F7F3EB" },
+  { label: "Une demi-bouteille de vin",        weight:  4, win: true,  icon: "🍾", bg: "#363E1C", col: "#F7F3EB" },
+  { label: "Grand lot : une bouteille de vin", weight:  1, win: true,  icon: "🏆", bg: "#2A0F18", col: "#B89048" },
 ];
 
 /* ================================================================
@@ -740,7 +810,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 /* ================================================================
-   FUNNEL — NAVIGATION
+   FUNNEL
 ================================================================ */
 function onReviewClick() {
   sessionStorage.setItem("review_clicked", "1");
@@ -749,7 +819,7 @@ function onReviewClick() {
 
 function showDoneButton(animate) {
   const el = document.getElementById("doneSection");
-  if (animate) setTimeout(() => el.classList.add("visible"), 420);
+  if (animate) setTimeout(() => el.classList.add("visible"), 440);
   else { el.style.transition = "none"; el.classList.add("visible"); }
 }
 
@@ -768,13 +838,12 @@ function goToGame() {
 function setStep(n) {
   for (let i = 1; i <= 3; i++) {
     const d = document.getElementById(`dot${i}`);
-    d.classList.remove("active", "done");
-    if (i < n)       d.classList.add("done");
-    else if (i === n) d.classList.add("active");
+    d.classList.remove("active","done");
+    if (i < n)       { d.classList.add("done"); d.textContent = ""; }
+    else if (i === n) { d.classList.add("active"); d.textContent = i; }
+    else               d.textContent = i;
     if (i <= 2)
       document.getElementById(`line${i}`).classList.toggle("done", i < n);
-    if (!d.classList.contains("done")) d.textContent = i;
-    else d.textContent = "";
   }
 }
 
@@ -792,9 +861,9 @@ function pickWinner() {
 }
 
 /* ================================================================
-   ANIMATION — FONTAINE & DÉFILEMENT
-   Les items tombent d'en haut (comme portés par l'eau).
-   Rapidité croissante puis ralentissement → arrêt sur le gagnant.
+   ANIMATION — défilement fontaine
+   Les lots tombent d'en haut (portés par l'eau).
+   Accélération → ralentissement → pause → gagnant.
 ================================================================ */
 let spinning = false;
 
@@ -805,7 +874,7 @@ function startSpin() {
 
   const winnerIdx = pickWinner();
 
-  // Séquence : ~22 items aléatoires + gagnant en dernier
+  // Séquence : 22 items aléatoires + gagnant en dernier
   const seq = [];
   for (let i = 0; i < 22; i++) {
     seq.push(Math.floor(Math.random() * PRIZES.length));
@@ -815,17 +884,14 @@ function startSpin() {
   let pos = 0;
 
   function tick() {
-    const prize  = PRIZES[seq[pos]];
     const isLast = pos === seq.length - 1;
-
-    swapItem(prize, isLast);
+    swapItem(PRIZES[seq[pos]], isLast);
 
     if (!isLast) {
       pos++;
       setTimeout(tick, getDelay(pos, seq.length));
     } else {
-      // Pause après le dernier item puis affichage du résultat
-      setTimeout(() => showWinner(winnerIdx), 900);
+      setTimeout(() => showWinner(winnerIdx), 950);
     }
   }
 
@@ -833,51 +899,42 @@ function startSpin() {
 }
 
 /**
- * Délai entre deux items.
- * Commence rapide (~90ms), ralentit progressivement (~680ms avant le dernier).
- * Grande pause avant le tout dernier item pour créer la tension.
+ * Délai entre deux items (ms).
+ * Commence à ~90ms, monte jusqu'à ~650ms,
+ * avec une pause marquée avant le dernier item.
  */
 function getDelay(pos, total) {
   const preLast = total - 2;
-  if (pos === preLast) return 900;           // pause dramatique avant-dernier
-  const progress = Math.min(pos / (total - 3), 1);
-  return 90 + Math.pow(progress, 1.6) * 590; // 90ms → 680ms
+  if (pos === preLast) return 950; // pause dramatique
+  const p = Math.min(pos / (total - 3), 1);
+  return 90 + Math.pow(p, 1.5) * 560;
 }
 
-/**
- * Remplace l'item visible avec animation drop-in (chute d'eau).
- * Si c'est le dernier, ajoute un contour doré.
- */
+/** Change l'item visible avec effet de chute depuis le haut */
 function swapItem(prize, isWinner) {
-  const el     = document.getElementById("slotItem");
-  const icon   = document.getElementById("siIcon");
-  const label  = document.getElementById("siLabel");
+  const el    = document.getElementById("slotItem");
+  const icon  = document.getElementById("siIcon");
+  const label = document.getElementById("siLabel");
 
-  // Sortie vers le bas
   el.classList.remove("drop-in");
   el.classList.add("drop-out");
 
   setTimeout(() => {
-    // Met à jour contenu + couleur
     icon.textContent  = prize.icon;
     label.textContent = prize.label;
-    label.style.opacity = "1";
-    label.style.letterSpacing = ".06em";
-    el.style.backgroundColor = prize.bg;
-    el.style.color = prize.col;
+    label.style.opacity       = "1";
+    label.style.letterSpacing = ".08em";
+    el.style.backgroundColor  = prize.bg;
+    el.style.color            = prize.col;
 
-    if (isWinner) {
-      el.style.outline = "3px solid var(--gold)";
-      el.style.outlineOffset = "-6px";
-    } else {
-      el.style.outline = "none";
-    }
+    // Contour or discret pour le gagnant
+    el.style.outline       = isWinner ? "1px solid var(--gold)" : "none";
+    el.style.outlineOffset = "-8px";
 
-    // Entrée depuis le haut (chute)
     el.classList.remove("drop-out");
     el.classList.add("drop-in");
-    setTimeout(() => el.classList.remove("drop-in"), 250);
-  }, 130);
+    setTimeout(() => el.classList.remove("drop-in"), 260);
+  }, 125);
 }
 
 /* ================================================================
@@ -889,7 +946,8 @@ function showWinner(idx) {
   savePlay();
 
   document.getElementById("winnerPrize").textContent = prize.label;
-  document.getElementById("winnerPrize").className   = "winner-prize" + (prize.win ? "" : " no-win");
+  document.getElementById("winnerPrize").className   =
+    "winner-prize" + (prize.win ? "" : " no-win");
   document.getElementById("winnerSub").textContent   = prize.win
     ? "Montrez cet écran à un membre de l'équipe."
     : "Merci d'être passé nous voir aujourd'hui.";
@@ -909,8 +967,8 @@ function showWinner(idx) {
 
 function handlePresent() {
   const btn = document.getElementById("presentBtn");
-  btn.textContent = "✓ Bon appétit !";
-  btn.style.background = "#474E27";
+  btn.textContent = "✓  Bon appétit !";
+  btn.style.background = "#363E1C";
   btn.disabled = true;
 }
 
@@ -936,19 +994,19 @@ function launchConfetti() {
   const ctx     = canvas.getContext("2d");
   canvas.width  = window.innerWidth;
   canvas.height = window.innerHeight;
-  const COLS    = ["#B08A34","#6E2535","#636E36","#5BA4A4","#E8C840","#D4614A","#F6F1E8"];
+  const COLS    = ["#907028","#5A1E2A","#4E5828","#5BA4A4","#E8C840","#C06040","#F7F3EB"];
   const PI2     = Math.PI * 2;
   let   frame   = 0;
 
-  const parts = Array.from({ length: 90 }, () => ({
+  const parts = Array.from({ length: 80 }, () => ({
     x: Math.random() * canvas.width,
     y: -12 - Math.random() * 50,
     w: 5 + Math.random() * 5,
-    h: 7 + Math.random() * 10,
+    h: 8 + Math.random() * 10,
     c: COLS[Math.floor(Math.random() * COLS.length)],
-    s: 2.5 + Math.random() * 4,
+    s: 2 + Math.random() * 4,
     a: Math.random() * PI2,
-    r: (Math.random() - .5) * .18,
+    r: (Math.random() - .5) * .16,
   }));
 
   (function draw() {
@@ -961,7 +1019,7 @@ function launchConfetti() {
       ctx.fillStyle = p.c; ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
       ctx.restore();
     });
-    if (alive && ++frame < 220) requestAnimationFrame(draw);
+    if (alive && ++frame < 200) requestAnimationFrame(draw);
     else ctx.clearRect(0, 0, canvas.width, canvas.height);
   })();
 }
