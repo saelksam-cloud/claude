@@ -5,668 +5,274 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>La Terrasse — Château La Coste</title>
   <style>
-    /* ============================================================
-       VARIABLES & RESET
-    ============================================================ */
     :root {
-      --creme:          #F5EFE0;
-      --creme-dark:     #EAE0CC;
-      --olive:          #6B7A3E;
-      --olive-dark:     #4E5A2C;
-      --terracotta:     #C0654A;
-      --bordeaux:       #7B2D3E;
-      --bordeaux-light: #9B3D52;
-      --bordeaux-deep:  #5A1E2C;
-      --gold:           #C8A84B;
-      --gold-light:     #E2C97A;
-      --stone:          #B8A88A;
-      --text-dark:      #2C1F14;
-      --text-mid:       #5C4A35;
-      --shadow:         rgba(44, 31, 20, 0.18);
+      --creme:      #F5EFE0;
+      --creme-dark: #EAE0CC;
+      --olive:      #6B7A3E;
+      --olive-dark: #4E5A2C;
+      --bordeaux:   #7B2D3E;
+      --bx-deep:    #5A1E2C;
+      --bx-light:   #9B3D52;
+      --gold:       #C8A84B;
+      --gold-light: #E2C97A;
+      --stone:      #B8A88A;
+      --text-dark:  #2C1F14;
+      --text-mid:   #5C4A35;
+      --turquoise:  #5BA4A4;
+      --soleil:     #E8C840;
+      --coral:      #D4614A;
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     html, body {
       min-height: 100%;
-      background-color: var(--creme);
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Crect width='80' height='80' fill='%23F5EFE0'/%3E%3Crect x='10' y='20' width='4' height='4' fill='%236B7A3E' opacity='.18'/%3E%3Crect x='14' y='16' width='4' height='4' fill='%236B7A3E' opacity='.14'/%3E%3Crect x='6' y='16' width='4' height='4' fill='%236B7A3E' opacity='.14'/%3E%3Crect x='10' y='12' width='4' height='4' fill='%236B7A3E' opacity='.10'/%3E%3Crect x='12' y='24' width='2' height='8' fill='%236B7A3E' opacity='.12'/%3E%3Crect x='50' y='55' width='4' height='4' fill='%236B7A3E' opacity='.15'/%3E%3Crect x='54' y='51' width='4' height='4' fill='%236B7A3E' opacity='.11'/%3E%3Crect x='46' y='51' width='4' height='4' fill='%236B7A3E' opacity='.11'/%3E%3Crect x='52' y='59' width='2' height='6' fill='%236B7A3E' opacity='.10'/%3E%3C/svg%3E");
+      background: var(--creme);
       color: var(--text-dark);
-      font-family: 'Georgia', 'Times New Roman', serif;
+      font-family: 'Georgia', serif;
       overflow-x: hidden;
     }
 
-    /* ============================================================
-       HEADER (commun aux deux étapes)
-    ============================================================ */
+    /* Fond subtil vignes */
+    body {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Crect width='80' height='80' fill='%23F5EFE0'/%3E%3Crect x='10' y='20' width='4' height='4' fill='%236B7A3E' opacity='.13'/%3E%3Crect x='14' y='16' width='4' height='4' fill='%236B7A3E' opacity='.09'/%3E%3Crect x='6' y='16' width='4' height='4' fill='%236B7A3E' opacity='.09'/%3E%3Crect x='50' y='55' width='4' height='4' fill='%236B7A3E' opacity='.10'/%3E%3Crect x='54' y='51' width='4' height='4' fill='%236B7A3E' opacity='.07'/%3E%3C/svg%3E");
+    }
+
+    /* ── HEADER ─────────────────────────────────── */
     header {
       width: 100%;
       background: var(--bordeaux);
-      padding: 20px 24px 16px;
+      padding: 18px 24px 14px;
       text-align: center;
       position: relative;
       border-bottom: 4px solid var(--gold);
     }
-
     header::before {
       content: '';
       display: block;
       height: 4px;
-      background: repeating-linear-gradient(
-        90deg,
-        var(--gold) 0px, var(--gold) 8px,
-        var(--bordeaux) 8px, var(--bordeaux) 16px
-      );
+      background: repeating-linear-gradient(90deg, var(--gold) 0, var(--gold) 8px, var(--bordeaux) 8px, var(--bordeaux) 16px);
       position: absolute;
       top: 0; left: 0; right: 0;
     }
+    .chateau-icon { width: 56px; height: 42px; display: block; margin: 0 auto 5px; image-rendering: pixelated; }
+    header h1 { color: var(--creme); font-size: 1.2rem; font-weight: normal; letter-spacing: .12em; text-transform: uppercase; }
+    header h1 span { display: block; color: var(--gold-light); font-size: .72rem; letter-spacing: .22em; margin-top: 2px; }
 
-    .chateau-icon {
-      width: 64px;
-      height: 48px;
-      display: block;
-      margin: 0 auto 6px;
-      image-rendering: pixelated;
-    }
-
-    header h1 {
-      color: var(--creme);
-      font-size: 1.25rem;
-      font-weight: normal;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      line-height: 1.3;
-    }
-
-    header h1 span {
-      display: block;
-      color: var(--gold-light);
-      font-size: 0.75rem;
-      letter-spacing: 0.22em;
-      margin-top: 2px;
-    }
-
-    /* ============================================================
-       BARRE DE PROGRESSION (3 étapes)
-    ============================================================ */
+    /* ── BARRE DE PROGRESSION ────────────────────── */
     .progress-bar {
       width: 100%;
-      background: var(--bordeaux-deep);
-      padding: 10px 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0;
+      background: var(--bx-deep);
+      padding: 8px 24px;
+      display: flex; align-items: center; justify-content: center;
       border-bottom: 2px solid var(--gold);
     }
-
     .step-dot {
-      width: 28px;
-      height: 28px;
+      width: 26px; height: 26px;
       border: 2px solid var(--stone);
-      background: var(--bordeaux-deep);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: 'Courier New', monospace;
-      font-size: 0.7rem;
-      color: var(--stone);
-      position: relative;
-      flex-shrink: 0;
-      transition: background 0.3s, border-color 0.3s, color 0.3s;
+      background: var(--bx-deep);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Courier New', monospace; font-size: .68rem;
+      color: var(--stone); flex-shrink: 0;
+      transition: all .3s;
     }
+    .step-dot.active { background: var(--gold); border-color: var(--gold-light); color: var(--text-dark); }
+    .step-dot.done   { background: var(--olive); border-color: var(--olive-dark); color: var(--creme); }
+    .step-dot.done::after { content: '✓'; }
+    .step-line { width: 44px; height: 2px; background: var(--stone); opacity: .4; flex-shrink: 0; transition: all .3s; }
+    .step-line.done { background: var(--olive); opacity: .8; }
 
-    .step-dot.active {
-      background: var(--gold);
-      border-color: var(--gold-light);
-      color: var(--text-dark);
-    }
+    /* ── PAGES ───────────────────────────────────── */
+    .page { display: none; flex-direction: column; align-items: center; width: 100%; padding-bottom: 52px; }
+    .page.active { display: flex; animation: pageIn .4s ease both; }
+    @keyframes pageIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
 
-    .step-dot.done {
-      background: var(--olive);
-      border-color: var(--olive-dark);
-      color: var(--creme);
-    }
+    /* ── PAGE 1 : AVIS ───────────────────────────── */
+    .review-wrap { width: 100%; max-width: 420px; padding: 28px 24px 0; text-align: center; }
 
-    .step-dot.done::after {
-      content: '✓';
-      font-size: 0.75rem;
-    }
+    .review-heading { font-size: 1.22rem; color: var(--bordeaux); font-weight: normal; line-height: 1.45; margin-bottom: 10px; }
+    .review-sub     { font-size: .87rem; color: var(--text-mid); line-height: 1.85; margin-bottom: 28px; }
 
-    .step-line {
-      width: 48px;
-      height: 2px;
-      background: var(--stone);
-      opacity: 0.4;
-      flex-shrink: 0;
-      transition: background 0.3s, opacity 0.3s;
-    }
-
-    .step-line.done {
-      background: var(--olive);
-      opacity: 0.8;
-    }
-
-    .step-label {
-      display: none; /* masqué sur mobile par défaut, visible via aria */
-    }
-
-    /* ============================================================
-       LAYOUT PAGES
-    ============================================================ */
-    .page {
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      width: 100%;
-      padding-bottom: 48px;
-    }
-
-    .page.active {
-      display: flex;
-      animation: pageIn 0.4s ease both;
-    }
-
-    @keyframes pageIn {
-      from { opacity: 0; transform: translateY(16px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    /* ============================================================
-       PAGE 1 — AVIS GOOGLE
-    ============================================================ */
-    .review-page {
-      padding: 36px 24px 0;
-      max-width: 440px;
-      width: 100%;
-      text-align: center;
-    }
-
-    /* Illustration vigne pixel art */
-    .vine-illustration {
-      display: block;
-      margin: 0 auto 28px;
-      image-rendering: pixelated;
-    }
-
-    .review-heading {
-      font-size: 1.3rem;
-      color: var(--bordeaux);
-      font-weight: normal;
-      line-height: 1.4;
-      margin-bottom: 12px;
-    }
-
-    .review-subtext {
-      font-size: 0.88rem;
-      color: var(--text-mid);
-      line-height: 1.8;
-      margin-bottom: 32px;
-    }
-
-    /* Bouton Google — principal, pleine largeur */
     .btn-google {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      width: 100%;
-      max-width: 320px;
-      margin: 0 auto;
-      padding: 18px 24px;
-      background: var(--bordeaux);
-      color: var(--creme);
-      font-family: 'Courier New', monospace;
-      font-size: 0.9rem;
-      letter-spacing: 0.10em;
-      text-transform: uppercase;
-      border: none;
-      cursor: pointer;
-      text-decoration: none;
-      box-shadow: 4px 4px 0 var(--bordeaux-deep);
-      transition: transform 0.1s, box-shadow 0.1s;
-      position: relative;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      width: 100%; max-width: 310px; margin: 0 auto;
+      padding: 17px 20px;
+      background: var(--bordeaux); color: var(--creme);
+      font-family: 'Courier New', monospace; font-size: .88rem;
+      letter-spacing: .10em; text-transform: uppercase;
+      border: none; cursor: pointer; text-decoration: none;
+      box-shadow: 4px 4px 0 var(--bx-deep);
+      transition: transform .1s, box-shadow .1s;
     }
+    .btn-google:hover  { transform: translate(-2px,-2px); box-shadow: 6px 6px 0 var(--bx-deep); }
+    .btn-google:active { transform: translate(2px,2px);   box-shadow: 2px 2px 0 var(--bx-deep); }
+    .btn-google .star  { color: var(--gold-light); font-size: 1rem; }
 
-    .btn-google:hover {
-      transform: translate(-2px, -2px);
-      box-shadow: 6px 6px 0 var(--bordeaux-deep);
-    }
-
-    .btn-google:active {
-      transform: translate(2px, 2px);
-      box-shadow: 2px 2px 0 var(--bordeaux-deep);
-    }
-
-    /* Icône étoile pixel art dans le bouton */
-    .star-icon {
-      font-size: 1.1rem;
-      color: var(--gold-light);
-      line-height: 1;
-    }
-
-    /* Zone "J'ai terminé" — cachée jusqu'au clic sur Google */
     #doneSection {
-      width: 100%;
-      max-width: 320px;
-      margin: 20px auto 0;
-      opacity: 0;
-      pointer-events: none;
-      transform: translateY(8px);
-      transition: opacity 0.5s ease, transform 0.5s ease;
+      width: 100%; max-width: 310px; margin: 18px auto 0;
+      opacity: 0; pointer-events: none; transform: translateY(8px);
+      transition: opacity .5s, transform .5s;
     }
+    #doneSection.visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
 
-    #doneSection.visible {
-      opacity: 1;
-      pointer-events: auto;
-      transform: translateY(0);
+    .or-sep {
+      display: flex; align-items: center; gap: 10px;
+      color: var(--stone); font-family: 'Courier New', monospace;
+      font-size: .68rem; letter-spacing: .10em; margin: 0 0 12px;
     }
-
-    /* Séparateur */
-    .or-divider {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin: 0 0 14px;
-      color: var(--stone);
-      font-family: 'Courier New', monospace;
-      font-size: 0.7rem;
-      letter-spacing: 0.12em;
-    }
-
-    .or-divider::before, .or-divider::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: var(--stone);
-      opacity: 0.5;
-    }
+    .or-sep::before, .or-sep::after { content: ''; flex: 1; height: 1px; background: var(--stone); opacity: .5; }
 
     .btn-done {
-      display: block;
-      width: 100%;
-      padding: 16px 20px;
-      background: var(--olive);
-      color: var(--creme);
-      font-family: 'Courier New', monospace;
-      font-size: 0.88rem;
-      letter-spacing: 0.10em;
-      text-transform: uppercase;
-      border: none;
-      cursor: pointer;
+      display: block; width: 100%; padding: 15px 20px;
+      background: var(--olive); color: var(--creme);
+      font-family: 'Courier New', monospace; font-size: .86rem;
+      letter-spacing: .10em; text-transform: uppercase;
+      border: none; cursor: pointer;
       box-shadow: 4px 4px 0 var(--olive-dark);
-      transition: transform 0.1s, box-shadow 0.1s;
-      position: relative;
+      transition: transform .1s, box-shadow .1s;
+    }
+    .btn-done::before { content: '▸ '; color: var(--gold-light); }
+    .btn-done:hover  { transform: translate(-2px,-2px); box-shadow: 6px 6px 0 var(--olive-dark); }
+    .btn-done:active { transform: translate(2px,2px);   box-shadow: 2px 2px 0 var(--olive-dark); }
+
+    .review-note { margin-top: 24px; font-size: .67rem; color: var(--stone); font-family: 'Courier New', monospace; letter-spacing: .04em; line-height: 1.75; }
+
+    /* ── PAGE 2 : JEU ────────────────────────────── */
+    .game-wrap { width: 100%; max-width: 420px; padding: 22px 20px 0; text-align: center; }
+
+    .game-tagline { font-size: .9rem; color: var(--text-mid); line-height: 1.75; margin-bottom: 20px; }
+    .game-tagline strong { display: block; color: var(--bordeaux); font-size: 1rem; margin-bottom: 2px; }
+
+    /* Grille de cartes 2 colonnes */
+    .cards-grid {
+      display: flex; flex-wrap: wrap; justify-content: center;
+      gap: 12px; width: 100%; max-width: 356px; margin: 0 auto 22px;
     }
 
-    .btn-done:hover {
-      transform: translate(-2px, -2px);
-      box-shadow: 6px 6px 0 var(--olive-dark);
+    /* Carte flip */
+    .prize-card {
+      width: calc(50% - 6px);
+      height: 118px;
+      perspective: 700px;
+      flex-shrink: 0;
     }
 
-    .btn-done:active {
-      transform: translate(2px, 2px);
-      box-shadow: 2px 2px 0 var(--olive-dark);
+    .card-inner {
+      position: relative; width: 100%; height: 100%;
+      transform-style: preserve-3d;
+      transition: transform .55s cubic-bezier(.4,0,.2,1);
+    }
+    .card-inner.flipped { transform: rotateY(180deg); }
+
+    .card-face {
+      position: absolute; inset: 0;
+      backface-visibility: hidden;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 6px;
     }
 
-    .btn-done::before {
-      content: '▸ ';
-      color: var(--gold-light);
-    }
-
-    /* Note discrète sous les boutons */
-    .review-note {
-      margin-top: 28px;
-      font-size: 0.68rem;
-      color: var(--stone);
-      font-family: 'Courier New', monospace;
-      letter-spacing: 0.04em;
-      line-height: 1.6;
-    }
-
-    /* ============================================================
-       PAGE 2 — ROUE DE LA CHANCE
-    ============================================================ */
-    .game-intro {
-      width: 100%;
-      max-width: 440px;
-      padding: 24px 24px 0;
-      text-align: center;
-    }
-
-    .game-tagline {
-      font-size: 0.92rem;
-      color: var(--text-mid);
-      line-height: 1.75;
-      margin-bottom: 4px;
-    }
-
-    .game-tagline strong {
-      color: var(--bordeaux);
-      display: block;
-      font-size: 1.05rem;
-      margin-bottom: 4px;
-    }
-
-    /* Roue */
-    .wheel-wrap {
-      position: relative;
-      width: 300px;
-      height: 300px;
-      margin: 20px auto 0;
-      filter: drop-shadow(0 8px 24px var(--shadow));
-    }
-
-    #wheelCanvas {
-      display: block;
-      image-rendering: pixelated;
-      border-radius: 50%;
-    }
-
-    .wheel-arrow {
-      position: absolute;
-      top: -14px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 0;
-      height: 0;
-      border-left: 14px solid transparent;
-      border-right: 14px solid transparent;
-      border-top: 28px solid var(--gold);
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,.3));
-      z-index: 10;
-    }
-
-    .wheel-arrow::after {
-      content: '';
-      position: absolute;
-      top: -32px;
-      left: -10px;
-      width: 20px;
-      height: 10px;
-      background: var(--gold);
-      border-radius: 4px 4px 0 0;
-    }
-
-    .wheel-center {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 40px;
-      height: 40px;
-      background: var(--creme);
-      border: 4px solid var(--bordeaux);
-      border-radius: 50%;
-      z-index: 10;
-      box-shadow: 0 0 0 3px var(--gold);
-    }
-
-    .wheel-center::after {
-      content: '✦';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      color: var(--bordeaux);
-      font-size: 14px;
-    }
-
-    /* Bouton spin */
-    .btn-spin {
-      display: block;
-      margin: 24px auto 0;
-      padding: 16px 40px;
+    /* Face mystère */
+    .card-front {
       background: var(--bordeaux);
-      color: var(--creme);
-      font-family: 'Courier New', monospace;
-      font-size: 1rem;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      border: none;
-      cursor: pointer;
-      position: relative;
-      transition: transform 0.1s, box-shadow 0.1s;
-      box-shadow: 4px 4px 0 var(--bordeaux-deep), inset 0 2px 0 var(--bordeaux-light);
+      border: 3px solid var(--bx-deep);
+      box-shadow: 3px 3px 0 var(--bx-deep);
+    }
+    .card-front .q { font-size: 2.4rem; color: var(--gold); font-family: 'Courier New', monospace; font-weight: bold; }
+    .card-front .deco { position: absolute; inset: 7px; border: 1px solid rgba(200,168,75,.18); pointer-events: none; }
+
+    /* Face prize */
+    .card-back {
+      transform: rotateY(180deg);
+      padding: 8px 6px;
+      border: 3px solid rgba(0,0,0,.15);
+      box-shadow: 3px 3px 0 rgba(0,0,0,.18);
+    }
+    .card-icon  { font-size: 2rem; line-height: 1; }
+    .card-label {
+      font-size: .6rem; font-weight: bold; text-align: center;
+      line-height: 1.3; font-family: 'Courier New', monospace;
+      letter-spacing: .03em; padding: 0 2px;
     }
 
-    .btn-spin:hover:not(:disabled) {
-      transform: translate(-2px, -2px);
-      box-shadow: 6px 6px 0 var(--bordeaux-deep), inset 0 2px 0 var(--bordeaux-light);
+    /* États post-révélation */
+    .prize-card.not-winner .card-back { opacity: .45; }
+    .prize-card.winner .card-back {
+      box-shadow: 0 0 0 3px var(--gold), 4px 4px 0 var(--bx-deep);
+    }
+    .prize-card.winner .card-inner { animation: winPop .6s .1s cubic-bezier(.175,.885,.32,1.275) both; }
+    @keyframes winPop {
+      0%   { transform: rotateY(180deg) scale(1); }
+      60%  { transform: rotateY(180deg) scale(1.14); }
+      100% { transform: rotateY(180deg) scale(1.06); }
     }
 
-    .btn-spin:active:not(:disabled) {
-      transform: translate(2px, 2px);
-      box-shadow: 2px 2px 0 var(--bordeaux-deep), inset 0 2px 0 var(--bordeaux-light);
+    /* Bouton lancer */
+    .btn-spin {
+      display: block; margin: 0 auto;
+      padding: 16px 36px;
+      background: var(--bordeaux); color: var(--creme);
+      font-family: 'Courier New', monospace; font-size: .95rem;
+      letter-spacing: .14em; text-transform: uppercase;
+      border: none; cursor: pointer; position: relative;
+      box-shadow: 4px 4px 0 var(--bx-deep), inset 0 2px 0 var(--bx-light);
+      transition: transform .1s, box-shadow .1s;
     }
-
-    .btn-spin:disabled {
-      opacity: 0.45;
-      cursor: not-allowed;
-    }
-
     .btn-spin::before { content: '▸'; position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--gold-light); font-size: 12px; }
     .btn-spin::after  { content: '◂'; position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--gold-light); font-size: 12px; }
+    .btn-spin:hover:not(:disabled) { transform: translate(-2px,-2px); box-shadow: 6px 6px 0 var(--bx-deep), inset 0 2px 0 var(--bx-light); }
+    .btn-spin:active:not(:disabled){ transform: translate(2px,2px);   box-shadow: 2px 2px 0 var(--bx-deep); }
+    .btn-spin:disabled { opacity: .4; cursor: not-allowed; }
 
-    .legal {
-      margin-top: 16px;
-      font-size: 0.67rem;
-      color: var(--stone);
-      text-align: center;
-      font-family: 'Courier New', monospace;
-      letter-spacing: 0.04em;
-      padding: 0 24px;
-      line-height: 1.7;
+    /* Résultat inline */
+    #winnerReveal { display: none; margin-top: 20px; text-align: center; padding: 0 4px; }
+    #winnerReveal.show { display: block; animation: pageIn .5s ease both; }
+
+    .winner-badge {
+      display: inline-block;
+      background: var(--bordeaux); color: var(--creme);
+      font-family: 'Courier New', monospace; font-size: .62rem;
+      letter-spacing: .18em; text-transform: uppercase;
+      padding: 4px 12px; margin-bottom: 10px;
     }
-
-    /* ============================================================
-       MESSAGE "DÉJÀ JOUÉ"
-    ============================================================ */
-    #alreadyPlayed {
-      display: none;
-      background: var(--creme-dark);
-      border: 3px solid var(--stone);
-      padding: 28px 24px;
-      margin: 32px 20px 0;
-      text-align: center;
-      max-width: 380px;
-    }
-
-    #alreadyPlayed.show { display: block; animation: pageIn 0.4s ease both; }
-
-    #alreadyPlayed .ap-icon { font-size: 2.2rem; display: block; margin-bottom: 10px; }
-
-    #alreadyPlayed p {
-      font-size: 0.88rem;
-      color: var(--text-mid);
-      font-family: 'Courier New', monospace;
-      line-height: 1.65;
-    }
-
-    /* ============================================================
-       OVERLAY RÉSULTAT
-    ============================================================ */
-    #resultOverlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(44, 31, 20, 0.72);
-      z-index: 100;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-      backdrop-filter: blur(2px);
-    }
-
-    #resultOverlay.show {
-      display: flex;
-      animation: fadeIn 0.4s ease;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to   { opacity: 1; }
-    }
-
-    .result-card {
-      background: var(--creme);
-      width: 100%;
-      max-width: 360px;
-      position: relative;
-      padding: 0 0 24px;
-      clip-path: polygon(
-        0 8px, 8px 8px, 8px 0,
-        calc(100% - 8px) 0, calc(100% - 8px) 8px, 100% 8px,
-        100% calc(100% - 8px), calc(100% - 8px) calc(100% - 8px),
-        calc(100% - 8px) 100%, 8px 100%, 8px calc(100% - 8px),
-        0 calc(100% - 8px)
-      );
-      box-shadow: 6px 6px 0 var(--bordeaux);
-      animation: cardPop 0.5s cubic-bezier(.175,.885,.32,1.275) both;
-    }
-
-    @keyframes cardPop {
-      from { transform: scale(0.5) rotate(-4deg); opacity: 0; }
-      to   { transform: scale(1) rotate(0deg); opacity: 1; }
-    }
-
-    .card-header {
-      background: var(--bordeaux);
-      padding: 14px 20px;
-      text-align: center;
-      position: relative;
-    }
-
-    .card-header::after {
-      content: '';
-      display: block;
-      height: 4px;
-      background: repeating-linear-gradient(
-        90deg,
-        var(--gold) 0px, var(--gold) 8px,
-        var(--bordeaux) 8px, var(--bordeaux) 16px
-      );
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-    }
-
-    .card-header h2 {
-      color: var(--gold-light);
-      font-size: 0.7rem;
-      letter-spacing: 0.22em;
-      text-transform: uppercase;
-      font-family: 'Courier New', monospace;
-    }
-
-    .card-illustration {
-      display: block;
-      margin: 20px auto 0;
-      image-rendering: pixelated;
-    }
-
-    .card-body {
-      padding: 12px 24px 0;
-      text-align: center;
-    }
-
-    .card-prize {
-      font-size: 1.35rem;
-      color: var(--bordeaux);
-      font-weight: bold;
-      line-height: 1.3;
-      margin-bottom: 6px;
-    }
-
-    .card-prize.no-win { color: var(--text-mid); font-size: 1.1rem; }
-
-    .card-subtitle {
-      font-size: 0.78rem;
-      color: var(--text-mid);
-      font-family: 'Courier New', monospace;
-      letter-spacing: 0.06em;
-      margin-bottom: 16px;
-    }
-
-    .card-code-wrap {
-      background: var(--creme-dark);
-      border: 2px solid var(--stone);
-      padding: 10px 16px;
-      margin: 0 0 16px;
-      font-family: 'Courier New', monospace;
-      font-size: 1.2rem;
-      letter-spacing: 0.18em;
-      color: var(--bordeaux);
-      font-weight: bold;
-      text-align: center;
-    }
-
-    .card-code-label {
-      font-size: 0.65rem;
-      color: var(--stone);
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      font-family: 'Courier New', monospace;
-      display: block;
-      margin-bottom: 4px;
-    }
+    .winner-prize { font-size: 1.3rem; color: var(--bordeaux); font-weight: bold; line-height: 1.3; margin-bottom: 6px; }
+    .winner-prize.no-win { color: var(--text-mid); font-size: 1rem; }
+    .winner-sub { font-size: .78rem; color: var(--text-mid); font-family: 'Courier New', monospace; letter-spacing: .06em; margin-bottom: 16px; line-height: 1.6; }
 
     .btn-present {
-      display: block;
-      width: calc(100% - 48px);
-      margin: 0 auto;
-      padding: 14px 20px;
-      background: var(--olive);
-      color: var(--creme);
-      font-family: 'Courier New', monospace;
-      font-size: 0.85rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      border: none;
-      cursor: pointer;
+      display: block; width: 100%; max-width: 300px;
+      margin: 0 auto; padding: 14px 20px;
+      background: var(--olive); color: var(--creme);
+      font-family: 'Courier New', monospace; font-size: .84rem;
+      letter-spacing: .10em; text-transform: uppercase;
+      border: none; cursor: pointer;
       box-shadow: 4px 4px 0 var(--olive-dark);
-      transition: transform 0.1s, box-shadow 0.1s;
+      transition: transform .1s, box-shadow .1s;
     }
+    .btn-present:hover  { transform: translate(-2px,-2px); box-shadow: 6px 6px 0 var(--olive-dark); }
+    .btn-present:active { transform: translate(2px,2px);   box-shadow: 2px 2px 0 var(--olive-dark); }
+    .btn-present:disabled { opacity: .7; cursor: default; transform: none; }
 
-    .btn-present:active {
-      transform: translate(2px, 2px);
-      box-shadow: 2px 2px 0 var(--olive-dark);
-    }
+    /* Déjà joué */
+    #alreadyPlayed { display: none; background: var(--creme-dark); border: 3px solid var(--stone); padding: 28px 24px; margin: 28px 20px 0; text-align: center; max-width: 360px; }
+    #alreadyPlayed.show { display: block; animation: pageIn .4s ease both; }
+    #alreadyPlayed .ap-icon { font-size: 2rem; display: block; margin-bottom: 10px; }
+    #alreadyPlayed p { font-size: .87rem; color: var(--text-mid); font-family: 'Courier New', monospace; line-height: 1.65; }
 
-    /* ============================================================
-       CONFETTI
-    ============================================================ */
-    #confettiCanvas {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 99;
-    }
+    .legal { margin-top: 18px; font-size: .67rem; color: var(--stone); font-family: 'Courier New', monospace; letter-spacing: .04em; line-height: 1.7; padding: 0 16px; }
 
-    /* ============================================================
-       SÉPARATEUR DÉCORATIF
-    ============================================================ */
     .divider {
-      width: 100%;
-      max-width: 320px;
-      height: 12px;
-      margin: 20px auto 0;
-      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='12'%3E%3Crect x='14' y='4' width='4' height='4' fill='%23C8A84B' opacity='.6'/%3E%3Crect x='4' y='6' width='8' height='2' fill='%23B8A88A' opacity='.5'/%3E%3Crect x='20' y='6' width='8' height='2' fill='%23B8A88A' opacity='.5'/%3E%3Crect x='0' y='6' width='3' height='2' fill='%23B8A88A' opacity='.3'/%3E%3Crect x='29' y='6' width='3' height='2' fill='%23B8A88A' opacity='.3'/%3E%3C/svg%3E") repeat-x center;
+      width: 100%; max-width: 300px; height: 12px; margin: 18px auto;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='12'%3E%3Crect x='14' y='4' width='4' height='4' fill='%23C8A84B' opacity='.6'/%3E%3Crect x='4' y='6' width='8' height='2' fill='%23B8A88A' opacity='.5'/%3E%3Crect x='20' y='6' width='8' height='2' fill='%23B8A88A' opacity='.5'/%3E%3C/svg%3E") repeat-x center;
     }
 
-    /* ============================================================
-       RESPONSIVE
-    ============================================================ */
-    @media (max-height: 700px) {
-      .wheel-wrap { width: 240px; height: 240px; }
-      header { padding: 14px 24px 12px; }
-      header h1 { font-size: 1.05rem; }
-      .review-page { padding-top: 24px; }
-    }
+    /* Confetti */
+    #confettiCanvas { position: fixed; inset: 0; pointer-events: none; z-index: 99; }
 
     @media (max-width: 360px) {
-      .wheel-wrap { width: 260px; height: 260px; }
-      .btn-spin { padding: 14px 30px; font-size: 0.9rem; }
-      .btn-google { font-size: 0.8rem; padding: 16px 16px; }
+      .prize-card { height: 104px; }
+      .cards-grid { gap: 8px; }
+      .btn-spin { padding: 14px 28px; font-size: .88rem; }
     }
   </style>
 </head>
@@ -674,33 +280,9 @@
 
 <canvas id="confettiCanvas"></canvas>
 
-<!-- ===== OVERLAY RÉSULTAT ===== -->
-<div id="resultOverlay" role="dialog" aria-modal="true" aria-label="Résultat du jeu">
-  <div class="result-card">
-    <div class="card-header">
-      <h2>✦ La Terrasse — Château La Coste ✦</h2>
-    </div>
-    <canvas id="prizeIllustration" class="card-illustration" width="120" height="80"></canvas>
-    <div class="card-body">
-      <div id="cardPrize" class="card-prize"></div>
-      <div id="cardSubtitle" class="card-subtitle"></div>
-      <div id="codeSection">
-        <div class="card-code-wrap">
-          <span class="card-code-label">Votre code</span>
-          <span id="prizeCode"></span>
-        </div>
-        <button class="btn-present" onclick="presentCode()">
-          Présenter ce code à l'équipe
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ===== STRUCTURE PRINCIPALE ===== -->
 <div id="app">
 
-  <!-- HEADER commun -->
+  <!-- HEADER -->
   <header>
     <svg class="chateau-icon" viewBox="0 0 64 48" xmlns="http://www.w3.org/2000/svg" style="image-rendering:pixelated;">
       <rect x="2"  y="14" width="10" height="26" fill="#EAE0CC"/>
@@ -729,130 +311,144 @@
     <h1>La Terrasse <span>Château La Coste · Provence</span></h1>
   </header>
 
-  <!-- BARRE DE PROGRESSION -->
-  <div class="progress-bar" role="progressbar" aria-valuemin="1" aria-valuemax="3" aria-valuenow="1">
-    <div class="step-dot active" id="dot1" aria-label="Étape 1 : Votre avis">1</div>
+  <!-- PROGRESS -->
+  <div class="progress-bar">
+    <div class="step-dot active" id="dot1">1</div>
     <div class="step-line" id="line1"></div>
-    <div class="step-dot" id="dot2" aria-label="Étape 2 : Votre attention">2</div>
+    <div class="step-dot" id="dot2">2</div>
     <div class="step-line" id="line2"></div>
-    <div class="step-dot" id="dot3" aria-label="Étape 3 : Résultat">3</div>
+    <div class="step-dot" id="dot3">3</div>
   </div>
 
-  <!-- ================================================
-       PAGE 1 — INVITATION AVIS GOOGLE
-  ================================================ -->
+  <!-- ══════════════════════════════════════════════
+       PAGE 1 — AVIS GOOGLE
+  ══════════════════════════════════════════════ -->
   <div class="page active" id="pageReview">
-    <div class="review-page">
+    <div class="review-wrap">
 
-      <!-- Illustration pixel art : vigne & verre -->
-      <svg class="vine-illustration" width="160" height="80" viewBox="0 0 160 80"
-           xmlns="http://www.w3.org/2000/svg" style="image-rendering:pixelated;">
-        <!-- Sol -->
-        <rect x="0" y="72" width="160" height="8" fill="#6B7A3E" opacity=".35"/>
-        <!-- Cep de vigne gauche -->
-        <rect x="16" y="40" width="4"  height="32" fill="#5C4A35" opacity=".7"/>
-        <rect x="12" y="36" width="4"  height="4"  fill="#6B7A3E"/>
-        <rect x="8"  y="32" width="4"  height="4"  fill="#6B7A3E"/>
-        <rect x="16" y="28" width="4"  height="4"  fill="#6B7A3E"/>
-        <rect x="20" y="32" width="4"  height="4"  fill="#6B7A3E"/>
-        <rect x="24" y="28" width="4"  height="4"  fill="#6B7A3E"/>
-        <!-- Grappes -->
-        <rect x="10" y="44" width="4"  height="4"  fill="#7B2D3E"/>
-        <rect x="14" y="48" width="4"  height="4"  fill="#7B2D3E"/>
-        <rect x="10" y="52" width="4"  height="4"  fill="#7B2D3E"/>
-        <!-- Cep vigne droit -->
-        <rect x="140" y="40" width="4" height="32" fill="#5C4A35" opacity=".7"/>
-        <rect x="144" y="36" width="4" height="4"  fill="#6B7A3E"/>
-        <rect x="148" y="32" width="4" height="4"  fill="#6B7A3E"/>
-        <rect x="140" y="28" width="4" height="4"  fill="#6B7A3E"/>
-        <rect x="136" y="32" width="4" height="4"  fill="#6B7A3E"/>
-        <rect x="132" y="28" width="4" height="4"  fill="#6B7A3E"/>
-        <rect x="146" y="44" width="4" height="4"  fill="#7B2D3E"/>
-        <rect x="142" y="48" width="4" height="4"  fill="#7B2D3E"/>
-        <rect x="146" y="52" width="4" height="4"  fill="#7B2D3E"/>
-        <!-- Verre de vin centre -->
-        <rect x="72" y="20" width="16" height="2"  fill="#C8A84B"/>
-        <rect x="70" y="22" width="20" height="16" fill="#F5EFE0" opacity=".8"/>
-        <rect x="70" y="22" width="20" height="10" fill="#9B3D52" opacity=".75"/>
-        <rect x="74" y="38" width="12" height="2"  fill="#F5EFE0" opacity=".8"/>
-        <rect x="78" y="40" width="4"  height="8"  fill="#F5EFE0" opacity=".8"/>
-        <rect x="72" y="48" width="16" height="2"  fill="#F5EFE0" opacity=".8"/>
-        <!-- Reflet verre -->
-        <rect x="72" y="24" width="2"  height="6"  fill="white"  opacity=".4"/>
-        <!-- Soleil pixel -->
-        <rect x="120" y="8"  width="8"  height="8"  fill="#C8A84B" opacity=".7"/>
-        <rect x="116" y="12" width="4"  height="4"  fill="#C8A84B" opacity=".4"/>
-        <rect x="128" y="12" width="4"  height="4"  fill="#C8A84B" opacity=".4"/>
-        <rect x="120" y="4"  width="8"  height="4"  fill="#C8A84B" opacity=".4"/>
+      <!-- Illustration pixel art : terrasse & fontaine inspirée de la photo -->
+      <svg width="220" height="110" viewBox="0 0 220 110"
+           xmlns="http://www.w3.org/2000/svg"
+           style="display:block;margin:0 auto 24px;image-rendering:pixelated;">
+        <!-- Ciel / sol -->
+        <rect x="0"   y="0"   width="220" height="110" fill="#F5EFE0"/>
+        <rect x="0"   y="90"  width="220" height="20"  fill="#6B7A3E" opacity=".25"/>
+        <!-- Arbres gauche -->
+        <rect x="0"   y="20"  width="18"  height="70"  fill="#6B7A3E" opacity=".55"/>
+        <rect x="0"   y="10"  width="22"  height="14"  fill="#4E5A2C" opacity=".7"/>
+        <!-- Arbres droite -->
+        <rect x="202" y="20"  width="18"  height="70"  fill="#6B7A3E" opacity=".55"/>
+        <rect x="198" y="10"  width="22"  height="14"  fill="#4E5A2C" opacity=".7"/>
+        <!-- Fontaine pierre -->
+        <!-- Bassin -->
+        <rect x="84"  y="74"  width="52"  height="12"  fill="#D4C4A8"/>
+        <rect x="80"  y="70"  width="60"  height="6"   fill="#E0D0B8"/>
+        <!-- Colonne -->
+        <rect x="104" y="44"  width="12"  height="28"  fill="#D4C4A8"/>
+        <!-- Vasque haute -->
+        <rect x="96"  y="38"  width="28"  height="8"   fill="#C8B898"/>
+        <rect x="94"  y="36"  width="32"  height="4"   fill="#D4C4A8"/>
+        <!-- Pot fleurs -->
+        <rect x="104" y="26"  width="12"  height="12"  fill="#C0654A"/>
+        <rect x="102" y="24"  width="16"  height="4"   fill="#B05A40"/>
+        <!-- Feuilles -->
+        <rect x="102" y="16"  width="6"   height="10"  fill="#6B7A3E"/>
+        <rect x="112" y="14"  width="6"   height="12"  fill="#6B7A3E"/>
+        <rect x="107" y="12"  width="6"   height="6"   fill="#4E5A2C"/>
+        <!-- Eau -->
+        <rect x="108" y="44"  width="4"   height="6"   fill="#A8D0E8" opacity=".9"/>
+        <!-- Chaise turquoise gauche -->
+        <rect x="28"  y="62"  width="22"  height="24"  fill="#5BA4A4"/>
+        <rect x="26"  y="60"  width="26"  height="4"   fill="#4A9090"/>
+        <rect x="28"  y="84"  width="5"   height="10"  fill="#4A9090"/>
+        <rect x="45"  y="84"  width="5"   height="10"  fill="#4A9090"/>
+        <!-- Chaise jaune droite -->
+        <rect x="170" y="62"  width="22"  height="24"  fill="#E8C840"/>
+        <rect x="168" y="60"  width="26"  height="4"   fill="#D4B430"/>
+        <rect x="170" y="84"  width="5"   height="10"  fill="#D4B430"/>
+        <rect x="187" y="84"  width="5"   height="10"  fill="#D4B430"/>
+        <!-- Table pierre centrale -->
+        <rect x="68"  y="56"  width="84"  height="6"   fill="#D4C4A8"/>
+        <rect x="96"  y="62"  width="28"  height="18"  fill="#C8B898"/>
+        <rect x="88"  y="78"  width="44"  height="4"   fill="#C0A888"/>
+        <!-- Verre vin sur table -->
+        <rect x="106" y="48"  width="8"   height="2"   fill="#F5EFE0"/>
+        <rect x="104" y="50"  width="12"  height="6"   fill="#9B3D52" opacity=".8"/>
+        <rect x="106" y="56"  width="8"   height="1"   fill="#F5EFE0"/>
+        <rect x="109" y="57"  width="2"   height="4"   fill="#F5EFE0"/>
+        <rect x="106" y="61"  width="8"   height="1"   fill="#F5EFE0"/>
+        <!-- Soleil -->
+        <rect x="190" y="6"   width="10"  height="10"  fill="#C8A84B" opacity=".7"/>
+        <rect x="186" y="10"  width="4"   height="4"   fill="#C8A84B" opacity=".4"/>
+        <rect x="200" y="10"  width="4"   height="4"   fill="#C8A84B" opacity=".4"/>
+        <rect x="190" y="2"   width="10"  height="4"   fill="#C8A84B" opacity=".35"/>
       </svg>
 
       <h2 class="review-heading">Merci d'être venu à La&nbsp;Terrasse.</h2>
-
-      <p class="review-subtext">
+      <p class="review-sub">
         Votre passage compte pour nous.<br>
         Si vous souhaitez partager votre expérience,<br>
-        un avis Google est toujours précieux.
+        un avis Google nous ferait chaud au cœur.
       </p>
 
-      <!-- Bouton Google Review -->
       <a id="googleReviewBtn" href="#" target="_blank" rel="noopener"
          class="btn-google" onclick="onReviewClick()">
-        <span class="star-icon">★</span>
+        <span class="star">★</span>
         Laisser un avis sur Google
-        <span class="star-icon">★</span>
+        <span class="star">★</span>
       </a>
 
-      <!-- Zone "J'ai terminé" — apparaît après le clic -->
       <div id="doneSection">
-        <div class="or-divider">ou revenez ici ensuite</div>
+        <div class="or-sep">ou revenez ici ensuite</div>
         <button class="btn-done" onclick="goToGame()">
           J'ai terminé — accéder au jeu
         </button>
       </div>
 
       <p class="review-note">
-        Merci pour votre retour.<br>
-        Tentez votre chance pour découvrir votre attention du jour.<br><br>
+        Merci pour votre retour. Tentez votre chance<br>
+        pour découvrir votre attention du jour.<br><br>
         Le jeu est indépendant de toute note ou contenu d'avis.
       </p>
 
     </div>
   </div>
 
-  <!-- ================================================
-       PAGE 2 — ROUE DE LA CHANCE
-  ================================================ -->
+  <!-- ══════════════════════════════════════════════
+       PAGE 2 — JEU (cartes retournées)
+  ══════════════════════════════════════════════ -->
   <div class="page" id="pageGame">
 
-    <!-- Message "déjà joué" -->
     <div id="alreadyPlayed">
       <span class="ap-icon">🍃</span>
       <p>Vous avez déjà participé aujourd'hui.<br>Revenez nous voir demain !</p>
     </div>
 
-    <!-- Jeu -->
-    <div id="gameSection" class="game-intro">
+    <div id="gameSection" class="game-wrap">
       <p class="game-tagline">
         <strong>Merci pour votre retour.</strong>
-        Tentez votre chance pour découvrir<br>votre attention du jour.
+        Tentez votre chance pour découvrir votre attention du jour.
       </p>
 
-      <div class="wheel-wrap">
-        <div class="wheel-arrow"></div>
-        <canvas id="wheelCanvas" width="300" height="300"></canvas>
-        <div class="wheel-center"></div>
-      </div>
+      <!-- Les cartes sont générées par JS -->
+      <div class="cards-grid" id="cardsGrid"></div>
 
-      <button id="spinBtn" class="btn-spin" onclick="spin()">
+      <button id="spinBtn" class="btn-spin" onclick="startReveal()">
         Tenter ma chance
       </button>
 
-      <div class="divider"></div>
+      <!-- Résultat — affiché après révélation, pas d'overlay -->
+      <div id="winnerReveal">
+        <div class="divider"></div>
+        <div class="winner-badge">✦ Votre attention du jour ✦</div>
+        <div id="winnerPrize" class="winner-prize"></div>
+        <div id="winnerSub"   class="winner-sub"></div>
+        <button id="presentBtn" class="btn-present" onclick="handlePresent()">
+          Montrer à un membre de l'équipe
+        </button>
+      </div>
 
-      <p class="legal">
-        Dans la limite des stocks disponibles.<br>
-        Un gain par personne et par jour.
-      </p>
+      <p class="legal">Dans la limite des stocks disponibles. Un gain par personne et par jour.</p>
     </div>
 
   </div>
@@ -861,342 +457,215 @@
 
 <script>
 /* ================================================================
-   CONFIGURATION
+   CONFIGURATION — modifier ici uniquement
 ================================================================ */
 
-/** URL de la page Google Review — à remplacer */
-const GOOGLE_REVIEW_URL = "https://g.page/r/VOTRE_CODE_GOOGLE/review";
+/** Lien Google Review de La Terrasse Provençale */
+const GOOGLE_REVIEW_URL = "https://www.google.com/maps?cid=7655344166233586966";
 
-/** Durée anti-replay (24h) */
-const COOLDOWN_MS  = 24 * 60 * 60 * 1000;
-const STORAGE_KEY  = "terrasse_lacostegame";
+const COOLDOWN_MS = 24 * 60 * 60 * 1000;
+const STORAGE_KEY = "terrasse_lacostegame";
 
 /**
- * Lots et probabilités (somme des weight = 100).
- * win: false → lot consolation, pas de code généré.
+ * Lots. Somme des weight = 100.
+ * Les couleurs s'inspirent des chaises colorées de la photo.
  */
 const PRIZES = [
-  { label: "Merci pour votre participation",  weight: 10, win: false, color: "#B8A88A", textColor: "#F5EFE0", icon: "leaf"   },
-  { label: "Un thé offert",                   weight: 30, win: true,  color: "#6B7A3E", textColor: "#F5EFE0", icon: "tea"    },
-  { label: "Un café offert",                  weight: 20, win: true,  color: "#5C4A35", textColor: "#F5EFE0", icon: "coffee" },
-  { label: "Un thé glacé offert",             weight: 20, win: true,  color: "#C0654A", textColor: "#F5EFE0", icon: "ice"    },
-  { label: "Un cookie offert",                weight: 15, win: true,  color: "#C8A84B", textColor: "#2C1F14", icon: "cookie" },
-  { label: "Une demi-bouteille de vin",       weight:  4, win: true,  color: "#7B2D3E", textColor: "#F5EFE0", icon: "wine"   },
-  { label: "Grand lot : une bouteille de vin",weight:  1, win: true,  color: "#4E5A2C", textColor: "#F5EFE0", icon: "wine2"  },
+  { label: "Merci pour votre participation",  weight: 10, win: false, icon: "🌿", bg: "#B8A88A", text: "#F5EFE0" },
+  { label: "Un thé offert",                   weight: 30, win: true,  icon: "🍵", bg: "#5BA4A4", text: "#F5EFE0" },
+  { label: "Un café offert",                  weight: 20, win: true,  icon: "☕", bg: "#6B4B3A", text: "#F5EFE0" },
+  { label: "Un thé glacé offert",             weight: 20, win: true,  icon: "🥤", bg: "#4A8BA8", text: "#F5EFE0" },
+  { label: "Un cookie offert",                weight: 15, win: true,  icon: "🍪", bg: "#E8C840", text: "#2C1F14" },
+  { label: "Une demi-bouteille de vin",        weight:  4, win: true,  icon: "🍷", bg: "#7B2D3E", text: "#F5EFE0" },
+  { label: "Grand lot : une bouteille de vin", weight:  1, win: true,  icon: "🍾", bg: "#4E5A2C", text: "#F5EFE0" },
 ];
-
-/* ================================================================
-   ÉTAT
-================================================================ */
-let spinning     = false;
-let currentAngle = 0;
-const TWO_PI     = Math.PI * 2;
 
 /* ================================================================
    INIT
 ================================================================ */
 document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("googleReviewBtn").href = GOOGLE_REVIEW_URL;
-
-  // Restaure l'état de la session : si le bouton Google a déjà été cliqué
-  // dans la même session, on ré-affiche directement "J'ai terminé"
-  if (sessionStorage.getItem("review_clicked")) {
-    showDoneButton(false); // sans animation, instantané
-  }
-
-  drawWheel(currentAngle);
+  if (sessionStorage.getItem("review_clicked")) showDoneButton(false);
+  buildCards();
 });
 
 /* ================================================================
-   FUNNEL — NAVIGATION ENTRE ÉTAPES
+   CONSTRUCTION DE LA GRILLE
 ================================================================ */
+function buildCards() {
+  const grid = document.getElementById("cardsGrid");
+  PRIZES.forEach((prize, i) => {
+    const card = document.createElement("div");
+    card.className = "prize-card";
+    card.id = `card-${i}`;
+    card.innerHTML = `
+      <div class="card-inner">
+        <div class="card-face card-front">
+          <span class="q">?</span>
+          <div class="deco"></div>
+        </div>
+        <div class="card-face card-back"
+             style="background:${prize.bg};color:${prize.text};">
+          <span class="card-icon">${prize.icon}</span>
+          <span class="card-label">${prize.label}</span>
+        </div>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
 
-/** Appelé au clic sur le bouton Google Review */
+/* ================================================================
+   FUNNEL
+================================================================ */
 function onReviewClick() {
   sessionStorage.setItem("review_clicked", "1");
   showDoneButton(true);
 }
 
 function showDoneButton(animate) {
-  const section = document.getElementById("doneSection");
-  if (animate) {
-    // Petit délai pour laisser l'onglet s'ouvrir avant l'animation
-    setTimeout(() => section.classList.add("visible"), 400);
-  } else {
-    section.style.transition = "none";
-    section.classList.add("visible");
-  }
+  const el = document.getElementById("doneSection");
+  if (animate) setTimeout(() => el.classList.add("visible"), 420);
+  else { el.style.transition = "none"; el.classList.add("visible"); }
 }
 
-/** Passe à la page du jeu */
 function goToGame() {
-  // Mise à jour de la barre de progression
   setStep(2);
-
   document.getElementById("pageReview").classList.remove("active");
   document.getElementById("pageGame").classList.add("active");
-
-  // Vérifie si déjà joué
   if (hasPlayedRecently()) {
     document.getElementById("gameSection").style.display = "none";
     document.getElementById("alreadyPlayed").classList.add("show");
-    setStep(3); // on est au bout du funnel
+    setStep(3);
   }
-
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
-/** Met à jour l'affichage de la barre de progression */
-function setStep(step) {
-  const dots  = [null,
-    document.getElementById("dot1"),
-    document.getElementById("dot2"),
-    document.getElementById("dot3")
-  ];
-  const lines = [null,
-    document.getElementById("line1"),
-    document.getElementById("line2")
-  ];
-
-  dots.forEach((dot, i) => {
-    if (!dot) return;
-    dot.classList.remove("active", "done");
-    if (i < step)  dot.classList.add("done"),   dot.textContent = "";
-    if (i === step) dot.classList.add("active"), dot.textContent = String(i);
-    if (i > step)   dot.textContent = String(i);
-  });
-
-  lines.forEach((line, i) => {
-    if (!line) return;
-    line.classList.toggle("done", i < step);
-  });
-
-  document.querySelector(".progress-bar").setAttribute("aria-valuenow", step);
-}
-
-/* ================================================================
-   ROUE — DESSIN
-================================================================ */
-function drawWheel(angleOffset) {
-  const canvas = document.getElementById("wheelCanvas");
-  const ctx    = canvas.getContext("2d");
-  const cx     = canvas.width / 2;
-  const cy     = canvas.height / 2;
-  const radius = cx - 6;
-  const total  = PRIZES.reduce((s, p) => s + p.weight, 0);
-
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  let startAngle = angleOffset;
-
-  PRIZES.forEach(prize => {
-    const sliceAngle = (prize.weight / total) * TWO_PI;
-    const endAngle   = startAngle + sliceAngle;
-
-    ctx.beginPath();
-    ctx.moveTo(cx, cy);
-    ctx.arc(cx, cy, radius, startAngle, endAngle);
-    ctx.closePath();
-    ctx.fillStyle = prize.color;
-    ctx.fill();
-    ctx.strokeStyle = "rgba(245,239,224,0.4)";
-    ctx.lineWidth   = 2;
-    ctx.stroke();
-
-    ctx.save();
-    ctx.translate(cx, cy);
-    ctx.rotate(startAngle + sliceAngle / 2);
-    ctx.textAlign = "right";
-    ctx.fillStyle = prize.textColor;
-    ctx.font      = "bold 10px 'Courier New', monospace";
-
-    let text = prize.label;
-    if (ctx.measureText(text).width > radius * 0.7) {
-      text = text.split(" ")[prize.win ? 1 : 0] || text;
-    }
-    ctx.fillText(text, radius - 10, 4);
-    ctx.restore();
-
-    startAngle = endAngle;
-  });
-
-  ctx.beginPath();
-  ctx.arc(cx, cy, radius, 0, TWO_PI);
-  ctx.strokeStyle = "#C8A84B";
-  ctx.lineWidth   = 5;
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.arc(cx, cy, radius - 6, 0, TWO_PI);
-  ctx.strokeStyle = "rgba(245,239,224,0.25)";
-  ctx.lineWidth   = 2;
-  ctx.stroke();
-}
-
-/* ================================================================
-   TIRAGE AU SORT
-================================================================ */
-function drawPrize() {
-  const rand = Math.random() * 100;
-  let cumul  = 0;
-  for (const prize of PRIZES) {
-    cumul += prize.weight;
-    if (rand < cumul) return prize;
+function setStep(n) {
+  for (let i = 1; i <= 3; i++) {
+    const d = document.getElementById(`dot${i}`);
+    d.classList.remove("active","done");
+    if (i < n)      { d.classList.add("done");   d.textContent = ""; }
+    else if (i === n){ d.classList.add("active"); d.textContent = i; }
+    else              d.textContent = i;
+    if (i <= 2) document.getElementById(`line${i}`).classList.toggle("done", i < n);
   }
-  return PRIZES[0];
 }
 
 /* ================================================================
-   ANIMATION SPIN
+   TIRAGE
 ================================================================ */
-function spin() {
-  if (spinning) return;
-  spinning = true;
+function pickWinner() {
+  const r = Math.random() * 100;
+  let c = 0;
+  for (let i = 0; i < PRIZES.length; i++) {
+    c += PRIZES[i].weight;
+    if (r < c) return i;
+  }
+  return 0;
+}
+
+/* ================================================================
+   RÉVÉLATION DES CARTES
+   — Toutes les cartes se retournent une par une
+   — La gagnante arrive en DERNIER avec une pause dramatique
+================================================================ */
+let revealing = false;
+
+function startReveal() {
+  if (revealing) return;
+  revealing = true;
   document.getElementById("spinBtn").disabled = true;
 
-  const wonPrize   = drawPrize();
-  const total      = PRIZES.reduce((s, p) => s + p.weight, 0);
-  let   prizeStart = 0;
+  const winnerIdx = pickWinner();
 
-  for (const p of PRIZES) {
-    if (p === wonPrize) break;
-    prizeStart += (p.weight / total) * TWO_PI;
-  }
+  // Ordre : non-gagnantes mélangées, puis gagnante en dernier
+  const others = PRIZES.map((_, i) => i).filter(i => i !== winnerIdx);
+  shuffle(others);
+  const order = [...others, winnerIdx];
 
-  const prizeCenter = prizeStart + ((wonPrize.weight / total) * TWO_PI) / 2;
-  const extraSpins  = (4 + Math.floor(Math.random() * 3)) * TWO_PI;
-  const targetAngle = -Math.PI / 2 - prizeCenter + extraSpins;
+  // Timing : accélération → ralentissement → grande pause → gagnante
+  let cumul = 0;
+  const delays = order.map((_, pos) => {
+    const isLast       = pos === order.length - 1;
+    const isPreLast    = pos === order.length - 2;
+    let interval;
+    if (isLast)        interval = 1500; // pause finale avant la révélation
+    else if (isPreLast)interval = 700;  // respiration avant l'avant-dernier
+    else               interval = 200 + pos * 80; // accélération progressive
+    cumul += interval;
+    return cumul;
+  });
 
-  const duration   = 3200;
-  const startTime  = performance.now();
-  const startAngle = currentAngle;
+  order.forEach((prizeIdx, pos) => {
+    const isWinner = pos === order.length - 1;
+    setTimeout(() => {
+      document.getElementById(`card-${prizeIdx}`)
+               .querySelector(".card-inner").classList.add("flipped");
 
-  function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
-
-  function animate(now) {
-    const elapsed  = now - startTime;
-    const progress = Math.min(elapsed / duration, 1);
-    currentAngle   = startAngle + targetAngle * easeOut(progress);
-    drawWheel(currentAngle);
-
-    if (progress < 1) {
-      requestAnimationFrame(animate);
-    } else {
-      spinning = false;
-      setStep(3);
-      savePlay();
-      showResult(wonPrize);
-    }
-  }
-
-  requestAnimationFrame(animate);
+      if (!isWinner) {
+        setTimeout(() =>
+          document.getElementById(`card-${prizeIdx}`).classList.add("not-winner"),
+        300);
+      } else {
+        document.getElementById(`card-${prizeIdx}`).classList.add("winner");
+        setTimeout(() => showWinner(winnerIdx), 700);
+      }
+    }, delays[pos]);
+  });
 }
 
 /* ================================================================
-   RÉSULTAT
+   AFFICHAGE DU RÉSULTAT (inline, pas d'overlay)
 ================================================================ */
-function showResult(prize) {
-  const overlay     = document.getElementById("resultOverlay");
-  const prizeEl     = document.getElementById("cardPrize");
-  const subtitleEl  = document.getElementById("cardSubtitle");
-  const codeSection = document.getElementById("codeSection");
-  const codeEl      = document.getElementById("prizeCode");
+function showWinner(idx) {
+  const prize = PRIZES[idx];
+  setStep(3);
+  savePlay();
 
-  prizeEl.textContent = prize.label;
-  prizeEl.className   = "card-prize" + (prize.win ? "" : " no-win");
+  document.getElementById("winnerPrize").textContent  = prize.label;
+  document.getElementById("winnerPrize").className    = "winner-prize" + (prize.win ? "" : " no-win");
+  document.getElementById("winnerSub").textContent    = prize.win
+    ? "Montrez cet écran à un membre de l'équipe."
+    : "Merci d'être passé nous voir !";
 
-  if (prize.win) {
-    subtitleEl.textContent    = "À présenter à un membre de l'équipe.";
-    codeSection.style.display = "block";
-    codeEl.textContent        = generateCode();
-    if (prize.weight <= 4) launchConfetti();
-  } else {
-    subtitleEl.textContent    = "Merci d'être passé nous voir !";
-    codeSection.style.display = "none";
-  }
+  const presentBtn = document.getElementById("presentBtn");
+  presentBtn.style.display = prize.win ? "block" : "none";
 
-  drawPrizeIllustration(prize.icon, prize.color);
-  overlay.classList.add("show");
+  document.getElementById("winnerReveal").classList.add("show");
+
+  if (prize.weight <= 4) launchConfetti();
+
+  // Scroll doux vers le résultat
+  setTimeout(() => document.getElementById("winnerReveal")
+    .scrollIntoView({ behavior: "smooth", block: "center" }), 200);
 }
 
-function closeResult() {
-  document.getElementById("resultOverlay").classList.remove("show");
-}
-
-document.getElementById("resultOverlay").addEventListener("click", function(e) {
-  if (e.target === this) closeResult();
-});
-
-function presentCode() {
-  const btn = document.querySelector(".btn-present");
-  btn.textContent    = "✓ Bon appétit !";
+function handlePresent() {
+  const btn = document.getElementById("presentBtn");
+  btn.textContent = "✓ Bon appétit !";
   btn.style.background = "#4E5A2C";
-  setTimeout(closeResult, 1400);
+  btn.disabled = true;
 }
 
 /* ================================================================
-   ILLUSTRATIONS PIXEL ART
+   HELPERS
 ================================================================ */
-function drawPrizeIllustration(icon, bgColor) {
-  const canvas = document.getElementById("prizeIllustration");
-  const ctx    = canvas.getContext("2d");
-  ctx.clearRect(0, 0, 120, 80);
-  ctx.fillStyle = bgColor;
-  ctx.fillRect(10, 6, 100, 68);
-  ctx.imageSmoothingEnabled = false;
-  const S = 4;
-
-  function px(x, y, w, h, color) {
-    ctx.fillStyle = color;
-    ctx.fillRect(10 + x * S, 6 + y * S, w * S, h * S);
-  }
-
-  const cream = "#F5EFE0", dark = "#2C1F14";
-
-  if (icon === "tea" || icon === "coffee") {
-    px(5, 6, 8, 1, cream); px(4, 7, 10, 5, cream); px(3, 8, 1, 3, cream);
-    px(5, 12, 8, 1, cream); px(4, 13, 10, 1, cream);
-    px(6, 4, 1, 2, "rgba(255,255,255,0.5)"); px(9, 3, 1, 3, "rgba(255,255,255,0.5)");
-    px(5, 8, 8, 3, icon === "coffee" ? "#3C2010" : "#C8A84B");
-  } else if (icon === "ice") {
-    px(5, 4, 8, 1, cream); px(4, 5, 10, 8, "rgba(100,180,220,0.7)");
-    px(5, 13, 8, 1, cream); px(5, 6, 3, 2, "rgba(255,255,255,0.6)");
-    px(9, 8, 3, 2, "rgba(255,255,255,0.6)"); px(11, 2, 1, 6, "#C0654A");
-  } else if (icon === "cookie") {
-    px(5, 3, 8, 1, "#C8A84B"); px(3, 4, 12, 8, "#C8A84B"); px(5, 12, 8, 1, "#C8A84B");
-    px(5, 6, 2, 2, dark); px(10, 5, 2, 2, dark); px(7, 9, 2, 2, dark); px(11, 9, 2, 2, dark);
-  } else if (icon === "wine" || icon === "wine2") {
-    const btl = "#7B2D3E";
-    px(8, 1, 2, 3, btl); px(6, 4, 6, 2, btl); px(5, 6, 8, 8, btl);
-    px(6, 8, 6, 4, cream); px(7, 9, 4, 2, "#C8A84B"); px(5, 14, 8, 1, btl);
-    if (icon === "wine2") { px(7, 2, 1, 1, "#C8A84B"); px(8, 1, 1, 1, "#C8A84B"); px(9, 2, 1, 1, "#C8A84B"); }
-  } else {
-    px(7, 3, 4, 2, "#6B7A3E"); px(5, 5, 8, 4, "#6B7A3E");
-    px(7, 9, 4, 2, "#6B7A3E"); px(9, 11, 2, 3, "#6B7A3E");
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
   }
 }
 
-/* ================================================================
-   CODE UNIQUE
-================================================================ */
-function generateCode() {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let code = "TERRASSE-";
-  for (let i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)];
-  return code;
-}
-
-/* ================================================================
-   ANTI-TRICHE 24h
-================================================================ */
 function hasPlayedRecently() {
   try {
     const ts = parseInt(localStorage.getItem(STORAGE_KEY), 10);
-    return ts && Date.now() - ts < COOLDOWN_MS;
+    return ts && (Date.now() - ts < COOLDOWN_MS);
   } catch (_) { return false; }
 }
 
 function savePlay() {
-  try { localStorage.setItem(STORAGE_KEY, Date.now().toString()); } catch (_) {}
+  try { localStorage.setItem(STORAGE_KEY, String(Date.now())); } catch (_) {}
 }
 
 /* ================================================================
@@ -1207,31 +676,32 @@ function launchConfetti() {
   const ctx     = canvas.getContext("2d");
   canvas.width  = window.innerWidth;
   canvas.height = window.innerHeight;
-  const COLORS  = ["#C8A84B","#7B2D3E","#6B7A3E","#C0654A","#F5EFE0","#E2C97A"];
+  const COLORS  = ["#C8A84B","#7B2D3E","#6B7A3E","#5BA4A4","#E8C840","#D4614A","#F5EFE0"];
+  const TWO_PI  = Math.PI * 2;
   let frame     = 0;
 
-  const particles = Array.from({ length: 80 }, () => ({
+  const parts = Array.from({ length: 90 }, () => ({
     x: Math.random() * canvas.width,
-    y: -10 - Math.random() * 40,
-    w: 4 + Math.random() * 6,
-    h: 6 + Math.random() * 10,
+    y: -10 - Math.random() * 50,
+    w: 5 + Math.random() * 6,
+    h: 7 + Math.random() * 10,
     color: COLORS[Math.floor(Math.random() * COLORS.length)],
-    speed: 2 + Math.random() * 4,
+    speed: 2.5 + Math.random() * 4,
     angle: Math.random() * TWO_PI,
-    rotSpeed: (Math.random() - 0.5) * 0.2,
+    rot: (Math.random() - .5) * .2,
   }));
 
   (function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     let alive = false;
-    particles.forEach(p => {
-      p.y += p.speed; p.angle += p.rotSpeed;
+    parts.forEach(p => {
+      p.y += p.speed; p.angle += p.rot;
       if (p.y < canvas.height + 20) alive = true;
       ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.angle);
       ctx.fillStyle = p.color; ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
       ctx.restore();
     });
-    if (alive && ++frame < 200) requestAnimationFrame(draw);
+    if (alive && ++frame < 220) requestAnimationFrame(draw);
     else ctx.clearRect(0, 0, canvas.width, canvas.height);
   })();
 }
