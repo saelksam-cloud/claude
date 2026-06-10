@@ -36,11 +36,11 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    /* ═══ HEADER — fond bordeaux ═══ */
+    /* ═══ HEADER ═══ */
     header {
       width: 100%;
       background: var(--wine-deep);
-      padding: 22px 24px 18px;
+      padding: 20px 24px 16px;
       text-align: center;
       position: relative;
       overflow: hidden;
@@ -48,229 +48,258 @@
     header::before {
       content: '';
       position: absolute; top: 0; left: 0; right: 0; height: 2px;
-      background: linear-gradient(90deg, transparent, var(--gold-soft) 40%, var(--gold-soft) 60%, transparent);
+      background: linear-gradient(90deg, transparent, var(--gold-soft) 35%, var(--gold-soft) 65%, transparent);
     }
     header::after {
       content: '';
       position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
-      background: linear-gradient(90deg, transparent, var(--gold) 30%, var(--gold) 70%, transparent);
+      background: linear-gradient(90deg, transparent, rgba(184,144,72,.4) 30%, rgba(184,144,72,.4) 70%, transparent);
     }
     .logo-wrap { display: flex; flex-direction: column; align-items: center; gap: 0; position: relative; z-index: 1; }
     .logo-crest { display: block; margin: 0 auto; }
     .logo-name-row {
-      color: rgba(247,243,235,.88);
+      color: rgba(247,243,235,.85);
       font-family: 'Cormorant Garamond', Georgia, serif;
-      font-size: 1.1rem; font-weight: 400; letter-spacing: .42em; text-transform: uppercase;
-      line-height: 1; margin-top: 6px;
+      font-size: 1.05rem; font-weight: 400; letter-spacing: .46em; text-transform: uppercase;
+      line-height: 1; margin-top: 5px;
     }
     .logo-script {
-      color: rgba(247,243,235,.78);
+      color: rgba(196,164,100,.9);
       font-family: 'Pinyon Script', cursive;
-      font-size: 1.9rem; font-weight: 400; letter-spacing: .02em; margin-top: -2px;
-    }
-    .logo-sub {
-      color: rgba(196,180,154,.55);
-      font-family: 'Courier New', monospace;
-      font-size: .48rem; letter-spacing: .3em; text-transform: uppercase; margin-top: 3px;
+      font-size: 1.75rem; font-weight: 400; letter-spacing: .02em; margin-top: 0px;
     }
 
     /* ═══ PROGRESS BAR ═══ */
     .progress-bar {
       width: 100%; background: var(--wine-deep);
-      padding: 8px 24px 10px;
+      padding: 8px 24px 12px;
       display: flex; align-items: center; justify-content: center;
-      border-bottom: 1px solid rgba(144,112,40,.25);
+      border-bottom: 1px solid rgba(144,112,40,.2);
     }
     .step-dot {
       width: 22px; height: 22px;
-      border: 1px solid rgba(196,180,154,.5); background: transparent;
+      border: 1px solid rgba(196,180,154,.4); background: transparent;
       display: flex; align-items: center; justify-content: center;
-      font-family: 'Courier New', monospace; font-size: .6rem;
-      color: var(--stone); flex-shrink: 0; transition: all .3s;
+      font-family: 'Courier New', monospace; font-size: .58rem;
+      color: rgba(196,180,154,.5); flex-shrink: 0; transition: all .3s;
     }
     .step-dot.active { border-color: var(--gold-soft); color: var(--gold-soft); background: rgba(144,112,40,.1); }
     .step-dot.done   { background: var(--olive); border-color: var(--olive); color: var(--bg); font-size: 0; }
-    .step-dot.done::after { content: '✓'; font-size: .6rem; }
-    .step-line { width: 40px; height: 1px; background: rgba(196,180,154,.28); flex-shrink: 0; transition: all .3s; }
-    .step-line.done { background: var(--olive); opacity: .65; }
+    .step-dot.done::after { content: '✓'; font-size: .58rem; }
+    .step-line { width: 44px; height: 1px; background: rgba(196,180,154,.2); flex-shrink: 0; transition: all .3s; }
+    .step-line.done { background: var(--olive); opacity: .5; }
 
     /* ═══ PAGES ═══ */
     .page { display: none; flex-direction: column; align-items: center; width: 100%; padding-bottom: 60px; }
     .page.active { display: flex; animation: fadeUp .4s ease both; }
-    @keyframes fadeUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
 
-    /* ═══ PAGE 1 ═══ */
-    .review-wrap { width: 100%; max-width: 400px; padding: 38px 28px 0; text-align: center; }
-    .fountain-illo { display: block; margin: 0 auto 26px; opacity: .84; }
-    .eyebrow { font-family:'Courier New',monospace; font-size:.58rem; letter-spacing:.32em; text-transform:uppercase; color:var(--stone); margin-bottom:12px; }
-    .review-title { font-size:1.7rem; font-weight:300; font-style:italic; color:var(--ink); line-height:1.35; margin-bottom:12px; }
-    .review-body  { font-size:.95rem; font-weight:300; color:var(--ink-mid); line-height:2; margin-bottom:32px; }
-    .thin-rule    { width:36px; height:1px; background:var(--gold); opacity:.55; margin:0 auto 26px; }
+    /* ═══ PAGE 1 ILLUSTRATION ═══ */
+    .terrace-illo-wrap {
+      width: 100%;
+      overflow: hidden;
+      border-bottom: 1px solid rgba(144,112,40,.18);
+      background: #EAE0CE;
+      line-height: 0;
+    }
+    .terrace-illo {
+      display: block;
+      width: 100%;
+      max-height: 42vw;
+      min-height: 148px;
+    }
+
+    /* ═══ PAGE 1 CONTENT ═══ */
+    .review-wrap {
+      width: 100%; max-width: 400px; padding: 30px 28px 0; text-align: center;
+    }
+    .eyebrow {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      font-family: 'Courier New', monospace; font-size: .52rem;
+      letter-spacing: .32em; text-transform: uppercase; color: var(--gold);
+      margin-bottom: 14px;
+    }
+    .eyebrow::before, .eyebrow::after { content: '✦'; font-size: .45rem; opacity: .65; }
+    .review-title {
+      font-size: 1.82rem; font-weight: 300; font-style: italic;
+      color: var(--ink); line-height: 1.3; margin-bottom: 12px;
+    }
+    .review-body {
+      font-size: .93rem; font-weight: 300; color: var(--ink-mid);
+      line-height: 2; margin-bottom: 28px;
+    }
+    .thin-rule { width: 28px; height: 1px; background: var(--gold); opacity: .45; margin: 0 auto 24px; }
 
     .btn-google {
-      display:flex; align-items:center; justify-content:center; gap:10px;
-      width:100%; max-width:300px; margin:0 auto; padding:14px 20px;
-      background:var(--wine); color:var(--bg);
-      font-family:'Courier New',monospace; font-size:.68rem; letter-spacing:.2em; text-transform:uppercase;
-      border:none; cursor:pointer; text-decoration:none; transition:background .2s,transform .1s;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      width: 100%; max-width: 300px; margin: 0 auto; padding: 15px 20px;
+      background: var(--wine); color: var(--bg);
+      font-family: 'Courier New', monospace; font-size: .67rem;
+      letter-spacing: .18em; text-transform: uppercase;
+      border: none; cursor: pointer; text-decoration: none; transition: background .2s, transform .1s;
+      position: relative;
     }
-    .btn-google:hover  { background:var(--wine-soft); }
-    .btn-google:active { transform:scale(.98); }
-    .btn-google .star  { color:var(--gold-soft); }
+    .btn-google::before {
+      content: '';
+      position: absolute; inset: 0;
+      border: 1px solid rgba(184,144,72,.25);
+      pointer-events: none;
+    }
+    .btn-google:hover  { background: var(--wine-soft); }
+    .btn-google:active { transform: scale(.98); }
+    .btn-google .star  { color: var(--gold-soft); font-size: .9rem; }
 
     #doneSection {
-      width:100%; max-width:300px; margin:18px auto 0;
-      opacity:0; pointer-events:none; transform:translateY(6px);
-      transition:opacity .5s,transform .5s;
+      width: 100%; max-width: 300px; margin: 18px auto 0;
+      opacity: 0; pointer-events: none; transform: translateY(6px);
+      transition: opacity .5s, transform .5s;
     }
-    #doneSection.visible { opacity:1; pointer-events:auto; transform:translateY(0); }
+    #doneSection.visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
 
     .or-sep {
-      display:flex; align-items:center; gap:12px;
-      color:var(--stone); font-family:'Courier New',monospace;
-      font-size:.56rem; letter-spacing:.2em; text-transform:uppercase; margin:0 0 13px;
+      display: flex; align-items: center; gap: 12px;
+      color: var(--stone-dark); font-family: 'Courier New', monospace;
+      font-size: .52rem; letter-spacing: .2em; text-transform: uppercase; margin: 0 0 13px;
     }
-    .or-sep::before,.or-sep::after { content:''; flex:1; height:1px; background:var(--stone-soft); }
+    .or-sep::before, .or-sep::after { content: ''; flex: 1; height: 1px; background: var(--stone-soft); }
 
     .btn-done {
-      display:block; width:100%; padding:13px 20px;
-      background:transparent; color:var(--olive);
-      font-family:'Courier New',monospace; font-size:.68rem; letter-spacing:.2em; text-transform:uppercase;
-      border:1px solid var(--olive); cursor:pointer; transition:background .2s,color .2s;
+      display: block; width: 100%; padding: 13px 20px;
+      background: transparent; color: var(--olive);
+      font-family: 'Courier New', monospace; font-size: .67rem;
+      letter-spacing: .18em; text-transform: uppercase;
+      border: 1px solid rgba(78,88,40,.55); cursor: pointer;
+      transition: background .2s, color .2s;
     }
-    .btn-done:hover { background:var(--olive); color:var(--bg); }
-    .review-note { margin-top:26px; font-size:.7rem; color:var(--stone); font-family:'Courier New',monospace; letter-spacing:.04em; line-height:1.85; }
+    .btn-done:hover { background: var(--olive); color: var(--bg); }
+    .review-note {
+      margin-top: 26px; font-size: .68rem; color: var(--stone);
+      font-family: 'Courier New', monospace; letter-spacing: .04em; line-height: 1.9;
+    }
 
     /* ═══ PAGE 2 ═══ */
-    .game-wrap { width:100%; max-width:400px; padding:32px 20px 0; text-align:center; }
-    .game-title { font-size:1.5rem; font-weight:300; font-style:italic; color:var(--ink); margin-bottom:4px; }
-    .game-sub   { font-size:.88rem; font-weight:300; color:var(--ink-mid); line-height:1.9; margin-bottom:22px; }
+    .game-wrap { width: 100%; max-width: 400px; padding: 28px 20px 0; text-align: center; }
+    .game-title { font-size: 1.5rem; font-weight: 300; font-style: italic; color: var(--ink); margin-bottom: 4px; }
+    .game-sub   { font-size: .88rem; font-weight: 300; color: var(--ink-mid); line-height: 1.9; margin-bottom: 20px; }
 
-    /* ═══ SLOT SCENE — fond bordeaux, défilement épuré ═══ */
+    /* ═══ SLOT SCENE ═══ */
     .slot-scene {
-      width: 100%; max-width: 340px;
-      margin: 0 auto 16px;
-      background: var(--wine-deep);
-      position: relative;
-      min-height: 186px;
-      overflow: hidden;
+      width: 100%; max-width: 340px; margin: 0 auto 16px;
+      background: var(--wine-deep); position: relative; min-height: 186px; overflow: hidden;
     }
-    /* Lignes or en haut et bas */
     .slot-scene::before {
-      content: ''; position:absolute; top:0; left:0; right:0; height:1px; z-index:5;
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; z-index: 5;
       background: linear-gradient(90deg, transparent, var(--gold-soft) 30%, var(--gold-soft) 70%, transparent);
     }
     .slot-scene::after {
-      content: ''; position:absolute; bottom:0; left:0; right:0; height:1px; z-index:5;
+      content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 1px; z-index: 5;
       background: linear-gradient(90deg, transparent, var(--gold) 30%, var(--gold) 70%, transparent);
     }
-    /* Fondu haut/bas pour effet rouleau */
     .slot-fade {
-      position:absolute; left:0; right:0; height:42px; z-index:4; pointer-events:none;
+      position: absolute; left: 0; right: 0; height: 42px; z-index: 4; pointer-events: none;
     }
-    .slot-fade.top { top:0;    background:linear-gradient(to bottom, var(--wine-deep) 0%, transparent 100%); }
-    .slot-fade.bot { bottom:0; background:linear-gradient(to top,   var(--wine-deep) 0%, transparent 100%); }
-
-    /* L'item — centré dans le slot, sans fond carré, sans bordure */
+    .slot-fade.top { top: 0;    background: linear-gradient(to bottom, var(--wine-deep) 0%, transparent 100%); }
+    .slot-fade.bot { bottom: 0; background: linear-gradient(to top,   var(--wine-deep) 0%, transparent 100%); }
     .slot-item {
-      position:absolute; inset:0;
-      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
       gap: 11px; padding: 28px 18px;
     }
     .slot-item.drop-in  { animation: slotIn  .30s cubic-bezier(.18,.88,.36,1) both; }
     .slot-item.drop-out { animation: slotOut .14s ease-in both; }
-    @keyframes slotIn  { from { transform:translateY(-38px); opacity:0; } to { transform:translateY(0); opacity:1; } }
-    @keyframes slotOut { from { transform:translateY(0);     opacity:1; } to { transform:translateY(26px); opacity:0; } }
-
-    .item-icon {
-      font-size: 3.8rem; line-height:1; display:block;
-      filter: drop-shadow(0 6px 18px rgba(0,0,0,.38));
-    }
-    .item-icon svg { width:3.8rem; height:3.8rem; vertical-align:middle; overflow:visible; }
-
+    @keyframes slotIn  { from { transform: translateY(-38px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @keyframes slotOut { from { transform: translateY(0);     opacity: 1; } to { transform: translateY(26px); opacity: 0; } }
+    .item-icon { font-size: 3.8rem; line-height: 1; display: block; filter: drop-shadow(0 6px 18px rgba(0,0,0,.38)); }
+    .item-icon svg { width: 3.8rem; height: 3.8rem; vertical-align: middle; overflow: visible; }
     .item-label {
       font-family: 'Cormorant Garamond', Georgia, serif;
-      font-size: 1.08rem; font-weight:300; font-style:italic;
-      text-align:center; line-height:1.4; max-width:220px;
+      font-size: 1.08rem; font-weight: 300; font-style: italic;
+      text-align: center; line-height: 1.4; max-width: 220px;
       text-shadow: 0 1px 6px rgba(0,0,0,.35);
     }
 
     /* ═══ LISTE DES GAINS ═══ */
-    .prize-list { width:100%; max-width:340px; margin:0 auto 22px; }
+    .prize-list { width: 100%; max-width: 340px; margin: 0 auto 22px; }
     .prize-list-title {
-      font-family:'Courier New',monospace; font-size:.52rem;
-      letter-spacing:.3em; text-transform:uppercase; color:var(--stone);
-      text-align:center; margin-bottom:9px; padding-top:6px;
-      border-top:1px solid rgba(196,180,154,.2);
+      font-family: 'Courier New', monospace; font-size: .5rem;
+      letter-spacing: .3em; text-transform: uppercase; color: var(--stone);
+      text-align: center; margin-bottom: 9px; padding-top: 6px;
+      border-top: 1px solid rgba(196,180,154,.18);
     }
-    .prize-list ul { list-style:none; }
+    .prize-list ul { list-style: none; }
     .pl-item {
-      display:flex; align-items:center; gap:10px;
-      padding:5px 10px 5px 14px;
-      opacity:.32; transition:opacity .22s,background .22s,transform .14s;
-      border-radius:2px;
+      display: flex; align-items: center; gap: 10px;
+      padding: 5px 10px 5px 14px;
+      opacity: .3; transition: opacity .22s, background .22s, transform .14s;
+      border-radius: 2px;
     }
-    .pl-item.active { opacity:.82; background:rgba(90,30,42,.12); transform:translateX(3px); }
-    .pl-item.won    { opacity:1;   background:rgba(144,112,40,.12); transform:translateX(0); }
-    .pl-item.won .pl-label { color:var(--wine); font-style:italic; }
-    .pl-icon { font-size:1.1rem; line-height:1; flex-shrink:0; filter:drop-shadow(0 1px 2px rgba(0,0,0,.12)); }
-    .pl-icon svg { width:1.1rem; height:1.1rem; vertical-align:middle; overflow:visible; }
-    .pl-label { font-family:'Cormorant Garamond',Georgia,serif; font-size:.92rem; font-weight:300; color:var(--ink-mid); line-height:1.3; }
+    .pl-item.active { opacity: .82; background: rgba(90,30,42,.1); transform: translateX(3px); }
+    .pl-item.won    { opacity: 1;   background: rgba(144,112,40,.1); transform: translateX(0); }
+    .pl-item.won .pl-label { color: var(--wine); font-style: italic; }
+    .pl-icon { font-size: 1.1rem; line-height: 1; flex-shrink: 0; filter: drop-shadow(0 1px 2px rgba(0,0,0,.12)); }
+    .pl-icon svg { width: 1.1rem; height: 1.1rem; vertical-align: middle; overflow: visible; }
+    .pl-label { font-family: 'Cormorant Garamond', Georgia, serif; font-size: .92rem; font-weight: 300; color: var(--ink-mid); line-height: 1.3; }
     .pl-badge {
-      margin-left:auto; flex-shrink:0;
-      font-family:'Courier New',monospace; font-size:.45rem;
-      letter-spacing:.1em; text-transform:uppercase;
-      color:var(--gold); opacity:0; transition:opacity .3s;
-      padding:2px 6px; border:1px solid rgba(144,112,40,.4);
+      margin-left: auto; flex-shrink: 0;
+      font-family: 'Courier New', monospace; font-size: .44rem;
+      letter-spacing: .1em; text-transform: uppercase;
+      color: var(--gold); opacity: 0; transition: opacity .3s;
+      padding: 2px 6px; border: 1px solid rgba(144,112,40,.35);
     }
-    .pl-item.won .pl-badge { opacity:1; }
+    .pl-item.won .pl-badge { opacity: 1; }
 
-    /* ─ Bouton ─ */
     .btn-spin {
-      display:block; margin:0 auto; padding:15px 44px;
-      background:var(--wine); color:var(--bg);
-      font-family:'Courier New',monospace; font-size:.7rem; letter-spacing:.22em; text-transform:uppercase;
-      border:none; cursor:pointer; transition:background .2s,transform .12s;
+      display: block; margin: 0 auto; padding: 15px 44px;
+      background: var(--wine); color: var(--bg);
+      font-family: 'Courier New', monospace; font-size: .7rem;
+      letter-spacing: .22em; text-transform: uppercase;
+      border: none; cursor: pointer; transition: background .2s, transform .12s;
+      position: relative;
     }
-    .btn-spin:hover:not(:disabled) { background:var(--wine-soft); }
-    .btn-spin:active:not(:disabled){ transform:scale(.98); }
-    .btn-spin:disabled { opacity:.36; cursor:not-allowed; }
+    .btn-spin::before {
+      content: '';
+      position: absolute; inset: 0;
+      border: 1px solid rgba(184,144,72,.2);
+      pointer-events: none;
+    }
+    .btn-spin:hover:not(:disabled) { background: var(--wine-soft); }
+    .btn-spin:active:not(:disabled){ transform: scale(.98); }
+    .btn-spin:disabled { opacity: .35; cursor: not-allowed; }
 
-    /* ─ Résultat ─ */
-    #winnerReveal { display:none; margin-top:28px; text-align:center; padding:0 4px; }
-    #winnerReveal.show { display:block; animation:fadeUp .5s ease both; }
-    .winner-rule { width:36px; height:1px; background:var(--gold); opacity:.55; margin:0 auto 16px; }
-    .winner-eyebrow { font-family:'Courier New',monospace; font-size:.58rem; letter-spacing:.3em; text-transform:uppercase; color:var(--stone); margin-bottom:10px; }
-    .winner-prize { font-size:1.45rem; font-weight:300; font-style:italic; color:var(--wine); line-height:1.3; margin-bottom:8px; }
-    .winner-prize.no-win { color:var(--ink-mid); font-size:1.1rem; }
-    .winner-sub { font-size:.76rem; font-weight:300; color:var(--ink-mid); font-family:'Courier New',monospace; letter-spacing:.06em; line-height:1.75; margin-bottom:20px; }
+    #winnerReveal { display: none; margin-top: 28px; text-align: center; padding: 0 4px; }
+    #winnerReveal.show { display: block; animation: fadeUp .5s ease both; }
+    .winner-rule { width: 28px; height: 1px; background: var(--gold); opacity: .5; margin: 0 auto 16px; }
+    .winner-eyebrow { font-family: 'Courier New', monospace; font-size: .55rem; letter-spacing: .32em; text-transform: uppercase; color: var(--gold); margin-bottom: 10px; }
+    .winner-prize { font-size: 1.45rem; font-weight: 300; font-style: italic; color: var(--wine); line-height: 1.3; margin-bottom: 8px; }
+    .winner-prize.no-win { color: var(--ink-mid); font-size: 1.1rem; }
+    .winner-sub { font-size: .74rem; font-weight: 300; color: var(--ink-mid); font-family: 'Courier New', monospace; letter-spacing: .06em; line-height: 1.75; margin-bottom: 20px; }
 
     .btn-present {
-      display:block; width:100%; max-width:280px; margin:0 auto; padding:14px 20px;
-      background:var(--olive); color:var(--bg);
-      font-family:'Courier New',monospace; font-size:.68rem; letter-spacing:.2em; text-transform:uppercase;
-      border:none; cursor:pointer; transition:background .2s,transform .1s;
+      display: block; width: 100%; max-width: 280px; margin: 0 auto; padding: 14px 20px;
+      background: var(--olive); color: var(--bg);
+      font-family: 'Courier New', monospace; font-size: .68rem;
+      letter-spacing: .2em; text-transform: uppercase;
+      border: none; cursor: pointer; transition: background .2s, transform .1s;
     }
-    .btn-present:hover  { background:var(--olive-dark); }
-    .btn-present:active { transform:scale(.98); }
-    .btn-present:disabled { opacity:.6; cursor:default; }
+    .btn-present:hover  { background: var(--olive-dark); }
+    .btn-present:active { transform: scale(.98); }
+    .btn-present:disabled { opacity: .6; cursor: default; }
 
-    /* Déjà joué */
-    #alreadyPlayed { display:none; border:1px solid var(--stone-soft); padding:28px 24px; margin:30px 20px 0; text-align:center; max-width:340px; }
-    #alreadyPlayed.show { display:block; animation:fadeUp .4s ease both; }
-    #alreadyPlayed .ap-icon { font-size:1.8rem; display:block; margin-bottom:10px; }
-    #alreadyPlayed p { font-size:.84rem; font-weight:300; color:var(--ink-mid); font-family:'Courier New',monospace; letter-spacing:.04em; line-height:1.8; }
+    #alreadyPlayed { display: none; border: 1px solid var(--stone-soft); padding: 28px 24px; margin: 30px 20px 0; text-align: center; max-width: 340px; }
+    #alreadyPlayed.show { display: block; animation: fadeUp .4s ease both; }
+    #alreadyPlayed .ap-icon { font-size: 1.8rem; display: block; margin-bottom: 10px; }
+    #alreadyPlayed p { font-size: .84rem; font-weight: 300; color: var(--ink-mid); font-family: 'Courier New', monospace; letter-spacing: .04em; line-height: 1.8; }
 
-    .legal { margin-top:20px; font-size:.6rem; color:var(--stone); font-family:'Courier New',monospace; letter-spacing:.05em; line-height:1.85; padding:0 16px; }
+    .legal { margin-top: 20px; font-size: .58rem; color: var(--stone); font-family: 'Courier New', monospace; letter-spacing: .05em; line-height: 1.85; padding: 0 16px; }
 
-    #confettiCanvas { position:fixed; inset:0; pointer-events:none; z-index:99; }
+    #confettiCanvas { position: fixed; inset: 0; pointer-events: none; z-index: 99; }
 
-    @media (max-width:360px) {
-      .slot-scene  { min-height:162px; }
-      .item-icon   { font-size:3.2rem; }
-      .item-icon svg { width:3.2rem; height:3.2rem; }
-      .item-label  { font-size:.92rem; }
-      .btn-spin    { padding:14px 32px; }
+    @media (max-width: 360px) {
+      .slot-scene  { min-height: 162px; }
+      .item-icon   { font-size: 3.2rem; }
+      .item-icon svg { width: 3.2rem; height: 3.2rem; }
+      .item-label  { font-size: .92rem; }
+      .btn-spin    { padding: 14px 32px; }
     }
   </style>
 </head>
@@ -279,82 +308,32 @@
 <canvas id="confettiCanvas"></canvas>
 <div id="app">
 
-  <!-- HEADER — fond bordeaux, logo couronne fidèle -->
+  <!-- HEADER -->
   <header>
     <div class="logo-wrap">
-      <!--
-        Remplacer par <img src="URL" class="logo-crest" style="height:66px" alt="Château La Coste">
-        quand vous aurez l'URL du logo officiel.
-      -->
-      <!--
-        Couronne Château La Coste :
-        - Croix (†) au top center
-        - Deux orbes aux pointes hautes (épaules de la couronne)
-        - Bras supérieurs : croix → orbes
-        - Bras inférieurs : orbes → fond de l'arche (forme W)
-        - [L] et [C] au niveau des orbes, s'étendent horizontalement
-        - "16 82" dans l'espace intérieur
-        - Ruban ondulé en bas
-      -->
-      <svg class="logo-crest" width="148" height="96" viewBox="0 0 200 108"
-           xmlns="http://www.w3.org/2000/svg">
-        <g stroke="rgba(247,243,235,.80)" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke-width="2.4">
-
-          <!-- ① Croix (†) entre les deux orbes -->
+      <svg class="logo-crest" width="144" height="94" viewBox="0 0 200 108" xmlns="http://www.w3.org/2000/svg">
+        <g stroke="rgba(247,243,235,.78)" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke-width="2.4">
           <line x1="100" y1="2"  x2="100" y2="22" stroke-width="2"/>
           <line x1="93"  y1="9"  x2="107" y2="9"  stroke-width="2"/>
-
-          <!-- ② Orbe gauche — point haut de l'arche gauche -->
-          <circle cx="44" cy="34" r="12" fill="rgba(247,243,235,.06)" stroke-width="2.4"/>
-          <!-- ② Orbe droit -->
+          <circle cx="44"  cy="34" r="12" fill="rgba(247,243,235,.06)" stroke-width="2.4"/>
           <circle cx="156" cy="34" r="12" fill="rgba(247,243,235,.06)" stroke-width="2.4"/>
-
-          <!-- ③ Bras supérieurs : croix → orbes (court segment au-dessus) -->
           <line x1="97"  y1="20" x2="53"  y2="28"/>
           <line x1="103" y1="20" x2="147" y2="28"/>
-
-          <!-- ④ Bras inférieurs : orbes → fond de l'arche en V -->
-          <line x1="44" y1="46" x2="100" y2="76"/>
+          <line x1="44"  y1="46" x2="100" y2="76"/>
           <line x1="156" y1="46" x2="100" y2="76"/>
-
-          <!-- ⑤ Boîte [L] — à gauche, au niveau des orbes -->
           <rect x="0"   y="25" width="36" height="20" fill="rgba(247,243,235,.06)" stroke-width="2"/>
-          <text x="18" y="40" text-anchor="middle"
-                fill="rgba(247,243,235,.86)" stroke="none"
-                font-family="Georgia,'Times New Roman',serif"
-                font-size="17" font-style="italic">L</text>
-
-          <!-- ⑤ Boîte [C] — à droite -->
+          <text x="18"  y="40" text-anchor="middle" fill="rgba(247,243,235,.84)" stroke="none" font-family="Georgia,'Times New Roman',serif" font-size="17" font-style="italic">L</text>
           <rect x="164" y="25" width="36" height="20" fill="rgba(247,243,235,.06)" stroke-width="2"/>
-          <text x="182" y="40" text-anchor="middle"
-                fill="rgba(247,243,235,.86)" stroke="none"
-                font-family="Georgia,'Times New Roman',serif"
-                font-size="17" font-style="italic">C</text>
-
-          <!-- ⑥ "16  82" dans l'espace intérieur de la couronne -->
-          <text x="79"  y="68" text-anchor="middle"
-                fill="rgba(247,243,235,.72)" stroke="none"
-                font-family="Georgia,'Times New Roman',serif" font-size="16">16</text>
-          <text x="121" y="68" text-anchor="middle"
-                fill="rgba(247,243,235,.72)" stroke="none"
-                font-family="Georgia,'Times New Roman',serif" font-size="16">82</text>
-
-          <!-- ⑦ Ruban ondulé -->
-          <!-- Patte gauche -->
-          <path d="M 10,78 L 36,78 L 32,96 L 6,96 Z"
-                fill="rgba(247,243,235,.05)" stroke="rgba(247,243,235,.45)" stroke-width="1.8"/>
-          <!-- Corps principal du ruban (wavy) -->
-          <path d="M 32,74 Q 56,69 100,77 Q 144,85 168,74 L 170,94 Q 144,102 100,95 Q 56,88 32,94 Z"
-                fill="rgba(247,243,235,.07)" stroke-width="2.2"/>
-          <!-- Patte droite -->
-          <path d="M 190,78 L 164,78 L 168,96 L 194,96 Z"
-                fill="rgba(247,243,235,.05)" stroke="rgba(247,243,235,.45)" stroke-width="1.8"/>
+          <text x="182" y="40" text-anchor="middle" fill="rgba(247,243,235,.84)" stroke="none" font-family="Georgia,'Times New Roman',serif" font-size="17" font-style="italic">C</text>
+          <text x="79"  y="68" text-anchor="middle" fill="rgba(247,243,235,.68)" stroke="none" font-family="Georgia,'Times New Roman',serif" font-size="16">16</text>
+          <text x="121" y="68" text-anchor="middle" fill="rgba(247,243,235,.68)" stroke="none" font-family="Georgia,'Times New Roman',serif" font-size="16">82</text>
+          <path d="M 10,78 L 36,78 L 32,96 L 6,96 Z"   fill="rgba(247,243,235,.05)" stroke="rgba(247,243,235,.42)" stroke-width="1.8"/>
+          <path d="M 32,74 Q 56,69 100,77 Q 144,85 168,74 L 170,94 Q 144,102 100,95 Q 56,88 32,94 Z" fill="rgba(247,243,235,.07)" stroke-width="2.2"/>
+          <path d="M 190,78 L 164,78 L 168,96 L 194,96 Z" fill="rgba(247,243,235,.05)" stroke="rgba(247,243,235,.42)" stroke-width="1.8"/>
         </g>
       </svg>
-
       <div class="logo-name-row">Château &nbsp; La Coste</div>
-      <div class="logo-script">Provence</div>
-      <div class="logo-sub">La Terrasse</div>
+      <div class="logo-script">La Terrasse</div>
     </div>
   </header>
 
@@ -369,52 +348,357 @@
 
   <!-- PAGE 1 — AVIS GOOGLE -->
   <div class="page active" id="pageReview">
-    <div class="review-wrap">
-      <svg class="fountain-illo" width="200" height="92" viewBox="0 0 200 92"
-           xmlns="http://www.w3.org/2000/svg" style="image-rendering:pixelated;">
-        <rect width="200" height="92" fill="#F7F3EB"/>
-        <rect x="0" y="82" width="200" height="10" fill="#E0D8C6"/>
-        <rect x="0" y="82" width="200" height="1"  fill="#A89070"/>
-        <rect x="2"   y="8"  width="4"  height="74" fill="#5A4A38" opacity=".2"/>
-        <rect x="0"   y="4"  width="10" height="8"  fill="#4E5828" opacity=".5"/>
-        <rect x="1"   y="1"  width="8"  height="5"  fill="#363E1C" opacity=".5"/>
-        <rect x="194" y="8"  width="4"  height="74" fill="#5A4A38" opacity=".2"/>
-        <rect x="190" y="4"  width="10" height="8"  fill="#4E5828" opacity=".5"/>
-        <rect x="191" y="1"  width="8"  height="5"  fill="#363E1C" opacity=".5"/>
-        <rect x="18"  y="20" width="26" height="2"  fill="#5A1E2A" opacity=".55"/>
-        <rect x="29"  y="22" width="2"  height="46" fill="#A89070" opacity=".45"/>
-        <rect x="156" y="20" width="26" height="2"  fill="#4E5828" opacity=".5"/>
-        <rect x="167" y="22" width="2"  height="46" fill="#A89070" opacity=".45"/>
-        <rect x="70"  y="70" width="60" height="12" fill="#D4C4A8"/>
-        <rect x="66"  y="65" width="68" height="6"  fill="#DDD0B8"/>
-        <rect x="96"  y="38" width="8"  height="28" fill="#C8B898"/>
-        <rect x="86"  y="32" width="28" height="8"  fill="#C0B090"/>
-        <rect x="84"  y="29" width="32" height="4"  fill="#D4C4A8"/>
-        <rect x="96"  y="18" width="8"  height="13" fill="#A05030" opacity=".8"/>
-        <rect x="94"  y="16" width="12" height="4"  fill="#8A4028" opacity=".8"/>
-        <rect x="93"  y="8"  width="4"  height="10" fill="#4E5828" opacity=".7"/>
-        <rect x="103" y="6"  width="4"  height="12" fill="#4E5828" opacity=".7"/>
-        <rect x="97"  y="4"  width="6"  height="6"  fill="#363E1C" opacity=".7"/>
-        <rect x="99"  y="38" width="2"  height="8"  fill="#64AFD4" opacity=".7"/>
-        <rect x="28"  y="52" width="16" height="18" fill="#5BA4A4" opacity=".65"/>
-        <rect x="26"  y="50" width="20" height="3"  fill="#4A9090" opacity=".65"/>
-        <rect x="156" y="52" width="16" height="18" fill="#E8C840" opacity=".65"/>
-        <rect x="154" y="50" width="20" height="3"  fill="#D4B430" opacity=".65"/>
-        <rect x="54"  y="50" width="32" height="4"  fill="#C8B898"/>
-        <rect x="62"  y="54" width="16" height="20" fill="#C0B090"/>
-        <rect x="66"  y="40" width="6"  height="1"  fill="#F7F3EB"/>
-        <rect x="64"  y="41" width="10" height="8"  fill="#7C3040" opacity=".65"/>
-        <rect x="66"  y="49" width="6"  height="1"  fill="#F7F3EB"/>
-        <rect x="178" y="4"  width="8"  height="8"  fill="#907028" opacity=".45"/>
-      </svg>
 
+    <!-- ILLUSTRATION TERRASSE PIXEL ART -->
+    <div class="terrace-illo-wrap">
+      <svg class="terrace-illo" viewBox="0 0 360 222" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+
+        <!-- FOND GÉNÉRAL -->
+        <rect x="0"   y="0"   width="360" height="222" fill="#EAE0CE"/>
+
+        <!-- FAÇADE BÂTIMENT -->
+        <rect x="0"   y="18"  width="360" height="160" fill="#DDD4BE"/>
+        <rect x="0"   y="18"  width="360" height="3"   fill="#C8BEA8"/>
+        <rect x="0"   y="52"  width="360" height="2"   fill="#D4CBA8" opacity=".35"/>
+        <rect x="0"   y="84"  width="360" height="2"   fill="#D4CBA8" opacity=".28"/>
+        <rect x="0"   y="116" width="360" height="2"   fill="#D4CBA8" opacity=".22"/>
+        <rect x="0"   y="148" width="360" height="2"   fill="#D4CBA8" opacity=".18"/>
+
+        <!-- PERGOLA PRINCIPALE -->
+        <rect x="0"   y="0"   width="360" height="18"  fill="#6A4A2C"/>
+        <rect x="0"   y="14"  width="360" height="5"   fill="#8A6240"/>
+        <!-- Lattes verticales -->
+        <rect x="8"   y="0"   width="5"  height="22"  fill="#7A5636"/>
+        <rect x="9"   y="0"   width="2"  height="20"  fill="#9A7050"/>
+        <rect x="50"  y="0"   width="5"  height="22"  fill="#7A5636"/>
+        <rect x="51"  y="0"   width="2"  height="20"  fill="#9A7050"/>
+        <rect x="92"  y="0"   width="5"  height="22"  fill="#7A5636"/>
+        <rect x="93"  y="0"   width="2"  height="20"  fill="#9A7050"/>
+        <rect x="134" y="0"   width="5"  height="22"  fill="#7A5636"/>
+        <rect x="135" y="0"   width="2"  height="20"  fill="#9A7050"/>
+        <rect x="176" y="0"   width="5"  height="22"  fill="#7A5636"/>
+        <rect x="177" y="0"   width="2"  height="20"  fill="#9A7050"/>
+        <rect x="218" y="0"   width="5"  height="22"  fill="#7A5636"/>
+        <rect x="219" y="0"   width="2"  height="20"  fill="#9A7050"/>
+        <rect x="260" y="0"   width="5"  height="22"  fill="#7A5636"/>
+        <rect x="261" y="0"   width="2"  height="20"  fill="#9A7050"/>
+        <rect x="302" y="0"   width="5"  height="22"  fill="#7A5636"/>
+        <rect x="303" y="0"   width="2"  height="20"  fill="#9A7050"/>
+        <rect x="344" y="0"   width="5"  height="22"  fill="#7A5636"/>
+        <rect x="345" y="0"   width="2"  height="20"  fill="#9A7050"/>
+
+        <!-- LIERRE/VIGNE PERGOLA gauche -->
+        <rect x="0"   y="16"  width="14" height="24"  fill="#3A5820"/>
+        <rect x="0"   y="26"  width="22" height="16"  fill="#4A6828"/>
+        <rect x="0"   y="38"  width="12" height="10"  fill="#3A5820"/>
+        <rect x="36"  y="16"  width="9"  height="20"  fill="#426228"/>
+        <rect x="34"  y="24"  width="16" height="14"  fill="#4E7030"/>
+        <rect x="36"  y="34"  width="9"  height="8"   fill="#3A5820"/>
+        <rect x="2"   y="36"  width="3"  height="3"   fill="#EDE8DC"/>
+        <rect x="14"  y="28"  width="3"  height="3"   fill="#F0EBE0"/>
+        <rect x="38"  y="32"  width="3"  height="3"   fill="#EDE8DC"/>
+
+        <!-- LIERRE/VIGNE PERGOLA droite -->
+        <rect x="346" y="16"  width="14" height="24"  fill="#3A5820"/>
+        <rect x="338" y="26"  width="22" height="16"  fill="#4A6828"/>
+        <rect x="348" y="38"  width="12" height="10"  fill="#3A5820"/>
+        <rect x="315" y="16"  width="9"  height="20"  fill="#426228"/>
+        <rect x="310" y="24"  width="16" height="14"  fill="#4E7030"/>
+        <rect x="315" y="34"  width="9"  height="8"   fill="#3A5820"/>
+        <rect x="355" y="36"  width="3"  height="3"   fill="#EDE8DC"/>
+        <rect x="343" y="28"  width="3"  height="3"   fill="#F0EBE0"/>
+        <rect x="317" y="32"  width="3"  height="3"   fill="#EDE8DC"/>
+
+        <!-- FENÊTRES GAUCHE (volets teal) -->
+        <rect x="22"  y="40"  width="56" height="68"  fill="#B8A888"/>
+        <rect x="24"  y="42"  width="24" height="64"  fill="#284E42"/>
+        <rect x="50"  y="42"  width="26" height="64"  fill="#284E42"/>
+        <rect x="24"  y="54"  width="24" height="2"   fill="#1C3C30"/>
+        <rect x="24"  y="68"  width="24" height="2"   fill="#1C3C30"/>
+        <rect x="24"  y="82"  width="24" height="2"   fill="#1C3C30"/>
+        <rect x="24"  y="96"  width="24" height="2"   fill="#1C3C30"/>
+        <rect x="50"  y="54"  width="26" height="2"   fill="#1C3C30"/>
+        <rect x="50"  y="68"  width="26" height="2"   fill="#1C3C30"/>
+        <rect x="50"  y="82"  width="26" height="2"   fill="#1C3C30"/>
+        <rect x="50"  y="96"  width="26" height="2"   fill="#1C3C30"/>
+        <rect x="46"  y="42"  width="4"  height="64"  fill="#C8B898"/>
+        <rect x="27"  y="44"  width="18" height="50"  fill="#7890A0" opacity=".35"/>
+        <rect x="53"  y="44"  width="20" height="50"  fill="#7890A0" opacity=".35"/>
+        <rect x="29"  y="46"  width="6"  height="14"  fill="#A8C0C8" opacity=".5"/>
+        <rect x="55"  y="46"  width="6"  height="14"  fill="#A8C0C8" opacity=".5"/>
+
+        <!-- FENÊTRES DROITE (miroir) -->
+        <rect x="282" y="40"  width="56" height="68"  fill="#B8A888"/>
+        <rect x="284" y="42"  width="24" height="64"  fill="#284E42"/>
+        <rect x="310" y="42"  width="26" height="64"  fill="#284E42"/>
+        <rect x="284" y="54"  width="24" height="2"   fill="#1C3C30"/>
+        <rect x="284" y="68"  width="24" height="2"   fill="#1C3C30"/>
+        <rect x="284" y="82"  width="24" height="2"   fill="#1C3C30"/>
+        <rect x="284" y="96"  width="24" height="2"   fill="#1C3C30"/>
+        <rect x="310" y="54"  width="26" height="2"   fill="#1C3C30"/>
+        <rect x="310" y="68"  width="26" height="2"   fill="#1C3C30"/>
+        <rect x="310" y="82"  width="26" height="2"   fill="#1C3C30"/>
+        <rect x="310" y="96"  width="26" height="2"   fill="#1C3C30"/>
+        <rect x="306" y="42"  width="4"  height="64"  fill="#C8B898"/>
+        <rect x="287" y="44"  width="18" height="50"  fill="#7890A0" opacity=".35"/>
+        <rect x="313" y="44"  width="20" height="50"  fill="#7890A0" opacity=".35"/>
+        <rect x="289" y="46"  width="6"  height="14"  fill="#A8C0C8" opacity=".5"/>
+        <rect x="315" y="46"  width="6"  height="14"  fill="#A8C0C8" opacity=".5"/>
+
+        <!-- FENÊTRE CENTRALE (au-dessus fontaine) -->
+        <rect x="148" y="36"  width="64" height="52"  fill="#B8A888"/>
+        <rect x="150" y="38"  width="28" height="48"  fill="#284E42"/>
+        <rect x="180" y="38"  width="30" height="48"  fill="#284E42"/>
+        <rect x="150" y="52"  width="28" height="2"   fill="#1C3C30"/>
+        <rect x="150" y="66"  width="28" height="2"   fill="#1C3C30"/>
+        <rect x="150" y="80"  width="28" height="2"   fill="#1C3C30"/>
+        <rect x="180" y="52"  width="30" height="2"   fill="#1C3C30"/>
+        <rect x="180" y="66"  width="30" height="2"   fill="#1C3C30"/>
+        <rect x="180" y="80"  width="30" height="2"   fill="#1C3C30"/>
+        <rect x="176" y="38"  width="4"  height="48"  fill="#C8B898"/>
+        <rect x="153" y="40"  width="22" height="44"  fill="#7890A0" opacity=".3"/>
+        <rect x="183" y="40"  width="24" height="44"  fill="#7890A0" opacity=".3"/>
+
+        <!-- VÉGÉTATION GAUCHE — colonnes denses -->
+        <rect x="0"   y="22"  width="16" height="148" fill="#2A3C16"/>
+        <rect x="14"  y="22"  width="5"  height="148" fill="#364E1C"/>
+        <rect x="0"   y="22"  width="72" height="28"  fill="#2A4818"/>
+        <rect x="0"   y="28"  width="84" height="30"  fill="#334C1C"/>
+        <rect x="0"   y="42"  width="76" height="28"  fill="#3A5820"/>
+        <rect x="0"   y="58"  width="80" height="26"  fill="#2E4A18"/>
+        <rect x="0"   y="72"  width="70" height="26"  fill="#364E1C"/>
+        <rect x="0"   y="86"  width="76" height="24"  fill="#304818"/>
+        <rect x="0"   y="98"  width="66" height="26"  fill="#3A5420"/>
+        <rect x="0"   y="112" width="58" height="22"  fill="#2E4818"/>
+        <rect x="0"   y="132" width="50" height="22"  fill="#364E1C"/>
+        <rect x="0"   y="150" width="40" height="20"  fill="#304818"/>
+        <!-- Feuillage moyen -->
+        <rect x="6"   y="26"  width="28" height="12"  fill="#4C7028"/>
+        <rect x="16"  y="38"  width="32" height="14"  fill="#527A2C"/>
+        <rect x="4"   y="54"  width="30" height="10"  fill="#4C7028"/>
+        <rect x="16"  y="68"  width="26" height="10"  fill="#567830"/>
+        <rect x="6"   y="82"  width="28" height="8"   fill="#4C7028"/>
+        <rect x="18"  y="96"  width="22" height="8"   fill="#507830"/>
+        <rect x="8"   y="108" width="20" height="8"   fill="#4C6C28"/>
+        <rect x="4"   y="122" width="18" height="8"   fill="#4A6828"/>
+        <!-- Feuillage clair (highlights) -->
+        <rect x="12"  y="30"  width="14" height="8"   fill="#688E36"/>
+        <rect x="22"  y="44"  width="18" height="8"   fill="#6A8C38"/>
+        <rect x="10"  y="60"  width="16" height="8"   fill="#668C36"/>
+        <rect x="20"  y="74"  width="14" height="7"   fill="#6A8838"/>
+        <rect x="10"  y="90"  width="16" height="7"   fill="#648A36"/>
+        <!-- Jasmin blanc -->
+        <rect x="8"   y="32"  width="4"  height="4"   fill="#F0ECE2"/>
+        <rect x="20"  y="48"  width="4"  height="4"   fill="#EDE9E0"/>
+        <rect x="6"   y="62"  width="3"  height="3"   fill="#F0ECE2"/>
+        <rect x="16"  y="76"  width="4"  height="4"   fill="#EDE9E0"/>
+        <rect x="8"   y="90"  width="3"  height="3"   fill="#F0ECE2"/>
+        <rect x="22"  y="102" width="4"  height="4"   fill="#EDE9E0"/>
+        <rect x="10"  y="114" width="3"  height="3"   fill="#F0ECE2"/>
+        <rect x="4"   y="126" width="4"  height="4"   fill="#EDE8DC"/>
+        <!-- Pot terre cuite gauche -->
+        <rect x="8"   y="170" width="44" height="18"  fill="#C05C38"/>
+        <rect x="6"   y="166" width="48" height="6"   fill="#D07040"/>
+        <rect x="10"  y="186" width="40" height="2"   fill="#A04C28"/>
+        <!-- Plante dans le pot -->
+        <rect x="12"  y="158" width="36" height="12"  fill="#3A5820"/>
+        <rect x="16"  y="150" width="28" height="10"  fill="#4A6828"/>
+        <rect x="20"  y="144" width="20" height="8"   fill="#527830"/>
+
+        <!-- VÉGÉTATION DROITE — miroir -->
+        <rect x="344" y="22"  width="16" height="148" fill="#2A3C16"/>
+        <rect x="341" y="22"  width="5"  height="148" fill="#364E1C"/>
+        <rect x="288" y="22"  width="72" height="28"  fill="#2A4818"/>
+        <rect x="276" y="28"  width="84" height="30"  fill="#334C1C"/>
+        <rect x="284" y="42"  width="76" height="28"  fill="#3A5820"/>
+        <rect x="280" y="58"  width="80" height="26"  fill="#2E4A18"/>
+        <rect x="290" y="72"  width="70" height="26"  fill="#364E1C"/>
+        <rect x="284" y="86"  width="76" height="24"  fill="#304818"/>
+        <rect x="294" y="98"  width="66" height="26"  fill="#3A5420"/>
+        <rect x="302" y="112" width="58" height="22"  fill="#2E4818"/>
+        <rect x="310" y="132" width="50" height="22"  fill="#364E1C"/>
+        <rect x="320" y="150" width="40" height="20"  fill="#304818"/>
+        <rect x="326" y="26"  width="28" height="12"  fill="#4C7028"/>
+        <rect x="312" y="38"  width="32" height="14"  fill="#527A2C"/>
+        <rect x="326" y="54"  width="30" height="10"  fill="#4C7028"/>
+        <rect x="318" y="68"  width="26" height="10"  fill="#567830"/>
+        <rect x="326" y="82"  width="28" height="8"   fill="#4C7028"/>
+        <rect x="320" y="96"  width="22" height="8"   fill="#507830"/>
+        <rect x="332" y="108" width="20" height="8"   fill="#4C6C28"/>
+        <rect x="338" y="122" width="18" height="8"   fill="#4A6828"/>
+        <rect x="334" y="30"  width="14" height="8"   fill="#688E36"/>
+        <rect x="320" y="44"  width="18" height="8"   fill="#6A8C38"/>
+        <rect x="334" y="60"  width="16" height="8"   fill="#668C36"/>
+        <rect x="320" y="74"  width="14" height="7"   fill="#6A8838"/>
+        <rect x="326" y="90"  width="16" height="7"   fill="#648A36"/>
+        <rect x="348" y="32"  width="4"  height="4"   fill="#F0ECE2"/>
+        <rect x="336" y="48"  width="4"  height="4"   fill="#EDE9E0"/>
+        <rect x="351" y="62"  width="3"  height="3"   fill="#F0ECE2"/>
+        <rect x="340" y="76"  width="4"  height="4"   fill="#EDE9E0"/>
+        <rect x="352" y="90"  width="3"  height="3"   fill="#F0ECE2"/>
+        <rect x="334" y="102" width="4"  height="4"   fill="#EDE9E0"/>
+        <rect x="346" y="114" width="3"  height="3"   fill="#F0ECE2"/>
+        <rect x="356" y="126" width="4"  height="4"   fill="#EDE8DC"/>
+        <rect x="308" y="170" width="44" height="18"  fill="#C05C38"/>
+        <rect x="306" y="166" width="48" height="6"   fill="#D07040"/>
+        <rect x="310" y="186" width="40" height="2"   fill="#A04C28"/>
+        <rect x="312" y="158" width="36" height="12"  fill="#3A5820"/>
+        <rect x="316" y="150" width="28" height="10"  fill="#4A6828"/>
+        <rect x="320" y="144" width="20" height="8"   fill="#527830"/>
+
+        <!-- FONTAINE CENTRALE -->
+        <!-- Fleurs rouges / bouquet au sommet -->
+        <rect x="160" y="54"  width="40" height="16"  fill="#3A5820"/>
+        <rect x="156" y="60"  width="48" height="16"  fill="#4A6428"/>
+        <rect x="158" y="70"  width="44" height="14"  fill="#3A5820"/>
+        <rect x="160" y="54"  width="8"  height="7"   fill="#C82828"/>
+        <rect x="170" y="50"  width="8"  height="8"   fill="#D43030"/>
+        <rect x="181" y="53"  width="8"  height="8"   fill="#C42828"/>
+        <rect x="175" y="62"  width="7"  height="6"   fill="#E03838"/>
+        <rect x="163" y="64"  width="6"  height="6"   fill="#CC3030"/>
+        <rect x="187" y="59"  width="6"  height="6"   fill="#D43030"/>
+        <rect x="155" y="64"  width="5"  height="5"   fill="#BE2828"/>
+        <!-- Urne supérieure -->
+        <rect x="168" y="82"  width="24" height="5"   fill="#D4C0A0"/>
+        <rect x="170" y="85"  width="20" height="18"  fill="#C8B898"/>
+        <rect x="172" y="87"  width="16" height="14"  fill="#D4C4A8"/>
+        <rect x="168" y="101" width="24" height="4"   fill="#C0AC88"/>
+        <rect x="171" y="104" width="18" height="3"   fill="#B8A080"/>
+        <!-- Cou / col intermédiaire -->
+        <rect x="177" y="107" width="6"  height="10"  fill="#C8B898"/>
+        <rect x="178" y="108" width="4"  height="8"   fill="#D4C4A8"/>
+        <!-- Fût de colonne -->
+        <rect x="175" y="116" width="10" height="46"  fill="#C8B898"/>
+        <rect x="176" y="117" width="6"  height="44"  fill="#D4C4A8"/>
+        <rect x="183" y="116" width="2"  height="46"  fill="#B0A080"/>
+        <!-- Base de colonne -->
+        <rect x="171" y="160" width="18" height="5"   fill="#C4B090"/>
+        <rect x="168" y="163" width="24" height="4"   fill="#B8A480"/>
+        <!-- Bassin — rebord supérieur -->
+        <rect x="104" y="165" width="152" height="10" fill="#D4C4A8"/>
+        <rect x="108" y="172" width="144" height="4"  fill="#C4B498"/>
+        <!-- Bassin — paroi -->
+        <rect x="106" y="174" width="148" height="18" fill="#C8B898"/>
+        <rect x="110" y="176" width="140" height="14" fill="#BCAC88"/>
+        <!-- Eau (surface) -->
+        <rect x="110" y="166" width="140" height="8"  fill="#88B4C8"/>
+        <rect x="114" y="167" width="132" height="5"  fill="#98C0D0"/>
+        <rect x="120" y="168" width="20"  height="2"  fill="#B0D4E0" opacity=".7"/>
+        <rect x="162" y="167" width="24"  height="2"  fill="#B0D4E0" opacity=".7"/>
+        <rect x="212" y="168" width="18"  height="2"  fill="#B0D4E0" opacity=".7"/>
+        <!-- Filet d'eau tombant -->
+        <rect x="179" y="116" width="2"   height="50" fill="#9CCCE0" opacity=".55"/>
+        <rect x="178" y="128" width="4"   height="38" fill="#B0D8E8" opacity=".45"/>
+        <!-- Éclaboussure -->
+        <rect x="173" y="162" width="14"  height="3"  fill="#B0D4E4" opacity=".65"/>
+        <!-- Socle du bassin -->
+        <rect x="100" y="190" width="160" height="4"  fill="#B8A888"/>
+        <rect x="96"  y="192" width="168" height="3"  fill="#A89878"/>
+
+        <!-- SOL — dalles de pierre -->
+        <rect x="0"   y="194" width="360" height="28" fill="#C8BC98"/>
+        <rect x="0"   y="194" width="360" height="2"  fill="#AEA07C"/>
+        <rect x="0"   y="208" width="360" height="2"  fill="#AEA07C"/>
+        <rect x="0"   y="220" width="360" height="2"  fill="#AEA07C"/>
+        <!-- Joints verticaux rangée 1 -->
+        <rect x="0"   y="196" width="2"   height="12" fill="#AEA07C"/>
+        <rect x="60"  y="196" width="2"   height="12" fill="#AEA07C"/>
+        <rect x="120" y="196" width="2"   height="12" fill="#AEA07C"/>
+        <rect x="180" y="196" width="2"   height="12" fill="#AEA07C"/>
+        <rect x="240" y="196" width="2"   height="12" fill="#AEA07C"/>
+        <rect x="300" y="196" width="2"   height="12" fill="#AEA07C"/>
+        <!-- Joints verticaux rangée 2 (décalés) -->
+        <rect x="30"  y="210" width="2"   height="12" fill="#AEA07C"/>
+        <rect x="90"  y="210" width="2"   height="12" fill="#AEA07C"/>
+        <rect x="150" y="210" width="2"   height="12" fill="#AEA07C"/>
+        <rect x="210" y="210" width="2"   height="12" fill="#AEA07C"/>
+        <rect x="270" y="210" width="2"   height="12" fill="#AEA07C"/>
+        <rect x="330" y="210" width="2"   height="12" fill="#AEA07C"/>
+
+        <!-- TABLE GAUCHE + CHAISES -->
+        <!-- Plateau table -->
+        <rect x="40"  y="160" width="48" height="5"   fill="#7A5C3A"/>
+        <rect x="41"  y="161" width="46" height="3"   fill="#9A7850"/>
+        <rect x="44"  y="164" width="40" height="2"   fill="#4A3020" opacity=".3"/>
+        <!-- Pieds -->
+        <rect x="59"  y="165" width="4"  height="28"  fill="#7A5C3A"/>
+        <rect x="60"  y="165" width="2"  height="28"  fill="#9A7850"/>
+        <!-- Chaise rouge gauche -->
+        <rect x="22"  y="162" width="16" height="22"  fill="#B83028"/>
+        <rect x="22"  y="159" width="16" height="5"   fill="#CC4438"/>
+        <rect x="22"  y="182" width="16" height="3"   fill="#9A2020"/>
+        <rect x="23"  y="180" width="2"  height="14"  fill="#8A1818"/>
+        <rect x="34"  y="180" width="2"  height="14"  fill="#8A1818"/>
+        <!-- Chaise bleue droite -->
+        <rect x="86"  y="162" width="16" height="22"  fill="#2858A8"/>
+        <rect x="86"  y="159" width="16" height="5"   fill="#3870CC"/>
+        <rect x="86"  y="182" width="16" height="3"   fill="#1C4888"/>
+        <rect x="87"  y="180" width="2"  height="14"  fill="#183878"/>
+        <rect x="98"  y="180" width="2"  height="14"  fill="#183878"/>
+        <!-- Chaise orange (vue de dos, fond table) -->
+        <rect x="58"  y="154" width="12" height="14"  fill="#D07028"/>
+        <rect x="58"  y="152" width="12" height="4"   fill="#E88030"/>
+
+        <!-- TABLE DROITE + CHAISES -->
+        <rect x="272" y="160" width="48" height="5"   fill="#7A5C3A"/>
+        <rect x="273" y="161" width="46" height="3"   fill="#9A7850"/>
+        <rect x="276" y="164" width="40" height="2"   fill="#4A3020" opacity=".3"/>
+        <rect x="298" y="165" width="4"  height="28"  fill="#7A5C3A"/>
+        <rect x="299" y="165" width="2"  height="28"  fill="#9A7850"/>
+        <!-- Chaise bleue gauche -->
+        <rect x="256" y="162" width="16" height="22"  fill="#2858A8"/>
+        <rect x="256" y="159" width="16" height="5"   fill="#3870CC"/>
+        <rect x="256" y="182" width="16" height="3"   fill="#1C4888"/>
+        <rect x="257" y="180" width="2"  height="14"  fill="#183878"/>
+        <rect x="268" y="180" width="2"  height="14"  fill="#183878"/>
+        <!-- Chaise orange droite -->
+        <rect x="322" y="162" width="16" height="22"  fill="#C86820"/>
+        <rect x="322" y="159" width="16" height="5"   fill="#E08030"/>
+        <rect x="322" y="182" width="16" height="3"   fill="#A85218"/>
+        <rect x="323" y="180" width="2"  height="14"  fill="#985018"/>
+        <rect x="334" y="180" width="2"  height="14"  fill="#985018"/>
+        <!-- Chaise rouge dos (fond table droite) -->
+        <rect x="290" y="154" width="12" height="14"  fill="#B83028"/>
+        <rect x="290" y="152" width="12" height="4"   fill="#CC4438"/>
+
+        <!-- POTS DÉCORATIFS PRÈS DE LA FONTAINE -->
+        <rect x="100" y="180" width="12" height="14"  fill="#B85830"/>
+        <rect x="98"  y="177" width="16" height="5"   fill="#C86840"/>
+        <rect x="101" y="170" width="10" height="10"  fill="#4A6C28"/>
+        <rect x="103" y="165" width="6"  height="7"   fill="#5A8030"/>
+        <rect x="248" y="180" width="12" height="14"  fill="#B85830"/>
+        <rect x="246" y="177" width="16" height="5"   fill="#C86840"/>
+        <rect x="249" y="170" width="10" height="10"  fill="#4A6C28"/>
+        <rect x="251" y="165" width="6"  height="7"   fill="#5A8030"/>
+
+        <!-- VÉGÉTATION INTERMÉDIAIRE (arbres derrière tables) -->
+        <rect x="80"  y="110" width="16" height="30"  fill="#3A5820" opacity=".65"/>
+        <rect x="78"  y="118" width="22" height="22"  fill="#4E6828" opacity=".6"/>
+        <rect x="82"  y="136" width="16" height="16"  fill="#3A5820" opacity=".6"/>
+        <rect x="264" y="110" width="16" height="30"  fill="#3A5820" opacity=".65"/>
+        <rect x="260" y="118" width="22" height="22"  fill="#4E6828" opacity=".6"/>
+        <rect x="262" y="136" width="16" height="16"  fill="#3A5820" opacity=".6"/>
+
+        <!-- DÉGRADÉ BAS (transition douce vers fond crème) -->
+        <rect x="0" y="195" width="360" height="27" fill="#C8BC98" opacity=".0"/>
+        <defs>
+          <linearGradient id="fadeBot" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#EAE0CE" stop-opacity="0"/>
+            <stop offset="100%" stop-color="#F7F3EB" stop-opacity="1"/>
+          </linearGradient>
+        </defs>
+        <rect x="0" y="194" width="360" height="28" fill="url(#fadeBot)"/>
+
+      </svg>
+    </div>
+
+    <div class="review-wrap">
       <div class="thin-rule"></div>
       <p class="eyebrow">La Terrasse · Château La Coste</p>
-      <h2 class="review-title">Merci d'être venu partager ce moment.</h2>
+      <h2 class="review-title">Partagez votre expérience<br>et tentez votre chance.</h2>
       <p class="review-body">
         Votre passage compte pour nous.<br>
-        Si vous souhaitez partager votre expérience,<br>
-        un avis Google nous ferait très plaisir.
+        Un avis Google nous aiderait beaucoup.
       </p>
 
       <a id="googleReviewBtn" href="#" target="_blank" rel="noopener"
@@ -423,15 +707,15 @@
       </a>
 
       <div id="doneSection">
-        <div class="or-sep">ou revenez ici ensuite</div>
+        <div class="or-sep">ou déjà fait ?</div>
         <button class="btn-done" onclick="goToGame()">
-          J'ai terminé — découvrir mon attention
+          🎁 &nbsp; J'ai terminé, accéder au jeu
         </button>
       </div>
 
       <p class="review-note">
-        Le jeu est indépendant de toute note ou contenu d'avis.<br>
-        Votre retour est libre et ne conditionne pas le résultat.
+        Dans la limite des stocks disponibles. Un gain par personne et par jour.<br>
+        Le jeu est indépendant de tout contenu ou note d'avis.
       </p>
     </div>
   </div>
@@ -449,7 +733,6 @@
       <h2 class="game-title">Tentez votre chance.</h2>
       <p class="game-sub">Merci pour votre retour.<br>Découvrez votre attention du jour.</p>
 
-      <!-- SLOT SCENE — fond bordeaux, défilement épuré sans fontaine -->
       <div class="slot-scene">
         <div class="slot-fade top"></div>
         <div class="slot-item" id="slotItem">
@@ -460,7 +743,6 @@
         <div class="slot-fade bot"></div>
       </div>
 
-      <!-- LISTE DES GAINS -->
       <div class="prize-list">
         <p class="prize-list-title">Lots disponibles</p>
         <ul id="prizeListUl"></ul>
@@ -470,7 +752,6 @@
         Tenter ma chance
       </button>
 
-      <!-- Résultat -->
       <div id="winnerReveal">
         <div class="winner-rule"></div>
         <p class="winner-eyebrow">Votre attention du jour</p>
@@ -495,7 +776,6 @@ const GOOGLE_REVIEW_URL = "https://www.google.com/maps?cid=7655344166233586966";
 const COOLDOWN_MS = 24 * 60 * 60 * 1000;
 const STORAGE_KEY = "terrasse_lacostegame_v4";
 
-/* SVG thé glacé — pas de clipPath pour éviter conflits d'ID */
 function teaGlassSVG() {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 56" style="width:1em;height:1em;vertical-align:middle;overflow:visible">
     <path d="M7 20 L29 20 L27 52 L9 52 Z" fill="rgba(175,100,28,.68)"/>
@@ -636,7 +916,6 @@ function swapItem(prize, prizeIdx, isWinner) {
     label.style.letterSpacing = ".04em";
     label.style.color         = prize.col;
 
-    /* Léger glow or sur l'item gagnant */
     wrap.style.boxShadow = isWinner
       ? "inset 0 0 0 1px rgba(184,144,72,.35), inset 0 0 40px rgba(144,112,40,.12)"
       : "none";
