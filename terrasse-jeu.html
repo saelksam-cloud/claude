@@ -4,226 +4,198 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>La Terrasse — Château La Coste</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet" />
   <style>
-    /* ══════════════════════════════════════════════════════════
-       DESIGN SYSTEM — inspiré de la DA de Château La Coste
-       Sobre · naturel · provence · galerie d'art
-    ══════════════════════════════════════════════════════════ */
-    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap');
-
+    /* ══════════════════════════════════════════════════════
+       VARIABLES — Château La Coste · sobre, naturel, pierre
+    ══════════════════════════════════════════════════════ */
     :root {
-      /* Fond */
-      --bg:        #F7F3EB;
-      --bg-alt:    #EDE7DA;
-      --bg-dark:   #E2D9C8;
-
-      /* Textes */
-      --ink:       #1A130A;
-      --ink-mid:   #5A4A38;
-      --ink-light: #9A8870;
-
-      /* Accents */
-      --wine:      #5A1E2A;
-      --wine-deep: #3C1018;
-      --wine-soft: #7C3040;
-      --gold:      #907028;
-      --gold-soft: #B89048;
-      --olive:     #4E5828;
-      --olive-dark:#363E1C;
-      --stone:     #B0A088;
-      --stone-soft:#D0C4B0;
-
-      /* Eau */
-      --water:     rgba(110,180,220,.55);
-      --water-str: rgba(110,180,220,.75);
+      --bg:         #F7F3EB;
+      --bg-alt:     #EDE7DA;
+      --bg-dark:    #E0D8C6;
+      --ink:        #1A130A;
+      --ink-mid:    #5A4A38;
+      --ink-light:  #9A8870;
+      --wine:       #5A1E2A;
+      --wine-deep:  #3C1018;
+      --wine-soft:  #7C3040;
+      --gold:       #907028;
+      --gold-soft:  #B89048;
+      --olive:      #4E5828;
+      --olive-dark: #363E1C;
+      --stone:      #C4B49A;
+      --stone-dark: #A89070;
+      --stone-soft: #DDD0B8;
+      --water:      rgba(100,175,220,.7);
+      --water-pale: rgba(100,175,220,.12);
     }
 
-    /* ── RESET ─────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     html, body {
       min-height: 100%;
       background: var(--bg);
       color: var(--ink);
-      font-family: 'Cormorant Garamond', 'Georgia', serif;
+      font-family: 'Cormorant Garamond', Georgia, serif;
       overflow-x: hidden;
       -webkit-font-smoothing: antialiased;
-      text-rendering: optimizeLegibility;
     }
 
-    /* Fallback sans Google Fonts */
-    @supports not (font-family: 'Cormorant Garamond') {
-      html, body { font-family: 'Georgia', serif; }
-    }
-
-    /* ── HEADER ─────────────────────────────── */
+    /* ═══════════════════════════════════════════
+       HEADER — logo Château La Coste
+       Remplacer .logo-text par <img> si vous avez l'URL du logo
+    ═══════════════════════════════════════════ */
     header {
       width: 100%;
       background: var(--wine-deep);
-      padding: 22px 24px 18px;
+      padding: 24px 24px 20px;
       text-align: center;
       position: relative;
     }
-
-    /* Fine ligne or en haut */
     header::before {
       content: '';
-      position: absolute; top: 0; left: 0; right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, var(--gold-soft), transparent);
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold-soft) 40%, var(--gold-soft) 60%, transparent);
     }
-    /* Fine ligne or en bas */
     header::after {
       content: '';
-      position: absolute; bottom: 0; left: 0; right: 0;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold) 30%, var(--gold) 70%, transparent);
     }
 
-    .chateau-icon {
-      width: 48px; height: 36px;
-      display: block; margin: 0 auto 8px;
-      image-rendering: pixelated;
-      opacity: .92;
+    /*
+      ─── LOGO ───────────────────────────────────────────────
+      Pour utiliser le vrai logo, remplacez tout le bloc
+      .logo-placeholder par :
+        <img src="URL_DE_VOTRE_LOGO" class="logo-img" alt="Château La Coste">
+      et ajoutez : .logo-img { height:40px; display:block; margin:0 auto; }
+      ────────────────────────────────────────────────────────
+    */
+    .logo-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
     }
-
-    .header-eyebrow {
-      font-family: 'Courier New', monospace;
-      font-size: .6rem;
-      letter-spacing: .35em;
+    .logo-vine {
+      display: block;
+      margin: 0 auto 6px;
+      opacity: .85;
+    }
+    .logo-chateau {
+      color: var(--bg);
+      font-size: .65rem;
+      letter-spacing: .42em;
       text-transform: uppercase;
-      color: var(--gold-soft);
-      margin-bottom: 4px;
+      font-weight: 300;
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-style: normal;
     }
-
-    header h1 {
+    .logo-name {
       color: var(--bg);
       font-size: 1.55rem;
-      font-weight: 300;
-      letter-spacing: .18em;
-      text-transform: uppercase;
-      line-height: 1.2;
-    }
-
-    header h1 em {
-      display: block;
-      font-style: italic;
-      font-weight: 300;
-      font-size: .82rem;
       letter-spacing: .22em;
-      color: var(--stone-soft);
-      margin-top: 3px;
+      text-transform: uppercase;
+      font-weight: 300;
+      line-height: 1;
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-style: normal;
+    }
+    .logo-sub {
+      color: var(--gold-soft);
+      font-size: .65rem;
+      letter-spacing: .32em;
+      text-transform: uppercase;
+      font-weight: 300;
+      margin-top: 4px;
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-style: italic;
     }
 
-    /* ── BARRE DE PROGRESSION ─────────────── */
+    /* ═══════════════════════════════════════════
+       BARRE DE PROGRESSION
+    ═══════════════════════════════════════════ */
     .progress-bar {
       width: 100%;
       background: var(--wine-deep);
       padding: 8px 24px 10px;
       display: flex; align-items: center; justify-content: center;
-      gap: 0;
-      border-bottom: 1px solid rgba(144,112,40,.3);
+      border-bottom: 1px solid rgba(144,112,40,.25);
     }
-
     .step-dot {
-      width: 24px; height: 24px;
-      border: 1px solid var(--stone);
+      width: 22px; height: 22px;
+      border: 1px solid rgba(196,180,154,.5);
       background: transparent;
       display: flex; align-items: center; justify-content: center;
-      font-family: 'Courier New', monospace; font-size: .62rem;
-      color: var(--stone); flex-shrink: 0;
-      transition: all .3s;
+      font-family: 'Courier New', monospace; font-size: .6rem;
+      color: var(--stone); flex-shrink: 0; transition: all .3s;
     }
-    .step-dot.active {
-      border-color: var(--gold-soft);
-      color: var(--gold-soft);
-      background: rgba(144,112,40,.12);
-    }
-    .step-dot.done {
-      background: var(--olive);
-      border-color: var(--olive);
-      color: var(--bg);
-      font-size: 0;
-    }
-    .step-dot.done::after { content: '✓'; font-size: .62rem; }
+    .step-dot.active { border-color: var(--gold-soft); color: var(--gold-soft); background: rgba(144,112,40,.1); }
+    .step-dot.done   { background: var(--olive); border-color: var(--olive); color: var(--bg); font-size: 0; }
+    .step-dot.done::after { content: '✓'; font-size: .6rem; }
+    .step-line { width: 40px; height: 1px; background: rgba(196,180,154,.28); flex-shrink: 0; transition: all .3s; }
+    .step-line.done { background: var(--olive); opacity: .65; }
 
-    .step-line {
-      width: 40px; height: 1px;
-      background: var(--stone); opacity: .3;
-      flex-shrink: 0; transition: all .3s;
-    }
-    .step-line.done { background: var(--olive); opacity: .6; }
-
-    /* ── PAGES ──────────────────────────────── */
+    /* ═══════════════════════════════════════════
+       PAGES
+    ═══════════════════════════════════════════ */
     .page { display: none; flex-direction: column; align-items: center; width: 100%; padding-bottom: 60px; }
-    .page.active { display: flex; animation: fadeUp .45s ease both; }
-
+    .page.active { display: flex; animation: fadeUp .4s ease both; }
     @keyframes fadeUp {
       from { opacity: 0; transform: translateY(14px); }
       to   { opacity: 1; transform: translateY(0); }
     }
 
-    /* ══════════════════════════════════════════
+    /* ═══════════════════════════════════════════
        PAGE 1 — AVIS GOOGLE
-    ══════════════════════════════════════════ */
+    ═══════════════════════════════════════════ */
     .review-wrap {
       width: 100%; max-width: 400px;
-      padding: 40px 28px 0;
+      padding: 38px 28px 0;
       text-align: center;
     }
 
-    /* Séparateur fin */
-    .thin-rule {
-      width: 40px; height: 1px;
-      background: var(--gold);
-      margin: 0 auto 28px;
-      opacity: .6;
-    }
+    /* Illustration fontaine (page 1) */
+    .fountain-illo { display: block; margin: 0 auto 26px; opacity: .84; }
 
-    /* Illustration fontaine — style gravure fine */
-    .fountain-illo { display: block; margin: 0 auto 28px; }
-
-    .review-eyebrow {
+    .eyebrow {
       font-family: 'Courier New', monospace;
-      font-size: .6rem; letter-spacing: .3em;
-      text-transform: uppercase; color: var(--stone);
-      margin-bottom: 14px;
+      font-size: .58rem; letter-spacing: .32em; text-transform: uppercase;
+      color: var(--stone); margin-bottom: 12px;
     }
 
     .review-title {
-      font-size: 1.7rem; font-weight: 300;
-      color: var(--ink); line-height: 1.35;
-      margin-bottom: 14px;
-      font-style: italic;
+      font-size: 1.7rem; font-weight: 300; font-style: italic;
+      color: var(--ink); line-height: 1.35; margin-bottom: 12px;
     }
-
     .review-body {
       font-size: .95rem; font-weight: 300;
       color: var(--ink-mid); line-height: 2;
-      margin-bottom: 34px;
+      margin-bottom: 32px;
     }
+
+    .thin-rule { width: 36px; height: 1px; background: var(--gold); opacity: .55; margin: 0 auto 26px; }
 
     /* Bouton Google */
     .btn-google {
       display: flex; align-items: center; justify-content: center; gap: 10px;
       width: 100%; max-width: 300px; margin: 0 auto;
-      padding: 14px 22px;
+      padding: 14px 20px;
       background: var(--wine); color: var(--bg);
       font-family: 'Courier New', monospace;
-      font-size: .7rem; letter-spacing: .2em; text-transform: uppercase;
+      font-size: .68rem; letter-spacing: .2em; text-transform: uppercase;
       border: none; cursor: pointer; text-decoration: none;
-      transition: background .2s, transform .12s;
+      transition: background .2s, transform .1s;
     }
     .btn-google:hover  { background: var(--wine-soft); }
     .btn-google:active { transform: scale(.98); }
-    .btn-google .star  { color: var(--gold-soft); font-size: .9rem; }
+    .btn-google .star  { color: var(--gold-soft); }
 
-    /* Section "J'ai terminé" */
     #doneSection {
-      width: 100%; max-width: 300px;
-      margin: 20px auto 0;
-      opacity: 0; pointer-events: none;
-      transform: translateY(6px);
+      width: 100%; max-width: 300px; margin: 18px auto 0;
+      opacity: 0; pointer-events: none; transform: translateY(6px);
       transition: opacity .5s, transform .5s;
     }
     #doneSection.visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
@@ -231,262 +203,343 @@
     .or-sep {
       display: flex; align-items: center; gap: 12px;
       color: var(--stone); font-family: 'Courier New', monospace;
-      font-size: .58rem; letter-spacing: .18em; text-transform: uppercase;
-      margin: 0 0 14px;
+      font-size: .56rem; letter-spacing: .2em; text-transform: uppercase;
+      margin: 0 0 13px;
     }
-    .or-sep::before, .or-sep::after {
-      content: ''; flex: 1; height: 1px;
-      background: var(--stone-soft);
-    }
+    .or-sep::before, .or-sep::after { content: ''; flex: 1; height: 1px; background: var(--stone-soft); }
 
     .btn-done {
-      display: block; width: 100%; padding: 14px 20px;
+      display: block; width: 100%; padding: 13px 20px;
       background: transparent; color: var(--olive);
       font-family: 'Courier New', monospace;
-      font-size: .7rem; letter-spacing: .2em; text-transform: uppercase;
+      font-size: .68rem; letter-spacing: .2em; text-transform: uppercase;
       border: 1px solid var(--olive); cursor: pointer;
       transition: background .2s, color .2s;
     }
     .btn-done:hover { background: var(--olive); color: var(--bg); }
 
     .review-note {
-      margin-top: 28px;
-      font-size: .72rem; color: var(--stone);
-      font-family: 'Courier New', monospace;
-      letter-spacing: .04em; line-height: 1.85;
-      font-style: normal;
+      margin-top: 26px; font-size: .7rem; color: var(--stone);
+      font-family: 'Courier New', monospace; letter-spacing: .04em; line-height: 1.85;
     }
 
-    /* ══════════════════════════════════════════
+    /* ═══════════════════════════════════════════
        PAGE 2 — JEU
-    ══════════════════════════════════════════ */
+    ═══════════════════════════════════════════ */
     .game-wrap {
       width: 100%; max-width: 400px;
-      padding: 36px 24px 0;
+      padding: 32px 20px 0;
       text-align: center;
     }
-
-    .game-eyebrow {
-      font-family: 'Courier New', monospace;
-      font-size: .6rem; letter-spacing: .3em;
-      text-transform: uppercase; color: var(--stone);
-      margin-bottom: 10px;
-    }
-
     .game-title {
-      font-size: 1.5rem; font-weight: 300;
-      font-style: italic;
-      color: var(--ink); line-height: 1.4;
-      margin-bottom: 6px;
+      font-size: 1.5rem; font-weight: 300; font-style: italic;
+      color: var(--ink); margin-bottom: 4px;
     }
-
     .game-sub {
-      font-size: .9rem; font-weight: 300;
-      color: var(--ink-mid); line-height: 1.9;
-      margin-bottom: 32px;
+      font-size: .88rem; font-weight: 300;
+      color: var(--ink-mid); line-height: 1.9; margin-bottom: 30px;
     }
 
-    /* ── SCÈNE FONTAINE ── */
-    .fountain-stage {
-      width: 100%; max-width: 310px;
-      margin: 0 auto 30px;
+    /* ═══════════════════════════════════════════
+       FONTAINE — structure complète
+       Spout → colonne d'eau → bassin avec item
+    ═══════════════════════════════════════════ */
+    .fountain-scene {
+      width: 100%; max-width: 340px;
+      margin: 0 auto 28px;
       position: relative;
     }
 
-    /* Cadre principal */
-    .slot-frame {
-      position: relative;
-      border: 1px solid var(--stone);
-      background: var(--bg);
-      overflow: hidden;
-    }
-
-    /* Ligne or fine en haut et bas du cadre */
-    .slot-frame::before {
-      content: '';
-      position: absolute; top: 0; left: 0; right: 0;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, var(--gold), transparent);
-      z-index: 3;
-    }
-    .slot-frame::after {
-      content: '';
-      position: absolute; bottom: 0; left: 0; right: 0;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, var(--gold), transparent);
-      z-index: 3;
-    }
-
-    /* Zone eau / fontaine au-dessus du slot */
+    /* ─ Tête de fontaine (source de l'eau) ─ */
     .fountain-head {
+      width: 100%;
       background: var(--wine-deep);
-      height: 58px;
-      display: flex; align-items: flex-end; justify-content: center;
+      padding: 0;
       position: relative;
       overflow: hidden;
+      height: 68px;
+      /* Coins en escalier pixel */
+      clip-path: polygon(
+        0 4px, 4px 4px, 4px 0,
+        calc(100% - 4px) 0, calc(100% - 4px) 4px, 100% 4px,
+        100% 100%, 0 100%
+      );
     }
-
-    /* Filets d'eau CSS animés */
-    .water-streams {
-      position: absolute; bottom: 0; left: 50%;
-      transform: translateX(-50%);
-      display: flex; gap: 7px;
-    }
-    .ws {
-      width: 2px;
-      background: linear-gradient(to bottom,
-        transparent 0%,
-        var(--water) 35%,
-        var(--water-str) 80%,
-        transparent 100%);
-      border-radius: 1px;
-      animation: streamFall var(--dur,.7s) linear infinite var(--del,0s);
-    }
-    @keyframes streamFall {
-      0%   { height: 0;    opacity: 0; transform: translateY(-8px); }
-      20%  { opacity: 1; }
-      80%  { opacity: .9; }
-      100% { height: 58px; opacity: 0; transform: translateY(0); }
-    }
-
-    /* Icône mini-fontaine dans le bandeau haut */
-    .fountain-cap {
-      position: absolute; top: 6px; left: 50%;
-      transform: translateX(-50%);
+    /* Fine ligne or en haut */
+    .fountain-head::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
       z-index: 2;
     }
 
-    /* Zone d'affichage de l'item */
-    .slot-window {
-      height: 178px;
-      display: flex; align-items: center; justify-content: center;
-      overflow: hidden;
-      position: relative;
-      background: var(--bg);
+    /* Fontaine pixel art dans le bandeau */
+    .spout-ornament {
+      position: absolute;
+      top: 8px; left: 50%;
+      transform: translateX(-50%);
+      z-index: 2;
+      image-rendering: pixelated;
     }
 
-    /* Reflets latéraux de l'eau */
-    .slot-window::before, .slot-window::after {
-      content: '';
-      position: absolute; top: 0;
-      width: 4px; height: 100%;
-      background: linear-gradient(to right, rgba(110,180,220,.1), transparent);
+    /* Les filets d'eau naissent ici et tombent vers le bas */
+    .water-curtain {
+      position: absolute;
+      bottom: 0; left: 50%;
+      transform: translateX(-50%);
+      display: flex; gap: 6px;
+      height: 100%;
+      align-items: flex-end;
       z-index: 1;
     }
-    .slot-window::before { left: 0; }
-    .slot-window::after  { right: 0; transform: scaleX(-1); }
+    .wc {
+      width: 3px;
+      border-radius: 2px;
+      background: linear-gradient(to bottom,
+        transparent 0%,
+        rgba(100,175,220,.5) 30%,
+        rgba(100,175,220,.85) 85%,
+        rgba(100,175,220,.95) 100%
+      );
+      animation: wFall var(--d,.68s) linear infinite var(--dl,0s);
+    }
+    @keyframes wFall {
+      0%   { height: 0;   opacity: 0; }
+      18%  { opacity: 1; }
+      82%  { opacity: .95; }
+      100% { height: 68px; opacity: 0; }
+    }
 
-    /* Item courant */
-    #slotItem {
-      width: 100%; height: 178px;
+    /* ─ Colonne d'eau entre la tête et le bassin ─ */
+    .water-column {
+      width: 100%;
+      height: 52px;
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      background: transparent;
+      position: relative;
+      overflow: hidden;
+    }
+    /* Rebords pierre latéraux de la colonne */
+    .water-column::before, .water-column::after {
+      content: '';
+      position: absolute; top: 0; bottom: 0; width: 12px;
+      background: var(--stone-dark);
+    }
+    .water-column::before { left: 0; }
+    .water-column::after  { right: 0; }
+
+    /* Fond de la colonne : eau translucide */
+    .wc-bg {
+      position: absolute; inset: 0 12px;
+      background: linear-gradient(to bottom, var(--water-pale), rgba(100,175,220,.06));
+    }
+
+    /* Filets prolongés dans la colonne (continuation de la tête) */
+    .col-stream {
+      width: 3px;
+      height: 100%;
+      position: relative;
+      z-index: 1;
+      overflow: hidden;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+    .col-stream::after {
+      content: '';
+      position: absolute; left: 0; width: 100%;
+      height: 30px;
+      background: linear-gradient(to bottom,
+        rgba(100,175,220,.9),
+        rgba(100,175,220,.5),
+        transparent
+      );
+      animation: colFlow var(--d,.65s) linear infinite var(--dl,0s);
+    }
+    @keyframes colFlow {
+      from { top: -30px; }
+      to   { top: 100%; }
+    }
+
+    /* ─ Bassin pierre (contient l'item) ─ */
+    .basin {
+      width: 100%;
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(180deg,
+        rgba(100,175,220,.06) 0%,
+        rgba(100,175,220,.14) 100%
+      );
+      /* Murs pierre gauche/droite plus épais */
+      border-left:  14px solid var(--stone-dark);
+      border-right: 14px solid var(--stone-dark);
+      /* Reflet intérieur pierre */
+      box-shadow:
+        inset 4px 0 8px rgba(0,0,0,.08),
+        inset -4px 0 8px rgba(0,0,0,.08);
+    }
+    /* Ligne or fine en haut du bassin (eau qui entre) */
+    .basin::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg,
+        transparent, rgba(100,175,220,.6) 30%, rgba(100,175,220,.6) 70%, transparent
+      );
+      z-index: 2;
+    }
+
+    /* Texture pierre sur les bords (pseudo dégradé) */
+    .basin-walls {
+      position: absolute; inset: 0;
+      pointer-events: none; z-index: 0;
+    }
+
+    /* L'item — directement dans l'eau, sans carte ni cadre */
+    .basin-item {
+      position: relative;
+      z-index: 3;
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
-      gap: 10px; padding: 16px 20px;
+      gap: 10px;
+      padding: 22px 16px;
+      min-height: 175px;
+      width: 100%;
+      transition: background-color .2s ease;
     }
 
-    #slotItem.drop-in  { animation: dropIn .24s ease-out both; }
-    #slotItem.drop-out { animation: dropOut .14s ease-in both; }
+    /* Animation entrée (chute depuis le haut, portée par l'eau) */
+    .basin-item.drop-in  { animation: bDropIn .28s cubic-bezier(.2,.8,.4,1) both; }
+    .basin-item.drop-out { animation: bDropOut .16s ease-in both; }
 
-    @keyframes dropIn {
-      from { transform: translateY(-24px); opacity: 0; }
+    @keyframes bDropIn {
+      from { transform: translateY(-28px); opacity: 0; }
       to   { transform: translateY(0);     opacity: 1; }
     }
-    @keyframes dropOut {
+    @keyframes bDropOut {
       from { transform: translateY(0);    opacity: 1; }
-      to   { transform: translateY(18px); opacity: 0; }
+      to   { transform: translateY(20px); opacity: 0; }
     }
 
-    .si-icon {
-      font-size: 3rem; line-height: 1; display: block;
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,.15));
+    .item-icon {
+      font-size: 3.6rem; line-height: 1; display: block;
+      /* Ombre portée vers le bas simulant un reflet dans l'eau */
+      filter: drop-shadow(0 6px 14px rgba(0,0,0,.22));
+      transition: font-size .1s;
     }
 
-    .si-label {
-      font-family: 'Courier New', monospace;
-      font-size: .72rem; font-weight: bold;
-      letter-spacing: .10em; text-transform: uppercase;
-      text-align: center; line-height: 1.45;
-      max-width: 200px;
+    .item-label {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 1.05rem; font-weight: 300; font-style: italic;
+      text-align: center; line-height: 1.4;
+      text-shadow: 0 1px 4px rgba(0,0,0,.18);
+      max-width: 220px;
     }
 
-    /* Zone bassin / fond pierre */
-    .fountain-basin {
-      height: 16px;
-      background: var(--bg-dark);
-      border-top: 1px solid var(--stone);
-      position: relative; overflow: hidden;
+    /* Ondulations eau en bas du bassin */
+    .water-surface {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      height: 22px; z-index: 2;
+      overflow: hidden;
     }
-    .fountain-basin::after {
+    .water-surface::after {
       content: '';
-      position: absolute; top: 5px; left: -100%;
-      width: 300%; height: 4px;
+      position: absolute; top: 6px; left: -100%;
+      width: 300%; height: 8px;
       background: repeating-linear-gradient(
         90deg,
-        transparent 0, transparent 8px,
-        rgba(110,180,220,.18) 8px, rgba(110,180,220,.18) 14px
+        transparent 0, transparent 10px,
+        rgba(100,175,220,.22) 10px, rgba(100,175,220,.22) 18px
       );
-      animation: ripple 3s linear infinite;
+      animation: waterRipple 2.4s linear infinite;
     }
-    @keyframes ripple { to { left: 0%; } }
+    @keyframes waterRipple { to { left: 0%; } }
 
-    /* ── BOUTON TENTER MA CHANCE ── */
+    /* Cercle de choc (ripple) à l'impact de l'item dans l'eau */
+    .ripple-ring {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      border: 1px solid rgba(100,175,220,.45);
+      pointer-events: none; z-index: 4;
+      width: 0; height: 0; opacity: 0;
+    }
+    .ripple-ring.burst {
+      animation: rippleBurst .7s ease-out forwards;
+    }
+    @keyframes rippleBurst {
+      0%   { width: 10px; height: 10px; opacity: .7; transform: translate(-50%, -50%) scaleY(.3); }
+      100% { width: 180px; height: 50px; opacity: 0; transform: translate(-50%, -50%) scaleY(1); }
+    }
+
+    /* ─ Socle bas du bassin ─ */
+    .basin-base {
+      width: 100%;
+      height: 22px;
+      background: var(--stone-dark);
+      position: relative;
+      /* Créneau pixel légèrement décoratif */
+      clip-path: polygon(
+        0 0, 100% 0,
+        100% calc(100% - 4px), calc(100% - 4px) calc(100% - 4px),
+        calc(100% - 4px) 100%, 4px 100%, 4px calc(100% - 4px), 0 calc(100% - 4px)
+      );
+    }
+    /* Ligne or en haut du socle */
+    .basin-base::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    }
+
+    /* ─ BOUTON TENTER MA CHANCE ─ */
     .btn-spin {
       display: block; margin: 0 auto;
       padding: 15px 44px;
       background: var(--wine); color: var(--bg);
       font-family: 'Courier New', monospace;
-      font-size: .72rem; letter-spacing: .22em; text-transform: uppercase;
+      font-size: .7rem; letter-spacing: .22em; text-transform: uppercase;
       border: none; cursor: pointer;
       transition: background .2s, transform .12s;
     }
     .btn-spin:hover:not(:disabled) { background: var(--wine-soft); }
     .btn-spin:active:not(:disabled){ transform: scale(.98); }
-    .btn-spin:disabled { opacity: .38; cursor: not-allowed; }
+    .btn-spin:disabled { opacity: .36; cursor: not-allowed; }
 
-    /* ── RÉSULTAT ── */
+    /* ─ RÉSULTAT ─ */
     #winnerReveal {
       display: none; margin-top: 28px;
       text-align: center; padding: 0 4px;
     }
     #winnerReveal.show { display: block; animation: fadeUp .5s ease both; }
 
-    .winner-line {
-      width: 40px; height: 1px;
-      background: var(--gold); opacity: .6;
-      margin: 0 auto 18px;
-    }
-
+    .winner-rule { width: 36px; height: 1px; background: var(--gold); opacity: .55; margin: 0 auto 16px; }
     .winner-eyebrow {
       font-family: 'Courier New', monospace;
-      font-size: .58rem; letter-spacing: .3em;
-      text-transform: uppercase; color: var(--stone);
-      margin-bottom: 10px;
+      font-size: .58rem; letter-spacing: .3em; text-transform: uppercase;
+      color: var(--stone); margin-bottom: 10px;
     }
-
     .winner-prize {
-      font-size: 1.45rem; font-weight: 300;
-      font-style: italic;
-      color: var(--wine); line-height: 1.3;
-      margin-bottom: 8px;
+      font-size: 1.45rem; font-weight: 300; font-style: italic;
+      color: var(--wine); line-height: 1.3; margin-bottom: 8px;
     }
     .winner-prize.no-win { color: var(--ink-mid); font-size: 1.1rem; }
-
     .winner-sub {
-      font-size: .78rem; font-weight: 300;
-      color: var(--ink-mid); line-height: 1.75;
-      margin-bottom: 22px;
-      font-family: 'Courier New', monospace;
-      letter-spacing: .06em;
+      font-size: .76rem; font-weight: 300; color: var(--ink-mid);
+      font-family: 'Courier New', monospace; letter-spacing: .06em;
+      line-height: 1.75; margin-bottom: 20px;
     }
 
     .btn-present {
-      display: block; width: 100%; max-width: 290px;
+      display: block; width: 100%; max-width: 280px;
       margin: 0 auto; padding: 14px 20px;
       background: var(--olive); color: var(--bg);
       font-family: 'Courier New', monospace;
-      font-size: .7rem; letter-spacing: .2em; text-transform: uppercase;
+      font-size: .68rem; letter-spacing: .2em; text-transform: uppercase;
       border: none; cursor: pointer;
-      transition: background .2s, transform .12s;
+      transition: background .2s, transform .1s;
     }
     .btn-present:hover  { background: var(--olive-dark); }
     .btn-present:active { transform: scale(.98); }
@@ -494,45 +547,31 @@
 
     /* Déjà joué */
     #alreadyPlayed {
-      display: none;
-      border: 1px solid var(--stone-soft);
-      padding: 28px 24px; margin: 32px 20px 0;
+      display: none; border: 1px solid var(--stone-soft);
+      padding: 28px 24px; margin: 30px 20px 0;
       text-align: center; max-width: 340px;
     }
     #alreadyPlayed.show { display: block; animation: fadeUp .4s ease both; }
     #alreadyPlayed .ap-icon { font-size: 1.8rem; display: block; margin-bottom: 10px; }
     #alreadyPlayed p {
-      font-size: .85rem; font-weight: 300;
-      color: var(--ink-mid); line-height: 1.8;
-      font-family: 'Courier New', monospace;
-      letter-spacing: .04em;
+      font-size: .84rem; font-weight: 300; color: var(--ink-mid);
+      font-family: 'Courier New', monospace; letter-spacing: .04em; line-height: 1.8;
     }
 
-    /* Mention légale */
+    /* Légal */
     .legal {
-      margin-top: 22px;
-      font-size: .62rem; color: var(--stone);
-      font-family: 'Courier New', monospace;
-      letter-spacing: .05em; line-height: 1.85;
-      padding: 0 16px;
+      margin-top: 20px; font-size: .6rem; color: var(--stone);
+      font-family: 'Courier New', monospace; letter-spacing: .05em; line-height: 1.85; padding: 0 16px;
     }
 
-    /* Filet décoratif */
-    .divider {
-      width: 40px; height: 1px;
-      background: var(--gold); opacity: .5;
-      margin: 20px auto;
-    }
-
-    /* Confetti canvas */
+    /* Confetti */
     #confettiCanvas { position: fixed; inset: 0; pointer-events: none; z-index: 99; }
 
-    /* ── RESPONSIVE ── */
     @media (max-width: 360px) {
-      .slot-window { height: 155px; }
-      #slotItem { height: 155px; }
-      .si-icon { font-size: 2.6rem; }
-      .btn-spin { padding: 14px 32px; }
+      .basin-item { min-height: 150px; padding: 18px 12px; }
+      .item-icon  { font-size: 3rem; }
+      .item-label { font-size: .92rem; }
+      .btn-spin   { padding: 14px 32px; }
     }
   </style>
 </head>
@@ -542,37 +581,47 @@
 
 <div id="app">
 
-  <!-- ── HEADER ── -->
+  <!-- ═══════════════════════════════════════
+       HEADER — Logo Château La Coste
+  ═══════════════════════════════════════ -->
   <header>
-    <svg class="chateau-icon" viewBox="0 0 64 48" xmlns="http://www.w3.org/2000/svg" style="image-rendering:pixelated;">
-      <rect x="2"  y="14" width="10" height="26" fill="#EDE7DA"/>
-      <rect x="52" y="14" width="10" height="26" fill="#EDE7DA"/>
-      <rect x="2"  y="10" width="3"  height="6"  fill="#EDE7DA"/>
-      <rect x="7"  y="10" width="3"  height="6"  fill="#EDE7DA"/>
-      <rect x="52" y="10" width="3"  height="6"  fill="#EDE7DA"/>
-      <rect x="57" y="10" width="3"  height="6"  fill="#EDE7DA"/>
-      <rect x="12" y="22" width="40" height="18" fill="#EDE7DA"/>
-      <rect x="16" y="14" width="32" height="10" fill="#EDE7DA"/>
-      <rect x="16" y="10" width="4"  height="6"  fill="#EDE7DA"/>
-      <rect x="22" y="10" width="4"  height="6"  fill="#EDE7DA"/>
-      <rect x="28" y="10" width="4"  height="6"  fill="#EDE7DA"/>
-      <rect x="34" y="10" width="4"  height="6"  fill="#EDE7DA"/>
-      <rect x="40" y="10" width="4"  height="6"  fill="#EDE7DA"/>
-      <rect x="26" y="30" width="12" height="10" fill="#5A1E2A"/>
-      <rect x="29" y="28" width="6"  height="2"  fill="#5A1E2A"/>
-      <rect x="4"  y="18" width="6"  height="4"  fill="#907028"/>
-      <rect x="54" y="18" width="6"  height="4"  fill="#907028"/>
-      <rect x="16" y="24" width="6"  height="4"  fill="#907028"/>
-      <rect x="42" y="24" width="6"  height="4"  fill="#907028"/>
-      <rect x="0"  y="40" width="64" height="4"  fill="#4E5828"/>
-      <rect x="0"  y="36" width="4"  height="4"  fill="#4E5828"/>
-      <rect x="60" y="36" width="4"  height="4"  fill="#4E5828"/>
-    </svg>
-    <p class="header-eyebrow">Château La Coste · Provence</p>
-    <h1>La Terrasse <em>Restaurant & Terrasse</em></h1>
+    <div class="logo-placeholder">
+      <!--
+        ╔══════════════════════════════════════════════════╗
+        ║  Pour utiliser le vrai logo, remplacez ce bloc   ║
+        ║  par : <img src="URL_LOGO" class="logo-img"      ║
+        ║         alt="Château La Coste">                  ║
+        ║  et ajoutez en CSS : .logo-img{height:44px}      ║
+        ╚══════════════════════════════════════════════════╝
+      -->
+      <!-- Emblème vigne pixel art (remplaçable par <img>) -->
+      <svg class="logo-vine" width="38" height="28" viewBox="0 0 38 28"
+           xmlns="http://www.w3.org/2000/svg" style="image-rendering:pixelated;">
+        <!-- Pied de vigne central -->
+        <rect x="17" y="14" width="4"  height="14" fill="#B89048" opacity=".7"/>
+        <!-- Feuilles gauche -->
+        <rect x="8"  y="8"  width="8"  height="6"  fill="#4E5828" opacity=".8"/>
+        <rect x="4"  y="4"  width="6"  height="6"  fill="#4E5828" opacity=".6"/>
+        <rect x="10" y="2"  width="6"  height="4"  fill="#4E5828" opacity=".6"/>
+        <rect x="8"  y="14" width="6"  height="4"  fill="#4E5828" opacity=".5"/>
+        <!-- Feuilles droite -->
+        <rect x="22" y="8"  width="8"  height="6"  fill="#4E5828" opacity=".8"/>
+        <rect x="28" y="4"  width="6"  height="6"  fill="#4E5828" opacity=".6"/>
+        <rect x="22" y="2"  width="6"  height="4"  fill="#4E5828" opacity=".6"/>
+        <rect x="24" y="14" width="6"  height="4"  fill="#4E5828" opacity=".5"/>
+        <!-- Petites baies -->
+        <rect x="6"  y="12" width="3"  height="3"  fill="#5A1E2A" opacity=".7"/>
+        <rect x="29" y="12" width="3"  height="3"  fill="#5A1E2A" opacity=".7"/>
+        <!-- Ligne sol -->
+        <rect x="0"  y="26" width="38" height="2"  fill="#B89048" opacity=".3"/>
+      </svg>
+      <span class="logo-chateau">Château</span>
+      <span class="logo-name">La Coste</span>
+      <span class="logo-sub">La Terrasse · Provence</span>
+    </div>
   </header>
 
-  <!-- ── PROGRESS ── -->
+  <!-- BARRE DE PROGRESSION -->
   <div class="progress-bar">
     <div class="step-dot active" id="dot1">1</div>
     <div class="step-line" id="line1"></div>
@@ -581,85 +630,62 @@
     <div class="step-dot" id="dot3">3</div>
   </div>
 
-  <!-- ══════════════════════════════════════════
+  <!-- ═══════════════════════════════════════
        PAGE 1 — AVIS GOOGLE
-  ══════════════════════════════════════════ -->
+  ═══════════════════════════════════════ -->
   <div class="page active" id="pageReview">
     <div class="review-wrap">
 
-      <!-- Illustration fontaine — style gravure fine, inspirée de la photo -->
-      <svg class="fountain-illo" width="200" height="96"
-           viewBox="0 0 200 96" xmlns="http://www.w3.org/2000/svg"
-           style="image-rendering:pixelated; opacity:.82;">
-        <!-- Fond ciel provençal -->
-        <rect width="200" height="96" fill="#F7F3EB"/>
-        <!-- Sol -->
-        <rect x="0" y="86" width="200" height="10" fill="#E2D9C8"/>
-        <!-- Ligne horizon -->
-        <rect x="0" y="86" width="200" height="1"  fill="#B0A088"/>
-        <!-- Arbres pin parasol gauche -->
-        <rect x="4"  y="10" width="4"  height="76" fill="#5A4A38" opacity=".25"/>
-        <rect x="0"  y="6"  width="12" height="8"  fill="#4E5828" opacity=".55"/>
-        <rect x="2"  y="2"  width="8"  height="6"  fill="#363E1C" opacity=".5"/>
-        <!-- Arbres pin parasol droite -->
-        <rect x="192" y="10" width="4" height="76" fill="#5A4A38" opacity=".25"/>
-        <rect x="188" y="6"  width="12" height="8" fill="#4E5828" opacity=".55"/>
-        <rect x="190" y="2"  width="8"  height="6" fill="#363E1C" opacity=".5"/>
-        <!-- Parasols terrasse -->
-        <rect x="20" y="22" width="28" height="3" fill="#5A1E2A" opacity=".6"/>
-        <rect x="32" y="25" width="3"  height="48" fill="#9A8870" opacity=".5"/>
-        <rect x="152" y="22" width="28" height="3" fill="#4E5828" opacity=".55"/>
-        <rect x="165" y="25" width="3"  height="48" fill="#9A8870" opacity=".5"/>
-        <!-- FONTAINE CENTRALE (gravure fine) -->
-        <!-- Bassin -->
-        <rect x="68" y="72" width="64" height="14" fill="#D4C4A8"/>
-        <rect x="64" y="68" width="72" height="6"  fill="#DDD0B8"/>
-        <rect x="62" y="66" width="76" height="3"  fill="#E2D4BC"/>
-        <!-- Colonne fine -->
-        <rect x="98" y="40" width="4"  height="28" fill="#C8B898"/>
-        <!-- Vasque -->
-        <rect x="88" y="34" width="24" height="8"  fill="#C0B090"/>
-        <rect x="86" y="32" width="28" height="3"  fill="#D4C4A8"/>
-        <!-- Pot -->
-        <rect x="96" y="20" width="8"  height="14" fill="#A05030" opacity=".8"/>
-        <rect x="94" y="18" width="12" height="4"  fill="#8A4028" opacity=".8"/>
-        <!-- Végétation fine -->
-        <rect x="94" y="10" width="3"  height="10" fill="#4E5828" opacity=".7"/>
-        <rect x="103" y="8" width="3"  height="12" fill="#4E5828" opacity=".7"/>
-        <rect x="99"  y="6" width="2"  height="6"  fill="#363E1C" opacity=".7"/>
-        <!-- Eau qui coule (filet fin) -->
-        <rect x="99" y="40" width="2"  height="8"  fill="#6EB4DC" opacity=".7"/>
-        <rect x="80" y="62" width="3"  height="3"  fill="#6EB4DC" opacity=".4"/>
-        <rect x="117" y="62" width="3" height="3"  fill="#6EB4DC" opacity=".4"/>
-        <!-- Chaises colorées (petites, style gravure) -->
-        <rect x="30" y="54" width="16" height="18" fill="#5BA4A4" opacity=".7"/>
-        <rect x="28" y="52" width="20" height="3"  fill="#4A9090" opacity=".7"/>
-        <rect x="154" y="54" width="16" height="18" fill="#E8C840" opacity=".7"/>
-        <rect x="152" y="52" width="20" height="3"  fill="#D4B430" opacity=".7"/>
-        <!-- Table centrale -->
-        <rect x="54" y="52" width="34" height="4"  fill="#C8B898"/>
-        <rect x="64" y="56" width="14" height="20" fill="#C0B090"/>
-        <rect x="56" y="74" width="30" height="3"  fill="#B8A888"/>
-        <!-- Verre à vin (silhouette fine) -->
-        <rect x="68" y="42" width="6"  height="1"  fill="#F7F3EB"/>
-        <rect x="66" y="43" width="10" height="8"  fill="#7C3040" opacity=".7"/>
-        <rect x="68" y="51" width="6"  height="1"  fill="#F7F3EB"/>
-        <rect x="70" y="52" width="2"  height="3"  fill="#F7F3EB"/>
-        <rect x="68" y="55" width="6"  height="1"  fill="#F7F3EB"/>
-        <!-- Table droite -->
-        <rect x="112" y="52" width="34" height="4" fill="#C8B898"/>
-        <rect x="122" y="56" width="14" height="20" fill="#C0B090"/>
-        <rect x="114" y="74" width="30" height="3" fill="#B8A888"/>
-        <!-- Soleil fin -->
-        <rect x="178" y="4"  width="8" height="8"  fill="#907028" opacity=".5"/>
-        <rect x="174" y="7"  width="4" height="3"  fill="#907028" opacity=".3"/>
-        <rect x="182" y="7"  width="4" height="3"  fill="#907028" opacity=".3"/>
-        <rect x="178" y="1"  width="8" height="3"  fill="#907028" opacity=".25"/>
+      <!-- Illustration fontaine / terrasse (style gravure fine) -->
+      <svg class="fountain-illo" width="200" height="92"
+           viewBox="0 0 200 92" xmlns="http://www.w3.org/2000/svg"
+           style="image-rendering:pixelated;">
+        <rect width="200" height="92" fill="#F7F3EB"/>
+        <rect x="0"   y="82" width="200" height="10" fill="#E0D8C6"/>
+        <rect x="0"   y="82" width="200" height="1"  fill="#A89070"/>
+        <!-- Arbres -->
+        <rect x="2"   y="8"  width="4"   height="74" fill="#5A4A38" opacity=".2"/>
+        <rect x="0"   y="4"  width="10"  height="8"  fill="#4E5828" opacity=".5"/>
+        <rect x="1"   y="1"  width="8"   height="5"  fill="#363E1C" opacity=".5"/>
+        <rect x="194" y="8"  width="4"   height="74" fill="#5A4A38" opacity=".2"/>
+        <rect x="190" y="4"  width="10"  height="8"  fill="#4E5828" opacity=".5"/>
+        <rect x="191" y="1"  width="8"   height="5"  fill="#363E1C" opacity=".5"/>
+        <!-- Parasols -->
+        <rect x="18"  y="20" width="26"  height="2"  fill="#5A1E2A" opacity=".55"/>
+        <rect x="29"  y="22" width="2"   height="46" fill="#A89070" opacity=".45"/>
+        <rect x="156" y="20" width="26"  height="2"  fill="#4E5828" opacity=".5"/>
+        <rect x="167" y="22" width="2"   height="46" fill="#A89070" opacity=".45"/>
+        <!-- Fontaine centrale -->
+        <rect x="70"  y="70" width="60"  height="12" fill="#D4C4A8"/>
+        <rect x="66"  y="65" width="68"  height="6"  fill="#DDD0B8"/>
+        <rect x="96"  y="38" width="8"   height="28" fill="#C8B898"/>
+        <rect x="86"  y="32" width="28"  height="8"  fill="#C0B090"/>
+        <rect x="84"  y="29" width="32"  height="4"  fill="#D4C4A8"/>
+        <rect x="96"  y="18" width="8"   height="13" fill="#A05030" opacity=".8"/>
+        <rect x="94"  y="16" width="12"  height="4"  fill="#8A4028" opacity=".8"/>
+        <rect x="93"  y="8"  width="4"   height="10" fill="#4E5828" opacity=".7"/>
+        <rect x="103" y="6"  width="4"   height="12" fill="#4E5828" opacity=".7"/>
+        <rect x="97"  y="4"  width="6"   height="6"  fill="#363E1C" opacity=".7"/>
+        <rect x="99"  y="38" width="2"   height="8"  fill="#64AFD4" opacity=".7"/>
+        <!-- Chaises -->
+        <rect x="28"  y="52" width="16"  height="18" fill="#5BA4A4" opacity=".65"/>
+        <rect x="26"  y="50" width="20"  height="3"  fill="#4A9090" opacity=".65"/>
+        <rect x="156" y="52" width="16"  height="18" fill="#E8C840" opacity=".65"/>
+        <rect x="154" y="50" width="20"  height="3"  fill="#D4B430" opacity=".65"/>
+        <!-- Table + verre -->
+        <rect x="54"  y="50" width="32"  height="4"  fill="#C8B898"/>
+        <rect x="62"  y="54" width="16"  height="20" fill="#C0B090"/>
+        <rect x="66"  y="40" width="6"   height="1"  fill="#F7F3EB"/>
+        <rect x="64"  y="41" width="10"  height="8"  fill="#7C3040" opacity=".65"/>
+        <rect x="66"  y="49" width="6"   height="1"  fill="#F7F3EB"/>
+        <!-- Soleil -->
+        <rect x="178" y="4"  width="8"   height="8"  fill="#907028" opacity=".45"/>
+        <rect x="174" y="7"  width="4"   height="3"  fill="#907028" opacity=".25"/>
+        <rect x="182" y="7"  width="4"   height="3"  fill="#907028" opacity=".25"/>
       </svg>
 
       <div class="thin-rule"></div>
-
-      <p class="review-eyebrow">La Terrasse · Château La Coste</p>
+      <p class="eyebrow">La Terrasse · Château La Coste</p>
       <h2 class="review-title">Merci d'être venu partager ce moment.</h2>
       <p class="review-body">
         Votre passage compte pour nous.<br>
@@ -669,9 +695,7 @@
 
       <a id="googleReviewBtn" href="#" target="_blank" rel="noopener"
          class="btn-google" onclick="onReviewClick()">
-        <span class="star">★</span>
-        Laisser un avis sur Google
-        <span class="star">★</span>
+        <span class="star">★</span> Laisser un avis sur Google <span class="star">★</span>
       </a>
 
       <div id="doneSection">
@@ -685,13 +709,12 @@
         Le jeu est indépendant de toute note ou contenu d'avis.<br>
         Votre retour est libre et ne conditionne pas le résultat.
       </p>
-
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════════
-       PAGE 2 — JEU : FONTAINE / DÉFILEMENT
-  ══════════════════════════════════════════ -->
+  <!-- ═══════════════════════════════════════
+       PAGE 2 — JEU : FONTAINE
+  ═══════════════════════════════════════ -->
   <div class="page" id="pageGame">
 
     <div id="alreadyPlayed">
@@ -700,63 +723,86 @@
     </div>
 
     <div id="gameSection" class="game-wrap">
-
-      <p class="game-eyebrow">La Terrasse · Attention du jour</p>
+      <p class="eyebrow">Attention du jour</p>
       <h2 class="game-title">Tentez votre chance.</h2>
-      <p class="game-sub">
-        Merci pour votre retour.<br>
-        Découvrez votre attention du jour.
-      </p>
+      <p class="game-sub">Merci pour votre retour.<br>Découvrez votre attention du jour.</p>
 
-      <!-- ─── Fontaine / slot ─── -->
-      <div class="fountain-stage">
-        <div class="slot-frame">
+      <!-- ─── FONTAINE ─── -->
+      <div class="fountain-scene">
 
-          <!-- Tête de fontaine (eau animée) -->
-          <div class="fountain-head">
-            <!-- Petite fontaine SVG pixel -->
-            <svg class="fountain-cap" width="52" height="34"
-                 viewBox="0 0 52 34" xmlns="http://www.w3.org/2000/svg"
-                 style="image-rendering:pixelated;">
-              <rect x="22" y="8"  width="8"  height="18" fill="#C8B898" opacity=".9"/>
-              <rect x="14" y="4"  width="24" height="6"  fill="#B8A888" opacity=".9"/>
-              <rect x="12" y="2"  width="28" height="3"  fill="#C8B898" opacity=".9"/>
-              <rect x="22" y="0"  width="8"  height="4"  fill="#A05030" opacity=".8"/>
-              <rect x="24" y="18" width="4"  height="4"  fill="#6EB4DC" opacity=".8"/>
-            </svg>
+        <!-- 1. Tête de fontaine (source) -->
+        <div class="fountain-head">
+          <!-- Ornement fontaine pixel art -->
+          <svg class="spout-ornament" width="70" height="46"
+               viewBox="0 0 70 46" xmlns="http://www.w3.org/2000/svg"
+               style="image-rendering:pixelated;">
+            <!-- Pot / source -->
+            <rect x="28" y="22" width="14" height="16" fill="#C4B49A" opacity=".9"/>
+            <rect x="26" y="20" width="18" height="4"  fill="#B0A088" opacity=".9"/>
+            <rect x="24" y="18" width="22" height="3"  fill="#C4B49A" opacity=".9"/>
+            <!-- Végétation -->
+            <rect x="28" y="8"  width="4"  height="12" fill="#4E5828" opacity=".9"/>
+            <rect x="36" y="6"  width="4"  height="14" fill="#4E5828" opacity=".9"/>
+            <rect x="32" y="4"  width="6"  height="6"  fill="#363E1C" opacity=".85"/>
+            <rect x="22" y="10" width="4"  height="8"  fill="#4E5828" opacity=".7"/>
+            <rect x="44" y="10" width="4"  height="8"  fill="#4E5828" opacity=".7"/>
+            <!-- Petite fleur -->
+            <rect x="24" y="6"  width="4"  height="4"  fill="#A05030" opacity=".75"/>
+            <rect x="42" y="6"  width="4"  height="4"  fill="#A05030" opacity=".75"/>
+            <!-- Ouverture eau (en bas du pot) -->
+            <rect x="32" y="36" width="6"  height="4"  fill="#64AFD4" opacity=".8"/>
+            <!-- Ligne or fine -->
+            <rect x="0"  y="44" width="70" height="1"  fill="#907028" opacity=".35"/>
+          </svg>
 
-            <!-- 5 filets d'eau animés -->
-            <div class="water-streams">
-              <div class="ws" style="--dur:.68s; --del:.00s"></div>
-              <div class="ws" style="--dur:.72s; --del:.16s"></div>
-              <div class="ws" style="--dur:.62s; --del:.32s"></div>
-              <div class="ws" style="--dur:.70s; --del:.08s"></div>
-              <div class="ws" style="--dur:.65s; --del:.24s"></div>
-            </div>
+          <!-- Filets d'eau depuis la source -->
+          <div class="water-curtain">
+            <div class="wc" style="--d:.66s;--dl:.00s"></div>
+            <div class="wc" style="--d:.72s;--dl:.14s"></div>
+            <div class="wc" style="--d:.60s;--dl:.28s"></div>
+            <div class="wc" style="--d:.68s;--dl:.07s"></div>
+            <div class="wc" style="--d:.74s;--dl:.22s"></div>
+            <div class="wc" style="--d:.62s;--dl:.36s"></div>
           </div>
+        </div>
 
-          <!-- Fenêtre affichant le lot en cours -->
-          <div class="slot-window">
-            <div id="slotItem">
-              <span class="si-icon" id="siIcon">💧</span>
-              <span class="si-label" id="siLabel"
-                    style="opacity:.32;letter-spacing:.28em">votre lot</span>
-            </div>
+        <!-- 2. Colonne d'eau (murs pierre + filets continus) -->
+        <div class="water-column">
+          <div class="wc-bg"></div>
+          <div class="col-stream" style="--d:.66s;--dl:.00s"></div>
+          <div class="col-stream" style="--d:.72s;--dl:.14s"></div>
+          <div class="col-stream" style="--d:.60s;--dl:.28s"></div>
+          <div class="col-stream" style="--d:.68s;--dl:.07s"></div>
+          <div class="col-stream" style="--d:.74s;--dl:.22s"></div>
+          <div class="col-stream" style="--d:.62s;--dl:.36s"></div>
+        </div>
+
+        <!-- 3. Bassin (item + eau) -->
+        <div class="basin">
+          <!-- L'item — directement dans l'eau, sans carte ni cadre -->
+          <div class="basin-item" id="slotItem">
+            <span class="item-icon" id="siIcon">💧</span>
+            <span class="item-label" id="siLabel"
+                  style="opacity:.3;font-style:italic;letter-spacing:.18em">votre lot</span>
           </div>
+          <!-- Cercle de choc à chaque changement d'item -->
+          <div class="ripple-ring" id="rippleRing"></div>
+          <!-- Surface d'eau en bas -->
+          <div class="water-surface"></div>
+        </div>
 
-          <!-- Bassin avec ondulations -->
-          <div class="fountain-basin"></div>
+        <!-- 4. Socle pierre -->
+        <div class="basin-base"></div>
 
-        </div><!-- /slot-frame -->
-      </div><!-- /fountain-stage -->
+      </div><!-- /fountain-scene -->
 
       <button id="spinBtn" class="btn-spin" onclick="startSpin()">
         Tenter ma chance
       </button>
 
-      <!-- Résultat inline -->
+      <!-- Résultat (inline, pas d'overlay) -->
       <div id="winnerReveal">
-        <div class="winner-line"></div>
+        <div class="winner-rule"></div>
         <p class="winner-eyebrow">Votre attention du jour</p>
         <div id="winnerPrize" class="winner-prize"></div>
         <div id="winnerSub"   class="winner-sub"></div>
@@ -765,10 +811,7 @@
         </button>
       </div>
 
-      <p class="legal">
-        Dans la limite des stocks disponibles.<br>
-        Un gain par personne et par jour.
-      </p>
+      <p class="legal">Dans la limite des stocks disponibles. Un gain par personne et par jour.</p>
     </div>
 
   </div>
@@ -780,26 +823,30 @@
    CONFIGURATION
 ================================================================ */
 
-/** Lien Google Review — remplacer par l'URL courte Google My Business */
+/** Lien Google Review — remplacer par le lien court Google My Business */
 const GOOGLE_REVIEW_URL = "https://www.google.com/maps?cid=7655344166233586966";
 
 const COOLDOWN_MS = 24 * 60 * 60 * 1000;
-const STORAGE_KEY = "terrasse_lacostegame_v3";
+const STORAGE_KEY = "terrasse_lacostegame_v4";
 
 /**
  * Lots et probabilités (somme = 100).
- * bg  = couleur de fond dans la fenêtre fontaine.
- * col = couleur du texte/icône.
+ * bg  = couleur de fond du bassin pendant cet item.
+ * col = couleur du texte/icône (toujours lisible sur bg).
  */
 const PRIZES = [
-  { label: "Merci pour votre participation",  weight: 10, win: false, icon: "🌿", bg: "#C4B49A", col: "#F7F3EB" },
-  { label: "Un café offert",                  weight: 24, win: true,  icon: "☕", bg: "#3C2010", col: "#F7F3EB" },
-  { label: "Un thé glacé offert",             weight: 24, win: true,  icon: "🧊", bg: "#2A5870", col: "#F7F3EB" },
-  { label: "Un verre de vin offert",          weight: 21, win: true,  icon: "🍷", bg: "#5A1E2A", col: "#F7F3EB" },
-  { label: "Un cookie offert",                weight: 16, win: true,  icon: "🍪", bg: "#7A5018", col: "#F7F3EB" },
-  { label: "Une demi-bouteille de vin",        weight:  4, win: true,  icon: "🍾", bg: "#363E1C", col: "#F7F3EB" },
-  { label: "Grand lot : une bouteille de vin", weight:  1, win: true,  icon: "🏆", bg: "#2A0F18", col: "#B89048" },
+  { label: "Merci pour votre participation",  weight: 10, win: false, icon: "🌿", bg: "rgba(180,160,130,.18)", col: "#5A4A38" },
+  { label: "Un café offert",                  weight: 24, win: true,  icon: "☕", bg: "rgba(44,20,8,.62)",     col: "#F7F3EB" },
+  { label: "Un thé glacé offert",             weight: 24, win: true,  icon: "🧊", bg: "rgba(30,70,100,.55)",   col: "#F7F3EB" },
+  { label: "Un verre de vin offert",          weight: 21, win: true,  icon: "🍷", bg: "rgba(90,30,42,.62)",    col: "#F7F3EB" },
+  { label: "Un cookie offert",                weight: 16, win: true,  icon: "🍪", bg: "rgba(120,80,20,.52)",   col: "#F7F3EB" },
+  { label: "Une demi-bouteille de vin",        weight:  4, win: true,  icon: "🍾", bg: "rgba(54,62,28,.65)",    col: "#F7F3EB" },
+  { label: "Grand lot : une bouteille de vin", weight:  1, win: true,  icon: "🏆", bg: "rgba(30,10,18,.75)",    col: "#B89048" },
 ];
+
+function var_css(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || "#5A4A38";
+}
 
 /* ================================================================
    INIT
@@ -840,15 +887,14 @@ function setStep(n) {
     const d = document.getElementById(`dot${i}`);
     d.classList.remove("active","done");
     if (i < n)       { d.classList.add("done"); d.textContent = ""; }
-    else if (i === n) { d.classList.add("active"); d.textContent = i; }
+    else if (i === n){ d.classList.add("active"); d.textContent = i; }
     else               d.textContent = i;
-    if (i <= 2)
-      document.getElementById(`line${i}`).classList.toggle("done", i < n);
+    if (i <= 2) document.getElementById(`line${i}`).classList.toggle("done", i < n);
   }
 }
 
 /* ================================================================
-   TIRAGE AU SORT
+   TIRAGE
 ================================================================ */
 function pickWinner() {
   const r = Math.random() * 100;
@@ -861,9 +907,7 @@ function pickWinner() {
 }
 
 /* ================================================================
-   ANIMATION — défilement fontaine
-   Les lots tombent d'en haut (portés par l'eau).
-   Accélération → ralentissement → pause → gagnant.
+   ANIMATION — FONTAINE
 ================================================================ */
 let spinning = false;
 
@@ -874,19 +918,14 @@ function startSpin() {
 
   const winnerIdx = pickWinner();
 
-  // Séquence : 22 items aléatoires + gagnant en dernier
-  const seq = [];
-  for (let i = 0; i < 22; i++) {
-    seq.push(Math.floor(Math.random() * PRIZES.length));
-  }
+  // 22 items aléatoires + gagnant en dernier
+  const seq = Array.from({ length: 22 }, () => Math.floor(Math.random() * PRIZES.length));
   seq.push(winnerIdx);
 
   let pos = 0;
-
   function tick() {
     const isLast = pos === seq.length - 1;
     swapItem(PRIZES[seq[pos]], isLast);
-
     if (!isLast) {
       pos++;
       setTimeout(tick, getDelay(pos, seq.length));
@@ -894,51 +933,57 @@ function startSpin() {
       setTimeout(() => showWinner(winnerIdx), 950);
     }
   }
-
   tick();
 }
 
-/**
- * Délai entre deux items (ms).
- * Commence à ~90ms, monte jusqu'à ~650ms,
- * avec une pause marquée avant le dernier item.
- */
+/** Délai entre deux items — accélération puis ralentissement + pause avant gagnant */
 function getDelay(pos, total) {
-  const preLast = total - 2;
-  if (pos === preLast) return 950; // pause dramatique
+  if (pos === total - 2) return 950;                      // pause dramatique
   const p = Math.min(pos / (total - 3), 1);
-  return 90 + Math.pow(p, 1.5) * 560;
+  return 90 + Math.pow(p, 1.5) * 560;                    // 90ms → 650ms
 }
 
-/** Change l'item visible avec effet de chute depuis le haut */
+/** Remplace l'item dans le bassin avec effet de chute */
 function swapItem(prize, isWinner) {
-  const el    = document.getElementById("slotItem");
+  const wrap  = document.getElementById("slotItem");
   const icon  = document.getElementById("siIcon");
   const label = document.getElementById("siLabel");
 
-  el.classList.remove("drop-in");
-  el.classList.add("drop-out");
+  wrap.classList.remove("drop-in");
+  wrap.classList.add("drop-out");
 
   setTimeout(() => {
     icon.textContent  = prize.icon;
     label.textContent = prize.label;
     label.style.opacity       = "1";
-    label.style.letterSpacing = ".08em";
-    el.style.backgroundColor  = prize.bg;
-    el.style.color            = prize.col;
+    label.style.letterSpacing = ".04em";
+    label.style.fontStyle     = "italic";
+    wrap.style.backgroundColor = prize.bg;
+    wrap.style.color           = prize.col;
 
-    // Contour or discret pour le gagnant
-    el.style.outline       = isWinner ? "1px solid var(--gold)" : "none";
-    el.style.outlineOffset = "-8px";
+    // Contour or discret sur le gagnant
+    wrap.style.boxShadow = isWinner
+      ? "inset 0 0 0 1px rgba(144,112,40,.5)"
+      : "none";
 
-    el.classList.remove("drop-out");
-    el.classList.add("drop-in");
-    setTimeout(() => el.classList.remove("drop-in"), 260);
-  }, 125);
+    wrap.classList.remove("drop-out");
+    wrap.classList.add("drop-in");
+    setTimeout(() => wrap.classList.remove("drop-in"), 300);
+
+    // Ripple d'impact dans l'eau
+    triggerRipple();
+  }, 140);
+}
+
+function triggerRipple() {
+  const r = document.getElementById("rippleRing");
+  r.classList.remove("burst");
+  void r.offsetWidth;
+  r.classList.add("burst");
 }
 
 /* ================================================================
-   AFFICHAGE RÉSULTAT
+   RÉSULTAT
 ================================================================ */
 function showWinner(idx) {
   const prize = PRIZES[idx];
@@ -954,15 +999,13 @@ function showWinner(idx) {
 
   const btn = document.getElementById("presentBtn");
   btn.style.display = prize.win ? "block" : "none";
-
   document.getElementById("winnerReveal").classList.add("show");
 
   if (prize.weight <= 4) launchConfetti();
 
   setTimeout(() =>
     document.getElementById("winnerReveal")
-            .scrollIntoView({ behavior: "smooth", block: "center" }),
-  200);
+            .scrollIntoView({ behavior: "smooth", block: "center" }), 250);
 }
 
 function handlePresent() {
@@ -1000,7 +1043,7 @@ function launchConfetti() {
 
   const parts = Array.from({ length: 80 }, () => ({
     x: Math.random() * canvas.width,
-    y: -12 - Math.random() * 50,
+    y: -14 - Math.random() * 50,
     w: 5 + Math.random() * 5,
     h: 8 + Math.random() * 10,
     c: COLS[Math.floor(Math.random() * COLS.length)],
@@ -1016,7 +1059,7 @@ function launchConfetti() {
       p.y += p.s; p.a += p.r;
       if (p.y < canvas.height + 20) alive = true;
       ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.a);
-      ctx.fillStyle = p.c; ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+      ctx.fillStyle = p.c; ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
       ctx.restore();
     });
     if (alive && ++frame < 200) requestAnimationFrame(draw);
