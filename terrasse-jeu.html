@@ -9,64 +9,35 @@
        VARIABLES & RESET
     ============================================================ */
     :root {
-      --creme:      #F5EFE0;
-      --creme-dark: #EAE0CC;
-      --olive:      #6B7A3E;
-      --olive-dark: #4E5A2C;
-      --terracotta: #C0654A;
-      --bordeaux:   #7B2D3E;
+      --creme:          #F5EFE0;
+      --creme-dark:     #EAE0CC;
+      --olive:          #6B7A3E;
+      --olive-dark:     #4E5A2C;
+      --terracotta:     #C0654A;
+      --bordeaux:       #7B2D3E;
       --bordeaux-light: #9B3D52;
-      --gold:       #C8A84B;
-      --gold-light: #E2C97A;
-      --stone:      #B8A88A;
-      --text-dark:  #2C1F14;
-      --text-mid:   #5C4A35;
-      --shadow:     rgba(44, 31, 20, 0.18);
-
-      --pixel: 2px; /* unité pixel-art — multiplier pour agrandir */
+      --bordeaux-deep:  #5A1E2C;
+      --gold:           #C8A84B;
+      --gold-light:     #E2C97A;
+      --stone:          #B8A88A;
+      --text-dark:      #2C1F14;
+      --text-mid:       #5C4A35;
+      --shadow:         rgba(44, 31, 20, 0.18);
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     html, body {
-      height: 100%;
-      background: var(--creme);
+      min-height: 100%;
+      background-color: var(--creme);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Crect width='80' height='80' fill='%23F5EFE0'/%3E%3Crect x='10' y='20' width='4' height='4' fill='%236B7A3E' opacity='.18'/%3E%3Crect x='14' y='16' width='4' height='4' fill='%236B7A3E' opacity='.14'/%3E%3Crect x='6' y='16' width='4' height='4' fill='%236B7A3E' opacity='.14'/%3E%3Crect x='10' y='12' width='4' height='4' fill='%236B7A3E' opacity='.10'/%3E%3Crect x='12' y='24' width='2' height='8' fill='%236B7A3E' opacity='.12'/%3E%3Crect x='50' y='55' width='4' height='4' fill='%236B7A3E' opacity='.15'/%3E%3Crect x='54' y='51' width='4' height='4' fill='%236B7A3E' opacity='.11'/%3E%3Crect x='46' y='51' width='4' height='4' fill='%236B7A3E' opacity='.11'/%3E%3Crect x='52' y='59' width='2' height='6' fill='%236B7A3E' opacity='.10'/%3E%3C/svg%3E");
       color: var(--text-dark);
       font-family: 'Georgia', 'Times New Roman', serif;
       overflow-x: hidden;
     }
 
     /* ============================================================
-       PIXEL-ART FONT FACE (system fallback stack)
-       Pour un vrai look pixel, on utilise une stack soignée.
-    ============================================================ */
-    .pixel {
-      font-family: 'Courier New', 'Lucida Console', monospace;
-      letter-spacing: 0.04em;
-      image-rendering: pixelated;
-    }
-
-    /* ============================================================
-       FOND — MOTIF VIGNES PIXEL ART (SVG inline data-uri)
-    ============================================================ */
-    body {
-      background-color: var(--creme);
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Crect width='80' height='80' fill='%23F5EFE0'/%3E%3C!-- feuille vigne pixel --/%3E%3Crect x='10' y='20' width='4' height='4' fill='%236B7A3E' opacity='.18'/%3E%3Crect x='14' y='16' width='4' height='4' fill='%236B7A3E' opacity='.14'/%3E%3Crect x='6' y='16' width='4' height='4' fill='%236B7A3E' opacity='.14'/%3E%3Crect x='10' y='12' width='4' height='4' fill='%236B7A3E' opacity='.10'/%3E%3Crect x='12' y='24' width='2' height='8' fill='%236B7A3E' opacity='.12'/%3E%3Crect x='50' y='55' width='4' height='4' fill='%236B7A3E' opacity='.15'/%3E%3Crect x='54' y='51' width='4' height='4' fill='%236B7A3E' opacity='.11'/%3E%3Crect x='46' y='51' width='4' height='4' fill='%236B7A3E' opacity='.11'/%3E%3Crect x='52' y='59' width='2' height='6' fill='%236B7A3E' opacity='.10'/%3E%3C/svg%3E");
-    }
-
-    /* ============================================================
-       LAYOUT PRINCIPAL
-    ============================================================ */
-    #app {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 0 0 40px;
-    }
-
-    /* ============================================================
-       HEADER
+       HEADER (commun aux deux étapes)
     ============================================================ */
     header {
       width: 100%;
@@ -74,12 +45,9 @@
       padding: 20px 24px 16px;
       text-align: center;
       position: relative;
-      box-shadow: 0 4px 0 var(--bordeaux-light) inset, 0 -4px 0 #5A1E2C inset;
-      /* bordure pixel art */
       border-bottom: 4px solid var(--gold);
     }
 
-    /* Motif décoratif pixel en haut du header */
     header::before {
       content: '';
       display: block;
@@ -93,12 +61,6 @@
       top: 0; left: 0; right: 0;
     }
 
-    .logo-pixel {
-      display: inline-block;
-      margin-bottom: 8px;
-    }
-
-    /* Château pixel art SVG en ligne */
     .chateau-icon {
       width: 64px;
       height: 48px;
@@ -125,34 +87,273 @@
     }
 
     /* ============================================================
-       SECTION INTRO
+       BARRE DE PROGRESSION (3 étapes)
     ============================================================ */
-    .intro {
+    .progress-bar {
       width: 100%;
-      max-width: 440px;
-      padding: 28px 24px 0;
-      text-align: center;
+      background: var(--bordeaux-deep);
+      padding: 10px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      border-bottom: 2px solid var(--gold);
     }
 
-    .intro-tagline {
-      font-size: 0.95rem;
-      color: var(--text-mid);
-      line-height: 1.7;
-      margin-bottom: 20px;
+    .step-dot {
+      width: 28px;
+      height: 28px;
+      border: 2px solid var(--stone);
+      background: var(--bordeaux-deep);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Courier New', monospace;
+      font-size: 0.7rem;
+      color: var(--stone);
+      position: relative;
+      flex-shrink: 0;
+      transition: background 0.3s, border-color 0.3s, color 0.3s;
     }
 
-    .intro-tagline strong {
-      color: var(--bordeaux);
+    .step-dot.active {
+      background: var(--gold);
+      border-color: var(--gold-light);
+      color: var(--text-dark);
+    }
+
+    .step-dot.done {
+      background: var(--olive);
+      border-color: var(--olive-dark);
+      color: var(--creme);
+    }
+
+    .step-dot.done::after {
+      content: '✓';
+      font-size: 0.75rem;
+    }
+
+    .step-line {
+      width: 48px;
+      height: 2px;
+      background: var(--stone);
+      opacity: 0.4;
+      flex-shrink: 0;
+      transition: background 0.3s, opacity 0.3s;
+    }
+
+    .step-line.done {
+      background: var(--olive);
+      opacity: 0.8;
+    }
+
+    .step-label {
+      display: none; /* masqué sur mobile par défaut, visible via aria */
     }
 
     /* ============================================================
-       ROUE DE LA CHANCE
+       LAYOUT PAGES
     ============================================================ */
+    .page {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      padding-bottom: 48px;
+    }
+
+    .page.active {
+      display: flex;
+      animation: pageIn 0.4s ease both;
+    }
+
+    @keyframes pageIn {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ============================================================
+       PAGE 1 — AVIS GOOGLE
+    ============================================================ */
+    .review-page {
+      padding: 36px 24px 0;
+      max-width: 440px;
+      width: 100%;
+      text-align: center;
+    }
+
+    /* Illustration vigne pixel art */
+    .vine-illustration {
+      display: block;
+      margin: 0 auto 28px;
+      image-rendering: pixelated;
+    }
+
+    .review-heading {
+      font-size: 1.3rem;
+      color: var(--bordeaux);
+      font-weight: normal;
+      line-height: 1.4;
+      margin-bottom: 12px;
+    }
+
+    .review-subtext {
+      font-size: 0.88rem;
+      color: var(--text-mid);
+      line-height: 1.8;
+      margin-bottom: 32px;
+    }
+
+    /* Bouton Google — principal, pleine largeur */
+    .btn-google {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      width: 100%;
+      max-width: 320px;
+      margin: 0 auto;
+      padding: 18px 24px;
+      background: var(--bordeaux);
+      color: var(--creme);
+      font-family: 'Courier New', monospace;
+      font-size: 0.9rem;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      box-shadow: 4px 4px 0 var(--bordeaux-deep);
+      transition: transform 0.1s, box-shadow 0.1s;
+      position: relative;
+    }
+
+    .btn-google:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0 var(--bordeaux-deep);
+    }
+
+    .btn-google:active {
+      transform: translate(2px, 2px);
+      box-shadow: 2px 2px 0 var(--bordeaux-deep);
+    }
+
+    /* Icône étoile pixel art dans le bouton */
+    .star-icon {
+      font-size: 1.1rem;
+      color: var(--gold-light);
+      line-height: 1;
+    }
+
+    /* Zone "J'ai terminé" — cachée jusqu'au clic sur Google */
+    #doneSection {
+      width: 100%;
+      max-width: 320px;
+      margin: 20px auto 0;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(8px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+
+    #doneSection.visible {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+
+    /* Séparateur */
+    .or-divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 0 0 14px;
+      color: var(--stone);
+      font-family: 'Courier New', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+    }
+
+    .or-divider::before, .or-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--stone);
+      opacity: 0.5;
+    }
+
+    .btn-done {
+      display: block;
+      width: 100%;
+      padding: 16px 20px;
+      background: var(--olive);
+      color: var(--creme);
+      font-family: 'Courier New', monospace;
+      font-size: 0.88rem;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      border: none;
+      cursor: pointer;
+      box-shadow: 4px 4px 0 var(--olive-dark);
+      transition: transform 0.1s, box-shadow 0.1s;
+      position: relative;
+    }
+
+    .btn-done:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0 var(--olive-dark);
+    }
+
+    .btn-done:active {
+      transform: translate(2px, 2px);
+      box-shadow: 2px 2px 0 var(--olive-dark);
+    }
+
+    .btn-done::before {
+      content: '▸ ';
+      color: var(--gold-light);
+    }
+
+    /* Note discrète sous les boutons */
+    .review-note {
+      margin-top: 28px;
+      font-size: 0.68rem;
+      color: var(--stone);
+      font-family: 'Courier New', monospace;
+      letter-spacing: 0.04em;
+      line-height: 1.6;
+    }
+
+    /* ============================================================
+       PAGE 2 — ROUE DE LA CHANCE
+    ============================================================ */
+    .game-intro {
+      width: 100%;
+      max-width: 440px;
+      padding: 24px 24px 0;
+      text-align: center;
+    }
+
+    .game-tagline {
+      font-size: 0.92rem;
+      color: var(--text-mid);
+      line-height: 1.75;
+      margin-bottom: 4px;
+    }
+
+    .game-tagline strong {
+      color: var(--bordeaux);
+      display: block;
+      font-size: 1.05rem;
+      margin-bottom: 4px;
+    }
+
+    /* Roue */
     .wheel-wrap {
       position: relative;
       width: 300px;
       height: 300px;
-      margin: 24px auto 0;
+      margin: 20px auto 0;
       filter: drop-shadow(0 8px 24px var(--shadow));
     }
 
@@ -162,7 +363,6 @@
       border-radius: 50%;
     }
 
-    /* Flèche indicatrice (pixel art) */
     .wheel-arrow {
       position: absolute;
       top: -14px;
@@ -188,7 +388,6 @@
       border-radius: 4px 4px 0 0;
     }
 
-    /* Centre de la roue */
     .wheel-center {
       position: absolute;
       top: 50%;
@@ -201,10 +400,8 @@
       border-radius: 50%;
       z-index: 10;
       box-shadow: 0 0 0 3px var(--gold);
-      image-rendering: pixelated;
     }
 
-    /* Pixel art decoration sur le centre */
     .wheel-center::after {
       content: '✦';
       position: absolute;
@@ -215,12 +412,10 @@
       font-size: 14px;
     }
 
-    /* ============================================================
-       BOUTON PRINCIPAL
-    ============================================================ */
+    /* Bouton spin */
     .btn-spin {
       display: block;
-      margin: 28px auto 0;
+      margin: 24px auto 0;
       padding: 16px 40px;
       background: var(--bordeaux);
       color: var(--creme);
@@ -232,24 +427,17 @@
       cursor: pointer;
       position: relative;
       transition: transform 0.1s, box-shadow 0.1s;
-      /* style pixel art : ombre portée en blocs */
-      box-shadow:
-        4px 4px 0 #5A1E2C,
-        inset 0 2px 0 var(--bordeaux-light);
+      box-shadow: 4px 4px 0 var(--bordeaux-deep), inset 0 2px 0 var(--bordeaux-light);
     }
 
     .btn-spin:hover:not(:disabled) {
       transform: translate(-2px, -2px);
-      box-shadow:
-        6px 6px 0 #5A1E2C,
-        inset 0 2px 0 var(--bordeaux-light);
+      box-shadow: 6px 6px 0 var(--bordeaux-deep), inset 0 2px 0 var(--bordeaux-light);
     }
 
     .btn-spin:active:not(:disabled) {
       transform: translate(2px, 2px);
-      box-shadow:
-        2px 2px 0 #5A1E2C,
-        inset 0 2px 0 var(--bordeaux-light);
+      box-shadow: 2px 2px 0 var(--bordeaux-deep), inset 0 2px 0 var(--bordeaux-light);
     }
 
     .btn-spin:disabled {
@@ -257,55 +445,42 @@
       cursor: not-allowed;
     }
 
-    /* Décoration coin pixel */
-    .btn-spin::before, .btn-spin::after {
-      content: '▸';
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      color: var(--gold-light);
-      font-size: 12px;
-    }
-    .btn-spin::before { left: 14px; }
-    .btn-spin::after  { right: 14px; content: '◂'; }
+    .btn-spin::before { content: '▸'; position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--gold-light); font-size: 12px; }
+    .btn-spin::after  { content: '◂'; position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--gold-light); font-size: 12px; }
 
-    /* ============================================================
-       BOUTON SECONDAIRE — GOOGLE REVIEW
-    ============================================================ */
-    .btn-review {
-      display: block;
-      margin: 16px auto 0;
-      padding: 12px 28px;
-      background: transparent;
-      color: var(--olive-dark);
-      font-family: 'Courier New', monospace;
-      font-size: 0.78rem;
-      letter-spacing: 0.10em;
-      text-transform: uppercase;
-      border: 2px solid var(--olive);
-      cursor: pointer;
-      text-decoration: none;
-      text-align: center;
-      width: max-content;
-      transition: background 0.15s, color 0.15s;
-    }
-
-    .btn-review:hover {
-      background: var(--olive);
-      color: var(--creme);
-    }
-
-    /* ============================================================
-       MENTION LÉGALE
-    ============================================================ */
     .legal {
-      margin-top: 20px;
-      font-size: 0.68rem;
+      margin-top: 16px;
+      font-size: 0.67rem;
       color: var(--stone);
       text-align: center;
       font-family: 'Courier New', monospace;
       letter-spacing: 0.04em;
       padding: 0 24px;
+      line-height: 1.7;
+    }
+
+    /* ============================================================
+       MESSAGE "DÉJÀ JOUÉ"
+    ============================================================ */
+    #alreadyPlayed {
+      display: none;
+      background: var(--creme-dark);
+      border: 3px solid var(--stone);
+      padding: 28px 24px;
+      margin: 32px 20px 0;
+      text-align: center;
+      max-width: 380px;
+    }
+
+    #alreadyPlayed.show { display: block; animation: pageIn 0.4s ease both; }
+
+    #alreadyPlayed .ap-icon { font-size: 2.2rem; display: block; margin-bottom: 10px; }
+
+    #alreadyPlayed p {
+      font-size: 0.88rem;
+      color: var(--text-mid);
+      font-family: 'Courier New', monospace;
+      line-height: 1.65;
     }
 
     /* ============================================================
@@ -329,18 +504,16 @@
     }
 
     @keyframes fadeIn {
-      from { opacity: 0; transform: scale(0.92); }
-      to   { opacity: 1; transform: scale(1); }
+      from { opacity: 0; }
+      to   { opacity: 1; }
     }
 
-    /* Carte cadeau pixel art */
     .result-card {
       background: var(--creme);
       width: 100%;
       max-width: 360px;
       position: relative;
       padding: 0 0 24px;
-      /* bordure en escalier pixel art */
       clip-path: polygon(
         0 8px, 8px 8px, 8px 0,
         calc(100% - 8px) 0, calc(100% - 8px) 8px, 100% 8px,
@@ -357,7 +530,6 @@
       to   { transform: scale(1) rotate(0deg); opacity: 1; }
     }
 
-    /* Bandeau haut de la carte */
     .card-header {
       background: var(--bordeaux);
       padding: 14px 20px;
@@ -386,7 +558,6 @@
       font-family: 'Courier New', monospace;
     }
 
-    /* Illustration pixel art du lot */
     .card-illustration {
       display: block;
       margin: 20px auto 0;
@@ -399,17 +570,14 @@
     }
 
     .card-prize {
-      font-size: 1.4rem;
+      font-size: 1.35rem;
       color: var(--bordeaux);
       font-weight: bold;
       line-height: 1.3;
       margin-bottom: 6px;
     }
 
-    .card-prize.no-win {
-      color: var(--text-mid);
-      font-size: 1.1rem;
-    }
+    .card-prize.no-win { color: var(--text-mid); font-size: 1.1rem; }
 
     .card-subtitle {
       font-size: 0.78rem;
@@ -419,7 +587,6 @@
       margin-bottom: 16px;
     }
 
-    /* Code unique */
     .card-code-wrap {
       background: var(--creme-dark);
       border: 2px solid var(--stone);
@@ -443,7 +610,6 @@
       margin-bottom: 4px;
     }
 
-    /* Bouton présenter */
     .btn-present {
       display: block;
       width: calc(100% - 48px);
@@ -466,34 +632,8 @@
       box-shadow: 2px 2px 0 var(--olive-dark);
     }
 
-    /* Message "déjà joué" */
-    #alreadyPlayed {
-      display: none;
-      background: var(--creme-dark);
-      border: 3px solid var(--stone);
-      padding: 24px;
-      margin: 24px 20px 0;
-      text-align: center;
-      max-width: 400px;
-    }
-
-    #alreadyPlayed.show { display: block; }
-
-    #alreadyPlayed p {
-      font-size: 0.88rem;
-      color: var(--text-mid);
-      font-family: 'Courier New', monospace;
-      line-height: 1.6;
-    }
-
-    #alreadyPlayed .ap-icon {
-      font-size: 2rem;
-      display: block;
-      margin-bottom: 10px;
-    }
-
     /* ============================================================
-       PARTICULES CONFETTI (canvas overlay)
+       CONFETTI
     ============================================================ */
     #confettiCanvas {
       position: fixed;
@@ -503,52 +643,47 @@
     }
 
     /* ============================================================
-       SEPARATEUR DÉCORATIF
+       SÉPARATEUR DÉCORATIF
     ============================================================ */
     .divider {
       width: 100%;
       max-width: 320px;
       height: 12px;
-      margin: 24px auto 0;
+      margin: 20px auto 0;
       background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='12'%3E%3Crect x='14' y='4' width='4' height='4' fill='%23C8A84B' opacity='.6'/%3E%3Crect x='4' y='6' width='8' height='2' fill='%23B8A88A' opacity='.5'/%3E%3Crect x='20' y='6' width='8' height='2' fill='%23B8A88A' opacity='.5'/%3E%3Crect x='0' y='6' width='3' height='2' fill='%23B8A88A' opacity='.3'/%3E%3Crect x='29' y='6' width='3' height='2' fill='%23B8A88A' opacity='.3'/%3E%3C/svg%3E") repeat-x center;
     }
 
     /* ============================================================
-       RESPONSIVE AJUSTEMENTS
+       RESPONSIVE
     ============================================================ */
     @media (max-height: 700px) {
       .wheel-wrap { width: 240px; height: 240px; }
       header { padding: 14px 24px 12px; }
       header h1 { font-size: 1.05rem; }
+      .review-page { padding-top: 24px; }
     }
 
     @media (max-width: 360px) {
       .wheel-wrap { width: 260px; height: 260px; }
       .btn-spin { padding: 14px 30px; font-size: 0.9rem; }
+      .btn-google { font-size: 0.8rem; padding: 16px 16px; }
     }
   </style>
 </head>
 <body>
 
-<!-- ===== CANVAS CONFETTI (caché jusqu'à un gain) ===== -->
 <canvas id="confettiCanvas"></canvas>
 
 <!-- ===== OVERLAY RÉSULTAT ===== -->
 <div id="resultOverlay" role="dialog" aria-modal="true" aria-label="Résultat du jeu">
   <div class="result-card">
-
     <div class="card-header">
       <h2>✦ La Terrasse — Château La Coste ✦</h2>
     </div>
-
-    <!-- Illustration pixel art générée dynamiquement par JS -->
     <canvas id="prizeIllustration" class="card-illustration" width="120" height="80"></canvas>
-
     <div class="card-body">
       <div id="cardPrize" class="card-prize"></div>
       <div id="cardSubtitle" class="card-subtitle"></div>
-
-      <!-- Code unique — masqué si "Merci pour votre participation" -->
       <div id="codeSection">
         <div class="card-code-wrap">
           <span class="card-code-label">Votre code</span>
@@ -559,93 +694,166 @@
         </button>
       </div>
     </div>
-
   </div>
 </div>
 
-<!-- ===== APP PRINCIPALE ===== -->
+<!-- ===== STRUCTURE PRINCIPALE ===== -->
 <div id="app">
 
+  <!-- HEADER commun -->
   <header>
-    <!-- Logo Château pixel art (SVG inline) -->
-    <svg class="chateau-icon" viewBox="0 0 64 48" xmlns="http://www.w3.org/2000/svg"
-         style="image-rendering:pixelated;">
-      <!-- Tours -->
+    <svg class="chateau-icon" viewBox="0 0 64 48" xmlns="http://www.w3.org/2000/svg" style="image-rendering:pixelated;">
       <rect x="2"  y="14" width="10" height="26" fill="#EAE0CC"/>
       <rect x="52" y="14" width="10" height="26" fill="#EAE0CC"/>
-      <!-- Créneaux gauche -->
-      <rect x="2"  y="10" width="3" height="6" fill="#EAE0CC"/>
-      <rect x="7"  y="10" width="3" height="6" fill="#EAE0CC"/>
-      <!-- Créneaux droit -->
-      <rect x="52" y="10" width="3" height="6" fill="#EAE0CC"/>
-      <rect x="57" y="10" width="3" height="6" fill="#EAE0CC"/>
-      <!-- Corps central -->
+      <rect x="2"  y="10" width="3"  height="6"  fill="#EAE0CC"/>
+      <rect x="7"  y="10" width="3"  height="6"  fill="#EAE0CC"/>
+      <rect x="52" y="10" width="3"  height="6"  fill="#EAE0CC"/>
+      <rect x="57" y="10" width="3"  height="6"  fill="#EAE0CC"/>
       <rect x="12" y="22" width="40" height="18" fill="#EAE0CC"/>
-      <!-- Toit central -->
       <rect x="16" y="14" width="32" height="10" fill="#EAE0CC"/>
-      <!-- Créneaux centre -->
-      <rect x="16" y="10" width="4" height="6" fill="#EAE0CC"/>
-      <rect x="22" y="10" width="4" height="6" fill="#EAE0CC"/>
-      <rect x="28" y="10" width="4" height="6" fill="#EAE0CC"/>
-      <rect x="34" y="10" width="4" height="6" fill="#EAE0CC"/>
-      <rect x="40" y="10" width="4" height="6" fill="#EAE0CC"/>
-      <!-- Porte -->
+      <rect x="16" y="10" width="4"  height="6"  fill="#EAE0CC"/>
+      <rect x="22" y="10" width="4"  height="6"  fill="#EAE0CC"/>
+      <rect x="28" y="10" width="4"  height="6"  fill="#EAE0CC"/>
+      <rect x="34" y="10" width="4"  height="6"  fill="#EAE0CC"/>
+      <rect x="40" y="10" width="4"  height="6"  fill="#EAE0CC"/>
       <rect x="26" y="30" width="12" height="10" fill="#7B2D3E"/>
       <rect x="29" y="28" width="6"  height="2"  fill="#7B2D3E"/>
-      <!-- Fenêtres tours -->
-      <rect x="4"  y="18" width="6" height="4" fill="#C8A84B"/>
-      <rect x="54" y="18" width="6" height="4" fill="#C8A84B"/>
-      <!-- Fenêtres corps -->
-      <rect x="16" y="24" width="6" height="4" fill="#C8A84B"/>
-      <rect x="42" y="24" width="6" height="4" fill="#C8A84B"/>
-      <!-- Sol / base -->
-      <rect x="0"  y="40" width="64" height="4" fill="#6B7A3E"/>
-      <!-- Vigne décorative -->
-      <rect x="0"  y="36" width="4" height="4" fill="#6B7A3E"/>
-      <rect x="60" y="36" width="4" height="4" fill="#6B7A3E"/>
+      <rect x="4"  y="18" width="6"  height="4"  fill="#C8A84B"/>
+      <rect x="54" y="18" width="6"  height="4"  fill="#C8A84B"/>
+      <rect x="16" y="24" width="6"  height="4"  fill="#C8A84B"/>
+      <rect x="42" y="24" width="6"  height="4"  fill="#C8A84B"/>
+      <rect x="0"  y="40" width="64" height="4"  fill="#6B7A3E"/>
+      <rect x="0"  y="36" width="4"  height="4"  fill="#6B7A3E"/>
+      <rect x="60" y="36" width="4"  height="4"  fill="#6B7A3E"/>
     </svg>
-
-    <h1>
-      La Terrasse
-      <span>Château La Coste · Provence</span>
-    </h1>
+    <h1>La Terrasse <span>Château La Coste · Provence</span></h1>
   </header>
 
-  <!-- Message "déjà joué" -->
-  <div id="alreadyPlayed">
-    <span class="ap-icon">🍃</span>
-    <p>Vous avez déjà participé aujourd'hui.<br>
-       Revenez nous voir demain !</p>
+  <!-- BARRE DE PROGRESSION -->
+  <div class="progress-bar" role="progressbar" aria-valuemin="1" aria-valuemax="3" aria-valuenow="1">
+    <div class="step-dot active" id="dot1" aria-label="Étape 1 : Votre avis">1</div>
+    <div class="step-line" id="line1"></div>
+    <div class="step-dot" id="dot2" aria-label="Étape 2 : Votre attention">2</div>
+    <div class="step-line" id="line2"></div>
+    <div class="step-dot" id="dot3" aria-label="Étape 3 : Résultat">3</div>
   </div>
 
-  <!-- Section principale du jeu -->
-  <div id="gameSection" class="intro">
+  <!-- ================================================
+       PAGE 1 — INVITATION AVIS GOOGLE
+  ================================================ -->
+  <div class="page active" id="pageReview">
+    <div class="review-page">
 
-    <p class="intro-tagline">
-      <strong>Merci pour votre visite à La Terrasse.</strong><br>
-      Tentez votre chance pour découvrir votre attention du jour.
-    </p>
+      <!-- Illustration pixel art : vigne & verre -->
+      <svg class="vine-illustration" width="160" height="80" viewBox="0 0 160 80"
+           xmlns="http://www.w3.org/2000/svg" style="image-rendering:pixelated;">
+        <!-- Sol -->
+        <rect x="0" y="72" width="160" height="8" fill="#6B7A3E" opacity=".35"/>
+        <!-- Cep de vigne gauche -->
+        <rect x="16" y="40" width="4"  height="32" fill="#5C4A35" opacity=".7"/>
+        <rect x="12" y="36" width="4"  height="4"  fill="#6B7A3E"/>
+        <rect x="8"  y="32" width="4"  height="4"  fill="#6B7A3E"/>
+        <rect x="16" y="28" width="4"  height="4"  fill="#6B7A3E"/>
+        <rect x="20" y="32" width="4"  height="4"  fill="#6B7A3E"/>
+        <rect x="24" y="28" width="4"  height="4"  fill="#6B7A3E"/>
+        <!-- Grappes -->
+        <rect x="10" y="44" width="4"  height="4"  fill="#7B2D3E"/>
+        <rect x="14" y="48" width="4"  height="4"  fill="#7B2D3E"/>
+        <rect x="10" y="52" width="4"  height="4"  fill="#7B2D3E"/>
+        <!-- Cep vigne droit -->
+        <rect x="140" y="40" width="4" height="32" fill="#5C4A35" opacity=".7"/>
+        <rect x="144" y="36" width="4" height="4"  fill="#6B7A3E"/>
+        <rect x="148" y="32" width="4" height="4"  fill="#6B7A3E"/>
+        <rect x="140" y="28" width="4" height="4"  fill="#6B7A3E"/>
+        <rect x="136" y="32" width="4" height="4"  fill="#6B7A3E"/>
+        <rect x="132" y="28" width="4" height="4"  fill="#6B7A3E"/>
+        <rect x="146" y="44" width="4" height="4"  fill="#7B2D3E"/>
+        <rect x="142" y="48" width="4" height="4"  fill="#7B2D3E"/>
+        <rect x="146" y="52" width="4" height="4"  fill="#7B2D3E"/>
+        <!-- Verre de vin centre -->
+        <rect x="72" y="20" width="16" height="2"  fill="#C8A84B"/>
+        <rect x="70" y="22" width="20" height="16" fill="#F5EFE0" opacity=".8"/>
+        <rect x="70" y="22" width="20" height="10" fill="#9B3D52" opacity=".75"/>
+        <rect x="74" y="38" width="12" height="2"  fill="#F5EFE0" opacity=".8"/>
+        <rect x="78" y="40" width="4"  height="8"  fill="#F5EFE0" opacity=".8"/>
+        <rect x="72" y="48" width="16" height="2"  fill="#F5EFE0" opacity=".8"/>
+        <!-- Reflet verre -->
+        <rect x="72" y="24" width="2"  height="6"  fill="white"  opacity=".4"/>
+        <!-- Soleil pixel -->
+        <rect x="120" y="8"  width="8"  height="8"  fill="#C8A84B" opacity=".7"/>
+        <rect x="116" y="12" width="4"  height="4"  fill="#C8A84B" opacity=".4"/>
+        <rect x="128" y="12" width="4"  height="4"  fill="#C8A84B" opacity=".4"/>
+        <rect x="120" y="4"  width="8"  height="4"  fill="#C8A84B" opacity=".4"/>
+      </svg>
 
-    <div class="wheel-wrap">
-      <div class="wheel-arrow"></div>
-      <canvas id="wheelCanvas" width="300" height="300"></canvas>
-      <div class="wheel-center"></div>
+      <h2 class="review-heading">Merci d'être venu à La&nbsp;Terrasse.</h2>
+
+      <p class="review-subtext">
+        Votre passage compte pour nous.<br>
+        Si vous souhaitez partager votre expérience,<br>
+        un avis Google est toujours précieux.
+      </p>
+
+      <!-- Bouton Google Review -->
+      <a id="googleReviewBtn" href="#" target="_blank" rel="noopener"
+         class="btn-google" onclick="onReviewClick()">
+        <span class="star-icon">★</span>
+        Laisser un avis sur Google
+        <span class="star-icon">★</span>
+      </a>
+
+      <!-- Zone "J'ai terminé" — apparaît après le clic -->
+      <div id="doneSection">
+        <div class="or-divider">ou revenez ici ensuite</div>
+        <button class="btn-done" onclick="goToGame()">
+          J'ai terminé — accéder au jeu
+        </button>
+      </div>
+
+      <p class="review-note">
+        Merci pour votre retour.<br>
+        Tentez votre chance pour découvrir votre attention du jour.<br><br>
+        Le jeu est indépendant de toute note ou contenu d'avis.
+      </p>
+
+    </div>
+  </div>
+
+  <!-- ================================================
+       PAGE 2 — ROUE DE LA CHANCE
+  ================================================ -->
+  <div class="page" id="pageGame">
+
+    <!-- Message "déjà joué" -->
+    <div id="alreadyPlayed">
+      <span class="ap-icon">🍃</span>
+      <p>Vous avez déjà participé aujourd'hui.<br>Revenez nous voir demain !</p>
     </div>
 
-    <button id="spinBtn" class="btn-spin" onclick="spin()">
-      Tenter ma chance
-    </button>
+    <!-- Jeu -->
+    <div id="gameSection" class="game-intro">
+      <p class="game-tagline">
+        <strong>Merci pour votre retour.</strong>
+        Tentez votre chance pour découvrir<br>votre attention du jour.
+      </p>
 
-    <div class="divider"></div>
+      <div class="wheel-wrap">
+        <div class="wheel-arrow"></div>
+        <canvas id="wheelCanvas" width="300" height="300"></canvas>
+        <div class="wheel-center"></div>
+      </div>
 
-    <a id="reviewLink" href="#" target="_blank" rel="noopener" class="btn-review">
-      ★ Laisser un avis sur Google
-    </a>
+      <button id="spinBtn" class="btn-spin" onclick="spin()">
+        Tenter ma chance
+      </button>
 
-    <p class="legal">
-      Dans la limite des stocks disponibles.<br>
-      Un gain par personne et par jour.
-    </p>
+      <div class="divider"></div>
+
+      <p class="legal">
+        Dans la limite des stocks disponibles.<br>
+        Un gain par personne et par jour.
+      </p>
+    </div>
 
   </div>
 
@@ -653,104 +861,156 @@
 
 <script>
 /* ================================================================
-   CONFIGURATION — modifiez ces constantes facilement
+   CONFIGURATION
 ================================================================ */
 
-/** URL de la page Google Review du restaurant */
-const GOOGLE_REVIEW_URL = "https://g.page/r/VOTRE_CODE_GOOGLE/review"; // ← À remplacer
+/** URL de la page Google Review — à remplacer */
+const GOOGLE_REVIEW_URL = "https://g.page/r/VOTRE_CODE_GOOGLE/review";
 
-/** Durée du cooldown entre deux participations (en ms) */
-const COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24 heures
-
-/** Clé localStorage */
-const STORAGE_KEY = "terrasse_lacostegame";
+/** Durée anti-replay (24h) */
+const COOLDOWN_MS  = 24 * 60 * 60 * 1000;
+const STORAGE_KEY  = "terrasse_lacostegame";
 
 /**
- * Lots et probabilités.
- * La somme des `weight` DOIT être égale à 100.
- * `win: false` = le lot "consolation" (pas de code généré).
+ * Lots et probabilités (somme des weight = 100).
+ * win: false → lot consolation, pas de code généré.
  */
 const PRIZES = [
-  { label: "Merci pour votre participation", weight: 10, win: false, color: "#B8A88A", textColor: "#F5EFE0", icon: "leaf"   },
-  { label: "Un thé offert",                  weight: 30, win: true,  color: "#6B7A3E", textColor: "#F5EFE0", icon: "tea"    },
-  { label: "Un café offert",                 weight: 20, win: true,  color: "#5C4A35", textColor: "#F5EFE0", icon: "coffee" },
-  { label: "Un thé glacé offert",            weight: 20, win: true,  color: "#C0654A", textColor: "#F5EFE0", icon: "ice"    },
-  { label: "Un cookie offert",               weight: 15, win: true,  color: "#C8A84B", textColor: "#2C1F14", icon: "cookie" },
-  { label: "Une demi-bouteille de vin",      weight:  4, win: true,  color: "#7B2D3E", textColor: "#F5EFE0", icon: "wine"   },
-  { label: "Grand lot : une bouteille de vin", weight: 1, win: true, color: "#4E5A2C", textColor: "#F5EFE0", icon: "wine2"  },
+  { label: "Merci pour votre participation",  weight: 10, win: false, color: "#B8A88A", textColor: "#F5EFE0", icon: "leaf"   },
+  { label: "Un thé offert",                   weight: 30, win: true,  color: "#6B7A3E", textColor: "#F5EFE0", icon: "tea"    },
+  { label: "Un café offert",                  weight: 20, win: true,  color: "#5C4A35", textColor: "#F5EFE0", icon: "coffee" },
+  { label: "Un thé glacé offert",             weight: 20, win: true,  color: "#C0654A", textColor: "#F5EFE0", icon: "ice"    },
+  { label: "Un cookie offert",                weight: 15, win: true,  color: "#C8A84B", textColor: "#2C1F14", icon: "cookie" },
+  { label: "Une demi-bouteille de vin",       weight:  4, win: true,  color: "#7B2D3E", textColor: "#F5EFE0", icon: "wine"   },
+  { label: "Grand lot : une bouteille de vin",weight:  1, win: true,  color: "#4E5A2C", textColor: "#F5EFE0", icon: "wine2"  },
 ];
 
 /* ================================================================
    ÉTAT
 ================================================================ */
 let spinning     = false;
-let currentAngle = 0; // angle actuel de la roue (radians)
+let currentAngle = 0;
 const TWO_PI     = Math.PI * 2;
 
 /* ================================================================
-   INITIALISATION
+   INIT
 ================================================================ */
 document.addEventListener("DOMContentLoaded", () => {
-  // Met à jour le lien Google Review
-  document.getElementById("reviewLink").href = GOOGLE_REVIEW_URL;
+  document.getElementById("googleReviewBtn").href = GOOGLE_REVIEW_URL;
 
-  // Vérifie si le joueur a déjà participé
-  if (hasPlayedRecently()) {
-    document.getElementById("gameSection").style.display = "none";
-    document.getElementById("alreadyPlayed").classList.add("show");
+  // Restaure l'état de la session : si le bouton Google a déjà été cliqué
+  // dans la même session, on ré-affiche directement "J'ai terminé"
+  if (sessionStorage.getItem("review_clicked")) {
+    showDoneButton(false); // sans animation, instantané
   }
 
-  // Dessine la roue initiale
   drawWheel(currentAngle);
 });
 
 /* ================================================================
-   ROUE — DESSIN (Canvas 2D)
+   FUNNEL — NAVIGATION ENTRE ÉTAPES
+================================================================ */
+
+/** Appelé au clic sur le bouton Google Review */
+function onReviewClick() {
+  sessionStorage.setItem("review_clicked", "1");
+  showDoneButton(true);
+}
+
+function showDoneButton(animate) {
+  const section = document.getElementById("doneSection");
+  if (animate) {
+    // Petit délai pour laisser l'onglet s'ouvrir avant l'animation
+    setTimeout(() => section.classList.add("visible"), 400);
+  } else {
+    section.style.transition = "none";
+    section.classList.add("visible");
+  }
+}
+
+/** Passe à la page du jeu */
+function goToGame() {
+  // Mise à jour de la barre de progression
+  setStep(2);
+
+  document.getElementById("pageReview").classList.remove("active");
+  document.getElementById("pageGame").classList.add("active");
+
+  // Vérifie si déjà joué
+  if (hasPlayedRecently()) {
+    document.getElementById("gameSection").style.display = "none";
+    document.getElementById("alreadyPlayed").classList.add("show");
+    setStep(3); // on est au bout du funnel
+  }
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+/** Met à jour l'affichage de la barre de progression */
+function setStep(step) {
+  const dots  = [null,
+    document.getElementById("dot1"),
+    document.getElementById("dot2"),
+    document.getElementById("dot3")
+  ];
+  const lines = [null,
+    document.getElementById("line1"),
+    document.getElementById("line2")
+  ];
+
+  dots.forEach((dot, i) => {
+    if (!dot) return;
+    dot.classList.remove("active", "done");
+    if (i < step)  dot.classList.add("done"),   dot.textContent = "";
+    if (i === step) dot.classList.add("active"), dot.textContent = String(i);
+    if (i > step)   dot.textContent = String(i);
+  });
+
+  lines.forEach((line, i) => {
+    if (!line) return;
+    line.classList.toggle("done", i < step);
+  });
+
+  document.querySelector(".progress-bar").setAttribute("aria-valuenow", step);
+}
+
+/* ================================================================
+   ROUE — DESSIN
 ================================================================ */
 function drawWheel(angleOffset) {
-  const canvas  = document.getElementById("wheelCanvas");
-  const ctx     = canvas.getContext("2d");
-  const cx      = canvas.width  / 2;
-  const cy      = canvas.height / 2;
-  const radius  = cx - 6;
-
-  // Calcul des angles de chaque secteur
-  const total   = PRIZES.reduce((s, p) => s + p.weight, 0);
-  let startAngle = angleOffset;
+  const canvas = document.getElementById("wheelCanvas");
+  const ctx    = canvas.getContext("2d");
+  const cx     = canvas.width / 2;
+  const cy     = canvas.height / 2;
+  const radius = cx - 6;
+  const total  = PRIZES.reduce((s, p) => s + p.weight, 0);
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  let startAngle = angleOffset;
 
-  PRIZES.forEach((prize, i) => {
+  PRIZES.forEach(prize => {
     const sliceAngle = (prize.weight / total) * TWO_PI;
     const endAngle   = startAngle + sliceAngle;
 
-    // Secteur
     ctx.beginPath();
     ctx.moveTo(cx, cy);
     ctx.arc(cx, cy, radius, startAngle, endAngle);
     ctx.closePath();
     ctx.fillStyle = prize.color;
     ctx.fill();
-
-    // Bordure pixel-art (épaisse, couleur unie)
     ctx.strokeStyle = "rgba(245,239,224,0.4)";
     ctx.lineWidth   = 2;
     ctx.stroke();
 
-    // Label court sur chaque secteur
     ctx.save();
     ctx.translate(cx, cy);
     ctx.rotate(startAngle + sliceAngle / 2);
-    ctx.textAlign    = "right";
-    ctx.fillStyle    = prize.textColor;
-    ctx.font         = "bold 10px 'Courier New', monospace";
-    ctx.letterSpacing = "0.5px";
+    ctx.textAlign = "right";
+    ctx.fillStyle = prize.textColor;
+    ctx.font      = "bold 10px 'Courier New', monospace";
 
-    // Troncature du texte pour les petits secteurs
-    const maxW = radius * 0.7;
     let text = prize.label;
-    if (ctx.measureText(text).width > maxW) {
-      // Abréviation : premier mot seulement
+    if (ctx.measureText(text).width > radius * 0.7) {
       text = text.split(" ")[prize.win ? 1 : 0] || text;
     }
     ctx.fillText(text, radius - 10, 4);
@@ -759,14 +1019,12 @@ function drawWheel(angleOffset) {
     startAngle = endAngle;
   });
 
-  // Bord extérieur stylé
   ctx.beginPath();
   ctx.arc(cx, cy, radius, 0, TWO_PI);
   ctx.strokeStyle = "#C8A84B";
   ctx.lineWidth   = 5;
   ctx.stroke();
 
-  // Second bord pixel art
   ctx.beginPath();
   ctx.arc(cx, cy, radius - 6, 0, TWO_PI);
   ctx.strokeStyle = "rgba(245,239,224,0.25)";
@@ -778,65 +1036,53 @@ function drawWheel(angleOffset) {
    TIRAGE AU SORT
 ================================================================ */
 function drawPrize() {
-  const rand  = Math.random() * 100;
-  let cumul   = 0;
+  const rand = Math.random() * 100;
+  let cumul  = 0;
   for (const prize of PRIZES) {
     cumul += prize.weight;
     if (rand < cumul) return prize;
   }
-  return PRIZES[0]; // fallback
+  return PRIZES[0];
 }
 
 /* ================================================================
-   ANIMATION DE SPIN
+   ANIMATION SPIN
 ================================================================ */
 function spin() {
   if (spinning) return;
   spinning = true;
+  document.getElementById("spinBtn").disabled = true;
 
-  const btn = document.getElementById("spinBtn");
-  btn.disabled = true;
-
-  // Choisit le lot en avance
-  const wonPrize = drawPrize();
-
-  // Calcule la position finale de la roue pour que ce secteur
-  // s'arrête sous la flèche (haut, angle = -π/2)
+  const wonPrize   = drawPrize();
   const total      = PRIZES.reduce((s, p) => s + p.weight, 0);
   let   prizeStart = 0;
+
   for (const p of PRIZES) {
     if (p === wonPrize) break;
     prizeStart += (p.weight / total) * TWO_PI;
   }
-  const prizeCenter = prizeStart + ((wonPrize.weight / total) * TWO_PI) / 2;
 
-  // La flèche pointe vers -PI/2 (12 h).
-  // On veut que prizeCenter + targetAngle = -PI/2 (mod 2PI)
-  const extraSpins  = (4 + Math.floor(Math.random() * 3)) * TWO_PI; // 4-6 tours
+  const prizeCenter = prizeStart + ((wonPrize.weight / total) * TWO_PI) / 2;
+  const extraSpins  = (4 + Math.floor(Math.random() * 3)) * TWO_PI;
   const targetAngle = -Math.PI / 2 - prizeCenter + extraSpins;
 
-  const duration  = 3200; // ms
-  const startTime = performance.now();
+  const duration   = 3200;
+  const startTime  = performance.now();
   const startAngle = currentAngle;
 
-  function easeOut(t) {
-    // Cubic ease-out pour un arrêt progressif
-    return 1 - Math.pow(1 - t, 3);
-  }
+  function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
 
   function animate(now) {
     const elapsed  = now - startTime;
     const progress = Math.min(elapsed / duration, 1);
-    const eased    = easeOut(progress);
-
-    currentAngle = startAngle + targetAngle * eased;
+    currentAngle   = startAngle + targetAngle * easeOut(progress);
     drawWheel(currentAngle);
 
     if (progress < 1) {
       requestAnimationFrame(animate);
     } else {
-      // Fin de l'animation
       spinning = false;
+      setStep(3);
       savePlay();
       showResult(wonPrize);
     }
@@ -846,69 +1092,57 @@ function spin() {
 }
 
 /* ================================================================
-   AFFICHAGE DU RÉSULTAT
+   RÉSULTAT
 ================================================================ */
 function showResult(prize) {
-  const overlay   = document.getElementById("resultOverlay");
-  const prizeEl   = document.getElementById("cardPrize");
-  const subtitleEl= document.getElementById("cardSubtitle");
+  const overlay     = document.getElementById("resultOverlay");
+  const prizeEl     = document.getElementById("cardPrize");
+  const subtitleEl  = document.getElementById("cardSubtitle");
   const codeSection = document.getElementById("codeSection");
-  const codeEl    = document.getElementById("prizeCode");
+  const codeEl      = document.getElementById("prizeCode");
 
-  prizeEl.textContent  = prize.label;
-  prizeEl.className    = "card-prize" + (prize.win ? "" : " no-win");
+  prizeEl.textContent = prize.label;
+  prizeEl.className   = "card-prize" + (prize.win ? "" : " no-win");
 
   if (prize.win) {
-    subtitleEl.textContent = "À présenter à un membre de l'équipe.";
+    subtitleEl.textContent    = "À présenter à un membre de l'équipe.";
     codeSection.style.display = "block";
-    const code = generateCode();
-    codeEl.textContent = code;
-    if (prize.weight <= 4) launchConfetti(); // Lots rares → confettis
+    codeEl.textContent        = generateCode();
+    if (prize.weight <= 4) launchConfetti();
   } else {
-    subtitleEl.textContent = "Merci d'être passé nous voir !";
+    subtitleEl.textContent    = "Merci d'être passé nous voir !";
     codeSection.style.display = "none";
   }
 
-  // Illustration pixel art du lot
   drawPrizeIllustration(prize.icon, prize.color);
-
   overlay.classList.add("show");
-  overlay.setAttribute("aria-hidden", "false");
 }
 
 function closeResult() {
   document.getElementById("resultOverlay").classList.remove("show");
 }
 
-/* Fermer en cliquant en dehors de la carte */
 document.getElementById("resultOverlay").addEventListener("click", function(e) {
   if (e.target === this) closeResult();
 });
 
 function presentCode() {
-  // Feedback visuel simple
   const btn = document.querySelector(".btn-present");
-  btn.textContent = "✓ Bon appétit !";
+  btn.textContent    = "✓ Bon appétit !";
   btn.style.background = "#4E5A2C";
   setTimeout(closeResult, 1400);
 }
 
 /* ================================================================
-   ILLUSTRATIONS PIXEL ART (Canvas 2D)
+   ILLUSTRATIONS PIXEL ART
 ================================================================ */
 function drawPrizeIllustration(icon, bgColor) {
   const canvas = document.getElementById("prizeIllustration");
   const ctx    = canvas.getContext("2d");
-  const W = 120, H = 80;
-  ctx.clearRect(0, 0, W, H);
-
-  // Fond arrondi pixel
+  ctx.clearRect(0, 0, 120, 80);
   ctx.fillStyle = bgColor;
-  ctx.fillRect(10, 6, W - 20, H - 12);
-
+  ctx.fillRect(10, 6, 100, 68);
   ctx.imageSmoothingEnabled = false;
-
-  // Échelle pixel art 4×
   const S = 4;
 
   function px(x, y, w, h, color) {
@@ -916,152 +1150,90 @@ function drawPrizeIllustration(icon, bgColor) {
     ctx.fillRect(10 + x * S, 6 + y * S, w * S, h * S);
   }
 
-  const cream = "#F5EFE0";
-  const dark  = "#2C1F14";
+  const cream = "#F5EFE0", dark = "#2C1F14";
 
   if (icon === "tea" || icon === "coffee") {
-    // Tasse
-    px(5,  6, 8, 1, cream);
-    px(4,  7, 10, 5, cream);
-    px(3,  8, 1,  3, cream); // anse
-    px(5, 12, 8, 1, cream); // soucoupe
-    px(4, 13, 10, 1, cream);
-    // Vapeur
-    px(6,  4, 1, 2, "rgba(255,255,255,0.5)");
-    px(9,  3, 1, 3, "rgba(255,255,255,0.5)");
-    if (icon === "coffee") {
-      px(5, 8, 8, 3, "#3C2010"); // café sombre
-    } else {
-      px(5, 8, 8, 3, "#C8A84B"); // thé doré
-    }
+    px(5, 6, 8, 1, cream); px(4, 7, 10, 5, cream); px(3, 8, 1, 3, cream);
+    px(5, 12, 8, 1, cream); px(4, 13, 10, 1, cream);
+    px(6, 4, 1, 2, "rgba(255,255,255,0.5)"); px(9, 3, 1, 3, "rgba(255,255,255,0.5)");
+    px(5, 8, 8, 3, icon === "coffee" ? "#3C2010" : "#C8A84B");
   } else if (icon === "ice") {
-    // Verre glacé
-    px(5,  4, 8, 1, cream);
-    px(4,  5, 10, 8, "rgba(100,180,220,0.7)");
-    px(5, 13, 8, 1, cream);
-    // Glaçons
-    px(5,  6, 3, 2, "rgba(255,255,255,0.6)");
-    px(9,  8, 3, 2, "rgba(255,255,255,0.6)");
-    // Paille
-    px(11, 2, 1, 6, "#C0654A");
+    px(5, 4, 8, 1, cream); px(4, 5, 10, 8, "rgba(100,180,220,0.7)");
+    px(5, 13, 8, 1, cream); px(5, 6, 3, 2, "rgba(255,255,255,0.6)");
+    px(9, 8, 3, 2, "rgba(255,255,255,0.6)"); px(11, 2, 1, 6, "#C0654A");
   } else if (icon === "cookie") {
-    // Cookie
-    px(5,  3, 8, 1, "#C8A84B");
-    px(3,  4, 12, 8, "#C8A84B");
-    px(5, 12, 8, 1, "#C8A84B");
-    // Pépites choco
-    px(5,  6, 2, 2, dark);
-    px(10, 5, 2, 2, dark);
-    px(7,  9, 2, 2, dark);
-    px(11, 9, 2, 2, dark);
+    px(5, 3, 8, 1, "#C8A84B"); px(3, 4, 12, 8, "#C8A84B"); px(5, 12, 8, 1, "#C8A84B");
+    px(5, 6, 2, 2, dark); px(10, 5, 2, 2, dark); px(7, 9, 2, 2, dark); px(11, 9, 2, 2, dark);
   } else if (icon === "wine" || icon === "wine2") {
-    // Bouteille de vin
     const btl = "#7B2D3E";
-    const lbl = cream;
-    // Col
-    px(8, 1, 2, 3, btl);
-    // Épaules
-    px(6, 4, 6, 2, btl);
-    // Corps
-    px(5, 6, 8, 8, btl);
-    // Étiquette
-    px(6, 8, 6, 4, lbl);
-    px(7, 9, 4, 2, "#C8A84B"); // filet or
-    // Fond
-    px(5, 14, 8, 1, btl);
-    if (icon === "wine2") {
-      // Étoile grand lot
-      px(7, 2, 1, 1, "#C8A84B");
-      px(8, 1, 1, 1, "#C8A84B");
-      px(9, 2, 1, 1, "#C8A84B");
-    }
+    px(8, 1, 2, 3, btl); px(6, 4, 6, 2, btl); px(5, 6, 8, 8, btl);
+    px(6, 8, 6, 4, cream); px(7, 9, 4, 2, "#C8A84B"); px(5, 14, 8, 1, btl);
+    if (icon === "wine2") { px(7, 2, 1, 1, "#C8A84B"); px(8, 1, 1, 1, "#C8A84B"); px(9, 2, 1, 1, "#C8A84B"); }
   } else {
-    // leaf — lot consolation
-    px(7,  3, 4, 2, "#6B7A3E");
-    px(5,  5, 8, 4, "#6B7A3E");
-    px(7,  9, 4, 2, "#6B7A3E");
-    px(9, 11, 2, 3, "#6B7A3E");
+    px(7, 3, 4, 2, "#6B7A3E"); px(5, 5, 8, 4, "#6B7A3E");
+    px(7, 9, 4, 2, "#6B7A3E"); px(9, 11, 2, 3, "#6B7A3E");
   }
 }
 
 /* ================================================================
-   GÉNÉRATION CODE UNIQUE
+   CODE UNIQUE
 ================================================================ */
 function generateCode() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let code = "TERRASSE-";
-  for (let i = 0; i < 4; i++) {
-    code += chars[Math.floor(Math.random() * chars.length)];
-  }
+  for (let i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)];
   return code;
 }
 
 /* ================================================================
-   ANTI-TRICHE — localStorage 24h
+   ANTI-TRICHE 24h
 ================================================================ */
 function hasPlayedRecently() {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (!stored) return false;
-    const ts = parseInt(stored, 10);
-    return Date.now() - ts < COOLDOWN_MS;
+    const ts = parseInt(localStorage.getItem(STORAGE_KEY), 10);
+    return ts && Date.now() - ts < COOLDOWN_MS;
   } catch (_) { return false; }
 }
 
 function savePlay() {
-  try {
-    localStorage.setItem(STORAGE_KEY, Date.now().toString());
-  } catch (_) {}
+  try { localStorage.setItem(STORAGE_KEY, Date.now().toString()); } catch (_) {}
 }
 
 /* ================================================================
-   CONFETTIS (canvas léger, pas de lib)
+   CONFETTIS
 ================================================================ */
 function launchConfetti() {
   const canvas  = document.getElementById("confettiCanvas");
   const ctx     = canvas.getContext("2d");
   canvas.width  = window.innerWidth;
   canvas.height = window.innerHeight;
+  const COLORS  = ["#C8A84B","#7B2D3E","#6B7A3E","#C0654A","#F5EFE0","#E2C97A"];
+  let frame     = 0;
 
-  const COLORS = ["#C8A84B","#7B2D3E","#6B7A3E","#C0654A","#F5EFE0","#E2C97A"];
-  const PIECES = 80;
-
-  const particles = Array.from({ length: PIECES }, () => ({
-    x:  Math.random() * canvas.width,
+  const particles = Array.from({ length: 80 }, () => ({
+    x: Math.random() * canvas.width,
     y: -10 - Math.random() * 40,
-    w:  4 + Math.random() * 6,
-    h:  6 + Math.random() * 10,
+    w: 4 + Math.random() * 6,
+    h: 6 + Math.random() * 10,
     color: COLORS[Math.floor(Math.random() * COLORS.length)],
     speed: 2 + Math.random() * 4,
-    angle: Math.random() * Math.PI * 2,
+    angle: Math.random() * TWO_PI,
     rotSpeed: (Math.random() - 0.5) * 0.2,
   }));
 
-  let frame = 0;
-
-  function draw() {
+  (function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     let alive = false;
-
     particles.forEach(p => {
-      p.y     += p.speed;
-      p.angle += p.rotSpeed;
+      p.y += p.speed; p.angle += p.rotSpeed;
       if (p.y < canvas.height + 20) alive = true;
-
-      ctx.save();
-      ctx.translate(p.x, p.y);
-      ctx.rotate(p.angle);
-      ctx.fillStyle = p.color;
-      ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.angle);
+      ctx.fillStyle = p.color; ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
       ctx.restore();
     });
-
-    frame++;
-    if (alive && frame < 200) requestAnimationFrame(draw);
+    if (alive && ++frame < 200) requestAnimationFrame(draw);
     else ctx.clearRect(0, 0, canvas.width, canvas.height);
-  }
-
-  requestAnimationFrame(draw);
+  })();
 }
 </script>
 </body>
