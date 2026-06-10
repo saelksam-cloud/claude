@@ -36,44 +36,40 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    /* ═══ HEADER — fond blanc + lignes topo ═══ */
+    /* ═══ HEADER — fond bordeaux ═══ */
     header {
       width: 100%;
-      background: #FFFFFF;
-      padding: 28px 24px 22px;
+      background: var(--wine-deep);
+      padding: 22px 24px 18px;
       text-align: center;
       position: relative;
       overflow: hidden;
     }
-    /* Seule bordure basse : fine ligne grise pour la séparation */
+    header::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold-soft) 40%, var(--gold-soft) 60%, transparent);
+    }
     header::after {
       content: '';
       position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
-      background: rgba(90,80,78,.15);
+      background: linear-gradient(90deg, transparent, var(--gold) 30%, var(--gold) 70%, transparent);
     }
-    /* SVG lignes topo en fond */
-    .header-topo {
-      position: absolute; inset: 0; width: 100%; height: 100%;
-      pointer-events: none; z-index: 0;
-    }
-    .logo-wrap {
-      display: flex; flex-direction: column; align-items: center; gap: 0;
-      position: relative; z-index: 1;
-    }
+    .logo-wrap { display: flex; flex-direction: column; align-items: center; gap: 0; position: relative; z-index: 1; }
     .logo-crest { display: block; margin: 0 auto; }
     .logo-name-row {
-      color: rgba(80,70,68,.88);
+      color: rgba(247,243,235,.88);
       font-family: 'Cormorant Garamond', Georgia, serif;
       font-size: 1.1rem; font-weight: 400; letter-spacing: .42em; text-transform: uppercase;
       line-height: 1; margin-top: 6px;
     }
     .logo-script {
-      color: rgba(80,70,68,.78);
+      color: rgba(247,243,235,.78);
       font-family: 'Pinyon Script', cursive;
       font-size: 1.9rem; font-weight: 400; letter-spacing: .02em; margin-top: -2px;
     }
     .logo-sub {
-      color: rgba(90,80,78,.45);
+      color: rgba(196,180,154,.55);
       font-family: 'Courier New', monospace;
       font-size: .48rem; letter-spacing: .3em; text-transform: uppercase; margin-top: 3px;
     }
@@ -283,79 +279,76 @@
 <canvas id="confettiCanvas"></canvas>
 <div id="app">
 
-  <!-- HEADER -->
+  <!-- HEADER — fond bordeaux, logo couronne fidèle -->
   <header>
-    <!-- Lignes topographiques organiques en fond (marque Château La Coste) -->
-    <svg class="header-topo" viewBox="0 0 400 180" preserveAspectRatio="xMidYMid slice"
-         xmlns="http://www.w3.org/2000/svg" fill="none">
-      <path d="M200,8 C252,2 338,28 374,72 C410,116 398,158 356,175 C314,192 250,194 196,190 C142,186 78,172 44,146 C10,120 4,84 22,55 C40,26 148,14 200,8" stroke="rgba(80,70,68,.10)" stroke-width="1.2"/>
-      <path d="M200,21 C247,16 326,40 358,81 C390,122 380,157 341,172 C302,187 244,188 192,185 C140,182 83,168 52,144 C21,120 16,86 32,60 C48,34 153,26 200,21" stroke="rgba(80,70,68,.11)" stroke-width="1.1"/>
-      <path d="M200,35 C243,30 314,52 343,90 C372,128 363,156 327,169 C291,182 238,182 188,180 C138,178 87,164 59,142 C31,120 27,89 42,65 C57,41 157,40 200,35" stroke="rgba(80,70,68,.12)" stroke-width="1.0"/>
-      <path d="M200,49 C238,45 302,64 328,99 C354,134 346,156 313,167 C280,178 232,177 185,175 C138,173 92,160 67,140 C42,120 38,91 51,70 C64,49 162,53 200,49" stroke="rgba(80,70,68,.12)" stroke-width="1.0"/>
-      <path d="M200,63 C232,59 289,76 312,108 C335,140 328,156 299,165 C270,174 227,172 182,171 C137,170 96,157 74,138 C52,119 49,93 60,75 C71,57 168,67 200,63" stroke="rgba(80,70,68,.13)" stroke-width="0.9"/>
-      <path d="M200,77 C227,73 276,88 296,116 C316,144 311,157 285,164 C259,171 221,168 179,168 C137,168 101,156 82,138 C63,120 61,96 70,80 C79,64 173,81 200,77" stroke="rgba(80,70,68,.13)" stroke-width="0.9"/>
-      <path d="M200,91 C222,88 263,100 280,124 C297,148 293,158 271,163 C249,168 215,164 176,165 C137,166 105,155 89,139 C73,123 72,100 79,85 C86,70 178,94 200,91" stroke="rgba(80,70,68,.10)" stroke-width="0.8"/>
-    </svg>
-
     <div class="logo-wrap">
       <!--
-        Vrai logo : remplacez le SVG par
-        <img src="URL_LOGO" class="logo-crest" style="height:62px" alt="Château La Coste">
+        Remplacer par <img src="URL" class="logo-crest" style="height:66px" alt="Château La Coste">
+        quand vous aurez l'URL du logo officiel.
       -->
-      <!-- Couronne héraldique Château La Coste : bras diagonaux, orbes, [L][C], 16 82, ruban -->
-      <svg class="logo-crest" width="136" height="88" viewBox="0 0 200 130"
+      <!--
+        Couronne Château La Coste :
+        - Croix (†) au top center
+        - Deux orbes aux pointes hautes (épaules de la couronne)
+        - Bras supérieurs : croix → orbes
+        - Bras inférieurs : orbes → fond de l'arche (forme W)
+        - [L] et [C] au niveau des orbes, s'étendent horizontalement
+        - "16 82" dans l'espace intérieur
+        - Ruban ondulé en bas
+      -->
+      <svg class="logo-crest" width="148" height="96" viewBox="0 0 200 108"
            xmlns="http://www.w3.org/2000/svg">
-        <g stroke="rgba(80,70,68,.82)" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke-width="2.6">
+        <g stroke="rgba(247,243,235,.80)" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke-width="2.4">
 
-          <!-- Croix (†) au sommet -->
-          <line x1="100" y1="2"  x2="100" y2="22"/>
-          <line x1="91"  y1="9"  x2="109" y2="9"/>
+          <!-- ① Croix (†) entre les deux orbes -->
+          <line x1="100" y1="2"  x2="100" y2="22" stroke-width="2"/>
+          <line x1="93"  y1="9"  x2="107" y2="9"  stroke-width="2"/>
 
-          <!-- Losange (◆) sous la croix -->
-          <path d="M100,20 L110,32 L100,43 L90,32 Z" fill="rgba(80,70,68,.82)" stroke-width="1.5"/>
+          <!-- ② Orbe gauche — point haut de l'arche gauche -->
+          <circle cx="44" cy="34" r="12" fill="rgba(247,243,235,.06)" stroke-width="2.4"/>
+          <!-- ② Orbe droit -->
+          <circle cx="156" cy="34" r="12" fill="rgba(247,243,235,.06)" stroke-width="2.4"/>
 
-          <!-- Bras gauche : du losange → orbe gauche → boîte L -->
-          <line x1="96"  y1="24" x2="5"   y2="68"/>
-          <!-- Bras droit -->
-          <line x1="104" y1="24" x2="195" y2="68"/>
+          <!-- ③ Bras supérieurs : croix → orbes (court segment au-dessus) -->
+          <line x1="97"  y1="20" x2="53"  y2="28"/>
+          <line x1="103" y1="20" x2="147" y2="28"/>
 
-          <!-- Orbe gauche (cercle sur le bras, au point de courbure visuel) -->
-          <circle cx="60" cy="40" r="14" fill="rgba(80,70,68,.04)" stroke-width="2.6"/>
-          <!-- Orbe droit -->
-          <circle cx="140" cy="40" r="14" fill="rgba(80,70,68,.04)" stroke-width="2.6"/>
+          <!-- ④ Bras inférieurs : orbes → fond de l'arche en V -->
+          <line x1="44" y1="46" x2="100" y2="76"/>
+          <line x1="156" y1="46" x2="100" y2="76"/>
 
-          <!-- Boîte [L] -->
-          <rect x="0" y="57" width="42" height="25" fill="rgba(80,70,68,.04)" stroke-width="2.2"/>
-          <text x="21" y="76" text-anchor="middle"
-                fill="rgba(80,70,68,.88)" stroke="none"
+          <!-- ⑤ Boîte [L] — à gauche, au niveau des orbes -->
+          <rect x="0"   y="25" width="36" height="20" fill="rgba(247,243,235,.06)" stroke-width="2"/>
+          <text x="18" y="40" text-anchor="middle"
+                fill="rgba(247,243,235,.86)" stroke="none"
                 font-family="Georgia,'Times New Roman',serif"
-                font-size="19" font-style="italic">L</text>
+                font-size="17" font-style="italic">L</text>
 
-          <!-- Boîte [C] -->
-          <rect x="158" y="57" width="42" height="25" fill="rgba(80,70,68,.04)" stroke-width="2.2"/>
-          <text x="179" y="76" text-anchor="middle"
-                fill="rgba(80,70,68,.88)" stroke="none"
+          <!-- ⑤ Boîte [C] — à droite -->
+          <rect x="164" y="25" width="36" height="20" fill="rgba(247,243,235,.06)" stroke-width="2"/>
+          <text x="182" y="40" text-anchor="middle"
+                fill="rgba(247,243,235,.86)" stroke="none"
                 font-family="Georgia,'Times New Roman',serif"
-                font-size="19" font-style="italic">C</text>
+                font-size="17" font-style="italic">C</text>
 
-          <!-- "16  82" dans l'espace central -->
-          <text x="76"  y="79" text-anchor="middle"
-                fill="rgba(80,70,68,.72)" stroke="none"
-                font-family="Georgia,'Times New Roman',serif" font-size="18">16</text>
-          <text x="124" y="79" text-anchor="middle"
-                fill="rgba(80,70,68,.72)" stroke="none"
-                font-family="Georgia,'Times New Roman',serif" font-size="18">82</text>
+          <!-- ⑥ "16  82" dans l'espace intérieur de la couronne -->
+          <text x="79"  y="68" text-anchor="middle"
+                fill="rgba(247,243,235,.72)" stroke="none"
+                font-family="Georgia,'Times New Roman',serif" font-size="16">16</text>
+          <text x="121" y="68" text-anchor="middle"
+                fill="rgba(247,243,235,.72)" stroke="none"
+                font-family="Georgia,'Times New Roman',serif" font-size="16">82</text>
 
-          <!-- Ruban ondulé -->
-          <!-- Patte gauche (repli) -->
-          <path d="M 4,88 L 34,88 L 29,108 L -1,108 Z"
-                fill="rgba(80,70,68,.04)" stroke="rgba(80,70,68,.45)" stroke-width="2"/>
-          <!-- Corps du ruban -->
-          <path d="M 29,84 Q 52,79 100,87 Q 148,95 171,84 L 173,107 Q 148,115 100,108 Q 52,101 29,107 Z"
-                fill="rgba(80,70,68,.04)" stroke-width="2.2"/>
-          <!-- Patte droite (repli) -->
-          <path d="M 196,88 L 166,88 L 171,108 L 201,108 Z"
-                fill="rgba(80,70,68,.04)" stroke="rgba(80,70,68,.45)" stroke-width="2"/>
+          <!-- ⑦ Ruban ondulé -->
+          <!-- Patte gauche -->
+          <path d="M 10,78 L 36,78 L 32,96 L 6,96 Z"
+                fill="rgba(247,243,235,.05)" stroke="rgba(247,243,235,.45)" stroke-width="1.8"/>
+          <!-- Corps principal du ruban (wavy) -->
+          <path d="M 32,74 Q 56,69 100,77 Q 144,85 168,74 L 170,94 Q 144,102 100,95 Q 56,88 32,94 Z"
+                fill="rgba(247,243,235,.07)" stroke-width="2.2"/>
+          <!-- Patte droite -->
+          <path d="M 190,78 L 164,78 L 168,96 L 194,96 Z"
+                fill="rgba(247,243,235,.05)" stroke="rgba(247,243,235,.45)" stroke-width="1.8"/>
         </g>
       </svg>
 
