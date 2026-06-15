@@ -369,7 +369,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
       <div class="card-title">
         📋 Toutes les demandes
         <span class="pill" id="admin-count">0</span>
-        <button class="btn btn-ghost btn-sm" onclick="openImport()" style="margin-left:auto">📥 Importer demande</button>
+        <button id="btn-import" class="btn btn-ghost btn-sm" onclick="openImport()" style="margin-left:auto">📥 Importer demande</button>
       </div>
       <div id="admin-list"><div class="empty">Aucune demande importée.</div></div>
     </div>
@@ -456,12 +456,15 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 
 <script>
 // ══ CONFIG ══════════════════════════════════════════════════════════════════
-const ADMIN_PASS = "aquaponey2026"; // ← changez ce mot de passe
+const SCRIPT_URL = "COLLER_ICI_URL_APPS_SCRIPT"; // ← URL copiée depuis Apps Script
+const ADMIN_PASS = "aquaponey2026"; // ← même mot de passe que dans le script
 const START      = new Date(2026, 5, 15);
 
 const MONTHS = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const DAYS   = ["Dimanche","Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"];
 const COLORS = ["#005f73","#ee9b00","#ae2012","#6d6875","#2d6a4f","#d4a373","#1d3557","#457b9d","#e76f51","#264653"];
+
+const BACKEND = ()=> SCRIPT_URL !== "COLLER_ICI_URL_APPS_SCRIPT";
 
 // ══ STATE ════════════════════════════════════════════════════════════════════
 let empName="", empReqs=[], empY, empM;
@@ -499,10 +502,19 @@ function startEmp(){
   if(!p){toast('Entrez votre prénom.');return;}
   empName=p+(n?' '+n:'');
   document.getElementById('emp-badge-name').textContent=p;
-  empReqs=loadEmp();
   go('employee');
-  renderEmpCal();
-  renderEmpList();
+  empReqs=loadEmp();
+  if(BACKEND()) fetchEmpFromServer();
+  else { renderEmpCal(); renderEmpList(); }
+}
+
+async function fetchEmpFromServer(){
+  try{
+    const r=await fetch(SCRIPT_URL+'?action=get&employee='+encodeURIComponent(empName));
+    empReqs=(await r.json()).rows||[];
+    saveEmp();
+  }catch(e){ empReqs=loadEmp(); }
+  renderEmpCal(); renderEmpList();
 }
 
 function em(d){
@@ -531,7 +543,9 @@ function renderEmpCal(){
 function renderEmpList(){
   const el=document.getElementById('emp-list');
   document.getElementById('emp-count').textContent=empReqs.length;
-  document.getElementById('btn-share').style.display=empReqs.length?'flex':'none';
+  // bouton partage seulement si pas de backend
+  const shareBtn=document.getElementById('btn-share');
+  if(shareBtn) shareBtn.style.display=(!BACKEND()&&empReqs.length)?'flex':'none';
   if(!empReqs.length){
     el.innerHTML='<div class="empty">Aucune demande. Cliquez sur un jour pour commencer.</div>';
     return;
@@ -564,11 +578,13 @@ function openAdd(key,date){
   openM('add');
 }
 
-function saveReq(){
+async function saveReq(){
   const slot=document.getElementById('m-slot').value.trim();
   const reason=document.getElementById('m-reason').value.trim();
   if(!slot){toast('Choisissez une plage horaire.');return;}
   if(!reason){toast('Indiquez une raison.');return;}
+  const btn=document.getElementById('btn-add');
+  btn.innerHTML='<span class="spin"></span> Envoi…';btn.disabled=true;
   const row={
     id:'r'+Date.now(),
     employee:empName,
@@ -578,38 +594,43 @@ function saveReq(){
     status:'pending',
     timestamp:new Date().toISOString()
   };
+  if(BACKEND()){
+    try{
+      const res=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'add',row}),headers:{'Content-Type':'text/plain'}});
+      const data=await res.json();
+      if(data.id) row.id=data.id;
+    }catch(e){toast('Erreur réseau — demande sauvegardée localement.');}}
   empReqs.push(row);
   empReqs.sort((a,b)=>a.dateKey.localeCompare(b.dateKey));
   saveEmp();
   closeM('add'); renderEmpCal(); renderEmpList();
-  toast('✅ Demande enregistrée !');
+  toast('✅ Demande envoyée au responsable !');
+  btn.innerHTML='Ajouter ✓';btn.disabled=false;
 }
 
 function delReq(i){
   if(!confirm('Supprimer cette demande ?'))return;
+  const r=empReqs[i];
+  if(BACKEND()&&r.id){
+    fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'delete',id:r.id}),headers:{'Content-Type':'text/plain'}}).catch(()=>{});
+  }
   empReqs.splice(i,1);
   saveEmp();
   renderEmpCal(); renderEmpList();
   toast('Demande supprimée.');
 }
 
-// ── Partage par code ─────────────────────────────────────────────────────────
+// ── Partage par code (fallback sans backend) ──────────────────────────────────
 function openShare(){
   if(!empReqs.length){toast('Aucune demande à envoyer.');return;}
   const code=btoa(unescape(encodeURIComponent(JSON.stringify(empReqs))));
   document.getElementById('share-code').value=code;
   openM('share');
 }
-
 function copyCode(){
   const ta=document.getElementById('share-code');
   ta.select(); ta.setSelectionRange(0,99999);
-  try{
-    navigator.clipboard.writeText(ta.value).then(()=>toast('✅ Code copié ! Envoyez-le à votre responsable.'));
-  }catch(e){
-    document.execCommand('copy');
-    toast('✅ Code copié ! Envoyez-le à votre responsable.');
-  }
+  navigator.clipboard.writeText(ta.value).then(()=>toast('✅ Code copié !')).catch(()=>{document.execCommand('copy');toast('✅ Code copié !');});
 }
 
 // ══ ADMIN ════════════════════════════════════════════════════════════════════
@@ -618,8 +639,20 @@ function loginAdmin(){
   go('admin'); loadAdmin();
 }
 
-function loadAdmin(){
-  adminData=loadAdminLS();
+async function loadAdmin(){
+  document.getElementById('admin-list').innerHTML='<div class="empty">Chargement…</div>';
+  if(BACKEND()){
+    try{
+      const r=await fetch(SCRIPT_URL+'?action=getAll&pass='+encodeURIComponent(ADMIN_PASS));
+      adminData=(await r.json()).rows||[];
+      saveAdmin();
+    }catch(e){toast('Erreur réseau.');adminData=loadAdminLS();}
+  } else {
+    adminData=loadAdminLS();
+  }
+  // masquer le bouton import si backend actif
+  const ib=document.getElementById('btn-import');
+  if(ib) ib.style.display=BACKEND()?'none':'';
   buildAdmin();
 }
 
@@ -678,7 +711,7 @@ function renderAdminList(){
   const sorted=[...vis].sort((a,b)=>a.dateKey.localeCompare(b.dateKey));
   document.getElementById('admin-count').textContent=sorted.length;
   const el=document.getElementById('admin-list');
-  if(!sorted.length){el.innerHTML='<div class="empty">Aucune demande importée.<br>Cliquez sur <b>Importer demande</b> pour ajouter une demande reçue d\'un employé.</div>';return;}
+  if(!sorted.length){el.innerHTML='<div class="empty">Aucune demande pour le moment.</div>';return;}
   el.innerHTML=sorted.map(r=>{
     const [,m,d]=r.dateKey.split('-');
     const col=empColors[r.employee]||'var(--teal)';
@@ -698,35 +731,24 @@ function renderAdminList(){
   }).join('');
 }
 
-// ── Import par code ───────────────────────────────────────────────────────────
 function openImport(){
   document.getElementById('import-code').value='';
   openM('import');
 }
-
 function importCode(){
   const raw=document.getElementById('import-code').value.trim();
   if(!raw){toast('Collez un code d\'abord.');return;}
   let rows;
-  try{
-    rows=JSON.parse(decodeURIComponent(escape(atob(raw))));
-    if(!Array.isArray(rows))throw new Error();
-  }catch(e){toast('Code invalide. Vérifiez avec l\'employé.');return;}
+  try{rows=JSON.parse(decodeURIComponent(escape(atob(raw))));if(!Array.isArray(rows))throw 0;}
+  catch(e){toast('Code invalide.');return;}
   let added=0;
-  rows.forEach(r=>{
-    if(!adminData.find(x=>x.id===r.id)){
-      r.status='pending';
-      adminData.push(r);
-      added++;
-    }
-  });
+  rows.forEach(r=>{if(!adminData.find(x=>x.id===r.id)){r.status='pending';adminData.push(r);added++;}});
   saveAdmin();
   closeM('import');
   buildAdmin();
-  toast(added>0?`✅ ${added} demande(s) importée(s) !`:'Ces demandes sont déjà présentes.');
+  toast(added>0?`✅ ${added} demande(s) importée(s) !`:'Déjà présentes.');
 }
 
-// ── Décision admin ────────────────────────────────────────────────────────────
 function openDetail(r){
   pendingRow=r;
   document.getElementById('m-d-title').textContent='Demande de '+r.employee;
@@ -741,8 +763,13 @@ function openDetail(r){
   openM('detail');
 }
 
-function decide(status){
+async function decide(status){
   if(!pendingRow)return;
+  if(BACKEND()){
+    try{
+      await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'status',id:pendingRow.id,status,pass:ADMIN_PASS}),headers:{'Content-Type':'text/plain'}});
+    }catch(e){toast('Erreur réseau.');return;}
+  }
   const idx=adminData.findIndex(r=>r.id===pendingRow.id);
   if(idx!==-1) adminData[idx].status=status;
   saveAdmin();
@@ -782,6 +809,7 @@ function toast(msg){
   const e=document.getElementById('toast');e.textContent=msg;e.classList.add('show');
   clearTimeout(tt);tt=setTimeout(()=>e.classList.remove('show'),3500);
 }
+
 </script>
 </body>
 </html>
