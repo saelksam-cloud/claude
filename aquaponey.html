@@ -311,9 +311,12 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
       <div class="card-title">
         📋 Mes demandes
         <span class="pill" id="emp-count">0</span>
-        <span id="emp-loading" style="display:none;font-size:.78rem;color:var(--muted);font-weight:400;">⏳ chargement…</span>
       </div>
       <div id="emp-list"><div class="empty">Aucune demande. Cliquez sur un jour pour commencer.</div></div>
+      <br/>
+      <button class="btn btn-primary btn-full" id="btn-share" onclick="openShare()" style="display:none">
+        📤 Envoyer mes demandes au responsable
+      </button>
     </div>
 
   </div>
@@ -366,8 +369,9 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
       <div class="card-title">
         📋 Toutes les demandes
         <span class="pill" id="admin-count">0</span>
+        <button class="btn btn-ghost btn-sm" onclick="openImport()" style="margin-left:auto">📥 Importer demande</button>
       </div>
-      <div id="admin-list"><div class="empty">Chargement…</div></div>
+      <div id="admin-list"><div class="empty">Aucune demande importée.</div></div>
     </div>
 
   </div>
@@ -403,6 +407,37 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   </div>
 </div>
 
+<!-- Modal partage employé -->
+<div class="overlay" id="m-share" onclick="if(event.target===this)closeM('share')">
+  <div class="modal">
+    <h3>📤 Partager mes demandes</h3>
+    <div class="msub">Copiez ce code et envoyez-le à votre responsable (WhatsApp, SMS…)</div>
+    <textarea id="share-code" rows="5" readonly
+      style="width:100%;padding:10px;border:1.5px solid #d1d5db;border-radius:8px;font-size:.78rem;
+             font-family:monospace;background:#f9fafb;resize:none;color:#374151;"></textarea>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeM('share')">Fermer</button>
+      <button class="btn btn-primary" onclick="copyCode()">📋 Copier le code</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal import admin -->
+<div class="overlay" id="m-import" onclick="if(event.target===this)closeM('import')">
+  <div class="modal">
+    <h3>📥 Importer une demande</h3>
+    <div class="msub">Collez le code reçu de votre employé</div>
+    <textarea id="import-code" rows="5"
+      style="width:100%;padding:10px;border:1.5px solid #d1d5db;border-radius:8px;font-size:.78rem;
+             font-family:monospace;background:#fafafa;resize:none;color:#374151;"
+      placeholder="Collez le code ici…"></textarea>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeM('import')">Annuler</button>
+      <button class="btn btn-primary" onclick="importCode()">Importer ✓</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal détail admin -->
 <div class="overlay" id="m-detail" onclick="if(event.target===this)closeM('detail')">
   <div class="modal">
@@ -420,26 +455,27 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 <div id="toast"></div>
 
 <script>
-// ════════════════════════════════════════════════════════════════════════════
-// ⚙️  CONFIG  — modifier ces deux valeurs
-// ════════════════════════════════════════════════════════════════════════════
-const SCRIPT_URL = "COLLER_ICI_URL_APPS_SCRIPT"; // URL Google Apps Script
-const ADMIN_PASS = "aquaponey2026";               // mot de passe admin
-const START      = new Date(2026, 5, 15);         // 15 juin 2026
+// ══ CONFIG ══════════════════════════════════════════════════════════════════
+const ADMIN_PASS = "aquaponey2026"; // ← changez ce mot de passe
+const START      = new Date(2026, 5, 15);
 
-// ════════════════════════════════════════════════════════════════════════════
 const MONTHS = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const DAYS   = ["Dimanche","Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"];
 const COLORS = ["#005f73","#ee9b00","#ae2012","#6d6875","#2d6a4f","#d4a373","#1d3557","#457b9d","#e76f51","#264653"];
 
-// STATE
+// ══ STATE ════════════════════════════════════════════════════════════════════
 let empName="", empReqs=[], empY, empM;
 let adminData=[], empColors={}, filterEmp=null;
 let adminY, adminM, pendingRow=null, pendingDate=null;
 
-// ════════════════════════════════════════════════════════════════════════════
-// NAV
-// ════════════════════════════════════════════════════════════════════════════
+// ══ STORAGE ══════════════════════════════════════════════════════════════════
+function lsKey(name){ return 'ap_emp_'+name.toLowerCase().trim(); }
+function saveEmp(){ localStorage.setItem(lsKey(empName), JSON.stringify(empReqs)); }
+function loadEmp(){ return JSON.parse(localStorage.getItem(lsKey(empName))||'[]'); }
+function saveAdmin(){ localStorage.setItem('ap_admin', JSON.stringify(adminData)); }
+function loadAdminLS(){ return JSON.parse(localStorage.getItem('ap_admin')||'[]'); }
+
+// ══ NAV ══════════════════════════════════════════════════════════════════════
 function go(page){
   document.querySelectorAll('.page').forEach(p=>p.style.display='none');
   const el=document.getElementById('page-'+page);
@@ -456,30 +492,17 @@ window.addEventListener('DOMContentLoaded',()=>{
   empM=adminM=today>=START?today.getMonth():START.getMonth();
 });
 
-// ════════════════════════════════════════════════════════════════════════════
-// EMPLOYEE
-// ════════════════════════════════════════════════════════════════════════════
+// ══ EMPLOYEE ═════════════════════════════════════════════════════════════════
 function startEmp(){
   const p=document.getElementById('e-prenom').value.trim();
   const n=document.getElementById('e-nom').value.trim();
-  if(!p){toast('Entrez votre prénom.'); return;}
+  if(!p){toast('Entrez votre prénom.');return;}
   empName=p+(n?' '+n:'');
   document.getElementById('emp-badge-name').textContent=p;
+  empReqs=loadEmp();
   go('employee');
   renderEmpCal();
-  fetchEmp();
-}
-
-async function fetchEmp(){
-  document.getElementById('emp-loading').style.display='inline';
-  if(SCRIPT_URL!=='COLLER_ICI_URL_APPS_SCRIPT'){
-    try{
-      const r=await fetch(SCRIPT_URL+'?action=get&emp='+encodeURIComponent(empName));
-      empReqs=(await r.json()).rows||[];
-    }catch(e){toast('Erreur réseau.');}
-  } else { empReqs=[]; }
-  document.getElementById('emp-loading').style.display='none';
-  renderEmpCal(); renderEmpList();
+  renderEmpList();
 }
 
 function em(d){
@@ -497,7 +520,8 @@ function renderEmpCal(){
       mine.forEach(r=>{
         const b=document.createElement('div'); b.className='c-badge';
         b.style.background=r.status==='approved'?'#2d6a4f':r.status==='refused'?'#ae2012':'var(--teal)';
-        b.textContent=r.slot.split(' ')[0]; cell.querySelector('.c-badges').appendChild(b);
+        b.textContent=r.slot.split(' ')[0];
+        cell.querySelector('.c-badges').appendChild(b);
       });
     }
     cell.addEventListener('click',()=>openAdd(key,date));
@@ -507,11 +531,15 @@ function renderEmpCal(){
 function renderEmpList(){
   const el=document.getElementById('emp-list');
   document.getElementById('emp-count').textContent=empReqs.length;
-  if(!empReqs.length){el.innerHTML='<div class="empty">Aucune demande. Cliquez sur un jour pour commencer.</div>';return;}
+  document.getElementById('btn-share').style.display=empReqs.length?'flex':'none';
+  if(!empReqs.length){
+    el.innerHTML='<div class="empty">Aucune demande. Cliquez sur un jour pour commencer.</div>';
+    return;
+  }
   el.innerHTML=empReqs.map((r,i)=>{
     const [,m,d]=r.dateKey.split('-');
     const sc=r.status==='approved'?'s-approved':r.status==='refused'?'s-refused':'s-pending';
-    const sl=r.status==='approved'?'✓ Validé':r.status==='refused'?'✗ Non accordé':'⏳ En attente';
+    const sl=r.status==='approved'?'✓ Validé par le responsable':r.status==='refused'?'✗ Non accordé':'⏳ En attente de réponse';
     return `<div class="rcard">
       <div class="r-date" style="background:var(--teal-dark)">
         <div class="rd">${+d}</div><div class="rm">${MONTHS[+m-1].slice(0,3)}</div>
@@ -536,44 +564,62 @@ function openAdd(key,date){
   openM('add');
 }
 
-async function saveReq(){
+function saveReq(){
   const slot=document.getElementById('m-slot').value.trim();
   const reason=document.getElementById('m-reason').value.trim();
   if(!slot){toast('Choisissez une plage horaire.');return;}
   if(!reason){toast('Indiquez une raison.');return;}
-  const btn=document.getElementById('btn-add');
-  btn.innerHTML='<span class="spin"></span>';btn.disabled=true;
-  const row={employee:empName,dateKey:pendingDate.key,dateLabel:pendingDate.label,slot,reason,status:'pending',timestamp:new Date().toISOString()};
-  if(SCRIPT_URL!=='COLLER_ICI_URL_APPS_SCRIPT'){
-    try{await post({action:'add',row});}catch(e){toast('Erreur réseau.');}
-  } else { row.id='local-'+Date.now(); }
-  empReqs.push(row); empReqs.sort((a,b)=>a.dateKey.localeCompare(b.dateKey));
-  closeM('add'); renderEmpCal(); renderEmpList(); toast('✅ Demande enregistrée !');
-  btn.innerHTML='Ajouter ✓';btn.disabled=false;
+  const row={
+    id:'r'+Date.now(),
+    employee:empName,
+    dateKey:pendingDate.key,
+    dateLabel:pendingDate.label,
+    slot,reason,
+    status:'pending',
+    timestamp:new Date().toISOString()
+  };
+  empReqs.push(row);
+  empReqs.sort((a,b)=>a.dateKey.localeCompare(b.dateKey));
+  saveEmp();
+  closeM('add'); renderEmpCal(); renderEmpList();
+  toast('✅ Demande enregistrée !');
 }
 
-async function delReq(i){
+function delReq(i){
   if(!confirm('Supprimer cette demande ?'))return;
-  const r=empReqs[i];
-  if(r.id&&SCRIPT_URL!=='COLLER_ICI_URL_APPS_SCRIPT'){try{await post({action:'delete',id:r.id});}catch(e){}}
-  empReqs.splice(i,1); renderEmpCal(); renderEmpList(); toast('Demande supprimée.');
+  empReqs.splice(i,1);
+  saveEmp();
+  renderEmpCal(); renderEmpList();
+  toast('Demande supprimée.');
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-// ADMIN
-// ════════════════════════════════════════════════════════════════════════════
+// ── Partage par code ─────────────────────────────────────────────────────────
+function openShare(){
+  if(!empReqs.length){toast('Aucune demande à envoyer.');return;}
+  const code=btoa(unescape(encodeURIComponent(JSON.stringify(empReqs))));
+  document.getElementById('share-code').value=code;
+  openM('share');
+}
+
+function copyCode(){
+  const ta=document.getElementById('share-code');
+  ta.select(); ta.setSelectionRange(0,99999);
+  try{
+    navigator.clipboard.writeText(ta.value).then(()=>toast('✅ Code copié ! Envoyez-le à votre responsable.'));
+  }catch(e){
+    document.execCommand('copy');
+    toast('✅ Code copié ! Envoyez-le à votre responsable.');
+  }
+}
+
+// ══ ADMIN ════════════════════════════════════════════════════════════════════
 function loginAdmin(){
   if(document.getElementById('a-pass').value!==ADMIN_PASS){toast('Mot de passe incorrect.');return;}
   go('admin'); loadAdmin();
 }
 
-async function loadAdmin(){
-  document.getElementById('admin-list').innerHTML='<div class="empty">Chargement…</div>';
-  if(SCRIPT_URL!=='COLLER_ICI_URL_APPS_SCRIPT'){
-    try{const r=await fetch(SCRIPT_URL+'?action=all&pass='+encodeURIComponent(ADMIN_PASS));
-      adminData=(await r.json()).rows||[];
-    }catch(e){toast('Erreur réseau.');}
-  } else { adminData=DEMO; }
+function loadAdmin(){
+  adminData=loadAdminLS();
   buildAdmin();
 }
 
@@ -586,7 +632,6 @@ function buildAdmin(){
   document.getElementById('s-tot').textContent=adminData.length;
   document.getElementById('s-pend').textContent=pend;
   document.getElementById('s-ok').textContent=ok;
-  // chips
   const fc=document.getElementById('admin-filter');
   fc.style.display=emps.length?'':'none';
   document.getElementById('admin-chips').innerHTML=
@@ -612,7 +657,10 @@ function renderAdminCal(){
     cell.classList.add('c-has');
     const uniq=[...new Set(day.map(r=>r.employee))];
     const dots=document.createElement('div'); dots.className='c-badges';
-    uniq.forEach(e=>{const d=document.createElement('div');d.className='c-dot';d.style.background=empColors[e];d.title=e;dots.appendChild(d);});
+    uniq.forEach(e=>{
+      const dot=document.createElement('div');dot.className='c-dot';
+      dot.style.background=empColors[e];dot.title=e;dots.appendChild(dot);
+    });
     cell.appendChild(dots);
     const b=document.createElement('div'); b.className='c-badge';
     b.style.background='#374151';
@@ -630,7 +678,7 @@ function renderAdminList(){
   const sorted=[...vis].sort((a,b)=>a.dateKey.localeCompare(b.dateKey));
   document.getElementById('admin-count').textContent=sorted.length;
   const el=document.getElementById('admin-list');
-  if(!sorted.length){el.innerHTML='<div class="empty">Aucune demande.</div>';return;}
+  if(!sorted.length){el.innerHTML='<div class="empty">Aucune demande importée.<br>Cliquez sur <b>Importer demande</b> pour ajouter une demande reçue d\'un employé.</div>';return;}
   el.innerHTML=sorted.map(r=>{
     const [,m,d]=r.dateKey.split('-');
     const col=empColors[r.employee]||'var(--teal)';
@@ -650,6 +698,35 @@ function renderAdminList(){
   }).join('');
 }
 
+// ── Import par code ───────────────────────────────────────────────────────────
+function openImport(){
+  document.getElementById('import-code').value='';
+  openM('import');
+}
+
+function importCode(){
+  const raw=document.getElementById('import-code').value.trim();
+  if(!raw){toast('Collez un code d\'abord.');return;}
+  let rows;
+  try{
+    rows=JSON.parse(decodeURIComponent(escape(atob(raw))));
+    if(!Array.isArray(rows))throw new Error();
+  }catch(e){toast('Code invalide. Vérifiez avec l\'employé.');return;}
+  let added=0;
+  rows.forEach(r=>{
+    if(!adminData.find(x=>x.id===r.id)){
+      r.status='pending';
+      adminData.push(r);
+      added++;
+    }
+  });
+  saveAdmin();
+  closeM('import');
+  buildAdmin();
+  toast(added>0?`✅ ${added} demande(s) importée(s) !`:'Ces demandes sont déjà présentes.');
+}
+
+// ── Décision admin ────────────────────────────────────────────────────────────
 function openDetail(r){
   pendingRow=r;
   document.getElementById('m-d-title').textContent='Demande de '+r.employee;
@@ -664,21 +741,17 @@ function openDetail(r){
   openM('detail');
 }
 
-async function decide(status){
+function decide(status){
   if(!pendingRow)return;
-  closeM('detail');
-  if(SCRIPT_URL!=='COLLER_ICI_URL_APPS_SCRIPT'){
-    try{await post({action:'status',id:pendingRow.id,status,pass:ADMIN_PASS});}catch(e){toast('Erreur réseau.');return;}
-  }
   const idx=adminData.findIndex(r=>r.id===pendingRow.id);
-  if(idx!==-1)adminData[idx].status=status;
+  if(idx!==-1) adminData[idx].status=status;
+  saveAdmin();
+  closeM('detail');
   buildAdmin();
   toast(status==='approved'?'✅ Demande validée !':'❌ Demande refusée.');
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-// CALENDAR ENGINE
-// ════════════════════════════════════════════════════════════════════════════
+// ══ CALENDAR ENGINE ══════════════════════════════════════════════════════════
 function buildCal(id,year,month,onDay){
   const grid=document.getElementById(id); grid.innerHTML='';
   const first=new Date(year,month,1), last=new Date(year,month+1,0);
@@ -698,30 +771,17 @@ function buildCal(id,year,month,onDay){
   }
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-// UTILS
-// ════════════════════════════════════════════════════════════════════════════
+// ══ UTILS ════════════════════════════════════════════════════════════════════
 function fmt(d){
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
 function openM(id){document.getElementById('m-'+id).classList.add('open');}
 function closeM(id){document.getElementById('m-'+id).classList.remove('open');}
-let tt; function toast(msg){const e=document.getElementById('toast');e.textContent=msg;e.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>e.classList.remove('show'),3000);}
-async function post(body){
-  return fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify(body),headers:{'Content-Type':'application/json'}});
+let tt;
+function toast(msg){
+  const e=document.getElementById('toast');e.textContent=msg;e.classList.add('show');
+  clearTimeout(tt);tt=setTimeout(()=>e.classList.remove('show'),3500);
 }
-
-// ════════════════════════════════════════════════════════════════════════════
-// DEMO DATA (affiché quand Apps Script pas encore configuré)
-// ════════════════════════════════════════════════════════════════════════════
-const DEMO=[
-  {id:'1',employee:'Sophie Dupont', dateKey:'2026-07-04',dateLabel:'Samedi 4 Juillet 2026',  slot:'Journée entière',          reason:'Mariage de ma sœur',        status:'approved', timestamp:'2026-06-15T09:00:00Z'},
-  {id:'2',employee:'Marc Leroy',    dateKey:'2026-07-14',dateLabel:'Mardi 14 Juillet 2026',  slot:'Service du soir (17h–23h)',reason:'Fête nationale en famille', status:'pending',  timestamp:'2026-06-15T10:00:00Z'},
-  {id:'3',employee:'Amina Traoré', dateKey:'2026-08-01',dateLabel:'Samedi 1 Août 2026',     slot:'Journée entière',          reason:'Départ en vacances',        status:'pending',  timestamp:'2026-06-15T11:00:00Z'},
-  {id:'4',employee:'Sophie Dupont', dateKey:'2026-07-21',dateLabel:'Mardi 21 Juillet 2026', slot:'Service du midi (11h–16h)',reason:'RDV médical',               status:'refused',  timestamp:'2026-06-15T12:00:00Z'},
-  {id:'5',employee:'Kevin Martin',  dateKey:'2026-08-15',dateLabel:'Samedi 15 Août 2026',   slot:'Journée entière',          reason:'Anniversaire de sa mère',   status:'pending',  timestamp:'2026-06-15T13:00:00Z'},
-  {id:'6',employee:'Léa Fontaine',  dateKey:'2026-07-07',dateLabel:'Mardi 7 Juillet 2026',  slot:'Matin (8h–12h)',           reason:'Formation HACCP',           status:'approved', timestamp:'2026-06-15T14:00:00Z'},
-];
 </script>
 </body>
 </html>
