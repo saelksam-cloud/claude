@@ -3,464 +3,229 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AquaPoney – Demandes d'indisponibilité</title>
+  <title>AquaPoney – Disponibilités</title>
   <style>
     :root {
-      --teal: #0a9396;
-      --teal-dark: #005f73;
+      --teal:       #0a9396;
+      --teal-dark:  #005f73;
       --teal-light: #94d2bd;
-      --cream: #f8f5f0;
-      --sand: #e9d8a6;
-      --coral: #ee9b00;
-      --red: #ae2012;
-      --white: #ffffff;
-      --text: #1a1a2e;
-      --muted: #6b7280;
-      --radius: 12px;
-      --shadow: 0 4px 24px rgba(0,0,0,0.10);
+      --cream:      #f8f5f0;
+      --sand:       #e9d8a6;
+      --coral:      #ee9b00;
+      --red:        #ae2012;
+      --white:      #ffffff;
+      --text:       #1a1a2e;
+      --muted:      #6b7280;
+      --radius:     12px;
+      --shadow:     0 4px 24px rgba(0,0,0,0.10);
     }
-
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
       font-family: 'Segoe UI', system-ui, sans-serif;
-      background: linear-gradient(135deg, #e0f7f7 0%, #f8f5f0 60%, #fef9ed 100%);
+      background: linear-gradient(135deg,#e0f7f7 0%,#f8f5f0 60%,#fef9ed 100%);
       min-height: 100vh;
       color: var(--text);
     }
 
-    /* ── HEADER ───────────────────────────────────────────── */
+    /* ── HEADER ── */
     header {
       background: linear-gradient(120deg, var(--teal-dark) 0%, var(--teal) 100%);
-      color: white;
-      padding: 28px 24px 22px;
-      text-align: center;
-      box-shadow: var(--shadow);
-      position: relative;
-      overflow: hidden;
+      color: white; padding: 24px 24px 18px; text-align: center;
+      box-shadow: var(--shadow); position: relative; overflow: hidden;
     }
-    header::before {
-      content: "🐴";
-      font-size: 80px;
-      position: absolute;
-      left: -10px;
-      top: -10px;
-      opacity: 0.12;
-      transform: rotate(-15deg);
-    }
-    header::after {
-      content: "💧";
-      font-size: 70px;
-      position: absolute;
-      right: -10px;
-      bottom: -10px;
-      opacity: 0.12;
-      transform: rotate(15deg);
-    }
-    .logo {
-      font-size: 2.4rem;
-      font-weight: 800;
-      letter-spacing: -1px;
-      text-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    }
+    header::before { content:"🐴"; font-size:80px; position:absolute; left:-10px; top:-10px; opacity:.1; transform:rotate(-15deg); }
+    header::after  { content:"💧"; font-size:70px; position:absolute; right:-10px; bottom:-10px; opacity:.1; transform:rotate(15deg); }
+    .logo { font-size:2.2rem; font-weight:800; letter-spacing:-1px; }
     .logo span { color: var(--sand); }
-    .tagline {
-      font-size: 0.95rem;
-      opacity: 0.85;
-      margin-top: 4px;
-      letter-spacing: 1px;
-      text-transform: uppercase;
+    .tagline { font-size:.85rem; opacity:.8; margin-top:3px; text-transform:uppercase; letter-spacing:1px; }
+    .admin-badge {
+      display:inline-block; background:var(--coral); color:white;
+      font-size:.75rem; font-weight:700; padding:3px 10px; border-radius:20px;
+      margin-top:6px; letter-spacing:.5px;
     }
 
-    /* ── WELCOME SCREEN ───────────────────────────────────── */
-    #welcome-screen {
-      max-width: 460px;
-      margin: 60px auto;
-      background: white;
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 40px 36px;
-      text-align: center;
+    /* ── CARDS ── */
+    .card {
+      background:white; border-radius:var(--radius);
+      box-shadow:var(--shadow); padding:28px 24px; margin-bottom:20px;
     }
-    #welcome-screen h2 {
-      font-size: 1.4rem;
-      color: var(--teal-dark);
-      margin-bottom: 8px;
+    .card-title {
+      font-size:1rem; font-weight:700; color:var(--teal-dark);
+      margin-bottom:16px; display:flex; align-items:center; gap:8px;
     }
-    #welcome-screen p {
-      color: var(--muted);
-      font-size: 0.95rem;
-      margin-bottom: 28px;
-      line-height: 1.6;
-    }
-    .input-group { margin-bottom: 16px; text-align: left; }
-    .input-group label {
-      display: block;
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: var(--teal-dark);
-      margin-bottom: 6px;
-    }
+
+    /* ── FORMS ── */
+    .input-group { margin-bottom:14px; }
+    .input-group label { display:block; font-size:.82rem; font-weight:600; color:var(--teal-dark); margin-bottom:5px; }
     .input-group input, .input-group select, .input-group textarea {
-      width: 100%;
-      padding: 11px 14px;
-      border: 1.5px solid #d1d5db;
-      border-radius: 8px;
-      font-size: 0.97rem;
-      transition: border-color .2s;
-      background: #fafafa;
-      color: var(--text);
+      width:100%; padding:10px 13px; border:1.5px solid #d1d5db; border-radius:8px;
+      font-size:.95rem; background:#fafafa; color:var(--text); transition:border-color .2s;
     }
     .input-group input:focus, .input-group select:focus, .input-group textarea:focus {
-      outline: none;
-      border-color: var(--teal);
-      background: white;
+      outline:none; border-color:var(--teal); background:white;
     }
+
+    /* ── BUTTONS ── */
     .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 13px 28px;
-      border: none;
-      border-radius: 8px;
-      font-size: 1rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all .2s;
+      display:inline-flex; align-items:center; gap:7px;
+      padding:11px 22px; border:none; border-radius:8px;
+      font-size:.95rem; font-weight:700; cursor:pointer; transition:all .2s;
     }
-    .btn-primary {
-      background: linear-gradient(120deg, var(--teal-dark), var(--teal));
-      color: white;
-      box-shadow: 0 2px 12px rgba(0,95,115,0.35);
-    }
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 18px rgba(0,95,115,0.4);
-    }
-    .btn-secondary {
-      background: var(--cream);
-      color: var(--teal-dark);
-      border: 1.5px solid var(--teal-light);
-    }
-    .btn-secondary:hover { background: var(--teal-light); }
-    .btn-danger {
-      background: var(--red);
-      color: white;
-      font-size: 0.9rem;
-      padding: 8px 16px;
-    }
-    .btn-submit {
-      background: linear-gradient(120deg, #005f73, var(--teal));
-      color: white;
-      width: 100%;
-      justify-content: center;
-      padding: 16px;
-      font-size: 1.1rem;
-      margin-top: 8px;
-      box-shadow: 0 2px 12px rgba(0,95,115,0.35);
-    }
-    .btn-submit:hover { transform: translateY(-2px); }
+    .btn-primary { background:linear-gradient(120deg,var(--teal-dark),var(--teal)); color:white; box-shadow:0 2px 12px rgba(0,95,115,.3); }
+    .btn-primary:hover { transform:translateY(-1px); box-shadow:0 4px 18px rgba(0,95,115,.4); }
+    .btn-secondary { background:var(--cream); color:var(--teal-dark); border:1.5px solid var(--teal-light); }
+    .btn-secondary:hover { background:var(--teal-light); }
+    .btn-full { width:100%; justify-content:center; padding:14px; font-size:1rem; }
+    .btn-sm { padding:7px 14px; font-size:.82rem; }
+    .btn-danger { background:#fef2f2; color:var(--red); border:1px solid #fecaca; }
+    .btn-danger:hover { background:#fee2e2; }
 
-    /* ── MAIN LAYOUT ──────────────────────────────────────── */
-    #app {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 28px 16px 60px;
-      display: none;
-    }
-
-    .greeting {
-      background: white;
-      border-radius: var(--radius);
-      padding: 20px 24px;
-      margin-bottom: 24px;
-      box-shadow: var(--shadow);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-    .greeting-text h2 { font-size: 1.2rem; color: var(--teal-dark); }
-    .greeting-text p { font-size: 0.9rem; color: var(--muted); margin-top: 2px; }
-
+    /* ── NOTICE ── */
     .notice {
-      background: linear-gradient(120deg, #fff3cd, #fef9ed);
-      border-left: 4px solid var(--coral);
-      border-radius: 8px;
-      padding: 14px 18px;
-      margin-bottom: 24px;
-      font-size: 0.88rem;
-      line-height: 1.6;
-      color: #7a5a00;
+      background:linear-gradient(120deg,#fff3cd,#fef9ed);
+      border-left:4px solid var(--coral); border-radius:8px;
+      padding:12px 16px; font-size:.85rem; line-height:1.6; color:#7a5a00;
+      margin-bottom:20px;
     }
-    .notice strong { color: #8a4500; }
 
-    /* ── CALENDAR ─────────────────────────────────────────── */
-    .calendar-section { margin-bottom: 32px; }
-    .month-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 12px;
+    /* ── WELCOME / LOGIN ── */
+    #screen-welcome, #screen-admin-login {
+      max-width:440px; margin:50px auto; padding:0 16px;
     }
-    .month-title {
-      font-size: 1.2rem;
-      font-weight: 700;
-      color: var(--teal-dark);
-      text-transform: capitalize;
+    .welcome-title { font-size:1.3rem; color:var(--teal-dark); margin-bottom:6px; }
+    .welcome-sub { font-size:.9rem; color:var(--muted); margin-bottom:22px; line-height:1.5; }
+
+    /* ── MAIN LAYOUT ── */
+    #screen-employee, #screen-admin {
+      max-width:920px; margin:0 auto; padding:24px 16px 60px; display:none;
     }
+    .greeting { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+    .greeting h2 { font-size:1.15rem; color:var(--teal-dark); }
+    .greeting p  { font-size:.85rem; color:var(--muted); margin-top:2px; }
+
+    /* ── CALENDAR ── */
+    .month-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+    .month-title  { font-size:1.1rem; font-weight:700; color:var(--teal-dark); text-transform:capitalize; }
     .month-nav button {
-      background: none;
-      border: 1.5px solid var(--teal-light);
-      border-radius: 6px;
-      padding: 5px 12px;
-      cursor: pointer;
-      color: var(--teal-dark);
-      font-size: 1rem;
-      transition: all .15s;
+      background:none; border:1.5px solid var(--teal-light); border-radius:6px;
+      padding:4px 12px; cursor:pointer; color:var(--teal-dark); font-size:1rem; transition:all .15s;
     }
-    .month-nav button:hover { background: var(--teal-light); }
+    .month-nav button:hover { background:var(--teal-light); }
 
-    .calendar-grid {
-      background: white;
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      overflow: hidden;
-    }
+    .calendar-grid { background:white; border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; }
     .cal-weekdays {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      background: var(--teal-dark);
-      color: white;
-      font-size: 0.78rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+      display:grid; grid-template-columns:repeat(7,1fr);
+      background:var(--teal-dark); color:white;
+      font-size:.74rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px;
     }
-    .cal-weekdays span {
-      padding: 10px 4px;
-      text-align: center;
-    }
-    .cal-days {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 1px;
-      background: #e5e7eb;
-    }
+    .cal-weekdays span { padding:9px 4px; text-align:center; }
+    .cal-days { display:grid; grid-template-columns:repeat(7,1fr); gap:1px; background:#e5e7eb; }
     .cal-day {
-      background: white;
-      min-height: 72px;
-      padding: 8px 6px 6px;
-      cursor: pointer;
-      transition: background .15s;
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
+      background:white; min-height:68px; padding:7px 5px 5px;
+      cursor:pointer; transition:background .12s; position:relative;
+      display:flex; flex-direction:column; align-items:flex-start;
     }
-    .cal-day:hover { background: #f0fdfd; }
-    .cal-day.empty { background: #f9fafb; cursor: default; }
-    .cal-day.past { background: #f3f4f6; cursor: not-allowed; opacity: 0.5; }
+    .cal-day:hover:not(.empty):not(.past) { background:#f0fdfd; }
+    .cal-day.empty  { background:#f9fafb; cursor:default; }
+    .cal-day.past   { background:#f3f4f6; cursor:not-allowed; opacity:.45; }
     .cal-day.today .day-num {
-      background: var(--coral);
-      color: white;
-      border-radius: 50%;
-      width: 28px;
-      height: 28px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      background:var(--coral); color:white; border-radius:50%;
+      width:26px; height:26px; display:flex; align-items:center; justify-content:center;
     }
-    .cal-day.selected { background: #e0f5f5; }
-    .cal-day.selected::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      border: 2.5px solid var(--teal);
-      border-radius: 0;
-      pointer-events: none;
+    .cal-day.has-mine   { background:#e0f5f5; }
+    .cal-day.has-mine::after {
+      content:''; position:absolute; inset:0; border:2.5px solid var(--teal);
+      pointer-events:none;
     }
-    .day-num {
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: var(--text);
-      margin-bottom: 4px;
-    }
+    /* Admin: different colors per employee */
+    .cal-day.has-entries { background:#f0fdf4; }
+    .day-num { font-size:.9rem; font-weight:600; margin-bottom:3px; }
     .day-badge {
-      font-size: 0.68rem;
-      background: var(--teal);
-      color: white;
-      border-radius: 4px;
-      padding: 2px 5px;
-      margin-top: 2px;
-      line-height: 1.3;
-      max-width: 100%;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      font-size:.62rem; border-radius:4px; padding:1px 5px; margin-top:1px;
+      color:white; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+      line-height:1.4;
     }
-    .day-badge.multiple { background: var(--teal-dark); }
+    /* Admin dot markers */
+    .dot-row { display:flex; flex-wrap:wrap; gap:2px; margin-top:2px; }
+    .emp-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
 
-    /* ── SELECTED DAYS PANEL ──────────────────────────────── */
-    #selected-panel {
-      background: white;
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 24px;
-      margin-bottom: 28px;
-    }
-    #selected-panel h3 {
-      font-size: 1.05rem;
-      color: var(--teal-dark);
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .badge-count {
-      background: var(--teal);
-      color: white;
-      border-radius: 20px;
-      font-size: 0.78rem;
-      padding: 2px 10px;
-    }
-    .empty-state {
-      text-align: center;
-      color: var(--muted);
-      font-size: 0.9rem;
-      padding: 24px 0;
-    }
+    /* ── REQUEST CARDS ── */
     .request-card {
-      border: 1.5px solid #e5e7eb;
-      border-radius: 10px;
-      padding: 14px 16px;
-      margin-bottom: 10px;
-      display: flex;
-      align-items: flex-start;
-      gap: 14px;
-      transition: border-color .2s;
+      border:1.5px solid #e5e7eb; border-radius:10px; padding:12px 14px;
+      margin-bottom:8px; display:flex; align-items:flex-start; gap:12px;
+      transition:border-color .2s;
     }
-    .request-card:hover { border-color: var(--teal-light); }
-    .request-date-box {
-      background: var(--teal-dark);
-      color: white;
-      border-radius: 8px;
-      padding: 8px 10px;
-      text-align: center;
-      min-width: 54px;
-      flex-shrink: 0;
+    .request-card:hover { border-color:var(--teal-light); }
+    .rdate-box {
+      background:var(--teal-dark); color:white; border-radius:8px;
+      padding:7px 9px; text-align:center; min-width:50px; flex-shrink:0;
     }
-    .request-date-box .rd-day { font-size: 1.4rem; font-weight: 800; line-height: 1; }
-    .request-date-box .rd-month { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.85; }
-    .request-info { flex: 1; }
-    .request-info .ri-time {
-      font-size: 0.82rem;
-      color: var(--teal);
-      font-weight: 700;
-      margin-bottom: 3px;
-    }
-    .request-info .ri-reason {
-      font-size: 0.88rem;
-      color: var(--text);
-      line-height: 1.4;
-    }
-    .request-remove {
-      background: none;
-      border: none;
-      cursor: pointer;
-      color: #9ca3af;
-      font-size: 1.1rem;
-      padding: 4px;
-      border-radius: 4px;
-      transition: color .15s, background .15s;
-      flex-shrink: 0;
-    }
-    .request-remove:hover { color: var(--red); background: #fef2f2; }
+    .rdate-box .rd { font-size:1.3rem; font-weight:800; line-height:1; }
+    .rdate-box .rm { font-size:.6rem; text-transform:uppercase; opacity:.85; }
+    .rinfo { flex:1; }
+    .rinfo .ri-emp  { font-size:.78rem; font-weight:700; margin-bottom:2px; }
+    .rinfo .ri-slot { font-size:.78rem; color:var(--teal); font-weight:700; margin-bottom:2px; }
+    .rinfo .ri-reason { font-size:.85rem; color:var(--text); line-height:1.4; }
+    .rinfo .ri-status { font-size:.73rem; margin-top:4px; font-weight:600; }
+    .status-pending  { color:var(--coral); }
+    .status-approved { color:#16a34a; }
+    .status-refused  { color:var(--red); }
+    .req-actions { display:flex; flex-direction:column; gap:4px; flex-shrink:0; }
 
-    /* ── MODAL ────────────────────────────────────────────── */
+    /* ── ADMIN EMPLOYEE LIST ── */
+    .emp-filter { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
+    .emp-chip {
+      padding:5px 12px; border-radius:20px; font-size:.8rem; font-weight:600;
+      border:2px solid; cursor:pointer; transition:all .15s;
+    }
+    .emp-chip.active { color:white; }
+
+    /* ── MODAL ── */
     .modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.45);
-      backdrop-filter: blur(3px);
-      z-index: 1000;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
+      display:none; position:fixed; inset:0;
+      background:rgba(0,0,0,.45); backdrop-filter:blur(3px);
+      z-index:1000; align-items:center; justify-content:center; padding:16px;
     }
-    .modal-overlay.open { display: flex; }
+    .modal-overlay.open { display:flex; }
     .modal {
-      background: white;
-      border-radius: var(--radius);
-      box-shadow: 0 12px 48px rgba(0,0,0,0.2);
-      padding: 32px 28px;
-      width: 100%;
-      max-width: 440px;
-      animation: slideUp .25s ease;
+      background:white; border-radius:var(--radius);
+      box-shadow:0 12px 48px rgba(0,0,0,.2); padding:28px 24px;
+      width:100%; max-width:420px; animation:slideUp .22s ease;
     }
-    @keyframes slideUp {
-      from { transform: translateY(30px); opacity: 0; }
-      to   { transform: translateY(0);    opacity: 1; }
-    }
-    .modal h3 {
-      font-size: 1.15rem;
-      color: var(--teal-dark);
-      margin-bottom: 6px;
-    }
-    .modal .modal-date {
-      font-size: 0.9rem;
-      color: var(--muted);
-      margin-bottom: 22px;
-    }
-    .modal-actions {
-      display: flex;
-      gap: 10px;
-      margin-top: 22px;
-    }
-    .modal-actions .btn { flex: 1; justify-content: center; }
+    @keyframes slideUp { from{transform:translateY(28px);opacity:0} to{transform:translateY(0);opacity:1} }
+    .modal h3 { font-size:1.05rem; color:var(--teal-dark); margin-bottom:4px; }
+    .modal .modal-sub { font-size:.85rem; color:var(--muted); margin-bottom:18px; }
+    .modal-actions { display:flex; gap:8px; margin-top:18px; }
+    .modal-actions .btn { flex:1; justify-content:center; }
 
-    /* ── SUBMISSION ───────────────────────────────────────── */
-    #submit-section {
-      background: white;
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 28px 24px;
+    /* ── TOAST ── */
+    #toast {
+      position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(80px);
+      background:#1a1a2e; color:white; padding:12px 24px; border-radius:8px;
+      font-size:.9rem; font-weight:600; transition:transform .3s; z-index:9999;
+      white-space:nowrap;
     }
-    #submit-section h3 {
-      font-size: 1.1rem;
-      color: var(--teal-dark);
-      margin-bottom: 8px;
-    }
-    #submit-section p {
-      font-size: 0.9rem;
-      color: var(--muted);
-      margin-bottom: 20px;
-      line-height: 1.5;
-    }
+    #toast.show { transform:translateX(-50%) translateY(0); }
 
-    /* ── SUCCESS ──────────────────────────────────────────── */
-    #success-screen {
-      display: none;
-      max-width: 480px;
-      margin: 60px auto;
-      background: white;
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 48px 36px;
-      text-align: center;
+    /* ── LOADING ── */
+    .spinner {
+      display:inline-block; width:18px; height:18px;
+      border:3px solid rgba(255,255,255,.3); border-top-color:white;
+      border-radius:50%; animation:spin .7s linear infinite; margin-right:4px;
     }
-    .success-icon { font-size: 4rem; margin-bottom: 16px; }
-    #success-screen h2 { font-size: 1.5rem; color: var(--teal-dark); margin-bottom: 8px; }
-    #success-screen p { color: var(--muted); line-height: 1.6; }
+    @keyframes spin { to { transform:rotate(360deg); } }
 
-    /* ── RESPONSIVE ───────────────────────────────────────── */
-    @media (max-width: 540px) {
-      .logo { font-size: 1.8rem; }
-      .cal-day { min-height: 52px; }
-      .day-num { font-size: 0.82rem; }
-      .day-badge { display: none; }
+    /* ── ADMIN STATS ── */
+    .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:12px; margin-bottom:20px; }
+    .stat-box { background:white; border-radius:10px; padding:16px 14px; text-align:center; box-shadow:var(--shadow); }
+    .stat-num { font-size:2rem; font-weight:800; color:var(--teal-dark); }
+    .stat-label { font-size:.78rem; color:var(--muted); margin-top:2px; }
+
+    /* ── RESPONSIVE ── */
+    @media(max-width:540px){
+      .logo{font-size:1.8rem}
+      .cal-day{min-height:48px}
+      .day-badge{display:none}
     }
   </style>
 </head>
@@ -468,346 +233,655 @@
 
 <header>
   <div class="logo">Aqua<span>Poney</span> 🐴</div>
-  <div class="tagline">Gestion des disponibilités – Équipe Restaurant</div>
+  <div class="tagline" id="header-tagline">Gestion des disponibilités – Équipe Restaurant</div>
+  <div class="admin-badge" id="admin-badge" style="display:none">👑 Vue Administration</div>
 </header>
 
-<!-- WELCOME SCREEN -->
-<div id="welcome-screen">
-  <h2>Bienvenue sur AquaPoney 👋</h2>
-  <p>Renseignez votre prénom et votre nom pour accéder à votre calendrier de disponibilités.</p>
-  <div class="input-group">
-    <label>Prénom</label>
-    <input type="text" id="input-prenom" placeholder="ex. Sophie" autocomplete="given-name" />
+<!-- ═══════════════════════════════════════════════════════ EMPLOYEE WELCOME -->
+<div id="screen-welcome">
+  <br/>
+  <div class="card">
+    <div class="welcome-title">Bienvenue 👋</div>
+    <p class="welcome-sub">Entrez votre prénom et votre nom pour accéder à votre calendrier de demandes.</p>
+    <div class="input-group">
+      <label>Prénom *</label>
+      <input type="text" id="emp-prenom" placeholder="Sophie" autocomplete="given-name" />
+    </div>
+    <div class="input-group">
+      <label>Nom *</label>
+      <input type="text" id="emp-nom" placeholder="Dupont" autocomplete="family-name" />
+    </div>
+    <br/>
+    <button class="btn btn-primary btn-full" onclick="startEmployee()">Accéder à mon calendrier →</button>
   </div>
-  <div class="input-group">
-    <label>Nom</label>
-    <input type="text" id="input-nom" placeholder="ex. Dupont" autocomplete="family-name" />
-  </div>
-  <br />
-  <button class="btn btn-primary" onclick="startApp()">
-    <span>Accéder à mon calendrier</span> →
-  </button>
 </div>
 
-<!-- MAIN APP -->
-<div id="app">
-  <div class="greeting">
-    <div class="greeting-text">
-      <h2 id="greeting-name"></h2>
-      <p>Sélectionnez les jours où vous n'êtes <strong>pas disponible</strong> jusqu'à la fin de votre contrat.</p>
+<!-- ═══════════════════════════════════════════════════════ ADMIN LOGIN -->
+<div id="screen-admin-login" style="display:none">
+  <br/>
+  <div class="card">
+    <div class="welcome-title">👑 Accès Administration</div>
+    <p class="welcome-sub">Connectez-vous pour voir toutes les demandes de votre équipe.</p>
+    <div class="input-group">
+      <label>Mot de passe admin</label>
+      <input type="password" id="admin-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')loginAdmin()" />
     </div>
-    <button class="btn btn-secondary" onclick="resetApp()">← Changer de nom</button>
+    <br/>
+    <button class="btn btn-primary btn-full" onclick="loginAdmin()">Connexion</button>
+    <br/><br/>
+    <button class="btn btn-secondary btn-full btn-sm" onclick="showScreen('welcome')">← Retour employé</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ EMPLOYEE VIEW -->
+<div id="screen-employee">
+
+  <div class="card">
+    <div class="greeting">
+      <div>
+        <h2 id="emp-greeting-name"></h2>
+        <p>Cliquez sur les jours où vous n'êtes <strong>pas disponible</strong>.</p>
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="showScreen('welcome')">← Changer</button>
+    </div>
   </div>
 
   <div class="notice">
-    ⚠️ <strong>Important :</strong> Vos demandes seront <strong>examinées</strong> mais ne constituent pas une garantie d'absence. La direction fera son possible pour en tenir compte en fonction des besoins du service.
+    ⚠️ <strong>Important :</strong> Ces demandes sont soumises à l'accord de la direction. Elles ne constituent pas une garantie d'absence accordée.
   </div>
 
-  <!-- CALENDAR -->
-  <div class="calendar-section">
+  <!-- Calendrier employé -->
+  <div class="card">
     <div class="month-header">
-      <div class="month-nav">
-        <button onclick="prevMonth()">‹</button>
-      </div>
-      <div class="month-title" id="month-title"></div>
-      <div class="month-nav">
-        <button onclick="nextMonth()">›</button>
-      </div>
+      <div class="month-nav"><button onclick="prevMonth('emp')">‹</button></div>
+      <div class="month-title" id="emp-month-title"></div>
+      <div class="month-nav"><button onclick="nextMonth('emp')">›</button></div>
     </div>
     <div class="calendar-grid">
       <div class="cal-weekdays">
-        <span>Lun</span><span>Mar</span><span>Mer</span>
-        <span>Jeu</span><span>Ven</span><span>Sam</span><span>Dim</span>
+        <span>Lun</span><span>Mar</span><span>Mer</span><span>Jeu</span><span>Ven</span><span>Sam</span><span>Dim</span>
       </div>
-      <div class="cal-days" id="cal-days"></div>
+      <div class="cal-days" id="emp-cal-days"></div>
     </div>
   </div>
 
-  <!-- SELECTED REQUESTS -->
-  <div id="selected-panel">
-    <h3>📋 Mes demandes <span class="badge-count" id="request-count">0</span></h3>
-    <div id="requests-list">
-      <div class="empty-state">Aucune demande pour l'instant.<br />Cliquez sur un jour dans le calendrier pour en ajouter une.</div>
+  <!-- Liste demandes -->
+  <div class="card">
+    <div class="card-title">
+      📋 Mes demandes
+      <span id="emp-req-count" style="background:var(--teal);color:white;border-radius:20px;font-size:.75rem;padding:2px 10px;">0</span>
+      <span id="emp-loading" style="display:none;font-size:.8rem;color:var(--muted);font-weight:400">Chargement…</span>
+    </div>
+    <div id="emp-req-list"><p style="color:var(--muted);font-size:.9rem;text-align:center;padding:20px 0">Aucune demande. Cliquez sur le calendrier pour en ajouter.</p></div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ ADMIN VIEW -->
+<div id="screen-admin">
+
+  <div class="card">
+    <div class="greeting">
+      <div>
+        <h2>Tableau de bord – Toutes les demandes</h2>
+        <p id="admin-sync-info" style="font-size:.8rem;color:var(--muted)">Chargement…</p>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-secondary btn-sm" onclick="loadAdminData()">🔄 Actualiser</button>
+        <button class="btn btn-secondary btn-sm" onclick="showScreen('welcome')">← Déconnexion</button>
+      </div>
     </div>
   </div>
 
-  <!-- SUBMIT -->
-  <div id="submit-section">
-    <h3>📨 Envoyer mes demandes</h3>
-    <p>Une fois vos jours sélectionnés, envoyez-les directement à la direction via email. Votre récapitulatif complet sera joint automatiquement.</p>
-    <button class="btn btn-submit" onclick="submitRequests()">
-      ✉️ &nbsp;Envoyer mes demandes à la direction
-    </button>
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat-box"><div class="stat-num" id="stat-emp">–</div><div class="stat-label">Employés</div></div>
+    <div class="stat-box"><div class="stat-num" id="stat-total">–</div><div class="stat-label">Demandes</div></div>
+    <div class="stat-box"><div class="stat-num" id="stat-pending">–</div><div class="stat-label">En attente</div></div>
   </div>
+
+  <!-- Filtre employés -->
+  <div class="card" id="admin-filter-card" style="display:none">
+    <div class="card-title">👥 Filtrer par employé</div>
+    <div class="emp-filter" id="emp-filter-chips"></div>
+  </div>
+
+  <!-- Calendrier admin -->
+  <div class="card">
+    <div class="month-header">
+      <div class="month-nav"><button onclick="prevMonth('admin')">‹</button></div>
+      <div class="month-title" id="admin-month-title"></div>
+      <div class="month-nav"><button onclick="nextMonth('admin')">›</button></div>
+    </div>
+    <div class="calendar-grid">
+      <div class="cal-weekdays">
+        <span>Lun</span><span>Mar</span><span>Mer</span><span>Mer</span><span>Jeu</span><span>Ven</span><span>Sam</span><span>Dim</span>
+      </div>
+      <div class="cal-days" id="admin-cal-days"></div>
+    </div>
+  </div>
+
+  <!-- Liste demandes admin -->
+  <div class="card">
+    <div class="card-title">📋 Toutes les demandes <span id="admin-req-count" style="background:var(--teal);color:white;border-radius:20px;font-size:.75rem;padding:2px 10px;">0</span></div>
+    <div id="admin-req-list"><p style="color:var(--muted);font-size:.9rem;text-align:center;padding:20px 0">Chargement…</p></div>
+  </div>
+
 </div>
 
-<!-- SUCCESS SCREEN -->
-<div id="success-screen">
-  <div class="success-icon">✅</div>
-  <h2>Demandes envoyées !</h2>
-  <p>Merci <strong id="success-name"></strong>. Vos demandes ont bien été transmises à la direction.<br /><br />
-  Elles seront <em>étudiées</em> et vous serez informé(e) des décisions prises.<br /><br />
-  <span style="color: var(--teal-dark); font-weight: 600;">À bientôt sur AquaPoney 🐴</span></p>
-  <br />
-  <button class="btn btn-primary" onclick="resetApp()" style="margin: 0 auto;">← Modifier mes demandes</button>
-</div>
-
-<!-- MODAL -->
-<div class="modal-overlay" id="modal" onclick="closeModalOutside(event)">
+<!-- ═══════════════════════════════════════════════════════ MODAL EMPLOYEE -->
+<div class="modal-overlay" id="modal-emp" onclick="if(event.target===this)closeModal('emp')">
   <div class="modal">
     <h3>📅 Déclarer une indisponibilité</h3>
-    <div class="modal-date" id="modal-date-label"></div>
-
+    <div class="modal-sub" id="modal-emp-datelabel"></div>
     <div class="input-group">
-      <label>Plage horaire concernée *</label>
+      <label>Plage horaire *</label>
       <select id="modal-slot">
-        <option value="">-- Choisissez une option --</option>
-        <option value="Journée entière">Journée entière</option>
-        <option value="Service du midi (11h–16h)">Service du midi (11h–16h)</option>
-        <option value="Service du soir (17h–23h)">Service du soir (17h–23h)</option>
-        <option value="Matin (8h–12h)">Matin (8h–12h)</option>
-        <option value="Après-midi (12h–17h)">Après-midi (12h–17h)</option>
-        <option value="Autre">Autre (précisez dans la raison)</option>
+        <option value="">-- Choisissez --</option>
+        <option>Journée entière</option>
+        <option>Service du midi (11h–16h)</option>
+        <option>Service du soir (17h–23h)</option>
+        <option>Matin (8h–12h)</option>
+        <option>Après-midi (12h–17h)</option>
+        <option>Autre (précisez dans la raison)</option>
       </select>
     </div>
-
     <div class="input-group">
       <label>Raison *</label>
-      <textarea id="modal-reason" rows="3" placeholder="Ex : Rendez-vous médical, événement familial, formation..."></textarea>
+      <textarea id="modal-reason" rows="3" placeholder="Ex : Rendez-vous médical, événement familial…"></textarea>
     </div>
-
     <div class="modal-actions">
-      <button class="btn btn-secondary" onclick="closeModal()">Annuler</button>
-      <button class="btn btn-primary" onclick="saveDay()">Ajouter ✓</button>
+      <button class="btn btn-secondary" onclick="closeModal('emp')">Annuler</button>
+      <button class="btn btn-primary" id="btn-save-day" onclick="saveDayEmp()">Ajouter ✓</button>
     </div>
   </div>
 </div>
 
+<!-- ═══════════════════════════════════════════════════════ MODAL ADMIN DETAIL -->
+<div class="modal-overlay" id="modal-admin" onclick="if(event.target===this)closeModal('admin')">
+  <div class="modal">
+    <h3 id="modal-admin-title">Demande</h3>
+    <div class="modal-sub" id="modal-admin-sub"></div>
+    <div id="modal-admin-body"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('admin')">Fermer</button>
+      <button class="btn btn-primary" id="btn-approve" onclick="updateStatus('approved')">✓ Valider</button>
+      <button class="btn btn-danger" id="btn-refuse"  onclick="updateStatus('refused')">✗ Refuser</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
 <script>
-  // ── CONFIG ─────────────────────────────────────────────────────────────────
-  const MANAGER_EMAIL = "saelksam@gmail.com"; // ← adresse de la direction
-  const START_DATE    = new Date(2026, 5, 15); // 15 juin 2026 (mois 0-based)
+// ══════════════════════════════════════════════════════════════════════════════
+// CONFIG — à modifier après avoir déployé votre Apps Script
+// ══════════════════════════════════════════════════════════════════════════════
+const SCRIPT_URL  = "COLLER_ICI_VOTRE_URL_APPS_SCRIPT"; // ← voir instructions
+const ADMIN_PASS  = "aquaponey2026";                     // ← changez ce mot de passe
+const START_DATE  = new Date(2026, 5, 15);               // 15 juin 2026
 
-  // ── STATE ──────────────────────────────────────────────────────────────────
-  let employeeName = "";
-  let currentYear, currentMonth;
-  let requests = []; // [{dateKey, dateLabel, slot, reason}]
-  let pendingDateKey = null;
-  let pendingDateLabel = null;
+// Palette couleurs pour les employés (admin view)
+const COLORS = [
+  "#0a9396","#ee9b00","#ae2012","#9b2226","#94d2bd",
+  "#e9d8a6","#005f73","#ca6702","#bb3e03","#001219"
+];
 
-  // ── INIT ───────────────────────────────────────────────────────────────────
-  window.addEventListener("DOMContentLoaded", () => {
-    // Support lien pré-rempli ?name=Prénom+Nom
-    const params = new URLSearchParams(location.search);
-    const nameParam = params.get("name");
-    if (nameParam) {
-      const parts = nameParam.trim().split(" ");
-      document.getElementById("input-prenom").value = parts[0] || "";
-      document.getElementById("input-nom").value = parts.slice(1).join(" ") || "";
-      startApp();
+const MONTHS_FR = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
+const DAYS_FR   = ["Dimanche","Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"];
+
+// ── STATE ──────────────────────────────────────────────────────────────────
+let currentEmployee = "";
+let empRequests     = [];   // demandes de l'employé courant
+let adminData       = [];   // toutes les demandes (admin)
+let empColors       = {};   // {nom: couleur}
+let empFilter       = null; // null = tous
+let pendingDate     = null; // {key, label}
+let adminPendingRow = null; // ligne admin sélectionnée
+
+let empYear, empMonth, adminYear, adminMonth;
+
+// ══════════════════════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════════════════════
+window.addEventListener("DOMContentLoaded", () => {
+  const params = new URLSearchParams(location.search);
+  if (params.get("admin") !== null) {
+    showScreen("admin-login");
+  } else {
+    showScreen("welcome");
+    const n = params.get("name");
+    if (n) {
+      const parts = n.trim().split(" ");
+      document.getElementById("emp-prenom").value = parts[0] || "";
+      document.getElementById("emp-nom").value = parts.slice(1).join(" ") || "";
+      startEmployee();
     }
-    const today = new Date();
-    currentYear  = today >= START_DATE ? today.getFullYear() : START_DATE.getFullYear();
-    currentMonth = today >= START_DATE ? today.getMonth()    : START_DATE.getMonth();
+  }
+
+  const today = new Date();
+  empYear   = adminYear   = today >= START_DATE ? today.getFullYear() : START_DATE.getFullYear();
+  empMonth  = adminMonth  = today >= START_DATE ? today.getMonth()    : START_DATE.getMonth();
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+// SCREENS
+// ══════════════════════════════════════════════════════════════════════════════
+function showScreen(name) {
+  ["welcome","admin-login","employee","admin"].forEach(s => {
+    document.getElementById("screen-"+s).style.display = "none";
   });
+  document.getElementById("screen-"+name).style.display = "block";
+  document.getElementById("admin-badge").style.display = name === "admin" ? "inline-block" : "none";
+}
 
-  // ── NAVIGATION ─────────────────────────────────────────────────────────────
-  function startApp() {
-    const prenom = document.getElementById("input-prenom").value.trim();
-    const nom    = document.getElementById("input-nom").value.trim();
-    if (!prenom) { alert("Merci d'entrer votre prénom."); return; }
-    employeeName = prenom + (nom ? " " + nom : "");
-    document.getElementById("welcome-screen").style.display = "none";
-    document.getElementById("app").style.display = "block";
-    document.getElementById("greeting-name").textContent = "Bonjour, " + prenom + " 👋";
-    renderCalendar();
-    renderRequests();
+// ══════════════════════════════════════════════════════════════════════════════
+// EMPLOYEE FLOW
+// ══════════════════════════════════════════════════════════════════════════════
+function startEmployee() {
+  const prenom = document.getElementById("emp-prenom").value.trim();
+  const nom    = document.getElementById("emp-nom").value.trim();
+  if (!prenom) { toast("Merci d'entrer votre prénom."); return; }
+  currentEmployee = prenom + (nom ? " "+nom : "");
+  document.getElementById("emp-greeting-name").textContent = "Bonjour, "+prenom+" 👋";
+  showScreen("employee");
+  renderEmpCalendar();
+  loadEmpRequests();
+}
+
+async function loadEmpRequests() {
+  if (SCRIPT_URL === "COLLER_ICI_VOTRE_URL_APPS_SCRIPT") {
+    empRequests = [];
+    renderEmpList();
+    return;
+  }
+  document.getElementById("emp-loading").style.display = "inline";
+  try {
+    const r = await fetch(SCRIPT_URL + "?action=get&employee=" + encodeURIComponent(currentEmployee));
+    const d = await r.json();
+    empRequests = d.rows || [];
+  } catch(e) { toast("Erreur de connexion."); }
+  document.getElementById("emp-loading").style.display = "none";
+  renderEmpCalendar();
+  renderEmpList();
+}
+
+function openDayModal(dateKey, dateObj) {
+  pendingDate = {
+    key: dateKey,
+    label: DAYS_FR[dateObj.getDay()]+" "+dateObj.getDate()+" "+MONTHS_FR[dateObj.getMonth()]+" "+dateObj.getFullYear()
+  };
+  document.getElementById("modal-emp-datelabel").textContent = "📅 "+pendingDate.label;
+  document.getElementById("modal-slot").value   = "";
+  document.getElementById("modal-reason").value = "";
+  document.getElementById("modal-emp").classList.add("open");
+}
+
+async function saveDayEmp() {
+  const slot   = document.getElementById("modal-slot").value.trim();
+  const reason = document.getElementById("modal-reason").value.trim();
+  if (!slot)   { toast("Choisissez une plage horaire."); return; }
+  if (!reason) { toast("Indiquez une raison."); return; }
+
+  const btn = document.getElementById("btn-save-day");
+  btn.innerHTML = '<span class="spinner"></span> Envoi…';
+  btn.disabled  = true;
+
+  const row = {
+    employee:  currentEmployee,
+    dateKey:   pendingDate.key,
+    dateLabel: pendingDate.label,
+    slot, reason,
+    status: "pending",
+    timestamp: new Date().toISOString()
+  };
+
+  if (SCRIPT_URL !== "COLLER_ICI_VOTRE_URL_APPS_SCRIPT") {
+    try {
+      await fetch(SCRIPT_URL, {
+        method: "POST",
+        body: JSON.stringify({action:"add", row}),
+        headers: {"Content-Type":"application/json"}
+      });
+    } catch(e) { toast("Erreur de connexion."); }
   }
 
-  function resetApp() {
-    document.getElementById("welcome-screen").style.display = "block";
-    document.getElementById("app").style.display = "none";
-    document.getElementById("success-screen").style.display = "none";
-    requests = [];
-    employeeName = "";
-    document.getElementById("input-prenom").value = "";
-    document.getElementById("input-nom").value = "";
+  empRequests.push(row);
+  empRequests.sort((a,b) => a.dateKey.localeCompare(b.dateKey));
+  closeModal("emp");
+  renderEmpCalendar();
+  renderEmpList();
+  toast("✅ Demande ajoutée !");
+
+  btn.innerHTML = "Ajouter ✓";
+  btn.disabled  = false;
+}
+
+async function deleteEmpRequest(idx) {
+  if (!confirm("Supprimer cette demande ?")) return;
+  const row = empRequests[idx];
+  if (row.id && SCRIPT_URL !== "COLLER_ICI_VOTRE_URL_APPS_SCRIPT") {
+    try {
+      await fetch(SCRIPT_URL, {
+        method: "POST",
+        body: JSON.stringify({action:"delete", id: row.id}),
+        headers:{"Content-Type":"application/json"}
+      });
+    } catch(e) {}
+  }
+  empRequests.splice(idx,1);
+  renderEmpCalendar();
+  renderEmpList();
+  toast("Demande supprimée.");
+}
+
+function renderEmpList() {
+  const list = document.getElementById("emp-req-list");
+  document.getElementById("emp-req-count").textContent = empRequests.length;
+  if (!empRequests.length) {
+    list.innerHTML = `<p style="color:var(--muted);font-size:.9rem;text-align:center;padding:20px 0">Aucune demande. Cliquez sur le calendrier pour en ajouter.</p>`;
+    return;
+  }
+  list.innerHTML = empRequests.map((r,i) => {
+    const [,m,d] = r.dateKey.split("-");
+    const statusHtml = r.status === "approved"
+      ? `<div class="ri-status status-approved">✓ Validé par la direction</div>`
+      : r.status === "refused"
+      ? `<div class="ri-status status-refused">✗ Non accordé</div>`
+      : `<div class="ri-status status-pending">⏳ En attente de réponse</div>`;
+    return `
+    <div class="request-card">
+      <div class="rdate-box" style="background:var(--teal-dark)">
+        <div class="rd">${parseInt(d)}</div>
+        <div class="rm">${MONTHS_FR[parseInt(m)-1].substring(0,3)}</div>
+      </div>
+      <div class="rinfo">
+        <div class="ri-slot">⏱ ${r.slot}</div>
+        <div class="ri-reason">${r.reason}</div>
+        ${statusHtml}
+      </div>
+      <div class="req-actions">
+        ${r.status==="pending" ? `<button class="btn btn-danger btn-sm" onclick="deleteEmpRequest(${i})">✕</button>` : ""}
+      </div>
+    </div>`;
+  }).join("");
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ADMIN FLOW
+// ══════════════════════════════════════════════════════════════════════════════
+function loginAdmin() {
+  const pass = document.getElementById("admin-pass").value;
+  if (pass !== ADMIN_PASS) { toast("Mot de passe incorrect."); return; }
+  showScreen("admin");
+  loadAdminData();
+}
+
+async function loadAdminData() {
+  document.getElementById("admin-sync-info").textContent = "Chargement…";
+  if (SCRIPT_URL === "COLLER_ICI_VOTRE_URL_APPS_SCRIPT") {
+    adminData = DEMO_DATA;
+    buildAdminView();
+    return;
+  }
+  try {
+    const r = await fetch(SCRIPT_URL + "?action=getAll&pass=" + encodeURIComponent(ADMIN_PASS));
+    const d = await r.json();
+    adminData = d.rows || [];
+    buildAdminView();
+  } catch(e) {
+    toast("Erreur de connexion.");
+    document.getElementById("admin-sync-info").textContent = "Erreur de connexion.";
+  }
+}
+
+function buildAdminView() {
+  // Assign colors to employees
+  const employees = [...new Set(adminData.map(r => r.employee))].sort();
+  employees.forEach((e,i) => { empColors[e] = COLORS[i % COLORS.length]; });
+
+  // Stats
+  const pending = adminData.filter(r => r.status === "pending").length;
+  document.getElementById("stat-emp").textContent     = employees.length;
+  document.getElementById("stat-total").textContent   = adminData.length;
+  document.getElementById("stat-pending").textContent = pending;
+  document.getElementById("admin-sync-info").textContent =
+    "Dernière mise à jour : " + new Date().toLocaleTimeString("fr-FR");
+
+  // Filter chips
+  const fc = document.getElementById("emp-filter-chips");
+  document.getElementById("admin-filter-card").style.display = employees.length ? "" : "none";
+  fc.innerHTML = `<div class="emp-chip ${empFilter===null?'active':''}"
+    style="border-color:#374151;${empFilter===null?'background:#374151;':''}"
+    onclick="setFilter(null)">Tous</div>` +
+    employees.map(e => `<div class="emp-chip ${empFilter===e?'active':''}"
+      style="border-color:${empColors[e]};${empFilter===e?'background:'+empColors[e]+';':''}"
+      onclick="setFilter('${e.replace(/'/g,"\\'")}')">
+      ${e}
+    </div>`).join("");
+
+  renderAdminCalendar();
+  renderAdminList();
+}
+
+function setFilter(name) {
+  empFilter = name;
+  buildAdminView();
+}
+
+function renderAdminList() {
+  const visible = empFilter ? adminData.filter(r => r.employee === empFilter) : adminData;
+  const sorted  = [...visible].sort((a,b) => a.dateKey.localeCompare(b.dateKey));
+  const list    = document.getElementById("admin-req-list");
+  document.getElementById("admin-req-count").textContent = sorted.length;
+
+  if (!sorted.length) {
+    list.innerHTML = `<p style="color:var(--muted);font-size:.9rem;text-align:center;padding:20px 0">Aucune demande.</p>`;
+    return;
   }
 
-  // ── CALENDAR ───────────────────────────────────────────────────────────────
-  const MONTHS_FR = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
-  const DAYS_FR   = ["Dimanche","Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"];
+  list.innerHTML = sorted.map(r => {
+    const [,m,d] = r.dateKey.split("-");
+    const color  = empColors[r.employee] || "#0a9396";
+    const statusHtml = r.status === "approved"
+      ? `<div class="ri-status status-approved">✓ Validé</div>`
+      : r.status === "refused"
+      ? `<div class="ri-status status-refused">✗ Refusé</div>`
+      : `<div class="ri-status status-pending">⏳ En attente</div>`;
+    return `
+    <div class="request-card" onclick="openAdminDetail(${JSON.stringify(r).replace(/"/g,'&quot;')})">
+      <div class="rdate-box" style="background:${color}">
+        <div class="rd">${parseInt(d)}</div>
+        <div class="rm">${MONTHS_FR[parseInt(m)-1].substring(0,3)}</div>
+      </div>
+      <div class="rinfo">
+        <div class="ri-emp" style="color:${color}">👤 ${r.employee}</div>
+        <div class="ri-slot">⏱ ${r.slot}</div>
+        <div class="ri-reason">${r.reason}</div>
+        ${statusHtml}
+      </div>
+    </div>`;
+  }).join("");
+}
 
-  function prevMonth() {
-    const prev = new Date(currentYear, currentMonth - 1, 1);
-    if (prev < new Date(START_DATE.getFullYear(), START_DATE.getMonth(), 1)) return;
-    currentMonth = prev.getMonth();
-    currentYear  = prev.getFullYear();
-    renderCalendar();
+function openAdminDetail(r) {
+  adminPendingRow = r;
+  document.getElementById("modal-admin-title").textContent = "Demande de "+r.employee;
+  document.getElementById("modal-admin-sub").textContent   = r.dateLabel;
+  document.getElementById("modal-admin-body").innerHTML    =
+    `<p style="margin-bottom:6px"><strong>Plage :</strong> ${r.slot}</p>
+     <p style="margin-bottom:6px"><strong>Raison :</strong> ${r.reason}</p>
+     <p style="font-size:.8rem;color:var(--muted)">Soumis le ${new Date(r.timestamp).toLocaleDateString("fr-FR")}</p>`;
+
+  const isDecided = r.status !== "pending";
+  document.getElementById("btn-approve").style.display = isDecided ? "none" : "";
+  document.getElementById("btn-refuse").style.display  = isDecided ? "none" : "";
+  document.getElementById("modal-admin").classList.add("open");
+}
+
+async function updateStatus(status) {
+  if (!adminPendingRow) return;
+  closeModal("admin");
+
+  if (SCRIPT_URL !== "COLLER_ICI_VOTRE_URL_APPS_SCRIPT") {
+    try {
+      await fetch(SCRIPT_URL, {
+        method:"POST",
+        body: JSON.stringify({action:"status", id: adminPendingRow.id, status}),
+        headers:{"Content-Type":"application/json"}
+      });
+    } catch(e) { toast("Erreur de connexion."); return; }
   }
-  function nextMonth() {
-    const next = new Date(currentYear, currentMonth + 1, 1);
-    currentMonth = next.getMonth();
-    currentYear  = next.getFullYear();
-    renderCalendar();
+
+  const idx = adminData.findIndex(r => r.id === adminPendingRow.id);
+  if (idx !== -1) adminData[idx].status = status;
+  buildAdminView();
+  toast(status === "approved" ? "✅ Demande validée !" : "❌ Demande refusée.");
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// CALENDAR SHARED
+// ══════════════════════════════════════════════════════════════════════════════
+function prevMonth(mode) {
+  if (mode==="emp") {
+    const p = new Date(empYear, empMonth-1, 1);
+    if (p < new Date(START_DATE.getFullYear(), START_DATE.getMonth(), 1)) return;
+    empYear=p.getFullYear(); empMonth=p.getMonth(); renderEmpCalendar();
+  } else {
+    const p = new Date(adminYear, adminMonth-1, 1);
+    if (p < new Date(START_DATE.getFullYear(), START_DATE.getMonth(), 1)) return;
+    adminYear=p.getFullYear(); adminMonth=p.getMonth(); renderAdminCalendar();
   }
+}
+function nextMonth(mode) {
+  if (mode==="emp") {
+    const n=new Date(empYear,empMonth+1,1); empYear=n.getFullYear(); empMonth=n.getMonth(); renderEmpCalendar();
+  } else {
+    const n=new Date(adminYear,adminMonth+1,1); adminYear=n.getFullYear(); adminMonth=n.getMonth(); renderAdminCalendar();
+  }
+}
 
-  function renderCalendar() {
-    document.getElementById("month-title").textContent =
-      MONTHS_FR[currentMonth] + " " + currentYear;
-
-    const firstDay = new Date(currentYear, currentMonth, 1);
-    const lastDay  = new Date(currentYear, currentMonth + 1, 0);
-    const today    = new Date(); today.setHours(0,0,0,0);
-
-    // Monday-based offset
-    let startOffset = firstDay.getDay() - 1;
-    if (startOffset < 0) startOffset = 6;
-
-    const grid = document.getElementById("cal-days");
-    grid.innerHTML = "";
-
-    for (let i = 0; i < startOffset; i++) {
-      const el = document.createElement("div");
-      el.className = "cal-day empty";
-      grid.appendChild(el);
+function renderEmpCalendar() {
+  document.getElementById("emp-month-title").textContent = MONTHS_FR[empMonth]+" "+empYear;
+  const grid = document.getElementById("emp-cal-days");
+  grid.innerHTML = "";
+  buildCalDays(grid, empYear, empMonth, (date, dateKey, el) => {
+    const mine = empRequests.filter(r => r.dateKey===dateKey);
+    if (mine.length) {
+      el.classList.add("has-mine");
+      mine.forEach(r => {
+        const b = document.createElement("div");
+        b.className = "day-badge";
+        b.style.background = r.status==="approved" ? "#16a34a" : r.status==="refused" ? var_red() : "var(--teal)";
+        b.textContent = r.slot.split(" ")[0];
+        el.appendChild(b);
+      });
     }
+    el.addEventListener("click", () => openDayModal(dateKey, date));
+  });
+}
 
-    for (let d = 1; d <= lastDay.getDate(); d++) {
-      const date    = new Date(currentYear, currentMonth, d);
-      const dateKey = fmt(date);
-      const el      = document.createElement("div");
-      el.className  = "cal-day";
+function var_red(){ return "#ae2012"; }
 
-      const numEl = document.createElement("div");
-      numEl.className = "day-num";
-      numEl.textContent = d;
-      el.appendChild(numEl);
-
-      const isPast   = date < today || date < START_DATE;
-      const isToday  = date.getTime() === today.getTime();
-      const myReqs   = requests.filter(r => r.dateKey === dateKey);
-
-      if (isPast)  el.classList.add("past");
-      if (isToday) el.classList.add("today");
-      if (myReqs.length > 0) {
-        el.classList.add("selected");
-        myReqs.forEach((r, i) => {
-          const badge = document.createElement("div");
-          badge.className = "day-badge" + (i > 0 ? " multiple" : "");
-          badge.textContent = r.slot;
-          el.appendChild(badge);
-        });
+function renderAdminCalendar() {
+  document.getElementById("admin-month-title").textContent = MONTHS_FR[adminMonth]+" "+adminYear;
+  const grid = document.getElementById("admin-cal-days");
+  grid.innerHTML = "";
+  const visible = empFilter ? adminData.filter(r => r.employee===empFilter) : adminData;
+  buildCalDays(grid, adminYear, adminMonth, (date, dateKey, el) => {
+    const dayEntries = visible.filter(r => r.dateKey===dateKey);
+    if (dayEntries.length) {
+      el.classList.add("has-entries");
+      const dotRow = document.createElement("div");
+      dotRow.className = "dot-row";
+      const unique = [...new Set(dayEntries.map(r => r.employee))];
+      unique.forEach(emp => {
+        const dot = document.createElement("div");
+        dot.className = "emp-dot";
+        dot.style.background = empColors[emp] || "#0a9396";
+        dot.title = emp;
+        dotRow.appendChild(dot);
+      });
+      el.appendChild(dotRow);
+      if (dayEntries.length === 1) {
+        const b = document.createElement("div");
+        b.className = "day-badge";
+        b.style.background = empColors[dayEntries[0].employee] || "#0a9396";
+        b.textContent = dayEntries[0].employee.split(" ")[0];
+        el.appendChild(b);
+      } else {
+        const b = document.createElement("div");
+        b.className = "day-badge";
+        b.style.background = "#374151";
+        b.textContent = dayEntries.length+" demandes";
+        el.appendChild(b);
       }
-
-      if (!isPast) {
-        el.addEventListener("click", () => openModal(dateKey, date));
-      }
-      grid.appendChild(el);
+      el.addEventListener("click", () => {
+        setFilter(null);
+        document.getElementById("admin-req-list").scrollIntoView({behavior:"smooth"});
+      });
     }
+  });
+}
+
+function buildCalDays(grid, year, month, onDay) {
+  const firstDay = new Date(year, month, 1);
+  const lastDay  = new Date(year, month+1, 0);
+  const today    = new Date(); today.setHours(0,0,0,0);
+
+  let offset = firstDay.getDay()-1;
+  if (offset<0) offset=6;
+
+  for (let i=0; i<offset; i++) {
+    const el=document.createElement("div"); el.className="cal-day empty"; grid.appendChild(el);
   }
+  for (let d=1; d<=lastDay.getDate(); d++) {
+    const date    = new Date(year, month, d);
+    const dateKey = fmt(date);
+    const el      = document.createElement("div");
+    el.className  = "cal-day";
+    const numEl   = document.createElement("div");
+    numEl.className = "day-num"; numEl.textContent = d;
+    el.appendChild(numEl);
 
-  function fmt(date) {
-    return date.getFullYear() + "-"
-      + String(date.getMonth()+1).padStart(2,"0") + "-"
-      + String(date.getDate()).padStart(2,"0");
+    const isPast  = date < today || date < START_DATE;
+    const isToday = date.getTime() === today.getTime();
+    if (isPast)  el.classList.add("past");
+    if (isToday) el.classList.add("today");
+    if (!isPast) onDay(date, dateKey, el);
+    grid.appendChild(el);
   }
+}
 
-  // ── MODAL ──────────────────────────────────────────────────────────────────
-  function openModal(dateKey, dateObj) {
-    pendingDateKey   = dateKey;
-    pendingDateLabel = DAYS_FR[dateObj.getDay()] + " " + dateObj.getDate() + " " + MONTHS_FR[dateObj.getMonth()] + " " + dateObj.getFullYear();
-    document.getElementById("modal-date-label").textContent = "📅 " + pendingDateLabel;
-    document.getElementById("modal-slot").value   = "";
-    document.getElementById("modal-reason").value = "";
-    document.getElementById("modal").classList.add("open");
-  }
-  function closeModal() {
-    document.getElementById("modal").classList.remove("open");
-    pendingDateKey = pendingDateLabel = null;
-  }
-  function closeModalOutside(e) {
-    if (e.target === document.getElementById("modal")) closeModal();
-  }
+function fmt(date) {
+  return date.getFullYear()+"-"+String(date.getMonth()+1).padStart(2,"0")+"-"+String(date.getDate()).padStart(2,"0");
+}
 
-  function saveDay() {
-    const slot   = document.getElementById("modal-slot").value.trim();
-    const reason = document.getElementById("modal-reason").value.trim();
-    if (!slot)   { alert("Merci de choisir une plage horaire."); return; }
-    if (!reason) { alert("Merci d'indiquer une raison."); return; }
+// ══════════════════════════════════════════════════════════════════════════════
+// MODAL / TOAST
+// ══════════════════════════════════════════════════════════════════════════════
+function closeModal(type) {
+  document.getElementById("modal-"+type).classList.remove("open");
+}
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById("toast");
+  el.textContent = msg; el.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 3000);
+}
 
-    // Allow multiple slots per day
-    requests.push({ dateKey: pendingDateKey, dateLabel: pendingDateLabel, slot, reason });
-    requests.sort((a, b) => a.dateKey.localeCompare(b.dateKey));
-    closeModal();
-    renderCalendar();
-    renderRequests();
-  }
-
-  // ── REQUESTS LIST ──────────────────────────────────────────────────────────
-  function renderRequests() {
-    const list  = document.getElementById("requests-list");
-    const count = document.getElementById("request-count");
-    count.textContent = requests.length;
-
-    if (requests.length === 0) {
-      list.innerHTML = `<div class="empty-state">Aucune demande pour l'instant.<br />Cliquez sur un jour dans le calendrier pour en ajouter une.</div>`;
-      return;
-    }
-
-    list.innerHTML = requests.map((r, i) => {
-      const parts = r.dateKey.split("-");
-      const day   = parseInt(parts[2]);
-      const month = MONTHS_FR[parseInt(parts[1])-1].substring(0,3).toUpperCase();
-      return `
-        <div class="request-card">
-          <div class="request-date-box">
-            <div class="rd-day">${day}</div>
-            <div class="rd-month">${month}</div>
-          </div>
-          <div class="request-info">
-            <div class="ri-time">⏱ ${r.slot}</div>
-            <div class="ri-reason">${r.reason}</div>
-          </div>
-          <button class="request-remove" onclick="removeRequest(${i})" title="Supprimer">✕</button>
-        </div>`;
-    }).join("");
-  }
-
-  function removeRequest(i) {
-    requests.splice(i, 1);
-    renderCalendar();
-    renderRequests();
-  }
-
-  // ── SUBMIT ─────────────────────────────────────────────────────────────────
-  function submitRequests() {
-    if (requests.length === 0) {
-      alert("Vous n'avez sélectionné aucun jour. Cliquez sur des jours dans le calendrier pour ajouter vos indisponibilités.");
-      return;
-    }
-
-    const subject = encodeURIComponent("AquaPoney – Demandes d'indisponibilité : " + employeeName);
-
-    const lines = requests.map((r, i) =>
-      `${i+1}. ${r.dateLabel}\n   Plage : ${r.slot}\n   Raison : ${r.reason}`
-    ).join("\n\n");
-
-    const body = encodeURIComponent(
-      `Bonjour,\n\nVoici mes demandes d'indisponibilité :\n\nNom : ${employeeName}\nDate d'envoi : ${new Date().toLocaleDateString("fr-FR")}\n\n` +
-      `${"─".repeat(40)}\n\n${lines}\n\n${"─".repeat(40)}\n\n` +
-      `⚠️ Je comprends que ces demandes sont soumises à l'accord de la direction et ne constituent pas une garantie d'absence.\n\nCordialement,\n${employeeName}`
-    );
-
-    window.location.href = `mailto:${MANAGER_EMAIL}?subject=${subject}&body=${body}`;
-
-    // Show success after short delay
-    setTimeout(() => {
-      document.getElementById("app").style.display = "none";
-      document.getElementById("success-screen").style.display = "block";
-      document.getElementById("success-name").textContent = employeeName.split(" ")[0];
-    }, 800);
-  }
+// ══════════════════════════════════════════════════════════════════════════════
+// DEMO DATA (quand Apps Script pas encore configuré)
+// ══════════════════════════════════════════════════════════════════════════════
+const DEMO_DATA = [
+  {id:"1", employee:"Sophie Dupont",  dateKey:"2026-07-04", dateLabel:"Samedi 4 Juillet 2026",   slot:"Journée entière",          reason:"Mariage de ma sœur",       status:"approved",  timestamp:"2026-06-15T09:00:00Z"},
+  {id:"2", employee:"Marc Leroy",     dateKey:"2026-07-14", dateLabel:"Mardi 14 Juillet 2026",   slot:"Service du soir (17h–23h)", reason:"Fête nationale en famille", status:"pending",   timestamp:"2026-06-15T10:00:00Z"},
+  {id:"3", employee:"Amina Traoré",   dateKey:"2026-08-01", dateLabel:"Samedi 1 Août 2026",      slot:"Journée entière",           reason:"Départ en vacances",        status:"pending",   timestamp:"2026-06-15T11:00:00Z"},
+  {id:"4", employee:"Sophie Dupont",  dateKey:"2026-07-21", dateLabel:"Mardi 21 Juillet 2026",   slot:"Service du midi (11h–16h)", reason:"RDV médical",               status:"refused",   timestamp:"2026-06-15T12:00:00Z"},
+  {id:"5", employee:"Kevin Martin",   dateKey:"2026-08-15", dateLabel:"Samedi 15 Août 2026",     slot:"Journée entière",           reason:"Anniversaire de ma mère",   status:"pending",   timestamp:"2026-06-15T13:00:00Z"},
+];
 </script>
+
 </body>
 </html>
