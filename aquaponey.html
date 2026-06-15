@@ -390,12 +390,14 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
       <select id="m-slot">
         <option value="">-- Choisir --</option>
         <option>Journée entière</option>
-        <option>Service du midi (11h–16h)</option>
-        <option>Service du soir (17h–23h)</option>
-        <option>Matin (8h–12h)</option>
-        <option>Après-midi (12h–17h)</option>
-        <option>Autre (précisez ci-dessous)</option>
+        <option>Matin</option>
+        <option>Après-midi</option>
+        <option>Soir</option>
       </select>
+    </div>
+    <div class="field" id="field-horaire" style="display:none">
+      <label>Précisez la plage horaire</label>
+      <input type="text" id="m-horaire" placeholder="Ex : 9h–13h, 14h–18h, 19h–23h…"/>
     </div>
     <div class="field">
       <label>Raison *</label>
@@ -602,11 +604,22 @@ function openAdd(key,date){
   document.getElementById('m-add-date').textContent='📅 '+pendingDate.label;
   document.getElementById('m-slot').value='';
   document.getElementById('m-reason').value='';
+  document.getElementById('m-horaire').value='';
+  document.getElementById('field-horaire').style.display='none';
+  // Afficher champ horaire si pas "Journée entière"
+  document.getElementById('m-slot').onchange=function(){
+    const show=this.value&&this.value!=='Journée entière';
+    document.getElementById('field-horaire').style.display=show?'':'none';
+  };
   openM('add');
 }
 
 async function saveReq(){
-  const slot=document.getElementById('m-slot').value.trim();
+  const slotBase=document.getElementById('m-slot').value.trim();
+  const horaire=document.getElementById('m-horaire').value.trim();
+  const slot=slotBase&&slotBase!=='Journée entière'&&horaire
+    ? slotBase+' ('+horaire+')'
+    : slotBase;
   const reason=document.getElementById('m-reason').value.trim();
   if(!slot){toast('Choisissez une plage horaire.');return;}
   if(!reason){toast('Indiquez une raison.');return;}
