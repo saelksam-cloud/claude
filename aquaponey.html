@@ -142,6 +142,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .r-date .rm{font-size:.6rem;text-transform:uppercase;opacity:.85;}
 .r-info{flex:1;}
 .r-emp{font-size:.76rem;font-weight:700;margin-bottom:2px;}
+.r-datelabel{font-size:.82rem;font-weight:700;color:var(--teal-dark);margin-bottom:3px;}
 .r-slot{font-size:.76rem;font-weight:700;color:var(--teal);margin-bottom:2px;}
 .r-reason{font-size:.85rem;line-height:1.4;}
 .r-status{font-size:.72rem;font-weight:700;margin-top:4px;}
@@ -559,6 +560,7 @@ function renderEmpList(){
         <div class="rd">${+d}</div><div class="rm">${MONTHS[+m-1].slice(0,3)}</div>
       </div>
       <div class="r-info">
+        <div class="r-datelabel">📅 ${r.dateLabel||r.dateKey}</div>
         <div class="r-slot">⏱ ${r.slot}</div>
         <div class="r-reason">${r.reason}</div>
         <div class="r-status ${sc}">${sl}</div>
@@ -723,6 +725,7 @@ function renderAdminList(){
       </div>
       <div class="r-info">
         <div class="r-emp" style="color:${col}">👤 ${r.employee}</div>
+        <div class="r-datelabel">📅 ${r.dateLabel||r.dateKey}</div>
         <div class="r-slot">⏱ ${r.slot}</div>
         <div class="r-reason">${r.reason}</div>
         <div class="r-status ${sc}">${sl}</div>
