@@ -23,6 +23,8 @@ function getSheet() {
     sheet.getRange("1:1").setFontWeight("bold").setBackground("#005f73").setFontColor("white");
     sheet.setColumnWidths(1, 8, [80, 140, 100, 160, 180, 260, 90, 160]);
   }
+  // Forcer colonnes DateKey et DateLabel en texte pour éviter la conversion automatique
+  sheet.getRange("C:D").setNumberFormat("@");
   return sheet;
 }
 
@@ -75,7 +77,7 @@ function doPost(e) {
       id,
       row.employee,
       row.dateKey,
-      row.dateLabel   || "",
+      row.dateLabel  || "",
       row.slot        || "",
       row.reason      || "",
       row.status      || "pending",
@@ -105,11 +107,21 @@ function doPost(e) {
 
 // ── HELPERS ──────────────────────────────────────────────────────────────────
 function rowToObj(headers, row) {
+  // Si Google Sheets a converti la dateKey en Date, on la reformate en "YYYY-MM-DD"
+  let dateKey = row[2];
+  if (dateKey instanceof Date) {
+    const y = dateKey.getFullYear();
+    const m = String(dateKey.getMonth()+1).padStart(2,'0');
+    const d = String(dateKey.getDate()).padStart(2,'0');
+    dateKey = y+'-'+m+'-'+d;
+  } else {
+    dateKey = String(dateKey);
+  }
   return {
     id:        row[0],
     employee:  row[1],
-    dateKey:   row[2],
-    dateLabel: row[3],
+    dateKey:   dateKey,
+    dateLabel: String(row[3]),
     slot:      row[4],
     reason:    row[5],
     status:    row[6],

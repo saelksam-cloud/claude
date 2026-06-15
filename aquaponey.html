@@ -467,6 +467,30 @@ const COLORS = ["#005f73","#ee9b00","#ae2012","#6d6875","#2d6a4f","#d4a373","#1d
 
 const BACKEND = ()=> SCRIPT_URL !== "COLLER_ICI_URL_APPS_SCRIPT";
 
+// Google Sheets convertit "2026-06-30" en Date object → on reparse en heure locale
+function fixDateKey(key) {
+  if (!key) return '';
+  const s = String(key);
+  // ISO datetime from Sheets (ex: "2026-06-29T22:00:00.000Z") → heure locale
+  if (s.includes('T') || s.includes('Z')) {
+    const d = new Date(s);
+    return d.getFullYear() + '-'
+      + String(d.getMonth()+1).padStart(2,'0') + '-'
+      + String(d.getDate()).padStart(2,'0');
+  }
+  return s.slice(0,10); // déjà au bon format "YYYY-MM-DD"
+}
+function datePartsFromKey(key) {
+  const k = fixDateKey(key);
+  const [y,m,d] = k.split('-').map(Number);
+  return {y, m, d};
+}
+function dateLabelFromKey(key) {
+  const {y,m,d} = datePartsFromKey(key);
+  const date = new Date(y, m-1, d);
+  return DAYS[date.getDay()] + ' ' + d + ' ' + MONTHS[m-1] + ' ' + y;
+}
+
 // ══ STATE ════════════════════════════════════════════════════════════════════
 let empName="", empReqs=[], empY, empM;
 let adminData=[], empColors={}, filterEmp=null;
@@ -552,15 +576,16 @@ function renderEmpList(){
     return;
   }
   el.innerHTML=empReqs.map((r,i)=>{
-    const [,m,d]=r.dateKey.split('-');
+    const {m,d}=datePartsFromKey(r.dateKey);
+    const label=r.dateLabel&&!r.dateLabel.includes('NaN')?r.dateLabel:dateLabelFromKey(r.dateKey);
     const sc=r.status==='approved'?'s-approved':r.status==='refused'?'s-refused':'s-pending';
     const sl=r.status==='approved'?'✓ Validé par le responsable':r.status==='refused'?'✗ Non accordé':'⏳ En attente de réponse';
     return `<div class="rcard">
       <div class="r-date" style="background:var(--teal-dark)">
-        <div class="rd">${+d}</div><div class="rm">${MONTHS[+m-1].slice(0,3)}</div>
+        <div class="rd">${d}</div><div class="rm">${MONTHS[m-1].slice(0,3)}</div>
       </div>
       <div class="r-info">
-        <div class="r-datelabel">📅 ${r.dateLabel||r.dateKey}</div>
+        <div class="r-datelabel">📅 ${label}</div>
         <div class="r-slot">⏱ ${r.slot}</div>
         <div class="r-reason">${r.reason}</div>
         <div class="r-status ${sc}">${sl}</div>
@@ -715,7 +740,8 @@ function renderAdminList(){
   const el=document.getElementById('admin-list');
   if(!sorted.length){el.innerHTML='<div class="empty">Aucune demande pour le moment.</div>';return;}
   el.innerHTML=sorted.map(r=>{
-    const [,m,d]=r.dateKey.split('-');
+    const {m,d}=datePartsFromKey(r.dateKey);
+    const label=r.dateLabel&&!r.dateLabel.includes('NaN')?r.dateLabel:dateLabelFromKey(r.dateKey);
     const col=empColors[r.employee]||'var(--teal)';
     const sc=r.status==='approved'?'s-approved':r.status==='refused'?'s-refused':'s-pending';
     const sl=r.status==='approved'?'✓ Validé':r.status==='refused'?'✗ Refusé':'⏳ En attente';
@@ -725,7 +751,7 @@ function renderAdminList(){
       </div>
       <div class="r-info">
         <div class="r-emp" style="color:${col}">👤 ${r.employee}</div>
-        <div class="r-datelabel">📅 ${r.dateLabel||r.dateKey}</div>
+        <div class="r-datelabel">📅 ${label}</div>
         <div class="r-slot">⏱ ${r.slot}</div>
         <div class="r-reason">${r.reason}</div>
         <div class="r-status ${sc}">${sl}</div>
