@@ -16,12 +16,11 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 
 /* ── PAGES ── */
 .page{display:none;min-height:100vh;}
-.page.active{display:block;}
 
 /* ══════════════ HOME ══════════════ */
 #page-home{
   background:linear-gradient(160deg,#003845 0%,var(--teal-dark) 45%,var(--teal) 100%);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  flex-direction:column;align-items:center;justify-content:center;
   padding:40px 20px;text-align:center;color:white;
 }
 .home-logo{font-size:3.2rem;font-weight:900;letter-spacing:-2px;margin-bottom:6px;}
@@ -212,7 +211,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 <body>
 
 <!-- ══════════════════════════════════════ PAGE HOME ══════════════════════════ -->
-<div id="page-home" class="page active">
+<div id="page-home" class="page">
   <div class="home-logo">Aqua<em>Poney</em> 🐴</div>
   <div class="home-sub">Portail disponibilités – Restaurant</div>
   <div class="home-cards">
@@ -442,12 +441,14 @@ let adminY, adminM, pendingRow=null, pendingDate=null;
 // NAV
 // ════════════════════════════════════════════════════════════════════════════
 function go(page){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.getElementById('page-'+page).classList.add('active');
+  document.querySelectorAll('.page').forEach(p=>p.style.display='none');
+  const el=document.getElementById('page-'+page);
+  el.style.display=page==='home'?'flex':'block';
   window.scrollTo(0,0);
 }
 
 window.addEventListener('DOMContentLoaded',()=>{
+  go('home');
   const p=new URLSearchParams(location.search);
   if(p.get('admin')!==null) go('admin-login');
   const today=new Date();
