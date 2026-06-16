@@ -609,7 +609,7 @@ function em(d){
 
 function renderEmpCal(){
   document.getElementById('emp-cal-title').textContent=MONTHS[empM]+' '+empY;
-  renderLives(empY, empM);
+  renderLives(empY, empM + 1); // empM est 0-based, renderLives attend 1-based
   buildCal('emp-cal-body',empY,empM,(date,key,cell)=>{
     const mine=empReqs.filter(r=>r.dateKey===key);
     if(mine.length){
