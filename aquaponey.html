@@ -246,18 +246,30 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   <div class="login-wrap">
     <br/>
     <div class="card">
-      <div class="card-title">👤 Identification</div>
+      <div class="card-title">👤 Connexion</div>
       <div class="field">
-        <label>Prénom *</label>
-        <input id="e-prenom" type="text" placeholder="Sophie" autocomplete="given-name"/>
+        <label>Votre prénom</label>
+        <select id="e-name">
+          <option value="">-- Choisissez --</option>
+          <option>Maya</option>
+          <option>Test</option>
+          <option>Sebastien</option>
+          <option>Camille</option>
+          <option>Agnese</option>
+          <option>Margeurite</option>
+          <option>Christian</option>
+          <option>Lisa</option>
+          <option>Lulu</option>
+          <option>Hugo</option>
+        </select>
       </div>
       <div class="field">
-        <label>Nom *</label>
-        <input id="e-nom" type="text" placeholder="Dupont" autocomplete="family-name"
-          onkeydown="if(event.key==='Enter')startEmp()"/>
+        <label>Code à 4 chiffres</label>
+        <input id="e-pin" type="password" inputmode="numeric" maxlength="4"
+          placeholder="••••" onkeydown="if(event.key==='Enter')startEmp()"/>
       </div>
       <br/>
-      <button class="btn btn-primary btn-full" onclick="startEmp()">Accéder à mon calendrier →</button>
+      <button class="btn btn-primary btn-full" onclick="startEmp()">Connexion →</button>
     </div>
   </div>
 </div>
@@ -467,7 +479,20 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 <script>
 // ══ CONFIG ══════════════════════════════════════════════════════════════════
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyYVoBNlhcwzJLgmduKclrBdE9vLeL5T-I6-wbtSN1k1tejNSL653MFq_yQZ4TIh0fb/exec"; // ← URL copiée depuis Apps Script
-const ADMIN_PASS = "aquaponey2026"; // ← même mot de passe que dans le script
+const ADMIN_PASS = "244342";
+
+const COMPTES = {
+  "Maya":       "9009",
+  "Test":       "0000",
+  "Sebastien":  "1357",
+  "Camille":    "1610",
+  "Agnese":     "2604",
+  "Margeurite": "2131",
+  "Christian":  "0314",
+  "Lisa":       "2468",
+  "Lulu":       "2468",
+  "Hugo":       "2912",
+};
 const START      = new Date(2026, 5, 15);
 
 const MONTHS = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
@@ -531,11 +556,13 @@ window.addEventListener('DOMContentLoaded',()=>{
 
 // ══ EMPLOYEE ═════════════════════════════════════════════════════════════════
 function startEmp(){
-  const p=document.getElementById('e-prenom').value.trim();
-  const n=document.getElementById('e-nom').value.trim();
-  if(!p){toast('Entrez votre prénom.');return;}
-  empName=p+(n?' '+n:'');
-  document.getElementById('emp-badge-name').textContent=p;
+  const name=document.getElementById('e-name').value;
+  const pin=document.getElementById('e-pin').value.trim();
+  if(!name){toast('Choisissez votre prénom.');return;}
+  if(!pin){toast('Entrez votre code.');return;}
+  if(COMPTES[name]!==pin){toast('❌ Code incorrect.');return;}
+  empName=name;
+  document.getElementById('emp-badge-name').textContent=empName;
   go('employee');
   empReqs=loadEmp();
   if(BACKEND()) fetchEmpFromServer();

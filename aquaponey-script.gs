@@ -10,7 +10,7 @@
 // 4. Copier l'URL de déploiement et la coller dans aquaponey.html (SCRIPT_URL)
 // ══════════════════════════════════════════════════════════════════════════════
 
-const ADMIN_PASSWORD = "aquaponey2026"; // ← même valeur que dans le HTML
+const ADMIN_PASSWORD = "244342";
 const SHEET_NAME     = "Demandes";
 
 function getSheet() {
