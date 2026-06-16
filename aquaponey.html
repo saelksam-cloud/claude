@@ -203,10 +203,31 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 @keyframes s{to{transform:rotate(360deg)}}
 
 /* ── VIES MARIO ── */
-.lives-bar{display:flex;gap:3px;align-items:center;}
-.life{font-size:1.2rem;line-height:1;transition:opacity .2s;}
-.life.used{opacity:.2;filter:grayscale(1);}
-.lives-label{font-size:.7rem;color:rgba(255,255,255,.7);margin-left:4px;white-space:nowrap;}
+.lives-wrap{
+  background:rgba(0,0,0,.25);border-radius:20px;padding:6px 14px;
+  display:flex;align-items:center;gap:6px;border:2px solid rgba(255,255,255,.25);
+}
+.lives-label{font-size:.7rem;color:rgba(255,255,255,.8);font-weight:700;letter-spacing:.5px;white-space:nowrap;}
+.lives-icons{display:flex;gap:2px;}
+.life{font-size:1.6rem;line-height:1;transition:all .3s;filter:drop-shadow(0 2px 4px rgba(0,0,0,.4));}
+.life.used{opacity:.18;filter:grayscale(1);transform:scale(.85);}
+/* Banner vies en haut de page employé */
+.lives-banner{
+  border-radius:12px;padding:14px 18px;margin-bottom:20px;
+  display:flex;align-items:center;justify-content:space-between;
+  color:white;font-weight:700;gap:12px;
+}
+.lives-banner.full{background:linear-gradient(120deg,#2d6a4f,#40916c);}
+.lives-banner.mid {background:linear-gradient(120deg,#b5830a,var(--coral));}
+.lives-banner.low {background:linear-gradient(120deg,var(--red),#c1121f); animation:pulse 1.5s infinite;}
+.lives-banner.zero{background:#6b7280;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}
+.lives-banner-icons{display:flex;gap:4px;}
+.life-big{font-size:2rem;line-height:1;filter:drop-shadow(0 2px 6px rgba(0,0,0,.3));}
+.life-big.used{opacity:.2;filter:grayscale(1);}
+.lives-banner-text{flex:1;}
+.lives-banner-text .lbt-main{font-size:1rem;}
+.lives-banner-text .lbt-sub{font-size:.78rem;opacity:.85;font-weight:400;margin-top:2px;}
 
 @media(max-width:520px){
   .home-card{min-width:100%;}
@@ -248,20 +269,9 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
     <div class="card">
       <div class="card-title">👤 Connexion</div>
       <div class="field">
-        <label>Votre prénom</label>
-        <select id="e-name">
-          <option value="">-- Choisissez --</option>
-          <option>Maya</option>
-          <option>Test</option>
-          <option>Sebastien</option>
-          <option>Camille</option>
-          <option>Agnese</option>
-          <option>Margeurite</option>
-          <option>Christian</option>
-          <option>Lisa</option>
-          <option>Lulu</option>
-          <option>Hugo</option>
-        </select>
+        <label>Prénom</label>
+        <input id="e-name" type="text" placeholder="Votre prénom" autocomplete="given-name"
+          onkeydown="if(event.key==='Enter')document.getElementById('e-pin').focus()"/>
       </div>
       <div class="field">
         <label>Code à 4 chiffres</label>
@@ -301,10 +311,21 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   <div class="ap-header">
     <div class="logo">Aqua<em>Poney</em> 🐴</div>
     <span class="mode-badge badge-emp" id="emp-badge-name"></span>
-    <div class="lives-bar" id="lives-bar" title="Demandes restantes ce mois"></div>
+    <div class="lives-wrap" id="lives-header">
+      <div class="lives-icons" id="lives-icons-header"></div>
+    </div>
     <button class="btn-back" onclick="go('emp-login')">← Changer</button>
   </div>
   <div class="container">
+
+    <!-- Banner vies -->
+    <div class="lives-banner" id="lives-banner">
+      <div class="lives-banner-icons" id="lives-banner-icons"></div>
+      <div class="lives-banner-text">
+        <div class="lbt-main" id="lives-banner-main"></div>
+        <div class="lbt-sub" id="lives-banner-sub"></div>
+      </div>
+    </div>
 
     <div class="notice">
       ⚠️ <strong>Rappel :</strong> Vos demandes seront étudiées par la direction. Elles ne constituent pas une absence accordée d'office.
@@ -478,8 +499,9 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 
 <script>
 // ══ CONFIG ══════════════════════════════════════════════════════════════════
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyYVoBNlhcwzJLgmduKclrBdE9vLeL5T-I6-wbtSN1k1tejNSL653MFq_yQZ4TIh0fb/exec"; // ← URL copiée depuis Apps Script
-const ADMIN_PASS = "244342";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyYVoBNlhcwzJLgmduKclrBdE9vLeL5T-I6-wbtSN1k1tejNSL653MFq_yQZ4TIh0fb/exec";
+const ADMIN_PASS = "244342";    // mot de passe écran admin
+const API_PASS   = "aquaponey2026"; // mot de passe backend (Apps Script)
 
 const COMPTES = {
   "Maya":       "9009",
@@ -556,10 +578,11 @@ window.addEventListener('DOMContentLoaded',()=>{
 
 // ══ EMPLOYEE ═════════════════════════════════════════════════════════════════
 function startEmp(){
-  const name=document.getElementById('e-name').value;
+  const name=document.getElementById('e-name').value.trim();
   const pin=document.getElementById('e-pin').value.trim();
-  if(!name){toast('Choisissez votre prénom.');return;}
+  if(!name){toast('Entrez votre prénom.');return;}
   if(!pin){toast('Entrez votre code.');return;}
+  if(COMPTES[name]===undefined){toast('❌ Prénom inconnu.');return;}
   if(COMPTES[name]!==pin){toast('❌ Code incorrect.');return;}
   empName=name;
   document.getElementById('emp-badge-name').textContent=empName;
@@ -724,7 +747,7 @@ async function loadAdmin(){
   document.getElementById('admin-list').innerHTML='<div class="empty">Chargement…</div>';
   if(BACKEND()){
     try{
-      const r=await fetch(SCRIPT_URL+'?action=getAll&pass='+encodeURIComponent(ADMIN_PASS));
+      const r=await fetch(SCRIPT_URL+'?action=getAll&pass='+encodeURIComponent(API_PASS));
       adminData=(await r.json()).rows||[];
       saveAdmin();
     }catch(e){toast('Erreur réseau.');adminData=loadAdminLS();}
@@ -840,14 +863,47 @@ function countLivesUsed(year, month) {
 function renderLives(year, month) {
   const used=countLivesUsed(year,month);
   const left=Math.max(0, MAX_LIVES-used);
-  const bar=document.getElementById('lives-bar');
-  if(!bar)return;
-  let html='';
-  for(let i=0;i<MAX_LIVES;i++){
-    html+=`<span class="life${i>=left?' used':''}">🐴</span>`;
+
+  // Mini header
+  const hIcons=document.getElementById('lives-icons-header');
+  if(hIcons){
+    hIcons.innerHTML='';
+    for(let i=0;i<MAX_LIVES;i++){
+      const s=document.createElement('span');
+      s.className='life'+(i>=left?' used':'');
+      s.textContent='🐴'; hIcons.appendChild(s);
+    }
   }
-  html+=`<span class="lives-label">${left}/${MAX_LIVES} ce mois</span>`;
-  bar.innerHTML=html;
+
+  // Grand banner
+  const banner=document.getElementById('lives-banner');
+  const bIcons=document.getElementById('lives-banner-icons');
+  const bMain=document.getElementById('lives-banner-main');
+  const bSub=document.getElementById('lives-banner-sub');
+  if(!banner)return;
+
+  bIcons.innerHTML='';
+  for(let i=0;i<MAX_LIVES;i++){
+    const s=document.createElement('span');
+    s.className='life-big'+(i>=left?' used':'');
+    s.textContent='🐴'; bIcons.appendChild(s);
+  }
+
+  banner.className='lives-banner '+(left===3?'full':left===2?'full':left===1?'mid':left===0?'zero':'low');
+  if(left===3){
+    bMain.textContent='3 demandes disponibles ce mois';
+    bSub.textContent='Chaque demande consomme une vie 🐴';
+  } else if(left===2){
+    bMain.textContent='2 demandes restantes ce mois';
+    bSub.textContent='Utilisez-les avec soin !';
+  } else if(left===1){
+    banner.className='lives-banner mid';
+    bMain.textContent='⚠️ Plus qu\'une demande ce mois !';
+    bSub.textContent='Dernière vie — choisissez bien votre jour.';
+  } else {
+    bMain.textContent='❌ Quota atteint pour ce mois';
+    bSub.textContent='Vous avez utilisé vos 3 demandes. Revenez le mois prochain.';
+  }
 }
 
 function openImport(){
@@ -886,7 +942,7 @@ async function decide(status){
   if(!pendingRow)return;
   if(BACKEND()){
     try{
-      await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'status',id:pendingRow.id,status,pass:ADMIN_PASS}),headers:{'Content-Type':'text/plain'}});
+      await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'status',id:pendingRow.id,status,pass:API_PASS}),headers:{'Content-Type':'text/plain'}});
     }catch(e){toast('Erreur réseau.');return;}
   }
   const idx=adminData.findIndex(r=>r.id===pendingRow.id);
