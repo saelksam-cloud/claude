@@ -609,14 +609,15 @@ async function fetchEmpFromServer(){
 
 function em(d){
   const n=new Date(empY,empM+d,1);
-  const minM=getMinDate(); if(n<new Date(minM.getFullYear(),minM.getMonth(),1))return;
+  const minM=getMinDate();
+  if(n<new Date(minM.getFullYear(),minM.getMonth(),1))return;
   empY=n.getFullYear(); empM=n.getMonth(); renderEmpCal();
 }
 
 function renderEmpCal(){
   document.getElementById('emp-cal-title').textContent=MONTHS[empM]+' '+empY;
   renderLives(empY, empM + 1); // empM est 0-based, renderLives attend 1-based
-  buildCal('emp-cal-body',empY,empM,(date,key,cell)=>{
+  buildCal('emp-cal-body',empY,empM,(date,key,cell,blocked)=>{
     const mine=empReqs.filter(r=>r.dateKey===key);
     if(mine.length){
       cell.classList.add('c-mine');
@@ -627,6 +628,7 @@ function renderEmpCal(){
         cell.querySelector('.c-badges').appendChild(b);
       });
     }
+    // Click toujours actif : openAdd gère lui-même le refus si trop tôt
     cell.addEventListener('click',()=>openAdd(key,date));
   });
 }
@@ -800,7 +802,7 @@ function am(d){
 function renderAdminCal(){
   document.getElementById('admin-cal-title').textContent=MONTHS[adminM]+' '+adminY;
   const vis=filterEmp?adminData.filter(r=>r.employee===filterEmp):adminData;
-  buildCal('admin-cal-body',adminY,adminM,(date,key,cell)=>{
+  buildCal('admin-cal-body',adminY,adminM,(date,key,cell,blocked)=>{
     const day=vis.filter(r=>r.dateKey===key);
     if(!day.length)return;
     cell.classList.add('c-has');
@@ -979,10 +981,10 @@ function buildCal(id,year,month,onDay){
     const num=document.createElement('div'); num.className='c-num'; num.textContent=d; c.appendChild(num);
     const badges=document.createElement('div'); badges.className='c-badges'; c.appendChild(badges);
     const isToday=date.getTime()===today.getTime();
-    const blocked=date<minDate; // grisé si < aujourd'hui+10j
+    const blocked=date<minDate;
     if(blocked)c.classList.add('c-past');
     if(isToday)c.classList.add('c-today');
-    if(!blocked)onDay(date,key,c);
+    onDay(date,key,c,blocked); // toujours appelé pour afficher les demandes existantes
     grid.appendChild(c);
   }
 }
