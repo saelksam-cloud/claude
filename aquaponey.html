@@ -521,7 +521,13 @@ const MONTHS = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Aoû
 const DAYS   = ["Dimanche","Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"];
 const COLORS = ["#005f73","#ee9b00","#ae2012","#6d6875","#2d6a4f","#d4a373","#1d3557","#457b9d","#e76f51","#264653"];
 
-const BACKEND = ()=> SCRIPT_URL !== "COLLER_ICI_URL_APPS_SCRIPT";
+// Date minimum pour une demande = aujourd'hui + 10 jours
+function getMinDate() {
+  const d = new Date();
+  d.setHours(0,0,0,0);
+  d.setDate(d.getDate() + 10);
+  return d;
+}
 
 // Google Sheets convertit "2026-06-30" en Date object → on reparse en heure locale
 function fixDateKey(key) {
@@ -603,7 +609,7 @@ async function fetchEmpFromServer(){
 
 function em(d){
   const n=new Date(empY,empM+d,1);
-  if(n<new Date(START.getFullYear(),START.getMonth(),1))return;
+  const minM=getMinDate(); if(n<new Date(minM.getFullYear(),minM.getMonth(),1))return;
   empY=n.getFullYear(); empM=n.getMonth(); renderEmpCal();
 }
 
@@ -658,6 +664,12 @@ function renderEmpList(){
 }
 
 function openAdd(key,date){
+  // Vérifier délai minimum 10 jours
+  if(date<getMinDate()){
+    const min=getMinDate();
+    toast(`⏳ Demande impossible avant le ${min.getDate()} ${MONTHS[min.getMonth()]}.`);
+    return;
+  }
   // Vérifier quota mensuel
   const used=countLivesUsed(date.getFullYear(), date.getMonth()+1);
   if(used>=MAX_LIVES){
@@ -958,6 +970,7 @@ function buildCal(id,year,month,onDay){
   const grid=document.getElementById(id); grid.innerHTML='';
   const first=new Date(year,month,1), last=new Date(year,month+1,0);
   const today=new Date(); today.setHours(0,0,0,0);
+  const minDate=getMinDate(); // aujourd'hui + 10 jours
   let off=first.getDay()-1; if(off<0)off=6;
   for(let i=0;i<off;i++){const c=document.createElement('div');c.className='cal-cell c-empty';grid.appendChild(c);}
   for(let d=1;d<=last.getDate();d++){
@@ -965,10 +978,11 @@ function buildCal(id,year,month,onDay){
     const c=document.createElement('div'); c.className='cal-cell';
     const num=document.createElement('div'); num.className='c-num'; num.textContent=d; c.appendChild(num);
     const badges=document.createElement('div'); badges.className='c-badges'; c.appendChild(badges);
-    const past=date<today||date<START, isToday=date.getTime()===today.getTime();
-    if(past)c.classList.add('c-past');
+    const isToday=date.getTime()===today.getTime();
+    const blocked=date<minDate; // grisé si < aujourd'hui+10j
+    if(blocked)c.classList.add('c-past');
     if(isToday)c.classList.add('c-today');
-    if(!past)onDay(date,key,c);
+    if(!blocked)onDay(date,key,c);
     grid.appendChild(c);
   }
 }
