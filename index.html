@@ -1,0 +1,2691 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AquaPoney</title>
+  <style>
+    :root {
+      --bg: #f5fffd;
+      --bg-strong: #dff7f3;
+      --surface: rgba(255, 255, 255, 0.84);
+      --surface-strong: #ffffff;
+      --text: #12343b;
+      --muted: #5d7f85;
+      --teal-900: #114b5f;
+      --teal-700: #1a7f8a;
+      --teal-500: #2cb1a7;
+      --teal-300: #9be4d7;
+      --coral-600: #eb6f5a;
+      --coral-500: #f48c73;
+      --coral-100: #ffe1da;
+      --gold: #f6c85f;
+      --ok: #2b9348;
+      --danger: #c44536;
+      --pending: #c77900;
+      --shadow: 0 20px 50px rgba(17, 75, 95, 0.15);
+      --radius-xl: 28px;
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --radius-sm: 10px;
+      --border: 1px solid rgba(17, 75, 95, 0.1);
+      --font-display: "Avenir Next", "Trebuchet MS", "Segoe UI", sans-serif;
+      --font-body: "Avenir", "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: var(--font-body);
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(244, 140, 115, 0.2), transparent 25%),
+        radial-gradient(circle at top right, rgba(44, 177, 167, 0.24), transparent 30%),
+        linear-gradient(180deg, #f9fffe 0%, #eefcf8 100%);
+      overflow-x: hidden;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      inset: auto;
+      width: 38vw;
+      height: 38vw;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.18;
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    body::before {
+      top: -10vw;
+      left: -8vw;
+      background: var(--coral-500);
+    }
+
+    body::after {
+      bottom: -12vw;
+      right: -8vw;
+      background: var(--teal-500);
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .page {
+      display: none;
+      min-height: 100vh;
+    }
+
+    .page.active {
+      display: block;
+      animation: fadeInUp 260ms ease;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(16px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .home-shell {
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    .hero {
+      width: min(1120px, 100%);
+      display: grid;
+      grid-template-columns: 1.2fr 0.9fr;
+      gap: 22px;
+      align-items: stretch;
+    }
+
+    .hero-panel,
+    .hero-side,
+    .card {
+      background: var(--surface);
+      border: var(--border);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(20px);
+    }
+
+    .hero-panel {
+      position: relative;
+      overflow: hidden;
+      padding: 42px;
+      background:
+        linear-gradient(140deg, rgba(17, 75, 95, 0.96), rgba(44, 177, 167, 0.88)),
+        var(--surface);
+      color: white;
+    }
+
+    .hero-panel::before {
+      content: "";
+      position: absolute;
+      top: 30px;
+      right: 42px;
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 35% 35%, #fff9c4 0%, #ffe082 28%, #ffc857 62%, #ff9f1c 100%);
+      box-shadow:
+        0 0 0 10px rgba(255, 211, 105, 0.12),
+        0 0 40px rgba(255, 200, 87, 0.45);
+      animation: sunFloat 5s ease-in-out infinite;
+    }
+
+    .hero-panel::after {
+      content: "";
+      position: absolute;
+      right: -70px;
+      top: -40px;
+      width: 220px;
+      height: 220px;
+      border-radius: 40px;
+      transform: rotate(18deg);
+      background: linear-gradient(135deg, rgba(255,255,255,0.22), rgba(255,255,255,0.04));
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    @keyframes sunFloat {
+      0%, 100% {
+        transform: translateY(0) scale(1);
+      }
+      50% {
+        transform: translateY(-10px) scale(1.04);
+      }
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.13);
+      border: 1px solid rgba(255,255,255,0.18);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-size: 0.76rem;
+      font-weight: 800;
+    }
+
+    .hero h1 {
+      margin: 18px 0 10px;
+      font-family: var(--font-display);
+      font-size: clamp(2.2rem, 5vw, 4.6rem);
+      line-height: 0.95;
+      letter-spacing: -0.05em;
+      max-width: 8.5ch;
+    }
+
+    .hero p.lead {
+      max-width: 55ch;
+      line-height: 1.7;
+      color: rgba(255,255,255,0.84);
+      font-size: 1.02rem;
+      margin: 0 0 26px;
+    }
+
+    .hero-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 26px;
+    }
+
+    .hero-metric {
+      padding: 16px 14px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.16);
+    }
+
+    .hero-metric strong {
+      display: block;
+      font-size: 1.55rem;
+      letter-spacing: -0.03em;
+      margin-bottom: 4px;
+    }
+
+    .hero-metric span {
+      font-size: 0.84rem;
+      color: rgba(255,255,255,0.78);
+    }
+
+    .hero-scene {
+      margin-top: 30px;
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 18px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .terrace-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.14);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      font-weight: 800;
+      color: #fff8e8;
+      box-shadow: 0 18px 30px rgba(5, 37, 47, 0.18);
+    }
+
+    .terrace-chip strong {
+      font-size: 1.02rem;
+      letter-spacing: -0.02em;
+    }
+
+    .terrace-chip span {
+      font-size: 0.88rem;
+      color: rgba(255, 248, 232, 0.82);
+    }
+
+    .mascot-wrap {
+      position: relative;
+      width: 180px;
+      height: 148px;
+      flex: 0 0 180px;
+    }
+
+    .mascot-shadow {
+      position: absolute;
+      left: 26px;
+      right: 18px;
+      bottom: 8px;
+      height: 22px;
+      border-radius: 50%;
+      background: rgba(7, 34, 41, 0.26);
+      filter: blur(8px);
+      animation: shadowPulse 2.6s ease-in-out infinite;
+    }
+
+    .mascot {
+      position: absolute;
+      right: 10px;
+      bottom: 18px;
+      width: 132px;
+      height: 112px;
+      animation: mascotBob 2.6s ease-in-out infinite;
+    }
+
+    @keyframes mascotBob {
+      0%, 100% {
+        transform: translateY(0) rotate(-2deg);
+      }
+      50% {
+        transform: translateY(-10px) rotate(2deg);
+      }
+    }
+
+    @keyframes shadowPulse {
+      0%, 100% {
+        transform: scaleX(1);
+        opacity: 0.24;
+      }
+      50% {
+        transform: scaleX(0.9);
+        opacity: 0.14;
+      }
+    }
+
+    .mascot-body {
+      position: absolute;
+      inset: 28px 14px 6px 18px;
+      border-radius: 48% 48% 42% 42%;
+      background: linear-gradient(180deg, #6ae3db 0%, #26b1a7 58%, #167f8a 100%);
+      border: 2px solid rgba(255, 255, 255, 0.22);
+      box-shadow: inset 0 -10px 18px rgba(0, 0, 0, 0.12);
+    }
+
+    .mascot-body::before,
+    .mascot-body::after {
+      content: "";
+      position: absolute;
+      top: -18px;
+      width: 28px;
+      height: 34px;
+      background: linear-gradient(180deg, #88efe7, #3ecabf);
+      border-radius: 70% 70% 30% 30%;
+      border: 2px solid rgba(255, 255, 255, 0.18);
+    }
+
+    .mascot-body::before {
+      left: 18px;
+      transform: rotate(-16deg);
+    }
+
+    .mascot-body::after {
+      right: 20px;
+      transform: rotate(18deg);
+    }
+
+    .mascot-face {
+      position: absolute;
+      inset: 0;
+    }
+
+    .mascot-eye {
+      position: absolute;
+      top: 36px;
+      width: 12px;
+      height: 16px;
+      border-radius: 50%;
+      background: #12343b;
+    }
+
+    .mascot-eye.left {
+      left: 42px;
+    }
+
+    .mascot-eye.right {
+      right: 38px;
+    }
+
+    .mascot-eye::after {
+      content: "";
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.85);
+    }
+
+    .mascot-snout {
+      position: absolute;
+      left: 38px;
+      right: 34px;
+      top: 48px;
+      height: 24px;
+      border-radius: 999px;
+      background: #dff7f3;
+      box-shadow: inset 0 -4px 8px rgba(17, 75, 95, 0.12);
+    }
+
+    .mascot-nostril {
+      position: absolute;
+      top: 8px;
+      width: 6px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(17, 75, 95, 0.55);
+    }
+
+    .mascot-nostril.left {
+      left: 22px;
+    }
+
+    .mascot-nostril.right {
+      right: 22px;
+    }
+
+    .mascot-mouth {
+      position: absolute;
+      left: 52px;
+      top: 76px;
+      width: 26px;
+      height: 14px;
+      border-bottom: 3px solid #12343b;
+      border-radius: 0 0 18px 18px;
+      opacity: 0.8;
+    }
+
+    .mascot-tail {
+      position: absolute;
+      right: 0;
+      top: 52px;
+      width: 30px;
+      height: 30px;
+      border-right: 6px solid #9be4d7;
+      border-top: 6px solid #9be4d7;
+      border-radius: 0 100% 0 0;
+      transform: rotate(18deg);
+      opacity: 0.85;
+    }
+
+    .mascot-water {
+      position: absolute;
+      left: 6px;
+      bottom: 0;
+      width: 108px;
+      height: 22px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.4), rgba(155, 228, 215, 0.25));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.45);
+    }
+
+    .mascot-water::before,
+    .mascot-water::after {
+      content: "";
+      position: absolute;
+      top: 7px;
+      width: 26px;
+      height: 8px;
+      border-top: 2px solid rgba(255,255,255,0.75);
+      border-radius: 999px;
+    }
+
+    .mascot-water::before {
+      left: 18px;
+    }
+
+    .mascot-water::after {
+      right: 18px;
+    }
+
+    .hero-side {
+      padding: 22px;
+      display: grid;
+      gap: 16px;
+      align-content: start;
+    }
+
+    .portal-tile {
+      position: relative;
+      overflow: hidden;
+      padding: 24px;
+      border-radius: 22px;
+      border: var(--border);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,255,255,0.75));
+      transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+    }
+
+    .portal-tile:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 16px 40px rgba(17, 75, 95, 0.16);
+      border-color: rgba(44, 177, 167, 0.35);
+    }
+
+    .portal-tile .icon {
+      width: 54px;
+      height: 54px;
+      display: grid;
+      place-items: center;
+      border-radius: 18px;
+      font-size: 1.55rem;
+      margin-bottom: 14px;
+      background: linear-gradient(135deg, var(--bg-strong), white);
+    }
+
+    .portal-tile.team .icon {
+      color: var(--teal-700);
+      box-shadow: inset 0 0 0 1px rgba(44,177,167,0.14);
+    }
+
+    .portal-tile.admin .icon {
+      color: var(--coral-600);
+      box-shadow: inset 0 0 0 1px rgba(235,111,90,0.16);
+    }
+
+    .portal-tile h2 {
+      margin: 0 0 8px;
+      font-size: 1.25rem;
+      font-family: var(--font-display);
+    }
+
+    .portal-tile p {
+      margin: 0 0 18px;
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: 0.96rem;
+    }
+
+    .portal-tile button,
+    .btn {
+      border: 0;
+      border-radius: 999px;
+      padding: 13px 18px;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+      transition: transform 140ms ease, box-shadow 140ms ease, opacity 140ms ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--teal-700), var(--teal-500));
+      color: white;
+      box-shadow: 0 10px 22px rgba(44, 177, 167, 0.28);
+    }
+
+    .btn-coral {
+      background: linear-gradient(135deg, var(--coral-600), var(--coral-500));
+      color: white;
+      box-shadow: 0 10px 22px rgba(244, 140, 115, 0.3);
+    }
+
+    .btn-soft {
+      background: white;
+      color: var(--teal-900);
+      box-shadow: inset 0 0 0 1px rgba(17, 75, 95, 0.12);
+    }
+
+    .btn-danger {
+      background: #fff1ee;
+      color: var(--danger);
+      box-shadow: inset 0 0 0 1px rgba(196, 69, 54, 0.18);
+    }
+
+    .btn-ok {
+      background: #eaf8ef;
+      color: var(--ok);
+      box-shadow: inset 0 0 0 1px rgba(43, 147, 72, 0.15);
+    }
+
+    .btn-block {
+      width: 100%;
+    }
+
+    .shell {
+      width: min(1240px, 100%);
+      margin: 0 auto;
+      padding: 24px 18px 72px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 22px;
+      padding: 18px 20px;
+      border-radius: 24px;
+      background: rgba(255,255,255,0.8);
+      backdrop-filter: blur(18px);
+      border: var(--border);
+      box-shadow: var(--shadow);
+      position: sticky;
+      top: 14px;
+      z-index: 20;
+    }
+
+    .brand {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .brand strong {
+      display: block;
+      font-size: 1.35rem;
+      font-family: var(--font-display);
+      letter-spacing: -0.03em;
+    }
+
+    .brand span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .badge {
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-size: 0.78rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .badge.team {
+      background: rgba(44,177,167,0.14);
+      color: var(--teal-700);
+    }
+
+    .badge.admin {
+      background: rgba(244,140,115,0.18);
+      color: var(--coral-600);
+    }
+
+    .grid {
+      display: grid;
+      gap: 18px;
+    }
+
+    .employee-grid {
+      grid-template-columns: 1.2fr 0.8fr;
+      align-items: start;
+    }
+
+    .admin-grid {
+      grid-template-columns: 0.95fr 1.05fr;
+      align-items: start;
+    }
+
+    .card {
+      padding: 22px;
+    }
+
+    .card h3,
+    .card h2 {
+      margin: 0 0 14px;
+      font-family: var(--font-display);
+      letter-spacing: -0.03em;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .section-head .title {
+      font-size: 1.15rem;
+      font-weight: 800;
+    }
+
+    .subtle {
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.6;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .stat {
+      padding: 16px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, #ffffff, #f7fffd);
+      border: var(--border);
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 1.9rem;
+      line-height: 1;
+      margin-bottom: 6px;
+      letter-spacing: -0.04em;
+    }
+
+    .stat span {
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .life-board {
+      display: grid;
+      gap: 12px;
+      padding: 18px;
+      border-radius: 22px;
+      background: linear-gradient(135deg, rgba(17, 75, 95, 0.96), rgba(44, 177, 167, 0.86));
+      color: white;
+    }
+
+    .life-board.warn {
+      background: linear-gradient(135deg, #b85c38, #ef8354);
+    }
+
+    .life-board.empty {
+      background: linear-gradient(135deg, #6b7f86, #90a4ab);
+    }
+
+    .lives {
+      display: flex;
+      gap: 8px;
+      font-size: 2rem;
+    }
+
+    .lives span.off {
+      opacity: 0.2;
+      filter: grayscale(1);
+      transform: scale(0.9);
+    }
+
+    .notice {
+      margin-top: 12px;
+      padding: 14px 16px;
+      border-radius: 16px;
+      background: #fff5ed;
+      color: #8c4c20;
+      border: 1px solid rgba(244, 140, 115, 0.22);
+      line-height: 1.55;
+      font-size: 0.92rem;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 14px;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+      width: 100%;
+      border: 1px solid rgba(17, 75, 95, 0.16);
+      border-radius: 14px;
+      padding: 14px 15px;
+      background: rgba(255,255,255,0.88);
+      color: var(--text);
+      transition: border-color 120ms ease, box-shadow 120ms ease, background 120ms ease;
+    }
+
+    .field textarea {
+      resize: vertical;
+      min-height: 110px;
+    }
+
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus {
+      outline: none;
+      background: white;
+      border-color: var(--teal-500);
+      box-shadow: 0 0 0 4px rgba(44, 177, 167, 0.12);
+    }
+
+    .calendar-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .calendar-head h3 {
+      margin: 0;
+      font-size: 1.18rem;
+      text-transform: capitalize;
+    }
+
+    .calendar-controls {
+      display: flex;
+      gap: 8px;
+    }
+
+    .icon-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      border: 0;
+      background: white;
+      box-shadow: inset 0 0 0 1px rgba(17,75,95,0.1);
+      color: var(--teal-900);
+      font-size: 1.2rem;
+    }
+
+    .calendar {
+      border-radius: 22px;
+      overflow: hidden;
+      border: 1px solid rgba(17,75,95,0.08);
+      background: #dcefed;
+    }
+
+    .calendar-weekdays,
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+    }
+
+    .calendar-weekdays div {
+      padding: 12px 6px;
+      text-align: center;
+      color: white;
+      font-weight: 800;
+      font-size: 0.76rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      background: linear-gradient(135deg, var(--teal-900), var(--teal-700));
+    }
+
+    .calendar-cell {
+      min-height: 92px;
+      padding: 10px 8px 8px;
+      background: rgba(255,255,255,0.92);
+      position: relative;
+      transition: transform 100ms ease, background 100ms ease;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      border-right: 1px solid rgba(17,75,95,0.05);
+      border-bottom: 1px solid rgba(17,75,95,0.05);
+    }
+
+    .calendar-cell.clickable:hover {
+      background: #f7fffd;
+      transform: translateY(-1px);
+    }
+
+    .calendar-cell.blank {
+      background: rgba(235, 244, 243, 0.64);
+    }
+
+    .calendar-cell.blocked {
+      background: rgba(243, 247, 246, 0.95);
+    }
+
+    .calendar-cell.today .day-number {
+      background: var(--coral-600);
+      color: white;
+      box-shadow: 0 8px 18px rgba(235, 111, 90, 0.25);
+    }
+
+    .calendar-cell.has-mine {
+      background: #eafbf7;
+      box-shadow: inset 0 0 0 2px rgba(44, 177, 167, 0.18);
+    }
+
+    .calendar-cell.has-team {
+      background: #f5fffc;
+    }
+
+    .day-number {
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 0.92rem;
+    }
+
+    .cell-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      max-width: 100%;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(17, 75, 95, 0.08);
+      color: var(--teal-900);
+      font-size: 0.67rem;
+      font-weight: 800;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .request-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .request-item {
+      display: grid;
+      grid-template-columns: 68px 1fr auto;
+      gap: 14px;
+      padding: 16px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, #ffffff, #fbfffe);
+      border: var(--border);
+      align-items: start;
+    }
+
+    .date-chip {
+      display: grid;
+      gap: 2px;
+      place-items: center;
+      border-radius: 16px;
+      padding: 12px 8px;
+      color: white;
+      font-weight: 800;
+    }
+
+    .date-chip .day {
+      font-size: 1.45rem;
+      line-height: 1;
+    }
+
+    .date-chip .month {
+      text-transform: uppercase;
+      font-size: 0.7rem;
+      letter-spacing: 0.06em;
+    }
+
+    .request-main h4 {
+      margin: 0 0 5px;
+      font-size: 1rem;
+    }
+
+    .request-main p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 0.92rem;
+    }
+
+    .request-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 8px 0 6px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 0.76rem;
+      font-weight: 800;
+    }
+
+    .pill.pending {
+      background: #fff4dd;
+      color: var(--pending);
+    }
+
+    .pill.approved {
+      background: #eaf8ef;
+      color: var(--ok);
+    }
+
+    .pill.refused {
+      background: #fff0ee;
+      color: var(--danger);
+    }
+
+    .request-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-width: 96px;
+    }
+
+    .empty-state {
+      padding: 28px 18px;
+      text-align: center;
+      color: var(--muted);
+      border: 1px dashed rgba(17,75,95,0.16);
+      border-radius: 18px;
+      background: rgba(255,255,255,0.5);
+    }
+
+    .login-wrap {
+      max-width: 460px;
+      margin: 6vh auto 0;
+    }
+
+    .login-card {
+      padding: 28px;
+    }
+
+    .login-card h1 {
+      margin: 0 0 8px;
+      font-family: var(--font-display);
+      letter-spacing: -0.04em;
+    }
+
+    .login-card p {
+      margin: 0 0 22px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip {
+      border: 0;
+      border-radius: 999px;
+      padding: 9px 12px;
+      background: white;
+      color: var(--teal-900);
+      box-shadow: inset 0 0 0 1px rgba(17,75,95,0.14);
+      font-weight: 700;
+      font-size: 0.84rem;
+    }
+
+    .chip.active {
+      background: linear-gradient(135deg, var(--teal-700), var(--teal-500));
+      color: white;
+      box-shadow: none;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(9, 28, 35, 0.48);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      z-index: 60;
+      backdrop-filter: blur(8px);
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal {
+      width: min(520px, 100%);
+      background: white;
+      border-radius: 26px;
+      padding: 24px;
+      box-shadow: 0 32px 60px rgba(0,0,0,0.18);
+      animation: pop 180ms ease;
+    }
+
+    @keyframes pop {
+      from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.98);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .modal h3 {
+      margin: 0 0 6px;
+      font-family: var(--font-display);
+      font-size: 1.35rem;
+    }
+
+    .modal p {
+      margin: 0 0 18px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 18px;
+      flex-wrap: wrap;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 22px;
+      transform: translate(-50%, 110px);
+      background: rgba(12, 29, 35, 0.94);
+      color: white;
+      padding: 13px 16px;
+      border-radius: 999px;
+      font-weight: 700;
+      z-index: 90;
+      transition: transform 180ms ease;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      max-width: min(92vw, 640px);
+      text-align: center;
+    }
+
+    .toast.show {
+      transform: translate(-50%, 0);
+    }
+
+    .inline-note {
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(44,177,167,0.1);
+      color: var(--teal-900);
+      font-size: 0.88rem;
+      line-height: 1.55;
+    }
+
+    .status-line {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #b7ccd2;
+    }
+
+    .status-dot.live {
+      background: var(--ok);
+      box-shadow: 0 0 0 6px rgba(43,147,72,0.12);
+    }
+
+    @media (max-width: 980px) {
+      .hero,
+      .employee-grid,
+      .admin-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .hero-scene {
+        align-items: start;
+        flex-direction: column;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .hero-panel,
+      .hero-side,
+      .card {
+        border-radius: 22px;
+      }
+
+      .hero-panel {
+        padding: 28px;
+      }
+
+      .hero-metrics {
+        grid-template-columns: 1fr;
+      }
+
+      .mascot-wrap {
+        width: 154px;
+        height: 132px;
+        align-self: end;
+      }
+
+      .topbar {
+        flex-wrap: wrap;
+        position: static;
+      }
+
+      .request-item {
+        grid-template-columns: 1fr;
+      }
+
+      .request-actions {
+        flex-direction: row;
+        min-width: 0;
+      }
+
+      .calendar-cell {
+        min-height: 76px;
+      }
+
+      .cell-tags .tag {
+        font-size: 0.62rem;
+        padding: 3px 6px;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .shell,
+      .home-shell {
+        padding-left: 14px;
+        padding-right: 14px;
+      }
+
+      .login-card,
+      .card,
+      .modal {
+        padding: 18px;
+      }
+
+      .stats {
+        grid-template-columns: 1fr;
+      }
+
+      .calendar-weekdays div {
+        font-size: 0.64rem;
+        padding: 10px 2px;
+      }
+
+      .calendar-cell {
+        min-height: 70px;
+        padding: 8px 5px 6px;
+      }
+
+      .tag {
+        display: none;
+      }
+
+      .hero-panel::before {
+        width: 74px;
+        height: 74px;
+        top: 22px;
+        right: 24px;
+      }
+
+      .terrace-chip {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <section class="page active" id="page-home">
+    <div class="home-shell">
+      <div class="hero">
+        <div class="hero-panel">
+          <div class="eyebrow">☀️ La Terrasse • AquaPoney</div>
+          <h1>Sami je peux pas, j'ai Aqua Poney...</h1>
+          <p class="lead">
+            Un portail simple pour gérer les indisponibilités de l'équipe, suivre les demandes en temps réel
+            et garder un calendrier clair côté admin comme côté employé.
+          </p>
+          <div class="hero-metrics">
+            <div class="hero-metric">
+              <strong>3</strong>
+              <span>Demandes max par mois et par personne</span>
+            </div>
+            <div class="hero-metric">
+              <strong>10 j</strong>
+              <span>Délai minimum avant la date demandée</span>
+            </div>
+            <div class="hero-metric">
+              <strong>Temps réel</strong>
+              <span>Google Sheets + Apps Script en backend</span>
+            </div>
+          </div>
+          <div class="hero-scene">
+            <div class="terrace-chip">
+              <div style="font-size:1.35rem;">🌞</div>
+              <div>
+                <strong>La Terrasse</strong>
+                <span>Le portail des indisponibilités du restaurant</span>
+              </div>
+            </div>
+            <div class="mascot-wrap" aria-hidden="true">
+              <div class="mascot-shadow"></div>
+              <div class="mascot">
+                <div class="mascot-tail"></div>
+                <div class="mascot-body">
+                  <div class="mascot-face">
+                    <div class="mascot-eye left"></div>
+                    <div class="mascot-eye right"></div>
+                    <div class="mascot-snout">
+                      <div class="mascot-nostril left"></div>
+                      <div class="mascot-nostril right"></div>
+                    </div>
+                    <div class="mascot-mouth"></div>
+                  </div>
+                </div>
+                <div class="mascot-water"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-side">
+          <div class="portal-tile team">
+            <div class="icon">👥</div>
+            <h2>Espace Équipe</h2>
+            <p>Connexion prénom + code à 4 chiffres, calendrier perso, dépôt de demande et suivi du statut.</p>
+            <button class="btn btn-primary" onclick="showPage('team-login')">Entrer côté équipe</button>
+          </div>
+
+          <div class="portal-tile admin">
+            <div class="icon">👑</div>
+            <h2>Espace Admin</h2>
+            <p>Vue globale, validation, refus, suppression et lecture par calendrier ou liste complète.</p>
+            <button class="btn btn-coral" onclick="showPage('admin-login')">Entrer côté admin</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="page" id="page-team-login">
+    <div class="shell">
+      <div class="topbar">
+        <div class="brand">
+          <strong>AquaPoney</strong>
+          <span>Portail d'indisponibilités de l'équipe</span>
+        </div>
+        <div class="badge team">Espace Équipe</div>
+        <button class="btn btn-soft" onclick="showPage('home')">Retour accueil</button>
+      </div>
+
+      <div class="login-wrap">
+        <div class="card login-card">
+          <h1>Connexion équipe</h1>
+          <p>Entrez votre prénom et votre code à 4 chiffres pour voir votre calendrier personnel.</p>
+          <div class="form-grid">
+            <div class="field">
+              <label for="team-name">Prénom</label>
+              <input id="team-name" type="text" autocomplete="given-name" placeholder="Ex : Maya">
+            </div>
+            <div class="field">
+              <label for="team-pin">Code à 4 chiffres</label>
+              <input id="team-pin" type="password" inputmode="numeric" maxlength="4" placeholder="••••">
+            </div>
+            <button class="btn btn-primary btn-block" id="team-login-btn" onclick="loginEmployee()">Connexion</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="page" id="page-admin-login">
+    <div class="shell">
+      <div class="topbar">
+        <div class="brand">
+          <strong>AquaPoney</strong>
+          <span>Vue manager et validation des demandes</span>
+        </div>
+        <div class="badge admin">Administration</div>
+        <button class="btn btn-soft" onclick="showPage('home')">Retour accueil</button>
+      </div>
+
+      <div class="login-wrap">
+        <div class="card login-card">
+          <h1>Connexion admin</h1>
+          <p>Entrez le mot de passe admin pour ouvrir la vue globale et gérer les demandes de l'équipe.</p>
+          <div class="form-grid">
+            <div class="field">
+              <label for="admin-pass">Mot de passe admin</label>
+              <input id="admin-pass" type="password" placeholder="••••••">
+            </div>
+            <button class="btn btn-coral btn-block" id="admin-login-btn" onclick="loginAdmin()">Connexion</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="page" id="page-team-app">
+    <div class="shell">
+      <div class="topbar">
+        <div class="brand">
+          <strong>AquaPoney</strong>
+          <span id="employee-greeting">Bonjour</span>
+        </div>
+        <div class="badge team" id="employee-badge">Équipe</div>
+        <div class="status-line"><span class="status-dot" id="team-sync-dot"></span><span id="team-sync-label">Connexion en attente</span></div>
+        <button class="btn btn-soft" onclick="logoutEmployee()">Déconnexion</button>
+      </div>
+
+      <div class="grid employee-grid">
+        <div class="grid">
+          <div class="card">
+            <div class="calendar-head">
+              <h3 id="team-calendar-title">Calendrier</h3>
+              <div class="calendar-controls">
+                <button class="icon-btn" onclick="changeEmployeeMonth(-1)">‹</button>
+                <button class="icon-btn" onclick="changeEmployeeMonth(1)">›</button>
+              </div>
+            </div>
+            <div class="calendar">
+              <div class="calendar-weekdays">
+                <div>Lun</div><div>Mar</div><div>Mer</div><div>Jeu</div><div>Ven</div><div>Sam</div><div>Dim</div>
+              </div>
+              <div class="calendar-grid" id="team-calendar-grid"></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="section-head">
+              <div class="title">Mes demandes</div>
+              <div class="badge team" id="employee-request-count">0 demande</div>
+            </div>
+            <div class="request-list" id="employee-request-list"></div>
+          </div>
+        </div>
+
+        <div class="grid">
+          <div class="life-board" id="life-board">
+            <div class="section-head">
+              <div class="title">Vies du mois</div>
+              <div id="life-label">3 sur 3 disponibles</div>
+            </div>
+            <div class="lives" id="life-icons"></div>
+            <div id="life-copy">Chaque demande posée sur ce mois consomme une vie 🐴.</div>
+          </div>
+
+          <div class="card">
+            <h3>Nouvelle demande</h3>
+            <p class="subtle">Choisissez la date, la plage horaire et la raison. Les demandes doivent être faites au moins 10 jours à l'avance.</p>
+            <div class="form-grid">
+              <div class="field">
+                <label for="req-date">Date</label>
+                <input id="req-date" type="date">
+              </div>
+              <div class="field">
+                <label for="req-slot">Plage horaire</label>
+                <select id="req-slot">
+                  <option value="">Choisir une plage</option>
+                  <option value="Journée entière">Journée entière</option>
+                  <option value="Matin">Matin</option>
+                  <option value="Après-midi">Après-midi</option>
+                  <option value="Soir">Soir</option>
+                </select>
+              </div>
+              <div class="field" id="req-custom-wrap">
+                <label for="req-custom">Horaire libre</label>
+                <input id="req-custom" type="text" placeholder="Ex : 9h-13h ou 19h-23h">
+              </div>
+              <div class="field">
+                <label for="req-reason">Raison</label>
+                <textarea id="req-reason" placeholder="Ex : rendez-vous médical, mariage, formation..."></textarea>
+              </div>
+              <button class="btn btn-primary btn-block" id="request-submit-btn" onclick="createRequest()">Envoyer la demande</button>
+            </div>
+            <div class="notice">La demande reste en attente tant qu'elle n'est pas validée. Une suppression n'est possible que tant qu'elle est en attente.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="page" id="page-admin-app">
+    <div class="shell">
+      <div class="topbar">
+        <div class="brand">
+          <strong>AquaPoney</strong>
+          <span>Vue d'ensemble des indisponibilités</span>
+        </div>
+        <div class="badge admin">Admin connecté</div>
+        <div class="status-line"><span class="status-dot" id="admin-sync-dot"></span><span id="admin-sync-label">Connexion en attente</span></div>
+        <button class="btn btn-soft" onclick="refreshAdmin()">Actualiser</button>
+        <button class="btn btn-soft" onclick="logoutAdmin()">Déconnexion</button>
+      </div>
+
+      <div class="grid">
+        <div class="stats">
+          <div class="stat"><strong id="stat-employees">0</strong><span>Employés</span></div>
+          <div class="stat"><strong id="stat-total">0</strong><span>Demandes</span></div>
+          <div class="stat"><strong id="stat-pending">0</strong><span>En attente</span></div>
+          <div class="stat"><strong id="stat-approved">0</strong><span>Validées</span></div>
+        </div>
+
+        <div class="grid admin-grid">
+          <div class="grid">
+            <div class="card">
+              <div class="calendar-head">
+                <h3 id="admin-calendar-title">Calendrier équipe</h3>
+                <div class="calendar-controls">
+                  <button class="icon-btn" onclick="changeAdminMonth(-1)">‹</button>
+                  <button class="icon-btn" onclick="changeAdminMonth(1)">›</button>
+                </div>
+              </div>
+              <div class="calendar">
+                <div class="calendar-weekdays">
+                  <div>Lun</div><div>Mar</div><div>Mer</div><div>Jeu</div><div>Ven</div><div>Sam</div><div>Dim</div>
+                </div>
+                <div class="calendar-grid" id="admin-calendar-grid"></div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="section-head">
+                <div class="title">Filtres</div>
+                <button class="btn btn-soft" onclick="setAdminFilter('all')">Réinitialiser</button>
+              </div>
+              <div class="chips" id="admin-filters"></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="section-head">
+              <div class="title">Toutes les demandes</div>
+              <div class="badge admin" id="admin-request-count">0 demande</div>
+            </div>
+            <div class="inline-note">Le mot de passe admin de l'interface est vérifié côté Apps Script. Le secret API backend reste côté script pour signer les sessions et ne figure pas dans ce HTML.</div>
+            <div class="request-list" id="admin-request-list" style="margin-top:14px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="modal-backdrop" id="modal-backdrop" onclick="closeModalIfBackdrop(event)">
+    <div class="modal">
+      <h3 id="modal-title">Détail</h3>
+      <p id="modal-subtitle"></p>
+      <div id="modal-body"></div>
+      <div class="modal-actions" id="modal-actions"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const CONFIG = {
+      scriptUrl: "https://script.google.com/macros/s/AKfycbyYVoBNlhcwzJLgmduKclrBdE9vLeL5T-I6-wbtSN1k1tejNSL653MFq_yQZ4TIh0fb/exec",
+      backendMode: "legacy",
+      backendApiPassword: "aquaponey2026"
+    };
+
+    const LOCAL_EMPLOYEES = {
+      "Maya": "9009",
+      "Test": "0000",
+      "Sebastien": "1357",
+      "Camille": "1610",
+      "Agnese": "2604",
+      "Margeurite": "2131",
+      "Christian": "0314",
+      "Lisa": "2468",
+      "Lulu": "2468",
+      "Hugo": "2912",
+      "François": "7483",
+      "Sasha": "3156",
+      "Julien": "8742",
+      "Fabien": "2468"
+    };
+
+    const LOCAL_ADMIN_PASSWORD = "244342";
+
+    const APP = {
+      employee: {
+        token: "",
+        name: "",
+        requests: [],
+        viewYear: 0,
+        viewMonth: 0
+      },
+      admin: {
+        token: "",
+        requests: [],
+        employees: [],
+        filter: "all",
+        viewYear: 0,
+        viewMonth: 0
+      },
+      colors: {},
+      months: ["janvier", "fevrier", "mars", "avril", "mai", "juin", "juillet", "aout", "septembre", "octobre", "novembre", "decembre"],
+      monthsLabel: ["Janvier", "Fevrier", "Mars", "Avril", "Mai", "Juin", "Juillet", "Aout", "Septembre", "Octobre", "Novembre", "Decembre"],
+      weekdaysLabel: ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"],
+      palette: ["#114b5f", "#eb6f5a", "#2cb1a7", "#6a4c93", "#9c6644", "#3a86ff", "#5f0f40", "#588157", "#bc4749", "#277da1"]
+    };
+
+    const STORAGE_KEYS = {
+      employeeToken: "aquaponey.employee.token",
+      employeeName: "aquaponey.employee.name",
+      adminToken: "aquaponey.admin.token",
+      localRequests: "aquaponey.local.requests"
+    };
+
+    document.addEventListener("DOMContentLoaded", init);
+    document.getElementById("req-slot").addEventListener("change", toggleCustomSlot);
+    document.getElementById("team-name").addEventListener("keydown", onLoginKeydown);
+    document.getElementById("team-pin").addEventListener("keydown", onLoginKeydown);
+    document.getElementById("admin-pass").addEventListener("keydown", onAdminKeydown);
+
+    function init() {
+      const today = new Date();
+      APP.employee.viewYear = today.getFullYear();
+      APP.employee.viewMonth = today.getMonth();
+      APP.admin.viewYear = today.getFullYear();
+      APP.admin.viewMonth = today.getMonth();
+
+      const minDate = toDateInputValue(addDays(startOfDay(new Date()), 10));
+      document.getElementById("req-date").min = minDate;
+      document.getElementById("req-custom-wrap").style.display = "none";
+      updateLocalModeBanner();
+
+      restoreSession();
+    }
+
+    function restoreSession() {
+      const employeeToken = localStorage.getItem(STORAGE_KEYS.employeeToken) || "";
+      const employeeName = localStorage.getItem(STORAGE_KEYS.employeeName) || "";
+      const adminToken = localStorage.getItem(STORAGE_KEYS.adminToken) || "";
+
+      if (employeeToken && employeeName) {
+        APP.employee.token = employeeToken;
+        APP.employee.name = employeeName;
+        openEmployeeApp();
+        return;
+      }
+
+      if (adminToken) {
+        APP.admin.token = adminToken;
+        openAdminApp();
+      }
+    }
+
+    function showPage(name) {
+      document.querySelectorAll(".page").forEach((page) => page.classList.remove("active"));
+      document.getElementById("page-" + name).classList.add("active");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function onLoginKeydown(event) {
+      if (event.key === "Enter") {
+        loginEmployee();
+      }
+    }
+
+    function onAdminKeydown(event) {
+      if (event.key === "Enter") {
+        loginAdmin();
+      }
+    }
+
+    async function loginEmployee() {
+      const firstName = document.getElementById("team-name").value.trim();
+      const pin = document.getElementById("team-pin").value.trim();
+
+      if (!firstName || !pin) {
+        toast("Entrez votre prenom et votre code a 4 chiffres.");
+        return;
+      }
+
+      withButtonLoading("team-login-btn", true, "Connexion...");
+      try {
+        const response = await api("loginEmployee", { firstName, pin });
+        APP.employee.token = response.token;
+        APP.employee.name = response.employee.firstName;
+        localStorage.setItem(STORAGE_KEYS.employeeToken, response.token);
+        localStorage.setItem(STORAGE_KEYS.employeeName, response.employee.firstName);
+        await openEmployeeApp();
+      } catch (error) {
+        toast(error.message || "Connexion employee impossible.");
+      } finally {
+        withButtonLoading("team-login-btn", false, "Connexion");
+      }
+    }
+
+    async function loginAdmin() {
+      const password = document.getElementById("admin-pass").value;
+      if (!password) {
+        toast("Entrez le mot de passe admin.");
+        return;
+      }
+
+      withButtonLoading("admin-login-btn", true, "Connexion...");
+      try {
+        const response = await api("loginAdmin", { password });
+        APP.admin.token = response.token;
+        localStorage.setItem(STORAGE_KEYS.adminToken, response.token);
+        await openAdminApp();
+      } catch (error) {
+        toast(error.message || "Connexion admin impossible.");
+      } finally {
+        withButtonLoading("admin-login-btn", false, "Connexion");
+      }
+    }
+
+    async function openEmployeeApp() {
+      document.getElementById("employee-greeting").textContent = "Bonjour " + APP.employee.name;
+      document.getElementById("employee-badge").textContent = APP.employee.name;
+      showPage("team-app");
+      setSyncState("team", false, isBackendConfigured() ? "Synchronisation..." : "Mode local actif");
+      try {
+        const response = await api("getMyRequests", { token: APP.employee.token });
+        APP.employee.requests = normalizeRequests(response.requests || []);
+        renderEmployeeApp();
+        setSyncState("team", true, isBackendConfigured() ? "Synchronise avec le backend" : "Sauvegarde sur cet appareil");
+      } catch (error) {
+        logoutEmployee(false);
+        toast(error.message || "Session employee expiree.");
+        showPage("team-login");
+      }
+    }
+
+    async function openAdminApp() {
+      showPage("admin-app");
+      await refreshAdmin();
+    }
+
+    async function refreshAdmin() {
+      setSyncState("admin", false, isBackendConfigured() ? "Synchronisation..." : "Mode local actif");
+      try {
+        const response = await api("getAllRequests", { token: APP.admin.token });
+        APP.admin.requests = normalizeRequests(response.requests || []);
+        APP.admin.employees = response.employees || extractEmployees(APP.admin.requests);
+        assignEmployeeColors(APP.admin.employees);
+        renderAdminApp();
+        setSyncState("admin", true, isBackendConfigured() ? "Synchronise avec le backend" : "Sauvegarde sur cet appareil");
+      } catch (error) {
+        logoutAdmin(false);
+        toast(error.message || "Session admin expiree.");
+        showPage("admin-login");
+      }
+    }
+
+    function logoutEmployee(jump = true) {
+      APP.employee.token = "";
+      APP.employee.name = "";
+      APP.employee.requests = [];
+      localStorage.removeItem(STORAGE_KEYS.employeeToken);
+      localStorage.removeItem(STORAGE_KEYS.employeeName);
+      if (jump) {
+        showPage("team-login");
+      }
+    }
+
+    function logoutAdmin(jump = true) {
+      APP.admin.token = "";
+      APP.admin.requests = [];
+      APP.admin.employees = [];
+      APP.admin.filter = "all";
+      localStorage.removeItem(STORAGE_KEYS.adminToken);
+      if (jump) {
+        showPage("admin-login");
+      }
+    }
+
+    function renderEmployeeApp() {
+      renderLifeBoard();
+      renderEmployeeCalendar();
+      renderEmployeeRequests();
+    }
+
+    function renderLifeBoard() {
+      const year = APP.employee.viewYear;
+      const month = APP.employee.viewMonth + 1;
+      const used = countRequestsInMonth(APP.employee.requests, APP.employee.name, year, month);
+      const left = Math.max(0, 3 - used);
+      const board = document.getElementById("life-board");
+      board.className = "life-board" + (left === 0 ? " empty" : left === 1 ? " warn" : "");
+
+      document.getElementById("life-label").textContent = left + " sur 3 disponibles";
+
+      const icons = document.getElementById("life-icons");
+      icons.innerHTML = "";
+      for (let i = 0; i < 3; i += 1) {
+        const icon = document.createElement("span");
+        icon.textContent = "🐴";
+        if (i >= left) icon.classList.add("off");
+        icons.appendChild(icon);
+      }
+
+      const copy = left === 0
+        ? "Quota atteint pour ce mois. Vous pourrez refaire une demande au mois suivant."
+        : left === 1
+          ? "Il ne reste qu'une vie sur ce mois. Choisissez bien votre prochaine date."
+          : "Chaque demande posee sur ce mois consomme une vie 🐴.";
+      document.getElementById("life-copy").textContent = copy;
+    }
+
+    function renderEmployeeCalendar() {
+      document.getElementById("team-calendar-title").textContent = APP.monthsLabel[APP.employee.viewMonth] + " " + APP.employee.viewYear;
+      const grid = document.getElementById("team-calendar-grid");
+      grid.innerHTML = "";
+
+      buildCalendar(grid, APP.employee.viewYear, APP.employee.viewMonth, (cellDate, key, cell, dayTags) => {
+        const dayRequests = APP.employee.requests.filter((request) => request.dateKey === key);
+
+        if (dayRequests.length) {
+          cell.classList.add("has-mine");
+          dayRequests.forEach((request) => {
+            dayTags.appendChild(makeTag(request.slotLabel, request.status));
+          });
+        }
+
+        if (!cell.classList.contains("blank")) {
+          cell.classList.add("clickable");
+          cell.addEventListener("click", () => pickDate(cellDate));
+        }
+      });
+    }
+
+    function renderEmployeeRequests() {
+      const list = document.getElementById("employee-request-list");
+      const sorted = [...APP.employee.requests].sort(sortByDateThenCreated);
+      document.getElementById("employee-request-count").textContent = sorted.length + (sorted.length > 1 ? " demandes" : " demande");
+
+      if (!sorted.length) {
+        list.innerHTML = '<div class="empty-state">Aucune demande pour le moment. Choisissez une date dans le calendrier ou via le formulaire.</div>';
+        return;
+      }
+
+      list.innerHTML = "";
+      sorted.forEach((request) => {
+        const item = buildRequestCard(request, false);
+        if (request.status === "pending") {
+          const button = document.createElement("button");
+          button.className = "btn btn-danger";
+          button.textContent = "Supprimer";
+          button.onclick = () => deleteEmployeeRequest(request.id);
+          item.querySelector(".request-actions").appendChild(button);
+        }
+        list.appendChild(item);
+      });
+    }
+
+    function renderAdminApp() {
+      renderAdminStats();
+      renderAdminFilters();
+      renderAdminCalendar();
+      renderAdminRequests();
+    }
+
+    function renderAdminStats() {
+      const requests = APP.admin.requests;
+      const employees = extractEmployees(requests);
+      document.getElementById("stat-employees").textContent = employees.length;
+      document.getElementById("stat-total").textContent = requests.length;
+      document.getElementById("stat-pending").textContent = requests.filter((request) => request.status === "pending").length;
+      document.getElementById("stat-approved").textContent = requests.filter((request) => request.status === "approved").length;
+    }
+
+    function renderAdminFilters() {
+      const wrap = document.getElementById("admin-filters");
+      const employees = extractEmployees(APP.admin.requests);
+      wrap.innerHTML = "";
+      employees.forEach((employee) => {
+        const button = document.createElement("button");
+        button.className = "chip" + (APP.admin.filter === employee ? " active" : "");
+        button.textContent = employee;
+        button.onclick = () => setAdminFilter(employee);
+        wrap.appendChild(button);
+      });
+    }
+
+    function setAdminFilter(value) {
+      APP.admin.filter = value;
+      renderAdminApp();
+    }
+
+    function renderAdminCalendar() {
+      document.getElementById("admin-calendar-title").textContent = APP.monthsLabel[APP.admin.viewMonth] + " " + APP.admin.viewYear;
+      const grid = document.getElementById("admin-calendar-grid");
+      grid.innerHTML = "";
+
+      const visible = getFilteredAdminRequests();
+      buildCalendar(grid, APP.admin.viewYear, APP.admin.viewMonth, (cellDate, key, cell, dayTags) => {
+        const dayRequests = visible.filter((request) => request.dateKey === key);
+        if (!dayRequests.length) return;
+
+        cell.classList.add("has-team");
+        const uniqueEmployees = [...new Set(dayRequests.map((request) => request.employee))];
+        uniqueEmployees.slice(0, 3).forEach((employee) => {
+          dayTags.appendChild(makeTag(employee, "employee", APP.colors[employee]));
+        });
+
+        if (dayRequests.length > 3) {
+          dayTags.appendChild(makeTag("+" + (dayRequests.length - 3), "employee", "#6b7f86"));
+        }
+
+        cell.classList.add("clickable");
+        cell.addEventListener("click", () => {
+          APP.admin.filter = "all";
+          renderAdminApp();
+          document.getElementById("admin-request-list").scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+      });
+    }
+
+    function renderAdminRequests() {
+      const list = document.getElementById("admin-request-list");
+      const visible = [...getFilteredAdminRequests()].sort(sortByDateThenCreated);
+      document.getElementById("admin-request-count").textContent = visible.length + (visible.length > 1 ? " demandes" : " demande");
+
+      if (!visible.length) {
+        list.innerHTML = '<div class="empty-state">Aucune demande visible avec le filtre actuel.</div>';
+        return;
+      }
+
+      list.innerHTML = "";
+      visible.forEach((request) => {
+        const item = buildRequestCard(request, true);
+        const actions = item.querySelector(".request-actions");
+
+        if (request.status === "pending") {
+          const approve = document.createElement("button");
+          approve.className = "btn btn-ok";
+          approve.textContent = "Valider";
+          approve.onclick = () => updateRequestStatus(request.id, "approved");
+
+          const refuse = document.createElement("button");
+          refuse.className = "btn btn-danger";
+          refuse.textContent = "Refuser";
+          refuse.onclick = () => updateRequestStatus(request.id, "refused");
+
+          actions.appendChild(approve);
+          actions.appendChild(refuse);
+        }
+
+        const remove = document.createElement("button");
+        remove.className = "btn btn-soft";
+        remove.textContent = "Supprimer";
+        remove.onclick = () => confirmDeleteRequest(request);
+        actions.appendChild(remove);
+
+        item.querySelector(".request-main").addEventListener("click", () => openAdminDetail(request));
+        list.appendChild(item);
+      });
+    }
+
+    function buildRequestCard(request, isAdmin) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "request-item";
+
+      const chip = document.createElement("div");
+      chip.className = "date-chip";
+      chip.style.background = isAdmin ? (APP.colors[request.employee] || "#114b5f") : "linear-gradient(135deg, #114b5f, #2cb1a7)";
+      chip.innerHTML = '<div class="day">' + request.dayOfMonth + '</div><div class="month">' + request.monthShort + "</div>";
+
+      const main = document.createElement("div");
+      main.className = "request-main";
+      const title = isAdmin
+        ? request.employee + " • " + request.dateLabel
+        : request.dateLabel;
+
+      main.innerHTML = [
+        "<h4>" + escapeHtml(title) + "</h4>",
+        '<div class="request-meta">',
+        '<span class="pill ' + request.status + '">' + statusLabel(request.status) + "</span>",
+        '<span class="pill" style="background: rgba(17,75,95,0.08); color: var(--teal-900);">' + escapeHtml(request.slotLabel) + "</span>",
+        "</div>",
+        "<p>" + escapeHtml(request.reason) + "</p>"
+      ].join("");
+
+      const actions = document.createElement("div");
+      actions.className = "request-actions";
+
+      wrapper.appendChild(chip);
+      wrapper.appendChild(main);
+      wrapper.appendChild(actions);
+
+      return wrapper;
+    }
+
+    function openAdminDetail(request) {
+      const body = [
+        '<div class="inline-note" style="margin-bottom:12px;">Soumis le ' + escapeHtml(formatDateTime(request.createdAt)) + '</div>',
+        "<p><strong>Employe :</strong> " + escapeHtml(request.employee) + "</p>",
+        "<p><strong>Date :</strong> " + escapeHtml(request.dateLabel) + "</p>",
+        "<p><strong>Plage :</strong> " + escapeHtml(request.slotLabel) + "</p>",
+        "<p><strong>Raison :</strong> " + escapeHtml(request.reason) + "</p>"
+      ].join("");
+
+      const actions = [];
+      if (request.status === "pending") {
+        actions.push({ label: "Valider", cls: "btn btn-ok", onClick: () => updateRequestStatus(request.id, "approved", true) });
+        actions.push({ label: "Refuser", cls: "btn btn-danger", onClick: () => updateRequestStatus(request.id, "refused", true) });
+      }
+      actions.push({ label: "Supprimer", cls: "btn btn-soft", onClick: () => confirmDeleteRequest(request, true) });
+      actions.push({ label: "Fermer", cls: "btn btn-primary", onClick: closeModal });
+
+      openModal("Demande de " + request.employee, request.dateLabel, body, actions);
+    }
+
+    function confirmDeleteRequest(request, closeFirst = false) {
+      if (closeFirst) closeModal();
+      openModal(
+        "Supprimer la demande",
+        request.employee + " • " + request.dateLabel,
+        "<p>Cette action supprimera definitivement la demande.</p>",
+        [
+          { label: "Annuler", cls: "btn btn-soft", onClick: closeModal },
+          { label: "Supprimer", cls: "btn btn-danger", onClick: () => deleteAdminRequest(request.id) }
+        ]
+      );
+    }
+
+    async function createRequest() {
+      const dateKey = document.getElementById("req-date").value;
+      const slotBase = document.getElementById("req-slot").value;
+      const custom = document.getElementById("req-custom").value.trim();
+      const reason = document.getElementById("req-reason").value.trim();
+
+      if (!dateKey || !slotBase || !reason) {
+        toast("Remplissez la date, la plage horaire et la raison.");
+        return;
+      }
+
+      const slotLabel = slotBase === "Journée entière" || !custom
+        ? slotBase
+        : slotBase + " (" + custom + ")";
+
+      const localCheck = validateLocalRequest(APP.employee.requests, APP.employee.name, dateKey);
+      if (!localCheck.ok) {
+        toast(localCheck.message);
+        return;
+      }
+
+      withButtonLoading("request-submit-btn", true, "Envoi...");
+      try {
+        await api("createRequest", {
+          token: APP.employee.token,
+          dateKey,
+          slotBase,
+          customSlot: custom,
+          reason
+        });
+
+        await openEmployeeApp();
+        resetEmployeeForm();
+        toast("Demande envoyee.");
+      } catch (error) {
+        toast(error.message || "Impossible d'envoyer la demande.");
+      } finally {
+        withButtonLoading("request-submit-btn", false, "Envoyer la demande");
+      }
+    }
+
+    async function deleteEmployeeRequest(requestId) {
+      try {
+        await api("deleteMyRequest", { token: APP.employee.token, requestId });
+        APP.employee.requests = APP.employee.requests.filter((request) => request.id !== requestId);
+        renderEmployeeApp();
+        toast("Demande supprimee.");
+      } catch (error) {
+        toast(error.message || "Suppression impossible.");
+      }
+    }
+
+    async function updateRequestStatus(requestId, status, closeAfter = false) {
+      try {
+        await api("setRequestStatus", { token: APP.admin.token, requestId, status });
+        if (closeAfter) closeModal();
+        await refreshAdmin();
+        toast(status === "approved" ? "Demande validee." : "Demande refusee.");
+      } catch (error) {
+        toast(error.message || "Mise a jour impossible.");
+      }
+    }
+
+    async function deleteAdminRequest(requestId) {
+      closeModal();
+      try {
+        await api("deleteRequest", { token: APP.admin.token, requestId });
+        await refreshAdmin();
+        toast("Demande supprimee.");
+      } catch (error) {
+        toast(error.message || "Suppression impossible.");
+      }
+    }
+
+    function changeEmployeeMonth(delta) {
+      const next = new Date(APP.employee.viewYear, APP.employee.viewMonth + delta, 1);
+      APP.employee.viewYear = next.getFullYear();
+      APP.employee.viewMonth = next.getMonth();
+      renderEmployeeApp();
+    }
+
+    function changeAdminMonth(delta) {
+      const next = new Date(APP.admin.viewYear, APP.admin.viewMonth + delta, 1);
+      APP.admin.viewYear = next.getFullYear();
+      APP.admin.viewMonth = next.getMonth();
+      renderAdminApp();
+    }
+
+    function pickDate(date) {
+      document.getElementById("req-date").value = toDateInputValue(date);
+      document.getElementById("req-date").scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    function toggleCustomSlot() {
+      const wrap = document.getElementById("req-custom-wrap");
+      const slot = document.getElementById("req-slot").value;
+      wrap.style.display = slot && slot !== "Journée entière" ? "block" : "none";
+    }
+
+    function resetEmployeeForm() {
+      document.getElementById("req-date").value = "";
+      document.getElementById("req-slot").value = "";
+      document.getElementById("req-custom").value = "";
+      document.getElementById("req-reason").value = "";
+      toggleCustomSlot();
+    }
+
+    function getFilteredAdminRequests() {
+      return APP.admin.filter === "all"
+        ? APP.admin.requests
+        : APP.admin.requests.filter((request) => request.employee === APP.admin.filter);
+    }
+
+    function buildCalendar(grid, year, month, onCell) {
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      const mondayOffset = (firstDay.getDay() + 6) % 7;
+      const todayKey = toDateInputValue(new Date());
+      const minAllowed = addDays(startOfDay(new Date()), 10);
+
+      for (let i = 0; i < mondayOffset; i += 1) {
+        const blank = document.createElement("div");
+        blank.className = "calendar-cell blank";
+        grid.appendChild(blank);
+      }
+
+      for (let day = 1; day <= lastDay.getDate(); day += 1) {
+        const current = new Date(year, month, day);
+        const key = toDateInputValue(current);
+
+        const cell = document.createElement("div");
+        cell.className = "calendar-cell";
+        if (startOfDay(current) < minAllowed) cell.classList.add("blocked");
+        if (key === todayKey) cell.classList.add("today");
+
+        const number = document.createElement("div");
+        number.className = "day-number";
+        number.textContent = day;
+
+        const tags = document.createElement("div");
+        tags.className = "cell-tags";
+
+        cell.appendChild(number);
+        cell.appendChild(tags);
+        onCell(current, key, cell, tags);
+        grid.appendChild(cell);
+      }
+    }
+
+    function makeTag(text, status, color) {
+      const tag = document.createElement("span");
+      tag.className = "tag";
+      tag.textContent = text;
+
+      if (status === "approved") {
+        tag.style.background = "#eaf8ef";
+        tag.style.color = "var(--ok)";
+      } else if (status === "refused") {
+        tag.style.background = "#fff0ee";
+        tag.style.color = "var(--danger)";
+      } else if (status === "pending") {
+        tag.style.background = "#fff4dd";
+        tag.style.color = "var(--pending)";
+      } else if (status === "employee" && color) {
+        tag.style.background = color;
+        tag.style.color = "white";
+      }
+      return tag;
+    }
+
+    function validateLocalRequest(requests, employeeName, dateKey) {
+      const date = parseDateKey(dateKey);
+      const minDate = addDays(startOfDay(new Date()), 10);
+      if (date < minDate) {
+        return { ok: false, message: "La demande doit etre faite au minimum 10 jours a l'avance." };
+      }
+
+      const used = countRequestsInMonth(requests, employeeName, date.getFullYear(), date.getMonth() + 1);
+      if (used >= 3) {
+        return { ok: false, message: "Quota atteint : 3 demandes maximum sur ce mois." };
+      }
+
+      return { ok: true };
+    }
+
+    function countRequestsInMonth(requests, employeeName, year, month) {
+      return requests.filter((request) => {
+        const date = parseDateKey(request.dateKey);
+        return request.employee === employeeName && date.getFullYear() === year && (date.getMonth() + 1) === month;
+      }).length;
+    }
+
+    function normalizeRequests(requests) {
+      return requests.map((request) => {
+        const fixedDate = (request.dateKey || "").slice(0, 10);
+        const parsed = parseDateKey(fixedDate);
+        return {
+          id: request.id,
+          employee: request.employee,
+          dateKey: fixedDate,
+          dateLabel: request.dateLabel || formatDateLabel(parsed),
+          slotBase: request.slotBase || extractSlotBase(request.slotLabel || request.slot || ""),
+          slotLabel: request.slotLabel || request.slot || "",
+          customSlot: request.customSlot || "",
+          reason: request.reason || "",
+          status: request.status || "pending",
+          createdAt: request.createdAt || request.timestamp || new Date().toISOString(),
+          dayOfMonth: String(parsed.getDate()),
+          monthShort: APP.monthsLabel[parsed.getMonth()].slice(0, 3)
+        };
+      });
+    }
+
+    function extractSlotBase(label) {
+      const match = label.match(/^(Journée entière|Matin|Après-midi|Soir)/);
+      return match ? match[1] : label;
+    }
+
+    function sortByDateThenCreated(a, b) {
+      if (a.dateKey === b.dateKey) return String(a.createdAt).localeCompare(String(b.createdAt));
+      return a.dateKey.localeCompare(b.dateKey);
+    }
+
+    function statusLabel(status) {
+      if (status === "approved") return "Validee";
+      if (status === "refused") return "Refusee";
+      return "En attente";
+    }
+
+    function setSyncState(scope, live, label) {
+      document.getElementById(scope + "-sync-dot").className = "status-dot" + (live ? " live" : "");
+      document.getElementById(scope + "-sync-label").textContent = label;
+    }
+
+    async function api(action, payload) {
+      if (!isBackendConfigured()) {
+        return localApi(action, payload);
+      }
+
+       if (CONFIG.backendMode === "legacy") {
+        return legacyApi(action, payload);
+      }
+
+      const response = await fetch(CONFIG.scriptUrl, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action, payload })
+      });
+
+      const data = await response.json();
+      if (!data.ok) {
+        throw new Error(data.error || "Erreur API.");
+      }
+      return data;
+    }
+
+    function isBackendConfigured() {
+      return Boolean(CONFIG.scriptUrl) && !CONFIG.scriptUrl.includes("PASTE_YOUR");
+    }
+
+    function updateLocalModeBanner() {
+      const note = !isBackendConfigured()
+        ? "Mode local actif : les comptes fonctionnent deja, mais les donnees restent sur ce telephone tant que l'URL Apps Script n'est pas renseignee."
+        : CONFIG.backendMode === "legacy"
+          ? "Backend Google Sheets connecte : cette interface lit et modifie les demandes deja presentes dans ton ancien AquaPoney."
+          : "Backend Google Apps Script connecte.";
+      const adminNote = document.querySelector("#page-admin-app .inline-note");
+      if (adminNote) {
+        adminNote.textContent = note;
+      }
+    }
+
+    async function legacyApi(action, payload) {
+      switch (action) {
+        case "loginEmployee":
+          return localLoginEmployee(payload);
+        case "loginAdmin":
+          return localLoginAdmin(payload);
+        case "getMyRequests":
+          return legacyGetMyRequests(payload);
+        case "createRequest":
+          return legacyCreateRequest(payload);
+        case "deleteMyRequest":
+          return legacyDeleteRequest(payload);
+        case "getAllRequests":
+          return legacyGetAllRequests(payload);
+        case "setRequestStatus":
+          return legacySetRequestStatus(payload);
+        case "deleteRequest":
+          return legacyDeleteRequest(payload);
+        default:
+          throw new Error("Action backend legacy inconnue.");
+      }
+    }
+
+    async function legacyGetMyRequests(payload) {
+      const employee = localRequireEmployee(payload.token);
+      const response = await fetch(CONFIG.scriptUrl + "?action=get&employee=" + encodeURIComponent(employee));
+      const data = await response.json();
+      return { ok: true, requests: data.rows || [] };
+    }
+
+    async function legacyCreateRequest(payload) {
+      const employee = localRequireEmployee(payload.token);
+      const dateKey = String(payload.dateKey || "");
+      const slotBase = String(payload.slotBase || "");
+      const customSlot = String(payload.customSlot || "").trim();
+      const reason = String(payload.reason || "").trim();
+      const slotLabel = slotBase === "Journée entière" || !customSlot ? slotBase : slotBase + " (" + customSlot + ")";
+      const requestDate = parseDateKey(dateKey);
+      const row = {
+        id: "r" + Date.now(),
+        employee,
+        dateKey,
+        dateLabel: formatDateLabel(requestDate),
+        slot: slotLabel,
+        reason,
+        status: "pending",
+        timestamp: new Date().toISOString()
+      };
+
+      const response = await fetch(CONFIG.scriptUrl, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "add", row })
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error("Erreur reseau.");
+      }
+      if (data && data.id) {
+        row.id = data.id;
+      }
+      return { ok: true, request: row };
+    }
+
+    async function legacyGetAllRequests(payload) {
+      localRequireAdmin(payload.token);
+      const response = await fetch(
+        CONFIG.scriptUrl + "?action=getAll&pass=" + encodeURIComponent(CONFIG.backendApiPassword)
+      );
+      const data = await response.json();
+      return {
+        ok: true,
+        employees: Object.keys(LOCAL_EMPLOYEES).sort((a, b) => a.localeCompare(b, "fr")),
+        requests: data.rows || []
+      };
+    }
+
+    async function legacySetRequestStatus(payload) {
+      localRequireAdmin(payload.token);
+      const response = await fetch(CONFIG.scriptUrl, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          action: "status",
+          id: payload.requestId,
+          status: payload.status,
+          pass: CONFIG.backendApiPassword
+        })
+      });
+      if (!response.ok) {
+        throw new Error("Impossible de mettre a jour la demande.");
+      }
+      let data = {};
+      try {
+        data = await response.json();
+      } catch (error) {
+        data = {};
+      }
+      if (data && data.ok === false) {
+        throw new Error(data.error || "Impossible de mettre a jour la demande.");
+      }
+      return { ok: true };
+    }
+
+    async function legacyDeleteRequest(payload) {
+      if (payload.token === "local-admin") {
+        localRequireAdmin(payload.token);
+      } else {
+        localRequireEmployee(payload.token);
+      }
+      const response = await fetch(CONFIG.scriptUrl, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          action: "delete",
+          id: payload.requestId
+        })
+      });
+      if (!response.ok) {
+        throw new Error("Impossible de supprimer la demande.");
+      }
+      let data = {};
+      try {
+        data = await response.json();
+      } catch (error) {
+        data = {};
+      }
+      if (data && data.ok === false) {
+        throw new Error(data.error || "Impossible de supprimer la demande.");
+      }
+      return { ok: true };
+    }
+
+    async function localApi(action, payload) {
+      switch (action) {
+        case "loginEmployee":
+          return localLoginEmployee(payload);
+        case "loginAdmin":
+          return localLoginAdmin(payload);
+        case "getMyRequests":
+          return localGetMyRequests(payload);
+        case "createRequest":
+          return localCreateRequest(payload);
+        case "deleteMyRequest":
+          return localDeleteMyRequest(payload);
+        case "getAllRequests":
+          return localGetAllRequests(payload);
+        case "setRequestStatus":
+          return localSetRequestStatus(payload);
+        case "deleteRequest":
+          return localDeleteRequest(payload);
+        default:
+          throw new Error("Action locale inconnue.");
+      }
+    }
+
+    function localLoginEmployee(payload) {
+      const firstName = String(payload.firstName || "").trim();
+      const pin = String(payload.pin || "").trim();
+      if (!LOCAL_EMPLOYEES[firstName] || LOCAL_EMPLOYEES[firstName] !== pin) {
+        throw new Error("Prenom ou code incorrect.");
+      }
+      return {
+        ok: true,
+        token: "local-employee:" + encodeURIComponent(firstName),
+        employee: { firstName }
+      };
+    }
+
+    function localLoginAdmin(payload) {
+      const password = String(payload.password || "");
+      if (password !== LOCAL_ADMIN_PASSWORD) {
+        throw new Error("Mot de passe admin incorrect.");
+      }
+      return {
+        ok: true,
+        token: "local-admin"
+      };
+    }
+
+    function localGetMyRequests(payload) {
+      const employee = localRequireEmployee(payload.token);
+      const rows = loadLocalRequests().filter((request) => request.employee === employee);
+      return { ok: true, requests: rows };
+    }
+
+    function localCreateRequest(payload) {
+      const employee = localRequireEmployee(payload.token);
+      const dateKey = String(payload.dateKey || "");
+      const slotBase = String(payload.slotBase || "");
+      const customSlot = String(payload.customSlot || "").trim();
+      const reason = String(payload.reason || "").trim();
+      const existing = loadLocalRequests();
+      const localCheck = validateLocalRequest(existing, employee, dateKey);
+      if (!localCheck.ok) {
+        throw new Error(localCheck.message);
+      }
+      const slotLabel = slotBase === "Journée entière" || !customSlot ? slotBase : slotBase + " (" + customSlot + ")";
+      const requestDate = parseDateKey(dateKey);
+      const row = {
+        id: "local-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8),
+        employee,
+        dateKey,
+        dateLabel: formatDateLabel(requestDate),
+        slotBase,
+        slotLabel,
+        customSlot,
+        reason,
+        status: "pending",
+        createdAt: new Date().toISOString()
+      };
+      existing.push(row);
+      saveLocalRequests(existing);
+      return { ok: true, request: row };
+    }
+
+    function localDeleteMyRequest(payload) {
+      const employee = localRequireEmployee(payload.token);
+      const requestId = String(payload.requestId || "");
+      const existing = loadLocalRequests();
+      const request = existing.find((row) => row.id === requestId);
+      if (!request) {
+        throw new Error("Demande introuvable.");
+      }
+      if (request.employee !== employee) {
+        throw new Error("Action non autorisee.");
+      }
+      if (request.status !== "pending") {
+        throw new Error("Seules les demandes en attente peuvent etre supprimees.");
+      }
+      saveLocalRequests(existing.filter((row) => row.id !== requestId));
+      return { ok: true };
+    }
+
+    function localGetAllRequests(payload) {
+      localRequireAdmin(payload.token);
+      return {
+        ok: true,
+        employees: Object.keys(LOCAL_EMPLOYEES).sort((a, b) => a.localeCompare(b, "fr")),
+        requests: loadLocalRequests()
+      };
+    }
+
+    function localSetRequestStatus(payload) {
+      localRequireAdmin(payload.token);
+      const requestId = String(payload.requestId || "");
+      const status = String(payload.status || "");
+      if (!["approved", "refused"].includes(status)) {
+        throw new Error("Statut invalide.");
+      }
+      const existing = loadLocalRequests();
+      const index = existing.findIndex((row) => row.id === requestId);
+      if (index === -1) {
+        throw new Error("Demande introuvable.");
+      }
+      existing[index].status = status;
+      saveLocalRequests(existing);
+      return { ok: true };
+    }
+
+    function localDeleteRequest(payload) {
+      localRequireAdmin(payload.token);
+      const requestId = String(payload.requestId || "");
+      const existing = loadLocalRequests();
+      if (!existing.some((row) => row.id === requestId)) {
+        throw new Error("Demande introuvable.");
+      }
+      saveLocalRequests(existing.filter((row) => row.id !== requestId));
+      return { ok: true };
+    }
+
+    function localRequireEmployee(token) {
+      const raw = String(token || "");
+      if (!raw.startsWith("local-employee:")) {
+        throw new Error("Session employee invalide.");
+      }
+      const employee = decodeURIComponent(raw.slice("local-employee:".length));
+      if (!LOCAL_EMPLOYEES[employee]) {
+        throw new Error("Session employee invalide.");
+      }
+      return employee;
+    }
+
+    function localRequireAdmin(token) {
+      if (String(token || "") !== "local-admin") {
+        throw new Error("Session admin invalide.");
+      }
+      return true;
+    }
+
+    function loadLocalRequests() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEYS.localRequests) || "[]");
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function saveLocalRequests(rows) {
+      localStorage.setItem(STORAGE_KEYS.localRequests, JSON.stringify(rows));
+    }
+
+    function openModal(title, subtitle, bodyHtml, actions) {
+      document.getElementById("modal-title").textContent = title;
+      document.getElementById("modal-subtitle").textContent = subtitle || "";
+      document.getElementById("modal-body").innerHTML = bodyHtml || "";
+
+      const actionsWrap = document.getElementById("modal-actions");
+      actionsWrap.innerHTML = "";
+      actions.forEach((action) => {
+        const button = document.createElement("button");
+        button.className = action.cls;
+        button.textContent = action.label;
+        button.onclick = action.onClick;
+        actionsWrap.appendChild(button);
+      });
+
+      document.getElementById("modal-backdrop").classList.add("open");
+    }
+
+    function closeModal() {
+      document.getElementById("modal-backdrop").classList.remove("open");
+    }
+
+    function closeModalIfBackdrop(event) {
+      if (event.target.id === "modal-backdrop") {
+        closeModal();
+      }
+    }
+
+    function toast(message) {
+      const element = document.getElementById("toast");
+      element.textContent = message;
+      element.classList.add("show");
+      clearTimeout(toast._timer);
+      toast._timer = setTimeout(() => element.classList.remove("show"), 3200);
+    }
+
+    function withButtonLoading(id, loading, label) {
+      const button = document.getElementById(id);
+      button.disabled = loading;
+      button.textContent = label;
+    }
+
+    function assignEmployeeColors(employees) {
+      APP.colors = {};
+      employees.forEach((employee, index) => {
+        APP.colors[employee] = APP.palette[index % APP.palette.length];
+      });
+    }
+
+    function extractEmployees(requests) {
+      return [...new Set(requests.map((request) => request.employee))].sort((a, b) => a.localeCompare(b, "fr"));
+    }
+
+    function parseDateKey(value) {
+      const parts = String(value).split("-").map(Number);
+      return new Date(parts[0], parts[1] - 1, parts[2]);
+    }
+
+    function startOfDay(date) {
+      const clone = new Date(date);
+      clone.setHours(0, 0, 0, 0);
+      return clone;
+    }
+
+    function addDays(date, days) {
+      const clone = new Date(date);
+      clone.setDate(clone.getDate() + days);
+      return clone;
+    }
+
+    function toDateInputValue(date) {
+      const normalized = startOfDay(date);
+      return normalized.getFullYear() + "-" + String(normalized.getMonth() + 1).padStart(2, "0") + "-" + String(normalized.getDate()).padStart(2, "0");
+    }
+
+    function formatDateLabel(date) {
+      return APP.weekdaysLabel[date.getDay()] + " " + date.getDate() + " " + APP.monthsLabel[date.getMonth()] + " " + date.getFullYear();
+    }
+
+    function formatDateTime(value) {
+      return new Date(value).toLocaleString("fr-FR");
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+  </script>
+</body>
+</html>
