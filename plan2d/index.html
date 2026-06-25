@@ -1,193 +1,197 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Plan 2D — Relevé Chantier</title>
-  <link rel="stylesheet" href="./styles.css" />
-</head>
-<body>
-  <div class="app-shell">
-
-    <!-- ── SIDEBAR ── -->
-    <aside class="sidebar">
-      <div class="sidebar-header">
-        <span class="brand">Plan 2D</span>
-        <span class="brand-sub">Relevé chantier interne</span>
-      </div>
-
-      <!-- Projet -->
-      <section class="sidebar-section">
-        <h3 class="section-title">Projet</h3>
-        <div class="field-group">
-          <label><span>Client</span><input id="clientName" type="text" placeholder="Nom du client" autocomplete="off" /></label>
-          <label><span>Projet</span><input id="projectName" type="text" placeholder="Nom du projet" autocomplete="off" /></label>
-          <label><span>Adresse</span><input id="projectAddress" type="text" placeholder="Adresse du chantier" autocomplete="off" /></label>
-          <label><span>Pièce</span><input id="roomName" type="text" placeholder="Ex : Séjour" autocomplete="off" /></label>
-          <label><span>Date</span><input id="projectDate" type="date" /></label>
-        </div>
-      </section>
-
-      <!-- Relevé vidéo -->
-      <section class="sidebar-section">
-        <h3 class="section-title">Relevé vidéo</h3>
-        <div class="field-group">
-          <label class="file-label">
-            <span>Vidéo chantier</span>
-            <input id="videoInput" type="file" accept="video/*" class="file-input" />
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JORA ET DEB - Plan 2D Chantier</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div id="authGate" class="auth-gate">
+      <div class="auth-card">
+        <p class="eyebrow">Acces interne</p>
+        <h1>Connexion obligatoire</h1>
+        <p class="intro">Connectez-vous pour acceder au prototype chantier.</p>
+        <form id="loginForm" class="auth-form">
+          <label>
+            <span>Email</span>
+            <input id="loginEmail" type="email" autocomplete="username" placeholder="moderneisolation13@gmail.com" />
           </label>
-          <p id="videoStatus" class="status-text">Aucune vidéo importée.</p>
-          <div class="btn-row">
-            <button id="importVideoBtn" class="btn btn-secondary" disabled>Générer brouillon</button>
-            <button id="clearVideoBtn" class="btn btn-ghost">Effacer</button>
-          </div>
-        </div>
-      </section>
+          <label>
+            <span>Mot de passe</span>
+            <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Mot de passe" />
+          </label>
+          <label class="auth-remember">
+            <input id="rememberSession" type="checkbox" checked />
+            <span>Rester connecte sur cet appareil</span>
+          </label>
+          <p id="loginStatus" class="status-note info">Acces reserve a l'equipe Moderne Isolation.</p>
+          <button class="primary-btn" type="submit">Se connecter</button>
+        </form>
+      </div>
+    </div>
 
-      <!-- Dimensions -->
-      <section class="sidebar-section">
-        <h3 class="section-title">Dimensions de la pièce</h3>
-        <div class="field-group grid-2">
-          <label><span>Largeur (m)</span><input id="roomWidth" type="number" step="0.01" placeholder="ex : 4.50" /></label>
-          <label><span>Longueur (m)</span><input id="roomLength" type="number" step="0.01" placeholder="ex : 6.20" /></label>
-          <label><span>Hauteur plafond (m)</span><input id="ceilingHeight" type="number" step="0.01" placeholder="ex : 2.70" /></label>
-          <label><span>Épaisseur murs (cm)</span><input id="wallThickness" type="number" step="1" placeholder="ex : 12" /></label>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="hero">
+          <p class="eyebrow">Prototype interne</p>
+          <h1>Plan 2D Chantier</h1>
+          <p class="intro">
+            Brouillon de releve video, calibration, cotations et plan 2D modifiable.
+          </p>
         </div>
-      </section>
 
-      <!-- Calibration -->
-      <section class="sidebar-section">
-        <h3 class="section-title">Calibration</h3>
-        <div class="field-group">
-          <div class="calibration-group">
-            <p class="section-sub">Cote principale</p>
-            <div class="grid-2">
-              <label><span>Observée (m)</span><input id="calibrationObserved" type="number" step="0.001" placeholder="ex : 5.15" /></label>
-              <label><span>Réelle (m)</span><input id="calibrationActual" type="number" step="0.001" placeholder="ex : 5.40" /></label>
+        <details class="card accordion-card" open>
+          <summary class="accordion-summary">
+            <div>
+              <h2>Informations</h2>
+              <p class="microcopy">Client, chantier, adresse, piece.</p>
             </div>
-            <label><span>Libellé</span><input id="calibrationLabel" type="text" placeholder="Ex : Largeur du séjour" /></label>
-          </div>
-          <div class="calibration-group check-group">
-            <p class="section-sub">Double vérification</p>
-            <div class="grid-2">
-              <label><span>Observée 2 (m)</span><input id="calibrationCheckObserved" type="number" step="0.001" placeholder="ex : 3.80" /></label>
-              <label><span>Réelle 2 (m)</span><input id="calibrationCheckActual" type="number" step="0.001" placeholder="ex : 3.90" /></label>
+          </summary>
+          <div class="accordion-body">
+            <div class="grid">
+              <label><span>Client</span><input id="clientName" type="text" placeholder="Mme Dupont" /></label>
+              <label><span>Chantier</span><input id="projectName" type="text" placeholder="Renovation salon" /></label>
+              <label class="full"><span>Adresse</span><input id="projectAddress" type="text" placeholder="12 rue des Tilleuls, Marseille" /></label>
+              <label><span>Piece</span><input id="roomName" type="text" placeholder="Salon" /></label>
+              <label><span>Date</span><input id="projectDate" type="date" /></label>
             </div>
           </div>
-          <p id="calibrationStatus" class="status-text">Aucune calibration appliquée.</p>
-          <div class="btn-row">
-            <button id="applyCalibrationBtn" class="btn btn-primary">Appliquer</button>
-            <button id="clearCalibrationBtn" class="btn btn-ghost">Réinitialiser</button>
+        </details>
+
+        <details class="card accordion-card" open>
+          <summary class="accordion-summary">
+            <div>
+              <h2>Releve video</h2>
+              <p class="microcopy">Import smartphone, brouillon de cotes.</p>
+            </div>
+            <span class="beta-badge">Beta</span>
+          </summary>
+          <div class="accordion-body">
+            <div class="grid">
+              <label class="full">
+                <span>Video chantier</span>
+                <input id="videoInput" type="file" accept="video/*" capture="environment" />
+              </label>
+              <label>
+                <span>Mode de scan</span>
+                <select id="videoScanMode">
+                  <option value="standard">Video smartphone standard</option>
+                  <option value="meter">Video avec metre visible</option>
+                  <option value="lidar">iPhone Pro / LiDAR</option>
+                </select>
+              </label>
+              <label>
+                <span>Type de piece</span>
+                <select id="videoRoomPreset">
+                  <option value="living">Salon / sejour</option>
+                  <option value="bedroom">Chambre</option>
+                  <option value="kitchen">Cuisine</option>
+                  <option value="bathroom">Salle de bain</option>
+                  <option value="hallway">Couloir / piece etroite</option>
+                </select>
+              </label>
+            </div>
+            <p id="videoStatus" class="status-note">Aucune video importee.</p>
+            <p id="videoInsights" class="status-note info">Chargez une video puis lancez le pre-remplissage.</p>
+            <div class="inline-actions">
+              <button id="importVideoBtn" class="secondary-btn" type="button">Pre-remplir depuis la video</button>
+              <button id="clearVideoBtn" class="ghost-btn" type="button">Effacer la video</button>
+            </div>
+          </div>
+        </details>
+
+        <details class="card accordion-card">
+          <summary class="accordion-summary">
+            <div>
+              <h2>Calibration</h2>
+              <p class="microcopy">Cote principale + controle secondaire.</p>
+            </div>
+          </summary>
+          <div class="accordion-body">
+            <div class="grid">
+              <label><span>Cote observee (m)</span><input id="calibrationObserved" type="number" step="0.01" placeholder="3.72" /></label>
+              <label><span>Cote reelle (m)</span><input id="calibrationActual" type="number" step="0.01" placeholder="3.90" /></label>
+              <label class="full"><span>Reference</span><input id="calibrationLabel" type="text" placeholder="Largeur du salon" /></label>
+              <label><span>Controle observe (m)</span><input id="calibrationCheckObserved" type="number" step="0.01" placeholder="1.18" /></label>
+              <label><span>Controle reel (m)</span><input id="calibrationCheckActual" type="number" step="0.01" placeholder="1.20" /></label>
+            </div>
+            <p id="calibrationStatus" class="status-note info">Aucune calibration appliquee.</p>
+            <div class="inline-actions">
+              <button id="applyCalibrationBtn" class="secondary-btn" type="button">Appliquer la calibration</button>
+              <button id="clearCalibrationBtn" class="ghost-btn" type="button">Supprimer la calibration</button>
+            </div>
+          </div>
+        </details>
+
+        <details class="card accordion-card">
+          <summary class="accordion-summary">
+            <div>
+              <h2>Dimensions</h2>
+              <p class="microcopy">Largeur, longueur, hauteur, epaisseur.</p>
+            </div>
+          </summary>
+          <div class="accordion-body">
+            <div class="grid">
+              <label><span>Largeur (m)</span><input id="roomWidth" type="number" step="0.01" /></label>
+              <label><span>Longueur (m)</span><input id="roomLength" type="number" step="0.01" /></label>
+              <label><span>Hauteur (m)</span><input id="ceilingHeight" type="number" step="0.01" /></label>
+              <label><span>Mur (cm)</span><input id="wallThickness" type="number" step="1" /></label>
+            </div>
+          </div>
+        </details>
+
+        <details class="card accordion-card">
+          <summary class="accordion-summary">
+            <div>
+              <h2>Notes</h2>
+              <p class="microcopy">Contraintes et remarques chantier.</p>
+            </div>
+          </summary>
+          <div class="accordion-body">
+            <label>
+              <span>Notes projet</span>
+              <textarea id="projectNotes" rows="5" placeholder="Contraintes, points de vigilance, informations utiles..."></textarea>
+            </label>
+          </div>
+        </details>
+
+        <section class="actions">
+          <button id="logoutBtn" class="ghost-btn" type="button">Se deconnecter</button>
+          <button id="demoBtn" class="secondary-btn" type="button">Charger un exemple</button>
+          <button id="resetBtn" class="ghost-btn" type="button">Reinitialiser</button>
+          <button id="printBtn" class="primary-btn" type="button">Imprimer / PDF</button>
+        </section>
+      </aside>
+
+      <main class="preview-area">
+        <div class="preview-topbar">
+          <div>
+            <p class="eyebrow">Apercu en direct</p>
+            <h2>Plan genere</h2>
+            <p class="microcopy">
+              Version GitHub Pages du prototype interne JORA ET DEB.
+            </p>
+          </div>
+          <div class="preview-side">
+            <div id="planSummary" class="summary">Aucune cote saisie.</div>
           </div>
         </div>
-      </section>
 
-      <!-- Ouvertures -->
-      <section class="sidebar-section">
-        <h3 class="section-title">Ouvertures</h3>
-        <div id="openingsList"></div>
-        <button id="addOpeningBtn" class="btn btn-add">+ Ajouter une ouverture</button>
-      </section>
-
-      <!-- Particularités -->
-      <section class="sidebar-section">
-        <h3 class="section-title">Particularités architecturales</h3>
-        <div id="featuresList"></div>
-        <div class="btn-grid">
-          <button id="addPillarBtn" class="btn btn-add-sm">+ Poteau</button>
-          <button id="addLineBtn" class="btn btn-add-sm">+ Ligne libre</button>
-          <button id="addAlcoveBtn" class="btn btn-add-sm">+ Alcôve</button>
-          <button id="addCurveBtn" class="btn btn-add-sm">+ Mur arrondi</button>
-        </div>
-      </section>
-
-      <!-- Mobilier -->
-      <section class="sidebar-section">
-        <h3 class="section-title">Mobilier</h3>
-        <div id="furnishingsList"></div>
-        <div class="btn-grid">
-          <button id="addSofaBtn" class="btn btn-add-sm">+ Canapé</button>
-          <button id="addTvBtn" class="btn btn-add-sm">+ TV</button>
-          <button id="addBedBtn" class="btn btn-add-sm">+ Lit</button>
-          <button id="addWardrobeBtn" class="btn btn-add-sm">+ Armoire</button>
-          <button id="addFridgeBtn" class="btn btn-add-sm">+ Frigo</button>
-          <button id="addKitchenBtn" class="btn btn-add-sm">+ Cuisine</button>
-          <button id="addIslandBtn" class="btn btn-add-sm">+ Îlot</button>
-        </div>
-      </section>
-
-      <!-- Notes sur plan -->
-      <section class="sidebar-section">
-        <h3 class="section-title">Notes sur plan</h3>
-        <div class="field-group">
-          <label><span>Texte de la note</span><textarea id="planNoteInput" rows="2" placeholder="Ex : Vérifier retour de mur..."></textarea></label>
-          <p id="planNoteStatus" class="status-text">Activez le mode note puis cliquez sur le plan.</p>
-          <div class="btn-row">
-            <button id="addPlanNoteBtn" class="btn btn-secondary">Ajouter note</button>
-            <button id="updatePlanNoteBtn" class="btn btn-ghost" disabled>Modifier</button>
-            <button id="deletePlanNoteBtn" class="btn btn-ghost" disabled>Supprimer</button>
+        <section class="preview-card">
+          <div id="planContainer" class="plan-container">
+            <svg class="plan-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 900">
+              <rect x="0" y="0" width="1180" height="900" fill="#fffdf8" />
+              <text x="70" y="52" fill="#b8642d" font-size="14" font-family="Avenir Next, Segoe UI, sans-serif" letter-spacing="2">PLAN 2D INTERNE</text>
+              <text x="70" y="82" fill="#1f2a2c" font-size="28" font-family="Georgia, serif">Plan vierge</text>
+              <rect x="130" y="160" width="920" height="560" rx="30" fill="rgba(33,79,75,0.04)" stroke="rgba(33,79,75,0.12)" stroke-dasharray="8 10" />
+              <text x="590" y="410" fill="#657172" font-size="22" text-anchor="middle" font-family="Avenir Next, Segoe UI, sans-serif">Renseignez les dimensions ou importez une video</text>
+            </svg>
           </div>
-        </div>
-      </section>
+        </section>
+      </main>
+    </div>
 
-      <!-- Notes projet -->
-      <section class="sidebar-section">
-        <h3 class="section-title">Notes projet</h3>
-        <label><textarea id="projectNotes" rows="3" placeholder="Remarques générales, points à vérifier..."></textarea></label>
-      </section>
-
-      <!-- Actions -->
-      <section class="sidebar-section sidebar-actions">
-        <div class="btn-row">
-          <button id="demoBtn" class="btn btn-ghost">Charger démo</button>
-          <button id="resetBtn" class="btn btn-danger">Réinitialiser</button>
-        </div>
-        <div class="btn-row">
-          <button id="exportSvgBtn" class="btn btn-primary">Export SVG</button>
-          <button id="printBtn" class="btn btn-secondary">Imprimer / PDF</button>
-        </div>
-      </section>
-    </aside>
-
-    <!-- ── MAIN ── -->
-    <main class="preview-area">
-      <div class="preview-header">
-        <div id="planSummary" class="plan-summary"></div>
-      </div>
-      <div id="planContainer" class="plan-container"></div>
-    </main>
-  </div>
-
-  <!-- Template ouverture -->
-  <template id="openingTemplate">
-    <article class="opening-item">
-      <div class="feature-head">
-        <span class="feature-badge">Ouverture</span>
-        <button type="button" data-action="delete" class="delete-btn">Supprimer</button>
-      </div>
-      <div class="opening-grid">
-        <label><span>Type</span>
-          <select data-field="type">
-            <option value="door">Porte</option>
-            <option value="window">Fenêtre</option>
-            <option value="arch">Arche</option>
-          </select>
-        </label>
-        <label><span>Mur</span>
-          <select data-field="wall">
-            <option value="top">Haut</option>
-            <option value="right">Droite</option>
-            <option value="bottom">Bas</option>
-            <option value="left">Gauche</option>
-          </select>
-        </label>
-        <label><span>Distance début (m)</span><input data-field="offset" type="number" step="0.01" min="0" /></label>
-        <label><span>Largeur (m)</span><input data-field="width" type="number" step="0.01" min="0.1" /></label>
-        <label class="full"><span>Libellé</span><input data-field="label" type="text" placeholder="Ex : Porte d'entrée" /></label>
-      </div>
-    </article>
-  </template>
-
-  <script src="./app.js"></script>
-</body>
+    <script src="./app.js"></script>
+  </body>
 </html>
