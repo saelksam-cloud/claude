@@ -1,3 +1,39 @@
+/* ── Auth ── */
+const AUTH_KEY = "plan2d-auth";
+const VALID_CREDENTIALS = [
+  { email: "moderneisolation13@gmail.com", password: "jora2024" },
+];
+
+(function initAuth() {
+  const gate = document.getElementById("authGate");
+  const shell = document.querySelector(".app-shell");
+  const form = document.getElementById("loginForm");
+  const statusEl = document.getElementById("loginStatus");
+
+  function unlock() {
+    gate.classList.add("hidden");
+    shell.classList.add("visible");
+  }
+
+  const saved = localStorage.getItem(AUTH_KEY);
+  if (saved === "ok") { unlock(); }
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const email = document.getElementById("loginEmail").value.trim().toLowerCase();
+    const password = document.getElementById("loginPassword").value;
+    const remember = document.getElementById("rememberSession").checked;
+    const match = VALID_CREDENTIALS.find(c => c.email === email && c.password === password);
+    if (match) {
+      if (remember) localStorage.setItem(AUTH_KEY, "ok");
+      unlock();
+    } else {
+      statusEl.textContent = "Email ou mot de passe incorrect.";
+      statusEl.className = "status-note error";
+    }
+  });
+})();
+
 /* ── Constants ── */
 const STORAGE_KEY = "plan2d-v2-state";
 const OFFSET_COLOR = "#2d7a78";
@@ -87,6 +123,10 @@ const els = {
   resetBtn:                 document.getElementById("resetBtn"),
   exportSvgBtn:             document.getElementById("exportSvgBtn"),
   printBtn:                 document.getElementById("printBtn"),
+  logoutBtn:                document.getElementById("logoutBtn"),
+  videoScanMode:            document.getElementById("videoScanMode"),
+  videoRoomPreset:          document.getElementById("videoRoomPreset"),
+  videoInsights:            document.getElementById("videoInsights"),
 };
 
 /* ── Init ── */
@@ -216,11 +256,18 @@ function bindActions() {
     dragState = null;
     latestPlanGeometry = null;
     els.videoInput.value = "";
-    els.planNoteInput.value = "";
+    if (els.planNoteInput) els.planNoteInput.value = "";
     localStorage.removeItem(STORAGE_KEY);
     syncInputsFromState();
     renderAll();
   });
+
+  if (els.logoutBtn) {
+    els.logoutBtn.addEventListener("click", () => {
+      localStorage.removeItem(AUTH_KEY);
+      location.reload();
+    });
+  }
 }
 
 /* ── Sync helpers ── */
