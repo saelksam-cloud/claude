@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Plan 2D — Relevé Chantier</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+
+    <!-- ── SIDEBAR ── -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <span class="brand">Plan 2D</span>
+        <span class="brand-sub">Relevé chantier interne</span>
+      </div>
+
+      <!-- Projet -->
+      <section class="sidebar-section">
+        <h3 class="section-title">Projet</h3>
+        <div class="field-group">
+          <label><span>Client</span><input id="clientName" type="text" placeholder="Nom du client" autocomplete="off" /></label>
+          <label><span>Projet</span><input id="projectName" type="text" placeholder="Nom du projet" autocomplete="off" /></label>
+          <label><span>Adresse</span><input id="projectAddress" type="text" placeholder="Adresse du chantier" autocomplete="off" /></label>
+          <label><span>Pièce</span><input id="roomName" type="text" placeholder="Ex : Séjour" autocomplete="off" /></label>
+          <label><span>Date</span><input id="projectDate" type="date" /></label>
+        </div>
+      </section>
+
+      <!-- Relevé vidéo -->
+      <section class="sidebar-section">
+        <h3 class="section-title">Relevé vidéo</h3>
+        <div class="field-group">
+          <label class="file-label">
+            <span>Vidéo chantier</span>
+            <input id="videoInput" type="file" accept="video/*" class="file-input" />
+          </label>
+          <p id="videoStatus" class="status-text">Aucune vidéo importée.</p>
+          <div class="btn-row">
+            <button id="importVideoBtn" class="btn btn-secondary" disabled>Générer brouillon</button>
+            <button id="clearVideoBtn" class="btn btn-ghost">Effacer</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Dimensions -->
+      <section class="sidebar-section">
+        <h3 class="section-title">Dimensions de la pièce</h3>
+        <div class="field-group grid-2">
+          <label><span>Largeur (m)</span><input id="roomWidth" type="number" step="0.01" placeholder="ex : 4.50" /></label>
+          <label><span>Longueur (m)</span><input id="roomLength" type="number" step="0.01" placeholder="ex : 6.20" /></label>
+          <label><span>Hauteur plafond (m)</span><input id="ceilingHeight" type="number" step="0.01" placeholder="ex : 2.70" /></label>
+          <label><span>Épaisseur murs (cm)</span><input id="wallThickness" type="number" step="1" placeholder="ex : 12" /></label>
+        </div>
+      </section>
+
+      <!-- Calibration -->
+      <section class="sidebar-section">
+        <h3 class="section-title">Calibration</h3>
+        <div class="field-group">
+          <div class="calibration-group">
+            <p class="section-sub">Cote principale</p>
+            <div class="grid-2">
+              <label><span>Observée (m)</span><input id="calibrationObserved" type="number" step="0.001" placeholder="ex : 5.15" /></label>
+              <label><span>Réelle (m)</span><input id="calibrationActual" type="number" step="0.001" placeholder="ex : 5.40" /></label>
+            </div>
+            <label><span>Libellé</span><input id="calibrationLabel" type="text" placeholder="Ex : Largeur du séjour" /></label>
+          </div>
+          <div class="calibration-group check-group">
+            <p class="section-sub">Double vérification</p>
+            <div class="grid-2">
+              <label><span>Observée 2 (m)</span><input id="calibrationCheckObserved" type="number" step="0.001" placeholder="ex : 3.80" /></label>
+              <label><span>Réelle 2 (m)</span><input id="calibrationCheckActual" type="number" step="0.001" placeholder="ex : 3.90" /></label>
+            </div>
+          </div>
+          <p id="calibrationStatus" class="status-text">Aucune calibration appliquée.</p>
+          <div class="btn-row">
+            <button id="applyCalibrationBtn" class="btn btn-primary">Appliquer</button>
+            <button id="clearCalibrationBtn" class="btn btn-ghost">Réinitialiser</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Ouvertures -->
+      <section class="sidebar-section">
+        <h3 class="section-title">Ouvertures</h3>
+        <div id="openingsList"></div>
+        <button id="addOpeningBtn" class="btn btn-add">+ Ajouter une ouverture</button>
+      </section>
+
+      <!-- Particularités -->
+      <section class="sidebar-section">
+        <h3 class="section-title">Particularités architecturales</h3>
+        <div id="featuresList"></div>
+        <div class="btn-grid">
+          <button id="addPillarBtn" class="btn btn-add-sm">+ Poteau</button>
+          <button id="addLineBtn" class="btn btn-add-sm">+ Ligne libre</button>
+          <button id="addAlcoveBtn" class="btn btn-add-sm">+ Alcôve</button>
+          <button id="addCurveBtn" class="btn btn-add-sm">+ Mur arrondi</button>
+        </div>
+      </section>
+
+      <!-- Mobilier -->
+      <section class="sidebar-section">
+        <h3 class="section-title">Mobilier</h3>
+        <div id="furnishingsList"></div>
+        <div class="btn-grid">
+          <button id="addSofaBtn" class="btn btn-add-sm">+ Canapé</button>
+          <button id="addTvBtn" class="btn btn-add-sm">+ TV</button>
+          <button id="addBedBtn" class="btn btn-add-sm">+ Lit</button>
+          <button id="addWardrobeBtn" class="btn btn-add-sm">+ Armoire</button>
+          <button id="addFridgeBtn" class="btn btn-add-sm">+ Frigo</button>
+          <button id="addKitchenBtn" class="btn btn-add-sm">+ Cuisine</button>
+          <button id="addIslandBtn" class="btn btn-add-sm">+ Îlot</button>
+        </div>
+      </section>
+
+      <!-- Notes sur plan -->
+      <section class="sidebar-section">
+        <h3 class="section-title">Notes sur plan</h3>
+        <div class="field-group">
+          <label><span>Texte de la note</span><textarea id="planNoteInput" rows="2" placeholder="Ex : Vérifier retour de mur..."></textarea></label>
+          <p id="planNoteStatus" class="status-text">Activez le mode note puis cliquez sur le plan.</p>
+          <div class="btn-row">
+            <button id="addPlanNoteBtn" class="btn btn-secondary">Ajouter note</button>
+            <button id="updatePlanNoteBtn" class="btn btn-ghost" disabled>Modifier</button>
+            <button id="deletePlanNoteBtn" class="btn btn-ghost" disabled>Supprimer</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Notes projet -->
+      <section class="sidebar-section">
+        <h3 class="section-title">Notes projet</h3>
+        <label><textarea id="projectNotes" rows="3" placeholder="Remarques générales, points à vérifier..."></textarea></label>
+      </section>
+
+      <!-- Actions -->
+      <section class="sidebar-section sidebar-actions">
+        <div class="btn-row">
+          <button id="demoBtn" class="btn btn-ghost">Charger démo</button>
+          <button id="resetBtn" class="btn btn-danger">Réinitialiser</button>
+        </div>
+        <div class="btn-row">
+          <button id="exportSvgBtn" class="btn btn-primary">Export SVG</button>
+          <button id="printBtn" class="btn btn-secondary">Imprimer / PDF</button>
+        </div>
+      </section>
+    </aside>
+
+    <!-- ── MAIN ── -->
+    <main class="preview-area">
+      <div class="preview-header">
+        <div id="planSummary" class="plan-summary"></div>
+      </div>
+      <div id="planContainer" class="plan-container"></div>
+    </main>
+  </div>
+
+  <!-- Template ouverture -->
+  <template id="openingTemplate">
+    <article class="opening-item">
+      <div class="feature-head">
+        <span class="feature-badge">Ouverture</span>
+        <button type="button" data-action="delete" class="delete-btn">Supprimer</button>
+      </div>
+      <div class="opening-grid">
+        <label><span>Type</span>
+          <select data-field="type">
+            <option value="door">Porte</option>
+            <option value="window">Fenêtre</option>
+            <option value="arch">Arche</option>
+          </select>
+        </label>
+        <label><span>Mur</span>
+          <select data-field="wall">
+            <option value="top">Haut</option>
+            <option value="right">Droite</option>
+            <option value="bottom">Bas</option>
+            <option value="left">Gauche</option>
+          </select>
+        </label>
+        <label><span>Distance début (m)</span><input data-field="offset" type="number" step="0.01" min="0" /></label>
+        <label><span>Largeur (m)</span><input data-field="width" type="number" step="0.01" min="0.1" /></label>
+        <label class="full"><span>Libellé</span><input data-field="label" type="text" placeholder="Ex : Porte d'entrée" /></label>
+      </div>
+    </article>
+  </template>
+
+  <script src="./app.js"></script>
+</body>
+</html>
