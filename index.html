@@ -1358,9 +1358,9 @@
           <div class="form-grid">
             <div class="field">
               <label for="team-name">Prénom</label>
-              <input id="team-name" type="text" autocomplete="given-name" placeholder="Ex : Maya">
+              <input id="team-name" type="text" autocomplete="given-name" placeholder="Ex : Maya" oninput="onNameInput()">
             </div>
-            <div class="field">
+            <div class="field" id="pin-field">
               <label for="team-pin">Code à 4 chiffres</label>
               <input id="team-pin" type="password" inputmode="numeric" maxlength="4" placeholder="••••">
             </div>
@@ -1561,6 +1561,9 @@
       backendApiPassword: "aquaponey2026"
     };
 
+    // Extras : connexion sans code, vies illimitées
+    const EXTRA_EMPLOYEES = ["Elisa", "Ezen", "Sasha", "Seb", "Jeanne"];
+
     const LOCAL_EMPLOYEES = {
       "Maya": "9009",
       "Test": "0000",
@@ -1617,6 +1620,12 @@
     document.getElementById("team-pin").addEventListener("keydown", onLoginKeydown);
     document.getElementById("admin-pass").addEventListener("keydown", onAdminKeydown);
 
+    function onNameInput() {
+      const firstName = document.getElementById("team-name").value.trim();
+      const isExtra = EXTRA_EMPLOYEES.some(e => e.toLowerCase() === firstName.toLowerCase());
+      document.getElementById("pin-field").style.display = isExtra ? "none" : "";
+    }
+
     function init() {
       const today = new Date();
       APP.employee.viewYear = today.getFullYear();
@@ -1672,14 +1681,15 @@
       const firstName = document.getElementById("team-name").value.trim();
       const pin = document.getElementById("team-pin").value.trim();
 
-      if (!firstName || !pin) {
+      const isExtra = EXTRA_EMPLOYEES.some(e => e.toLowerCase() === firstName.toLowerCase());
+      if (!firstName || (!isExtra && !pin)) {
         toast("Entrez votre prenom et votre code a 4 chiffres.");
         return;
       }
 
       withButtonLoading("team-login-btn", true, "Connexion...");
       try {
-        const response = await api("loginEmployee", { firstName, pin });
+        const response = await api("loginEmployee", { firstName, pin: isExtra ? "EXTRA" : pin });
         APP.employee.token = response.token;
         APP.employee.name = response.employee.firstName;
         localStorage.setItem(STORAGE_KEYS.employeeToken, response.token);
@@ -1781,15 +1791,27 @@
     function renderLifeBoard() {
       const year = APP.employee.viewYear;
       const month = APP.employee.viewMonth + 1;
+      const isExtra = EXTRA_EMPLOYEES.some(e => e.toLowerCase() === (APP.employee.name || "").toLowerCase());
+      const board = document.getElementById("life-board");
+      const icons = document.getElementById("life-icons");
+      icons.innerHTML = "";
+
+      if (isExtra) {
+        board.className = "life-board";
+        document.getElementById("life-label").textContent = "Vies illimitées ∞";
+        const icon = document.createElement("span");
+        icon.textContent = "🐴";
+        icons.appendChild(icon);
+        document.getElementById("life-copy").textContent = "Vous etes en extra : pas de limite de demandes ce mois-ci.";
+        return;
+      }
+
       const used = countRequestsInMonth(APP.employee.requests, APP.employee.name, year, month);
       const left = Math.max(0, 3 - used);
-      const board = document.getElementById("life-board");
       board.className = "life-board" + (left === 0 ? " empty" : left === 1 ? " warn" : "");
 
       document.getElementById("life-label").textContent = left + " sur 3 disponibles";
 
-      const icons = document.getElementById("life-icons");
-      icons.innerHTML = "";
       for (let i = 0; i < 3; i += 1) {
         const icon = document.createElement("span");
         icon.textContent = "🐴";
@@ -2199,9 +2221,12 @@
         return { ok: false, message: "La demande doit etre faite au minimum 10 jours a l'avance." };
       }
 
-      const used = countRequestsInMonth(requests, employeeName, date.getFullYear(), date.getMonth() + 1);
-      if (used >= 3) {
-        return { ok: false, message: "Quota atteint : 3 demandes maximum sur ce mois." };
+      const isExtra = EXTRA_EMPLOYEES.some(e => e.toLowerCase() === (employeeName || "").toLowerCase());
+      if (!isExtra) {
+        const used = countRequestsInMonth(requests, employeeName, date.getFullYear(), date.getMonth() + 1);
+        if (used >= 3) {
+          return { ok: false, message: "Quota atteint : 3 demandes maximum sur ce mois." };
+        }
       }
 
       return { ok: true };
@@ -2453,6 +2478,15 @@
     function localLoginEmployee(payload) {
       const firstName = String(payload.firstName || "").trim();
       const pin = String(payload.pin || "").trim();
+      const isExtra = EXTRA_EMPLOYEES.some(e => e.toLowerCase() === firstName.toLowerCase());
+      if (isExtra) {
+        const canonical = EXTRA_EMPLOYEES.find(e => e.toLowerCase() === firstName.toLowerCase());
+        return {
+          ok: true,
+          token: "local-employee:" + encodeURIComponent(canonical),
+          employee: { firstName: canonical }
+        };
+      }
       if (!LOCAL_EMPLOYEES[firstName] || LOCAL_EMPLOYEES[firstName] !== pin) {
         throw new Error("Prenom ou code incorrect.");
       }
