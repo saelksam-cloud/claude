@@ -1783,9 +1783,123 @@
     }
 
     function renderEmployeeApp() {
-      renderLifeBoard();
-      renderEmployeeCalendar();
-      renderEmployeeRequests();
+      const isExtra = EXTRA_EMPLOYEES.some(e => e.toLowerCase() === (APP.employee.name || "").toLowerCase());
+      if (isExtra) {
+        renderExtraApp();
+      } else {
+        renderLifeBoard();
+        renderEmployeeCalendar();
+        renderEmployeeRequests();
+      }
+    }
+
+    function renderExtraApp() {
+      // Masque les blocs standard, affiche uniquement le calendrier extra
+      document.querySelector(".employee-grid").innerHTML = `
+        <div class="grid">
+          <div class="card">
+            <div class="calendar-head">
+              <h3 id="extra-calendar-title"></h3>
+              <div class="calendar-controls">
+                <button class="icon-btn" onclick="changeExtraMonth(-1)">‹</button>
+                <button class="icon-btn" onclick="changeExtraMonth(1)">›</button>
+              </div>
+            </div>
+            <p class="subtle" style="margin:0 0 12px">Appuyez sur un jour pour le marquer <strong>indisponible</strong>. Appuyez à nouveau pour annuler.</p>
+            <div class="calendar">
+              <div class="calendar-weekdays">
+                <div>Lun</div><div>Mar</div><div>Mer</div><div>Jeu</div><div>Ven</div><div>Sam</div><div>Dim</div>
+              </div>
+              <div class="calendar-grid" id="extra-calendar-grid"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="section-head">
+              <div class="title">Mes indisponibilités</div>
+              <div class="badge team" id="extra-count">0</div>
+            </div>
+            <div class="request-list" id="extra-list"></div>
+          </div>
+        </div>`;
+      renderExtraCalendar();
+    }
+
+    function renderExtraCalendar() {
+      const title = document.getElementById("extra-calendar-title");
+      if (title) title.textContent = APP.monthsLabel[APP.employee.viewMonth] + " " + APP.employee.viewYear;
+      const grid = document.getElementById("extra-calendar-grid");
+      if (!grid) return;
+      grid.innerHTML = "";
+
+      buildCalendar(grid, APP.employee.viewYear, APP.employee.viewMonth, (cellDate, key, cell) => {
+        const isUnavailable = APP.employee.requests.some(r => r.dateKey === key);
+        if (isUnavailable) {
+          cell.classList.add("has-mine");
+          const tag = document.createElement("div");
+          tag.className = "day-tag pending";
+          tag.textContent = "Indispo";
+          cell.appendChild(tag);
+        }
+        if (!cell.classList.contains("blank")) {
+          cell.classList.add("clickable");
+          cell.addEventListener("click", () => toggleExtraDay(cellDate, key, isUnavailable));
+        }
+      });
+
+      // Liste des indisponibilités
+      const list = document.getElementById("extra-list");
+      const count = document.getElementById("extra-count");
+      const sorted = [...APP.employee.requests].sort(sortByDateThenCreated);
+      if (count) count.textContent = sorted.length + (sorted.length > 1 ? " jours" : " jour");
+      if (!list) return;
+      if (!sorted.length) {
+        list.innerHTML = '<div class="empty-state">Aucune indisponibilité. Tapez sur un jour pour en ajouter une.</div>';
+        return;
+      }
+      list.innerHTML = "";
+      sorted.forEach(r => {
+        const item = buildRequestCard(r, false);
+        const actions = item.querySelector(".request-actions");
+        if (actions && r.status === "pending") {
+          const btn = document.createElement("button");
+          btn.className = "btn btn-danger";
+          btn.textContent = "Annuler";
+          btn.onclick = () => deleteEmployeeRequest(r.id);
+          actions.appendChild(btn);
+        }
+        list.appendChild(item);
+      });
+    }
+
+    async function toggleExtraDay(cellDate, key, isUnavailable) {
+      if (isUnavailable) {
+        const existing = APP.employee.requests.find(r => r.dateKey === key);
+        if (existing) await deleteEmployeeRequest(existing.id);
+        return;
+      }
+      const minDate = addDays(startOfDay(new Date()), 1);
+      if (cellDate < minDate) { toast("Impossible de marquer un jour passé."); return; }
+      try {
+        await api("createRequest", {
+          token: APP.employee.token,
+          dateKey: key,
+          slotBase: "Indisponible",
+          customSlot: "",
+          reason: ""
+        });
+        const res = await api("getMyRequests", { token: APP.employee.token });
+        APP.employee.requests = normalizeRequests(res.requests || []);
+        renderExtraCalendar();
+      } catch (err) {
+        toast(err.message || "Erreur.");
+      }
+    }
+
+    function changeExtraMonth(dir) {
+      APP.employee.viewMonth += dir;
+      if (APP.employee.viewMonth < 0) { APP.employee.viewMonth = 11; APP.employee.viewYear--; }
+      if (APP.employee.viewMonth > 11) { APP.employee.viewMonth = 0; APP.employee.viewYear++; }
+      renderExtraCalendar();
     }
 
     function renderLifeBoard() {
@@ -2216,12 +2330,13 @@
 
     function validateLocalRequest(requests, employeeName, dateKey) {
       const date = parseDateKey(dateKey);
-      const minDate = addDays(startOfDay(new Date()), 10);
+      const isExtra = EXTRA_EMPLOYEES.some(e => e.toLowerCase() === (employeeName || "").toLowerCase());
+      const minDate = addDays(startOfDay(new Date()), isExtra ? 1 : 10);
       if (date < minDate) {
-        return { ok: false, message: "La demande doit etre faite au minimum 10 jours a l'avance." };
+        return { ok: false, message: isExtra ? "Impossible de marquer un jour passe." : "La demande doit etre faite au minimum 10 jours a l'avance." };
       }
 
-      const isExtra = EXTRA_EMPLOYEES.some(e => e.toLowerCase() === (employeeName || "").toLowerCase());
+
       if (!isExtra) {
         const used = countRequestsInMonth(requests, employeeName, date.getFullYear(), date.getMonth() + 1);
         if (used >= 3) {
