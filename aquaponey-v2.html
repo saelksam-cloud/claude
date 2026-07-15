@@ -2605,7 +2605,8 @@
         throw new Error("Session employee invalide.");
       }
       const employee = decodeURIComponent(raw.slice("local-employee:".length));
-      if (!LOCAL_EMPLOYEES[employee]) {
+      const isExtra = EXTRA_EMPLOYEES.some(e => e.toLowerCase() === employee.toLowerCase());
+      if (!LOCAL_EMPLOYEES[employee] && !isExtra) {
         throw new Error("Session employee invalide.");
       }
       return employee;
