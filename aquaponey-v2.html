@@ -1562,7 +1562,7 @@
     };
 
     // Extras : connexion sans code, vies illimitées
-    const EXTRA_EMPLOYEES = ["Elisa", "Ezen", "Seb", "Jeanne", "Bastien", "Marie", "Paul"];
+    const EXTRA_EMPLOYEES = ["Elisa", "Ezen", "Seb", "Jeanne", "Bastien", "Marie", "Paul", "Phoebe"];
 
     const LOCAL_EMPLOYEES = {
       "Maya": "9009",
@@ -1874,25 +1874,44 @@
     async function toggleExtraDay(cellDate, key, isUnavailable) {
       if (isUnavailable) {
         const existing = APP.employee.requests.find(r => r.dateKey === key);
-        if (existing) await deleteEmployeeRequest(existing.id);
+        if (!existing) return;
+        // Optimiste : retire immédiatement
+        APP.employee.requests = APP.employee.requests.filter(r => r.id !== existing.id);
+        renderExtraCalendar();
+        api("deleteMyRequest", { token: APP.employee.token, requestId: existing.id }).catch(err => {
+          // Revert si erreur
+          APP.employee.requests.push(existing);
+          renderExtraCalendar();
+          toast(err.message || "Erreur lors de la suppression.");
+        });
         return;
       }
       const minDate = addDays(startOfDay(new Date()), 1);
       if (cellDate < minDate) { toast("Impossible de marquer un jour passé."); return; }
-      try {
-        await api("createRequest", {
-          token: APP.employee.token,
-          dateKey: key,
-          slotBase: "Indisponible",
-          customSlot: "",
-          reason: ""
-        });
-        const res = await api("getMyRequests", { token: APP.employee.token });
-        APP.employee.requests = normalizeRequests(res.requests || []);
+      // Optimiste : ajoute immédiatement un placeholder
+      const tempId = "temp-" + key;
+      const tempReq = {
+        id: tempId, employee: APP.employee.name, dateKey: key,
+        dateLabel: key, slotBase: "Indisponible", slotLabel: "Indisponible",
+        reason: "", status: "pending", timestamp: new Date().toISOString()
+      };
+      APP.employee.requests.push(tempReq);
+      renderExtraCalendar();
+      api("createRequest", {
+        token: APP.employee.token, dateKey: key,
+        slotBase: "Indisponible", customSlot: "", reason: ""
+      }).then(res => {
+        // Remplace le placeholder par le vrai ID
+        const real = res && res.request ? res.request : null;
+        APP.employee.requests = APP.employee.requests.filter(r => r.id !== tempId);
+        if (real) APP.employee.requests.push(normalizeRequests([real])[0]);
         renderExtraCalendar();
-      } catch (err) {
+      }).catch(err => {
+        // Revert si erreur
+        APP.employee.requests = APP.employee.requests.filter(r => r.id !== tempId);
+        renderExtraCalendar();
         toast(err.message || "Erreur.");
-      }
+      });
     }
 
     function changeExtraMonth(dir) {
