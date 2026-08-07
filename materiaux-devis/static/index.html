@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<title>Materiaux depuis devis - prototype</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f7f7f5;
+    --card: #ffffff;
+    --text: #1c1c1a;
+    --muted: #6b6b66;
+    --border: #e3e2dd;
+    --accent: #b5651d;
+    --accent-contrast: #ffffff;
+    --warn-bg: #fff4e5;
+    --warn-border: #f0c987;
+    --ok-bg: #eef7ee;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #171715;
+      --card: #232320;
+      --text: #ece9e2;
+      --muted: #a3a099;
+      --border: #38372f;
+      --accent: #d78a4a;
+      --accent-contrast: #171715;
+      --warn-bg: #3a2d16;
+      --warn-border: #6b4d1f;
+      --ok-bg: #1c2c1c;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    padding: 2rem 1rem 4rem;
+  }
+  main { max-width: 880px; margin: 0 auto; }
+  h1 { font-size: 1.4rem; margin-bottom: 0.25rem; }
+  p.lead { color: var(--muted); margin-top: 0; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  label { font-weight: 600; display: block; margin-bottom: 0.5rem; }
+  input[type=file] { display: block; margin-bottom: 1rem; }
+  button {
+    background: var(--accent);
+    color: var(--accent-contrast);
+    border: none;
+    border-radius: 8px;
+    padding: 0.6rem 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button.secondary {
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+  }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+  th, td { text-align: left; padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 600; }
+  tr.to-order { background: var(--warn-bg); }
+  .badge {
+    display: inline-block;
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+  }
+  .badge.ok { background: var(--ok-bg); }
+  .badge.warn { background: var(--warn-border); color: #3a2d16; }
+  #status { color: var(--muted); font-size: 0.9rem; margin-top: 0.5rem; }
+  .error { color: #b3261e; }
+  .unmatched { border-color: var(--warn-border); }
+  .row-actions { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Materiaux necessaires depuis un devis</h1>
+  <p class="lead">Prototype : upload un CSV de devis (product_ref, description, quantity), le moteur explose les nomenclatures Odoo et calcule ce qu'il faut sortir du stock / commander.</p>
+
+  <div class="card">
+    <label for="devis-file">Fichier devis (CSV)</label>
+    <input type="file" id="devis-file" accept=".csv" />
+    <div class="row-actions">
+      <button id="run-btn">Calculer les materiaux</button>
+      <button class="secondary" id="sample-btn" type="button">Utiliser le devis d'exemple</button>
+    </div>
+    <div id="status"></div>
+  </div>
+
+  <div class="card" id="unmatched-card" style="display:none;">
+    <strong>Lignes du devis non reconnues dans le catalogue</strong>
+    <p class="lead">Ces references n'existent pas dans data/produits.csv. Elles necessitent une revue manuelle ou un matching assiste.</p>
+    <table id="unmatched-table">
+      <thead><tr><th>Reference</th><th>Description</th><th>Quantite</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="card" id="results-card" style="display:none;">
+    <strong>Liste des materiaux necessaires</strong>
+    <table id="results-table">
+      <thead>
+        <tr>
+          <th>Reference</th>
+          <th>Designation</th>
+          <th>Unite</th>
+          <th>Besoin total</th>
+          <th>Stock dispo</th>
+          <th>A commander</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</main>
+
+<script>
+const fileInput = document.getElementById('devis-file');
+const runBtn = document.getElementById('run-btn');
+const sampleBtn = document.getElementById('sample-btn');
+const statusEl = document.getElementById('status');
+const resultsCard = document.getElementById('results-card');
+const resultsBody = document.querySelector('#results-table tbody');
+const unmatchedCard = document.getElementById('unmatched-card');
+const unmatchedBody = document.querySelector('#unmatched-table tbody');
+
+let sampleFile = null;
+
+sampleBtn.addEventListener('click', async () => {
+  statusEl.textContent = 'Chargement du devis d\'exemple...';
+  const res = await fetch('/api/sample-devis');
+  const blob = await res.blob();
+  sampleFile = new File([blob], 'devis_exemple.csv', { type: 'text/csv' });
+  statusEl.textContent = 'Devis d\'exemple charge. Clique sur "Calculer les materiaux".';
+});
+
+runBtn.addEventListener('click', async () => {
+  const file = fileInput.files[0] || sampleFile;
+  if (!file) {
+    statusEl.innerHTML = '<span class="error">Choisis un fichier CSV ou utilise le devis d\'exemple.</span>';
+    return;
+  }
+  runBtn.disabled = true;
+  statusEl.textContent = 'Calcul en cours...';
+  resultsCard.style.display = 'none';
+  unmatchedCard.style.display = 'none';
+
+  const form = new FormData();
+  form.append('devis_file', file);
+
+  try {
+    const res = await fetch('/api/explode', { method: 'POST', body: form });
+    const data = await res.json();
+    if (!res.ok) {
+      statusEl.innerHTML = `<span class="error">${data.detail || 'Erreur inconnue'}</span>`;
+      return;
+    }
+    renderResults(data);
+    statusEl.textContent = `${data.devis_lines_count} ligne(s) de devis traitee(s).`;
+  } catch (e) {
+    statusEl.innerHTML = `<span class="error">Erreur reseau : ${e}</span>`;
+  } finally {
+    runBtn.disabled = false;
+  }
+});
+
+function renderResults(data) {
+  resultsBody.innerHTML = '';
+  for (const m of data.materials) {
+    const tr = document.createElement('tr');
+    if (m.qty_to_order > 0) tr.classList.add('to-order');
+    tr.innerHTML = `
+      <td>${m.ref}</td>
+      <td>${m.name}</td>
+      <td>${m.uom}</td>
+      <td>${m.qty_needed}</td>
+      <td>${m.qty_available}</td>
+      <td>${m.qty_to_order > 0
+          ? `<span class="badge warn">${m.qty_to_order}</span>`
+          : `<span class="badge ok">0</span>`}</td>
+    `;
+    resultsBody.appendChild(tr);
+  }
+  resultsCard.style.display = data.materials.length ? 'block' : 'none';
+
+  unmatchedBody.innerHTML = '';
+  for (const u of data.unmatched) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${u.product_ref}</td><td>${u.description}</td><td>${u.quantity}</td>`;
+    unmatchedBody.appendChild(tr);
+  }
+  unmatchedCard.style.display = data.unmatched.length ? 'block' : 'none';
+}
+</script>
+</body>
+</html>

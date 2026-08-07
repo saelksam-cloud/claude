@@ -1,0 +1,13 @@
+bom_product_ref,component_ref,qty_per_unit,uom
+CLO-BA13,PLQ-BA13,0.7,unite
+CLO-BA13,RAIL-48,0.3,unite
+CLO-BA13,MONT-48,0.6,unite
+CLO-BA13,VIS-TP25,0.02,boite
+CLO-BA13,JOINT-BANDE,0.01,rouleau
+CLO-BA13,ENDUIT-JOINT,0.05,sac
+CLO-BA13,KIT-FIX,0.3,kit
+CLO-BA13,ENS-VISSERIE,0.1,ens
+KIT-FIX,CHEVILLE-8,0.1,boite
+KIT-FIX,VIS-6,0.1,boite
+ENS-VISSERIE,VIS-3,1,boite
+ENS-VISSERIE,RONDELLE-8,1,boite

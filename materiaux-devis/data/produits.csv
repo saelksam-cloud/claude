@@ -1,0 +1,14 @@
+default_code,name,uom,qty_available,stop_explosion
+CLO-BA13,Cloison placo BA13 (au m2),m2,0,0
+PLQ-BA13,Plaque BA13 2.5x1.2m,unite,120,0
+RAIL-48,Rail 48mm (barre 3m),unite,60,0
+MONT-48,Montant 48mm (barre 2.6m),unite,80,0
+VIS-TP25,Vis TP 25mm (boite de 1000),boite,15,0
+JOINT-BANDE,Bande a joint (rouleau 75m),rouleau,10,0
+ENDUIT-JOINT,Enduit joint (sac 25kg),sac,8,0
+KIT-FIX,Kit de fixation standard (assemble et stocke tel quel),kit,40,1
+CHEVILLE-8,Cheville 8mm (boite de 100),boite,20,0
+VIS-6,Vis 6x60 (boite de 200),boite,25,0
+ENS-VISSERIE,Ensemble visserie (regroupement non stocke),ens,0,0
+VIS-3,Vis 3.5x30 (boite de 500),boite,30,0
+RONDELLE-8,Rondelle 8mm (boite de 200),boite,12,0
