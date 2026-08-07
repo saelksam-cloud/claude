@@ -1556,9 +1556,9 @@
 
   <script>
     const CONFIG = {
-      scriptUrl: "https://script.google.com/macros/s/AKfycbyU29XMWe14WX4URXr0wcn3y3N5AhPLkEzXWI-iH8wbJrPILLKBfNi8HaM40Dsf1sF3-A/exec",
+      scriptUrl: "https://script.google.com/macros/s/AKfycbxT48wXV7iTrS14n8Qjmd9R2wkZLVO3xHh4bxnrZZaJ7-NBYX95PfRf6UQKDMukWxAJog/exec",
       backendMode: "legacy",
-      backendApiPassword: "aquaponey2026"
+      backendApiPassword: "244342"
     };
 
     // Extras : connexion sans code, vies illimitées
@@ -2426,6 +2426,7 @@
 
       const response = await fetch(CONFIG.scriptUrl, {
         method: "POST",
+        redirect: "follow",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({ action, payload })
       });
@@ -2478,7 +2479,7 @@
 
     async function legacyGetMyRequests(payload) {
       const employee = localRequireEmployee(payload.token);
-      const response = await fetch(CONFIG.scriptUrl + "?action=get&employee=" + encodeURIComponent(employee));
+      const response = await fetch(CONFIG.scriptUrl + "?action=get&employee=" + encodeURIComponent(employee), { redirect: "follow" });
       const data = await response.json();
       return { ok: true, requests: data.rows || [] };
     }
@@ -2504,6 +2505,7 @@
 
       const response = await fetch(CONFIG.scriptUrl, {
         method: "POST",
+        redirect: "follow",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({ action: "add", row })
       });
@@ -2520,7 +2522,8 @@
     async function legacyGetAllRequests(payload) {
       localRequireAdmin(payload.token);
       const response = await fetch(
-        CONFIG.scriptUrl + "?action=getAll&pass=" + encodeURIComponent(CONFIG.backendApiPassword)
+        CONFIG.scriptUrl + "?action=getAll&pass=" + encodeURIComponent(CONFIG.backendApiPassword),
+        { redirect: "follow" }
       );
       const data = await response.json();
       return {
@@ -2534,6 +2537,7 @@
       localRequireAdmin(payload.token);
       const response = await fetch(CONFIG.scriptUrl, {
         method: "POST",
+        redirect: "follow",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({
           action: "status",
@@ -2565,6 +2569,7 @@
       }
       const response = await fetch(CONFIG.scriptUrl, {
         method: "POST",
+        redirect: "follow",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({
           action: "delete",
