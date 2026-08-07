@@ -105,6 +105,22 @@ different par variante.
   plutot que silencieusement ignoree — a verifier manuellement.
 - **Detection de nomenclature circulaire** (garde-fou, leve une erreur explicite).
 
+## Tester l'acces API Odoo (avant de brancher quoi que ce soit)
+
+`odoo_api_test.py` verifie, en lecture seule, que l'API externe XML-RPC de
+ton instance Odoo Online est accessible avec une cle API — fonctionnalite
+du coeur d'Odoo, disponible que tu sois en Odoo Online (`*.odoo.com`) ou
+Odoo.sh, sans lien avec le plan tarifaire. A lancer en local (ne jamais
+mettre tes identifiants dans un chat) :
+
+```bash
+export ODOO_URL="https://tonentreprise.odoo.com"
+export ODOO_DB="tonentreprise"
+export ODOO_USERNAME="toi@exemple.com"
+export ODOO_API_KEY="..."   # genere dans Odoo : avatar > Mon profil > Securite du compte
+python odoo_api_test.py
+```
+
 ## Prochaines etapes possibles
 
 1. **Brancher l'API Odoo** (XML-RPC) a la place des CSV statiques, pour lire
