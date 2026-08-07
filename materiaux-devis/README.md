@@ -21,12 +21,21 @@ materiaux-devis/
   bom_engine.py          moteur d'explosion de nomenclature (stdlib uniquement)
   test_bom_engine.py      tests (pytest)
   api.py                  API FastAPI (upload devis -> liste materiaux)
-  static/index.html       petite interface web
+  static/index.html       petite interface web (branchee sur l'API FastAPI)
+  static/autonome.html    meme interface, 100% autonome (moteur reecrit en JS,
+                           aucun serveur requis) : a ouvrir directement dans un
+                           navigateur pour un apercu ou une demo rapide
   data/
     produits.csv          export catalogue produits (a remplacer par le tien)
     nomenclatures.csv     export nomenclatures/BOM (a remplacer par le tien)
     devis_exemple.csv     exemple de devis pour tester sans fichier a soi
 ```
+
+`static/autonome.html` duplique volontairement la logique de `bom_engine.py`
+en JavaScript (memes regles : explosion recursive, sous-ensembles stockes vs
+regroupements, agregation, comparaison au stock). Pratique pour montrer le
+principe sans rien installer ; le moteur Python reste la version de reference
+a faire evoluer en priorite.
 
 ## Lancer le prototype
 
