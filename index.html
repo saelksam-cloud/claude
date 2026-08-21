@@ -1780,6 +1780,427 @@
         width: 100%;
       }
     }
+
+    /* ═══════════════════════════════════════════
+       CASH PRIZE — COUNTDOWN GATE
+    ═══════════════════════════════════════════ */
+    .countdown-gate {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: #0a0a0a;
+      background-image:
+        radial-gradient(ellipse 60% 50% at 50% 0%, rgba(184,146,74,0.18) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 40% at 80% 80%, rgba(184,146,74,0.08) 0%, transparent 60%);
+    }
+    .cg-inner {
+      text-align: center;
+      color: #fff;
+      padding: 48px 24px;
+      display: grid;
+      gap: 20px;
+      place-items: center;
+    }
+    .cg-eyebrow {
+      font-size: 0.75rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: #b8924a;
+      font-weight: 600;
+    }
+    .cg-logo {
+      font-size: 4.5rem;
+      animation: cgFloat 3s ease-in-out infinite;
+      filter: drop-shadow(0 0 32px rgba(184,146,74,0.55));
+    }
+    @keyframes cgFloat {
+      0%,100%{transform:translateY(0) scale(1);}
+      50%{transform:translateY(-12px) scale(1.04);}
+    }
+    .cg-title {
+      margin: 0;
+      font-size: clamp(3rem, 10vw, 6rem);
+      font-weight: 800;
+      letter-spacing: -0.06em;
+      background: linear-gradient(135deg, #f0d080, #b8924a 40%, #fff8e8 70%, #b8924a);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .cg-sub {
+      margin: 0;
+      color: rgba(255,255,255,0.55);
+      font-size: 1rem;
+    }
+    .cg-clock {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .cg-unit {
+      display: grid;
+      place-items: center;
+      gap: 6px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(184,146,74,0.3);
+      border-radius: 16px;
+      padding: 18px 22px;
+      min-width: 90px;
+    }
+    .cg-unit span {
+      font-size: 2.8rem;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      background: linear-gradient(135deg, #f0d080, #b8924a);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+    }
+    .cg-unit small {
+      font-size: 0.68rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.4);
+    }
+    .cg-sep {
+      font-size: 2rem;
+      color: rgba(184,146,74,0.5);
+      font-weight: 800;
+      margin-bottom: 16px;
+    }
+    .cg-hint {
+      margin: 0;
+      color: rgba(255,255,255,0.35);
+      font-size: 0.9rem;
+    }
+    .cg-btn {
+      border: 1px solid rgba(184,146,74,0.6);
+      border-radius: 999px;
+      padding: 16px 42px;
+      background: linear-gradient(135deg, rgba(184,146,74,0.2), rgba(184,146,74,0.05));
+      color: #f0d080;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 200ms ease;
+      animation: cgPulse 2s ease-in-out infinite;
+    }
+    .cg-btn:hover {
+      background: linear-gradient(135deg, rgba(184,146,74,0.4), rgba(184,146,74,0.15));
+      transform: translateY(-2px);
+      box-shadow: 0 12px 36px rgba(184,146,74,0.25);
+    }
+    @keyframes cgPulse {
+      0%,100%{box-shadow:0 0 0 0 rgba(184,146,74,0.3);}
+      50%{box-shadow:0 0 0 10px rgba(184,146,74,0);}
+    }
+
+    /* ═══════════════════════════════════════════
+       CASH PRIZE — MAIN PAGE
+    ═══════════════════════════════════════════ */
+    #page-cash-prize {
+      background: #0c0c0c;
+      background-image:
+        radial-gradient(ellipse 70% 40% at 50% 0%, rgba(184,146,74,0.14) 0%, transparent 65%),
+        radial-gradient(ellipse 35% 50% at 90% 60%, rgba(184,146,74,0.07) 0%, transparent 60%);
+      color: #f0ece4;
+      min-height: 100vh;
+    }
+    .cp-shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 0 20px 80px;
+    }
+    .cp-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 24px 0 16px;
+    }
+    .cp-back {
+      background: none;
+      border: 1px solid rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.5);
+      border-radius: 999px;
+      padding: 10px 18px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 150ms;
+    }
+    .cp-back:hover { color: #fff; border-color: rgba(255,255,255,0.25); }
+    .cp-brand {
+      font-size: 0.72rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: #b8924a;
+      font-weight: 600;
+    }
+
+    /* HERO */
+    .cp-hero {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 48px;
+      align-items: center;
+      padding: 48px 0 64px;
+    }
+    .cp-pill {
+      display: inline-block;
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #b8924a;
+      border: 1px solid rgba(184,146,74,0.35);
+      border-radius: 999px;
+      padding: 7px 16px;
+      margin-bottom: 20px;
+    }
+    .cp-h1 {
+      margin: 0 0 18px;
+      font-size: clamp(3.5rem, 8vw, 6.5rem);
+      font-weight: 800;
+      letter-spacing: -0.06em;
+      line-height: 0.92;
+      background: linear-gradient(135deg, #f0ece4 30%, #b8924a 70%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .cp-desc {
+      margin: 0 0 28px;
+      color: rgba(240,236,228,0.65);
+      font-size: 1.05rem;
+      line-height: 1.75;
+      max-width: 56ch;
+    }
+    .cp-desc em { color: #f0d080; font-style: normal; }
+    .cp-keywords {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .cp-keywords span {
+      border: 1px solid rgba(184,146,74,0.3);
+      border-radius: 999px;
+      padding: 7px 16px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: rgba(240,236,228,0.55);
+      letter-spacing: 0.04em;
+      animation: kwFadeIn 0.5s ease both;
+    }
+    @keyframes kwFadeIn {
+      from{opacity:0;transform:translateY(8px);}
+      to{opacity:1;transform:none;}
+    }
+    .cp-keywords span:nth-child(1){animation-delay:0.05s}
+    .cp-keywords span:nth-child(2){animation-delay:0.1s}
+    .cp-keywords span:nth-child(3){animation-delay:0.15s}
+    .cp-keywords span:nth-child(4){animation-delay:0.2s}
+    .cp-keywords span:nth-child(5){animation-delay:0.25s}
+    .cp-keywords span:nth-child(6){animation-delay:0.3s}
+    .cp-keywords span:nth-child(7){animation-delay:0.35s}
+    .cp-keywords span:nth-child(8){animation-delay:0.4s}
+    .cp-trophy-wrap {
+      position: relative;
+      width: 160px;
+      height: 160px;
+      display: grid;
+      place-items: center;
+    }
+    .cp-trophy-glow {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(184,146,74,0.35) 0%, transparent 70%);
+      animation: glowPulse 2.5s ease-in-out infinite;
+    }
+    @keyframes glowPulse {
+      0%,100%{transform:scale(1);opacity:0.7;}
+      50%{transform:scale(1.18);opacity:1;}
+    }
+    .cp-trophy {
+      font-size: 5.5rem;
+      position: relative;
+      z-index: 1;
+      animation: cgFloat 3s ease-in-out infinite;
+      filter: drop-shadow(0 8px 32px rgba(184,146,74,0.6));
+    }
+
+    /* SECTION LABEL */
+    .cp-section-label {
+      text-align: center;
+      font-size: 0.72rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: #b8924a;
+      margin: 0 0 32px;
+    }
+
+    /* FLIP CARDS */
+    .cp-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 18px;
+      margin-bottom: 72px;
+      perspective: 1000px;
+    }
+    .cp-flip-card {
+      height: 240px;
+      cursor: pointer;
+      perspective: 1000px;
+    }
+    .cp-flip-inner {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.65s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .cp-flip-card.flipped .cp-flip-inner {
+      transform: rotateY(180deg);
+    }
+    .cp-flip-front, .cp-flip-back {
+      position: absolute;
+      inset: 0;
+      border-radius: 20px;
+      backface-visibility: hidden;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 24px;
+    }
+    .cp-flip-front {
+      background: linear-gradient(145deg, #1a1a1a, #111);
+      border: 1px solid rgba(184,146,74,0.25);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .cp-flip-front span {
+      font-size: 3.5rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #f0d080, #b8924a);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .cp-flip-front small {
+      font-size: 0.68rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.25);
+    }
+    .cp-flip-back {
+      background: linear-gradient(145deg, #1c160a, #18120a);
+      border: 1px solid rgba(184,146,74,0.45);
+      transform: rotateY(180deg);
+      flex-direction: column;
+      gap: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .cp-flip-back strong {
+      font-size: 1.45rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, #f0d080, #b8924a);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .cp-flip-back p {
+      margin: 0;
+      font-size: 0.85rem;
+      line-height: 1.6;
+      color: rgba(240,236,228,0.65);
+    }
+
+    /* PRIZES */
+    .cp-prizes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 18px;
+      margin-bottom: 48px;
+    }
+    .cp-prize {
+      border-radius: 22px;
+      border: 1px solid rgba(184,146,74,0.2);
+      overflow: hidden;
+      background: linear-gradient(180deg, #141414, #0f0f0f);
+      transition: transform 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
+    }
+    .cp-prize:hover {
+      transform: translateY(-5px);
+      border-color: rgba(184,146,74,0.5);
+      box-shadow: 0 20px 50px rgba(184,146,74,0.12);
+    }
+    .cp-prize-icon {
+      font-size: 3rem;
+      padding: 32px 24px 20px;
+      display: block;
+      text-align: center;
+    }
+    .cp-mallmann .cp-prize-icon { background: linear-gradient(145deg, #2a0e08, #1a0a06); filter:drop-shadow(0 0 20px rgba(220,80,30,0.4)); }
+    .cp-italien .cp-prize-icon  { background: linear-gradient(145deg, #0a1a0e, #07130a); }
+    .cp-tanao .cp-prize-icon    { background: linear-gradient(145deg, #081522, #050e18); }
+    .cp-terrasse-prize .cp-prize-icon { background: linear-gradient(145deg, #1a1408, #120f05); filter:drop-shadow(0 0 20px rgba(240,208,80,0.3)); }
+    .cp-prize-body {
+      padding: 4px 22px 24px;
+    }
+    .cp-prize-tag {
+      display: inline-block;
+      font-size: 0.64rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: #b8924a;
+      border: 1px solid rgba(184,146,74,0.3);
+      border-radius: 999px;
+      padding: 5px 12px;
+      margin-bottom: 10px;
+    }
+    .cp-prize h3 {
+      margin: 0 0 8px;
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #f0ece4;
+    }
+    .cp-prize p {
+      margin: 0 0 14px;
+      color: rgba(240,236,228,0.5);
+      font-size: 0.88rem;
+      line-height: 1.65;
+    }
+    .cp-prize-cond {
+      font-size: 0.75rem;
+      color: rgba(184,146,74,0.75);
+      line-height: 1.55;
+    }
+    .cp-prize-cond strong { color: #b8924a; }
+
+    /* FOOTNOTE */
+    .cp-footnote {
+      text-align: center;
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      color: rgba(255,255,255,0.2);
+      padding: 0 20px;
+      line-height: 1.8;
+    }
+
+    @media (max-width: 768px) {
+      .cp-hero { grid-template-columns: 1fr; }
+      .cp-trophy-wrap { display: none; }
+      .cp-cards-grid { grid-template-columns: repeat(2, 1fr); }
+      .cg-unit { min-width: 72px; padding: 14px 16px; }
+      .cg-unit span { font-size: 2.2rem; }
+    }
   </style>
 </head>
 <body>
@@ -2232,128 +2653,157 @@
     </div>
   </section>
 
+  <!-- CASH PRIZE COUNTDOWN GATE -->
+  <section class="page" id="page-cash-countdown">
+    <div class="countdown-gate">
+      <div class="cg-inner">
+        <div class="cg-eyebrow">✦ La Terrasse · Exclusif ✦</div>
+        <div class="cg-logo">🏆</div>
+        <h1 class="cg-title">Cash Prize</h1>
+        <p class="cg-sub">Cette page se déverrouille dans&nbsp;:</p>
+        <div class="cg-clock" id="cg-clock">
+          <div class="cg-unit"><span id="cg-h">00</span><small>heures</small></div>
+          <div class="cg-sep">:</div>
+          <div class="cg-unit"><span id="cg-m">00</span><small>min</small></div>
+          <div class="cg-sep">:</div>
+          <div class="cg-unit"><span id="cg-s">00</span><small>sec</small></div>
+        </div>
+        <p class="cg-hint" id="cg-hint">Reviens quand le compteur atteint zéro.</p>
+        <button class="cg-btn" id="cg-enter-btn" style="display:none" onclick="showPage(‘cash-prize’)">Entrer ✦</button>
+      </div>
+    </div>
+  </section>
+
   <section class="page" id="page-cash-prize">
-    <div class="shell">
-      <div class="topbar">
-        <div class="brand">
-          <strong>Cash Prize de La Terrasse</strong>
-          <span>Meilleures ventes, assiduité, énergie d’équipe et best moments</span>
-        </div>
-        <div class="badge admin">Cash Prize</div>
-        <button class="btn btn-soft" onclick="showPage('home')">Voir AquaPoney</button>
-        <button class="btn btn-soft" onclick="showPage('landing')">Retour accueil</button>
+    <div class="cp-shell">
+      <!-- TOPBAR -->
+      <div class="cp-topbar">
+        <button class="cp-back" onclick="showPage(‘landing’)">← Accueil</button>
+        <div class="cp-brand">✦ Cash Prize · La Terrasse ✦</div>
+        <div></div>
       </div>
 
-      <div class="grid">
-        <div class="prize-hero">
-          <div class="eyebrow">🎉 Remise des prix • Salle only</div>
-          <h1>Les cracks de La Terrasse.</h1>
-          <p>
-            Cette page célèbre les meilleures ventes, les personnes les plus assidues, les plus agréables à bosser avec
-            et les grands moments de la salle. Les gagnants sont là, les lots aussi, mais on garde un peu de mystère sur qui repart avec quoi.
-          </p>
-          <div class="fun-note">
-            Samy reçoit le titre officiel de <strong>meilleur manager du monde entier</strong>, avec comme lot spécial :
-            <strong>un sourire de Anizé</strong> (depuis le temps qu’il attend).
+      <!-- HERO -->
+      <div class="cp-hero">
+        <div class="cp-hero-left">
+          <div class="cp-pill">✦ Réservé à l’équipe salle ✦</div>
+          <h1 class="cp-h1">Merci.<br>Vraiment.</h1>
+          <p class="cp-desc">Ces récompenses ne célèbrent pas un classement.<br>Elles disent <em>merci</em> aux personnes les plus agréables à travailler avec — celles avec qui la salle tourne mieux, les sourires qui restent même quand c’est chaud, et le travail qu’on ne voit pas mais qu’on ressent.</p>
+          <div class="cp-keywords">
+            <span>Bonne humeur</span><span>Fiabilité</span><span>Élégance</span><span>Présence</span><span>Équipe</span><span>Effort</span><span>Timing</span><span>Vente</span>
           </div>
         </div>
-
-        <div class="prize-grid">
-          <div class="card">
-            <div class="section-head">
-              <div class="title">Les gagnants salle</div>
-              <div class="badge sun">Chefs de rang & salle</div>
-            </div>
-            <div class="winner-wall">
-              <div class="winner-card"><strong>Fabien</strong><span>Pour sa gayeté et son talent à mettre un peu de soleil même quand la salle part en toupie.</span></div>
-              <div class="winner-card"><strong>Lisa</strong><span>Pour l’énergie, la fiabilité et le niveau de bonne humeur parfaitement calibré.</span></div>
-              <div class="winner-card"><strong>Lulu</strong><span>Pour la vibe, le sérieux au service et les moments où tout roule mieux avec elle.</span></div>
-              <div class="winner-card"><strong>Camille</strong><span>Pour l’assiduité, le mental et les journées où elle garde tout debout.</span></div>
-              <div class="winner-card"><strong>Maya</strong><span>Pour le rythme, la salle tenue proprement et le sens du timing.</span></div>
-              <div class="winner-card"><strong>François</strong><span>Pour l’impact en service et le calme qui évite trois incendies par soirée.</span></div>
-              <div class="winner-card"><strong>Mila</strong><span>Pour la qualité de présence, l’élégance et le plaisir de travailler ensemble.</span></div>
-              <div class="winner-card"><strong>Marguerite</strong><span>Pour avoir reussi l’exploit d’etre à la fois discrete, efficace et probablement deja au courant avant tout le monde.</span></div>
-              <div class="winner-card"><strong>Samy</strong><span>Meilleur manager du monde entier. Oui, c’est officiel maintenant.</span></div>
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="section-head">
-              <div class="title">Les cash prizes</div>
-              <div class="badge admin">Mystère gardé</div>
-            </div>
-            <div class="prize-list">
-              <div class="prize-item">
-                <div class="prize-image mallmann">🔥</div>
-                <div class="prize-content">
-                  <h3>Repas pour deux au Mallmann</h3>
-                </div>
-              </div>
-              <div class="prize-item">
-                <div class="prize-image italien">🍝</div>
-                <div class="prize-content">
-                  <h3>Repas pour deux à l’Italien</h3>
-                </div>
-              </div>
-              <div class="prize-item">
-                <div class="prize-image tadao">🌊</div>
-                <div class="prize-content">
-                  <h3>Repas pour deux au Tadao Ando</h3>
-                </div>
-              </div>
-              <div class="prize-item">
-                <div class="prize-image terrasse">☀️</div>
-                <div class="prize-content">
-                  <h3>Repas pour quatre à La Terrasse*</h3>
-                </div>
-              </div>
-              <div class="prize-item">
-                <div class="prize-content">
-                  <h3>Cash prizes en main propre</h3>
-                  <p>Il y aura aussi des cash prizes de <strong>100 €</strong>, <strong>75 €</strong> et <strong>50 €</strong> sur le salaire et/ou sur le pourboire, donnés directement en main propre.</p>
-                </div>
-              </div>
-            </div>
-            <div class="prize-footnote" style="margin-top:14px;">
-              <strong>*</strong> Le vin est à la charge du personnel invité, avec remise de <strong>-40 % à La Terrasse</strong> et <strong>-20 % dans les autres restaurants</strong>.
-            </div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="section-head">
-            <div class="title">Best Moments de La Terrasse</div>
-            <div class="badge team">Photos & vidéos à venir</div>
-          </div>
-          <p class="subtle">
-            Cette partie est prête pour les futurs souvenirs. Quand tu m’enverras les photos et les vidéos de l’équipe,
-            on pourra les intégrer ici comme une galerie vivante des meilleurs moments.
-          </p>
-          <div class="moments-grid">
-            <div class="moment-card">
-              <div class="moment-icon">📸</div>
-              <div>
-                <h3>Photo souvenir</h3>
-                <p>Emplacement prévu pour une photo d’équipe, un service mémorable ou un moment drôle de la salle.</p>
-              </div>
-            </div>
-            <div class="moment-card">
-              <div class="moment-icon">🎬</div>
-              <div>
-                <h3>Vidéo best moment</h3>
-                <p>Bloc prêt à recevoir une vidéo courte : anniversaire, rush héroïque ou scène culte de La Terrasse.</p>
-              </div>
-            </div>
-            <div class="moment-card">
-              <div class="moment-icon">✨</div>
-              <div>
-                <h3>Moment légendaire</h3>
-                <p>Une place réservée pour les images qu’on voudra garder affichées comme les grands classiques de la team.</p>
-              </div>
-            </div>
+        <div class="cp-hero-right">
+          <div class="cp-trophy-wrap">
+            <div class="cp-trophy-glow"></div>
+            <div class="cp-trophy">🏆</div>
           </div>
         </div>
       </div>
+
+      <!-- PARTICIPANTS -->
+      <div class="cp-section-label">✦ Les participants ✦</div>
+      <div class="cp-cards-grid">
+
+        <div class="cp-flip-card" onclick="this.classList.toggle(‘flipped’)">
+          <div class="cp-flip-inner">
+            <div class="cp-flip-front"><span>?</span><small>Touche pour découvrir</small></div>
+            <div class="cp-flip-back"><strong>Fabien</strong><p>Pour sa gayeté et son talent à mettre un peu de soleil même quand la salle part en toupie.</p></div>
+          </div>
+        </div>
+
+        <div class="cp-flip-card" onclick="this.classList.toggle(‘flipped’)">
+          <div class="cp-flip-inner">
+            <div class="cp-flip-front"><span>?</span><small>Touche pour découvrir</small></div>
+            <div class="cp-flip-back"><strong>Marguerite</strong><p>Pour avoir réussi l’exploit d’être à la fois discrète, efficace et probablement déjà au courant avant tout le monde.</p></div>
+          </div>
+        </div>
+
+        <div class="cp-flip-card" onclick="this.classList.toggle(‘flipped’)">
+          <div class="cp-flip-inner">
+            <div class="cp-flip-front"><span>?</span><small>Touche pour découvrir</small></div>
+            <div class="cp-flip-back"><strong>Mila</strong><p>Pour la qualité de présence, l’élégance et le plaisir de travailler ensemble.</p></div>
+          </div>
+        </div>
+
+        <div class="cp-flip-card" onclick="this.classList.toggle(‘flipped’)">
+          <div class="cp-flip-inner">
+            <div class="cp-flip-front"><span>?</span><small>Touche pour découvrir</small></div>
+            <div class="cp-flip-back"><strong>Maya</strong><p>Pour le rythme, la salle tenue proprement et le sens du timing.</p></div>
+          </div>
+        </div>
+
+        <div class="cp-flip-card" onclick="this.classList.toggle(‘flipped’)">
+          <div class="cp-flip-inner">
+            <div class="cp-flip-front"><span>?</span><small>Touche pour découvrir</small></div>
+            <div class="cp-flip-back"><strong>François</strong><p>Pour l’impact en service et le calme qui évite trois incendies par soirée.</p></div>
+          </div>
+        </div>
+
+        <div class="cp-flip-card" onclick="this.classList.toggle(‘flipped’)">
+          <div class="cp-flip-inner">
+            <div class="cp-flip-front"><span>?</span><small>Touche pour découvrir</small></div>
+            <div class="cp-flip-back"><strong>Lulu</strong><p>Pour la vibe, le sérieux au service et les moments où tout roule mieux avec elle.</p></div>
+          </div>
+        </div>
+
+        <div class="cp-flip-card" onclick="this.classList.toggle(‘flipped’)">
+          <div class="cp-flip-inner">
+            <div class="cp-flip-front"><span>?</span><small>Touche pour découvrir</small></div>
+            <div class="cp-flip-back"><strong>Lisa</strong><p>Pour l’énergie, la fiabilité et le niveau de bonne humeur parfaitement calibré.</p></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- PRIZES -->
+      <div class="cp-section-label">✦ Les récompenses ✦</div>
+      <div class="cp-prizes-grid">
+
+        <div class="cp-prize cp-mallmann">
+          <div class="cp-prize-icon">🔥</div>
+          <div class="cp-prize-body">
+            <div class="cp-prize-tag">Dîner pour 2</div>
+            <h3>Mallmann</h3>
+            <p>Restaurant argentin de caractère. Une table pour deux, une expérience feu et braise à partager.</p>
+            <div class="cp-prize-cond">Alcool à la charge des invités · <strong>-20% à La Terrasse</strong></div>
+          </div>
+        </div>
+
+        <div class="cp-prize cp-italien">
+          <div class="cp-prize-icon">🍝</div>
+          <div class="cp-prize-body">
+            <div class="cp-prize-tag">Dîner pour 2</div>
+            <h3>L’Italien</h3>
+            <p>Le meilleur de la cuisine italienne, une table pour deux dans une ambiance chaleureuse.</p>
+            <div class="cp-prize-cond">Alcool à la charge des invités · <strong>-20% à La Terrasse</strong></div>
+          </div>
+        </div>
+
+        <div class="cp-prize cp-tanao">
+          <div class="cp-prize-icon">🌊</div>
+          <div class="cp-prize-body">
+            <div class="cp-prize-tag">Dîner pour 2</div>
+            <h3>Tanao</h3>
+            <p>Cuisine méditerranéenne raffinée. Une escapade pour deux autour des saveurs du bassin.</p>
+            <div class="cp-prize-cond">Alcool à la charge des invités · <strong>-20% à La Terrasse</strong></div>
+          </div>
+        </div>
+
+        <div class="cp-prize cp-terrasse-prize">
+          <div class="cp-prize-icon">☀️</div>
+          <div class="cp-prize-body">
+            <div class="cp-prize-tag">Dîner pour 4</div>
+            <h3>La Terrasse</h3>
+            <p>Une table pour quatre chez nous. Le grand format, pour partager la maison avec qui tu veux.</p>
+            <div class="cp-prize-cond">Alcool à la charge des invités · <strong>-40% sur les boissons</strong></div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="cp-footnote">✦ &nbsp; Ces récompenses sont attribuées par Sami, sans classement ni compétition — uniquement à hauteur de l’effort, de la bonne humeur et du plaisir de travailler ensemble. &nbsp; ✦</div>
+
     </div>
   </section>
 
@@ -2482,12 +2932,66 @@
     }
 
     function showPage(name) {
+      // Si on demande cash-prize, on passe par le countdown d'abord
+      if (name === "cash-prize") {
+        startCountdown();
+        document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+        document.getElementById("page-cash-countdown").classList.add("active");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
       document.querySelectorAll(".page").forEach((page) => page.classList.remove("active"));
       document.getElementById("page-" + name).classList.add("active");
       window.scrollTo({ top: 0, behavior: "smooth" });
       if (name === "sami-todo") {
         renderSamiPage();
       }
+    }
+
+    // ── COUNTDOWN ──────────────────────────────
+    const UNLOCK_KEY = "cp_unlock_until";
+    let countdownTimer = null;
+
+    function startCountdown() {
+      // Vérifie si déjà déverrouillé
+      const until = parseInt(localStorage.getItem(UNLOCK_KEY) || "0");
+      if (until && Date.now() < until) {
+        revealEntry();
+        return;
+      }
+      // Fixe le déverrouillage à maintenant + 24h (modifiable)
+      const target = Date.now() + 24 * 60 * 60 * 1000;
+      try { localStorage.setItem(UNLOCK_KEY, String(target)); } catch(e){}
+      tickCountdown(target);
+    }
+
+    function tickCountdown(target) {
+      if (countdownTimer) clearInterval(countdownTimer);
+      countdownTimer = setInterval(() => {
+        const diff = target - Date.now();
+        if (diff <= 0) {
+          clearInterval(countdownTimer);
+          document.getElementById("cg-h").textContent = "00";
+          document.getElementById("cg-m").textContent = "00";
+          document.getElementById("cg-s").textContent = "00";
+          revealEntry();
+          return;
+        }
+        const h = Math.floor(diff / 3600000);
+        const m = Math.floor((diff % 3600000) / 60000);
+        const s = Math.floor((diff % 60000) / 1000);
+        document.getElementById("cg-h").textContent = String(h).padStart(2, "0");
+        document.getElementById("cg-m").textContent = String(m).padStart(2, "0");
+        document.getElementById("cg-s").textContent = String(s).padStart(2, "0");
+      }, 1000);
+    }
+
+    function revealEntry() {
+      const hint = document.getElementById("cg-hint");
+      const btn  = document.getElementById("cg-enter-btn");
+      if (hint) hint.style.display = "none";
+      if (btn)  btn.style.display  = "inline-block";
+      try { localStorage.setItem(UNLOCK_KEY, "0"); } catch(e){}
     }
 
     function onLoginKeydown(event) {
