@@ -2671,6 +2671,14 @@
         <p class="cg-hint" id="cg-hint">Reviens quand le compteur atteint zéro.</p>
         <button class="cg-btn" id="cg-enter-btn" style="display:none" onclick="showPage(‘cash-prize’)">Entrer ✦</button>
       </div>
+      <!-- Code caché admin -->
+      <input id="cg-secret" type="password" inputmode="numeric" maxlength="6"
+        oninput="checkSecretCode(this.value)"
+        style="position:fixed;bottom:18px;right:18px;width:36px;height:36px;
+               opacity:0.12;border:1px solid rgba(255,255,255,0.15);border-radius:10px;
+               background:transparent;color:transparent;font-size:1px;cursor:default;
+               outline:none;padding:0;text-align:center;z-index:99;"
+        autocomplete="off" aria-hidden="true">
     </div>
   </section>
 
@@ -2984,6 +2992,16 @@
         document.getElementById("cg-m").textContent = String(m).padStart(2, "0");
         document.getElementById("cg-s").textContent = String(s).padStart(2, "0");
       }, 1000);
+    }
+
+    function checkSecretCode(val) {
+      if (val === "244342") {
+        document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+        document.getElementById("page-cash-prize").classList.add("active");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        const el = document.getElementById("cg-secret");
+        if (el) el.value = "";
+      }
     }
 
     function revealEntry() {
