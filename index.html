@@ -2178,6 +2178,41 @@
     .cp-keywords span:nth-child(6){animation-delay:0.3s}
     .cp-keywords span:nth-child(7){animation-delay:0.35s}
     .cp-keywords span:nth-child(8){animation-delay:0.4s}
+    .cp-terrasse-frame {
+      position: relative;
+      width: min(34vw, 420px);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 0 0 1px rgba(184,146,74,0.3), 0 0 60px rgba(184,146,74,0.18), 0 24px 64px rgba(0,0,0,0.45);
+      flex-shrink: 0;
+    }
+    .cp-terrasse-img {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 16px;
+    }
+    .cp-terrasse-glow {
+      position: absolute;
+      inset: -40px;
+      background: radial-gradient(ellipse 60% 60% at 50% 50%, rgba(184,146,74,0.22) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: -1;
+    }
+    .cp-terrasse-badge {
+      position: absolute;
+      bottom: 14px;
+      right: 14px;
+      background: rgba(10,8,6,0.72);
+      border: 1px solid rgba(184,146,74,0.4);
+      color: #b8924a;
+      font-size: 0.65rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      padding: 6px 12px;
+      border-radius: 999px;
+      backdrop-filter: blur(8px);
+    }
     .cp-trophy-wrap {
       position: relative;
       width: min(34vw, 360px);
@@ -2437,6 +2472,7 @@
     @media (max-width: 768px) {
       .cp-hero { grid-template-columns: 1fr; }
       .cp-trophy-wrap { width: min(82vw, 330px); height: min(82vw, 330px); margin: -12px auto 0; }
+      .cp-terrasse-frame { width: min(90vw, 420px); margin: 0 auto; }
       .cp-cards-grid { grid-template-columns: repeat(2, 1fr); }
       .cg-unit { min-width: 72px; padding: 14px 16px; }
       .cg-unit span { font-size: 2.2rem; }
@@ -2923,12 +2959,178 @@
           </div>
         </div>
         <div class="cp-hero-right">
-          <div class="cp-trophy-wrap">
-            <div class="cp-trophy-glow"></div>
-            <canvas class="cp-orb-canvas" id="cp-orb" width="720" height="720" aria-label="Forme dorée animée représentant l'énergie de l'équipe"></canvas>
-            <div class="cp-orb-cross" aria-hidden="true"></div>
-            <span class="cp-orb-label top">Sales · 2026</span>
-            <span class="cp-orb-label bottom">La Terrasse · Ensemble</span>
+          <div class="cp-terrasse-frame">
+            <div class="cp-terrasse-glow"></div>
+            <svg class="cp-terrasse-img" viewBox="0 0 520 340" xmlns="http://www.w3.org/2000/svg" aria-label="La Terrasse">
+              <!-- Ciel / fond doux -->
+              <rect width="520" height="340" fill="#f5ede0"/>
+              <!-- Sol carrelé -->
+              <rect y="240" width="520" height="100" fill="#e8d9c0"/>
+              <!-- Motif carrelage sol -->
+              <g opacity="0.25">
+                <line x1="0" y1="255" x2="520" y2="255" stroke="#c4a87a" stroke-width="0.7"/>
+                <line x1="0" y1="270" x2="520" y2="270" stroke="#c4a87a" stroke-width="0.7"/>
+                <line x1="0" y1="285" x2="520" y2="285" stroke="#c4a87a" stroke-width="0.7"/>
+                <line x1="0" y1="300" x2="520" y2="300" stroke="#c4a87a" stroke-width="0.7"/>
+                <line x1="0" y1="315" x2="520" y2="315" stroke="#c4a87a" stroke-width="0.7"/>
+                <line x1="52" y1="240" x2="52" y2="340" stroke="#c4a87a" stroke-width="0.7"/>
+                <line x1="104" y1="240" x2="104" y2="340" stroke="#c4a87a" stroke-width="0.7"/>
+                <line x1="156" y1="240" x2="156" y2="340" stroke="#c4a87a" stroke-width="0.7"/>
+                <line x1="208" y1="240" x2="208" y2="340" stroke="#c4a87a" stroke-width="0.7"/>
+                <line x1="260" y1="240" x2="260" y2="340" stroke="#c4a87a" stroke-width="0.7"/>
+                <line x1="312" y1="240" x2="312" y2="340" stroke="#c4a87a" stroke-width="0.7"/>
+                <line x1="364" y1="240" x2="364" y2="340" stroke="#c4a87a" stroke-width="0.7"/>
+                <line x1="416" y1="240" x2="416" y2="340" stroke="#c4a87a" stroke-width="0.7"/>
+                <line x1="468" y1="240" x2="468" y2="340" stroke="#c4a87a" stroke-width="0.7"/>
+              </g>
+              <!-- Mur facade -->
+              <rect y="60" width="520" height="200" fill="#f0e2c8"/>
+              <!-- Bande carreaux mosaïque -->
+              <rect y="175" width="520" height="40" fill="#e0cfa8"/>
+              <g>
+                <rect x="10" y="177" width="18" height="18" rx="1" fill="#c0392b" opacity="0.7"/>
+                <rect x="30" y="177" width="18" height="18" rx="1" fill="#d4ac60" opacity="0.7"/>
+                <rect x="50" y="177" width="18" height="18" rx="1" fill="#2980b9" opacity="0.7"/>
+                <rect x="70" y="177" width="18" height="18" rx="1" fill="#27ae60" opacity="0.7"/>
+                <rect x="90" y="177" width="18" height="18" rx="1" fill="#c0392b" opacity="0.7"/>
+                <rect x="110" y="177" width="18" height="18" rx="1" fill="#d4ac60" opacity="0.7"/>
+                <rect x="130" y="177" width="18" height="18" rx="1" fill="#2980b9" opacity="0.7"/>
+                <rect x="150" y="177" width="18" height="18" rx="1" fill="#27ae60" opacity="0.7"/>
+                <rect x="170" y="177" width="18" height="18" rx="1" fill="#c0392b" opacity="0.7"/>
+                <rect x="190" y="177" width="18" height="18" rx="1" fill="#d4ac60" opacity="0.7"/>
+                <rect x="210" y="177" width="18" height="18" rx="1" fill="#2980b9" opacity="0.7"/>
+                <rect x="230" y="177" width="18" height="18" rx="1" fill="#27ae60" opacity="0.7"/>
+                <rect x="250" y="177" width="18" height="18" rx="1" fill="#c0392b" opacity="0.7"/>
+                <rect x="270" y="177" width="18" height="18" rx="1" fill="#d4ac60" opacity="0.7"/>
+                <rect x="290" y="177" width="18" height="18" rx="1" fill="#2980b9" opacity="0.7"/>
+                <rect x="310" y="177" width="18" height="18" rx="1" fill="#27ae60" opacity="0.7"/>
+                <rect x="330" y="177" width="18" height="18" rx="1" fill="#c0392b" opacity="0.7"/>
+                <rect x="350" y="177" width="18" height="18" rx="1" fill="#d4ac60" opacity="0.7"/>
+                <rect x="370" y="177" width="18" height="18" rx="1" fill="#2980b9" opacity="0.7"/>
+                <rect x="390" y="177" width="18" height="18" rx="1" fill="#27ae60" opacity="0.7"/>
+                <rect x="410" y="177" width="18" height="18" rx="1" fill="#c0392b" opacity="0.7"/>
+                <rect x="430" y="177" width="18" height="18" rx="1" fill="#d4ac60" opacity="0.7"/>
+                <rect x="450" y="177" width="18" height="18" rx="1" fill="#2980b9" opacity="0.7"/>
+                <rect x="470" y="177" width="18" height="18" rx="1" fill="#27ae60" opacity="0.7"/>
+                <rect x="490" y="177" width="18" height="18" rx="1" fill="#c0392b" opacity="0.7"/>
+              </g>
+              <!-- Volet gauche -->
+              <rect x="60" y="80" width="70" height="80" rx="3" fill="#4a7c6e"/>
+              <rect x="60" y="80" width="70" height="80" rx="3" fill="none" stroke="#3a5c52" stroke-width="1.5"/>
+              <line x1="95" y1="80" x2="95" y2="160" stroke="#3a5c52" stroke-width="1.5"/>
+              <line x1="60" y1="120" x2="130" y2="120" stroke="#3a5c52" stroke-width="1"/>
+              <!-- Fenêtre gauche -->
+              <rect x="62" y="82" width="31" height="36" rx="1" fill="#d4c5a0" opacity="0.6"/>
+              <rect x="97" y="82" width="31" height="36" rx="1" fill="#d4c5a0" opacity="0.6"/>
+              <!-- Volet droit -->
+              <rect x="380" y="80" width="70" height="80" rx="3" fill="#4a7c6e"/>
+              <rect x="380" y="80" width="70" height="80" rx="3" fill="none" stroke="#3a5c52" stroke-width="1.5"/>
+              <line x1="415" y1="80" x2="415" y2="160" stroke="#3a5c52" stroke-width="1.5"/>
+              <line x1="380" y1="120" x2="450" y2="120" stroke="#3a5c52" stroke-width="1"/>
+              <!-- Lanterne -->
+              <rect x="182" y="88" width="8" height="14" rx="2" fill="#555"/>
+              <rect x="178" y="95" width="16" height="20" rx="2" fill="#e8d080" opacity="0.9"/>
+              <rect x="178" y="95" width="16" height="20" rx="2" fill="none" stroke="#888" stroke-width="1"/>
+              <!-- Fontaine — base -->
+              <ellipse cx="260" cy="248" rx="72" ry="16" fill="#d4b882"/>
+              <ellipse cx="260" cy="248" rx="72" ry="16" fill="none" stroke="#b8924a" stroke-width="1.5"/>
+              <!-- Fontaine — vasque -->
+              <rect x="228" y="200" width="64" height="52" rx="32" fill="#d4b882"/>
+              <ellipse cx="260" cy="200" rx="32" ry="10" fill="#c4a460"/>
+              <ellipse cx="260" cy="248" rx="68" ry="12" fill="#b8d4e8" opacity="0.7"/>
+              <!-- Fontaine — colonne -->
+              <rect x="254" y="148" width="12" height="60" rx="4" fill="#c8a855"/>
+              <!-- Fontaine — eau -->
+              <path d="M240 200 Q230 220 225 240" stroke="#90c0d8" stroke-width="3" fill="none" opacity="0.8"/>
+              <path d="M280 200 Q290 220 295 240" stroke="#90c0d8" stroke-width="3" fill="none" opacity="0.8"/>
+              <!-- Fleurs sur fontaine -->
+              <ellipse cx="260" cy="145" rx="22" ry="16" fill="#e8734a"/>
+              <ellipse cx="245" cy="150" rx="12" ry="10" fill="#d4522a"/>
+              <ellipse cx="275" cy="150" rx="12" ry="10" fill="#e87050"/>
+              <ellipse cx="260" cy="140" rx="10" ry="8" fill="#f09070"/>
+              <ellipse cx="260" cy="145" rx="22" ry="16" fill="none" stroke="#c05030" stroke-width="0.5" opacity="0.4"/>
+              <!-- Bac à fleur gauche -->
+              <ellipse cx="110" cy="235" rx="30" ry="10" fill="#c8855a"/>
+              <rect x="82" y="200" width="56" height="38" rx="4" fill="#c8855a"/>
+              <ellipse cx="110" cy="200" rx="28" ry="9" fill="#a86840"/>
+              <ellipse cx="110" cy="196" rx="22" ry="14" fill="#2d7a3a"/>
+              <!-- Bac à fleur droit -->
+              <ellipse cx="410" cy="235" rx="30" ry="10" fill="#c8855a"/>
+              <rect x="382" y="200" width="56" height="38" rx="4" fill="#c8855a"/>
+              <ellipse cx="410" cy="200" rx="28" ry="9" fill="#a86840"/>
+              <ellipse cx="410" cy="196" rx="22" ry="14" fill="#2d7a3a"/>
+              <!-- Tables rondes -->
+              <ellipse cx="110" cy="295" rx="44" ry="12" fill="#d0c0a0" opacity="0.9"/>
+              <rect x="105" y="255" width="10" height="42" rx="2" fill="#b89860"/>
+              <!-- Verres table gauche -->
+              <rect x="95" y="270" width="6" height="14" rx="1" fill="#b8d4e8" opacity="0.8"/>
+              <rect x="118" y="272" width="6" height="12" rx="1" fill="#b8d4e8" opacity="0.8"/>
+              <!-- Table droite -->
+              <ellipse cx="410" cy="295" rx="44" ry="12" fill="#d0c0a0" opacity="0.9"/>
+              <rect x="405" y="255" width="10" height="42" rx="2" fill="#b89860"/>
+              <rect x="395" y="270" width="6" height="14" rx="1" fill="#b8d4e8" opacity="0.8"/>
+              <rect x="418" y="272" width="6" height="12" rx="1" fill="#b8d4e8" opacity="0.8"/>
+              <!-- Chaises bistro — gauche -->
+              <g transform="translate(68,260)">
+                <rect x="0" y="0" width="28" height="4" rx="2" fill="#c0392b"/>
+                <rect x="0" y="20" width="28" height="4" rx="2" fill="#c0392b"/>
+                <rect x="2" y="4" width="4" height="22" rx="2" fill="#c0392b"/>
+                <rect x="22" y="4" width="4" height="22" rx="2" fill="#c0392b"/>
+                <rect x="2" y="30" width="4" height="20" rx="2" fill="#8b1a0a"/>
+                <rect x="22" y="30" width="4" height="20" rx="2" fill="#8b1a0a"/>
+              </g>
+              <g transform="translate(148,262)">
+                <rect x="0" y="0" width="28" height="4" rx="2" fill="#2980b9"/>
+                <rect x="0" y="20" width="28" height="4" rx="2" fill="#2980b9"/>
+                <rect x="2" y="4" width="4" height="22" rx="2" fill="#2980b9"/>
+                <rect x="22" y="4" width="4" height="22" rx="2" fill="#2980b9"/>
+                <rect x="2" y="30" width="4" height="20" rx="2" fill="#1a5a8a"/>
+                <rect x="22" y="30" width="4" height="20" rx="2" fill="#1a5a8a"/>
+              </g>
+              <!-- Chaises bistro — droite -->
+              <g transform="translate(360,262)">
+                <rect x="0" y="0" width="28" height="4" rx="2" fill="#27ae60"/>
+                <rect x="0" y="20" width="28" height="4" rx="2" fill="#27ae60"/>
+                <rect x="2" y="4" width="4" height="22" rx="2" fill="#27ae60"/>
+                <rect x="22" y="4" width="4" height="22" rx="2" fill="#27ae60"/>
+                <rect x="2" y="30" width="4" height="20" rx="2" fill="#1a7a40"/>
+                <rect x="22" y="30" width="4" height="20" rx="2" fill="#1a7a40"/>
+              </g>
+              <g transform="translate(440,260)">
+                <rect x="0" y="0" width="28" height="4" rx="2" fill="#c0392b"/>
+                <rect x="0" y="20" width="28" height="4" rx="2" fill="#c0392b"/>
+                <rect x="2" y="4" width="4" height="22" rx="2" fill="#c0392b"/>
+                <rect x="22" y="4" width="4" height="22" rx="2" fill="#c0392b"/>
+                <rect x="2" y="30" width="4" height="20" rx="2" fill="#8b1a0a"/>
+                <rect x="22" y="30" width="4" height="20" rx="2" fill="#8b1a0a"/>
+              </g>
+              <!-- Pergola / treille -->
+              <rect x="0" y="40" width="520" height="10" rx="3" fill="#8b6c3a" opacity="0.7"/>
+              <rect x="30" y="0" width="8" height="50" rx="3" fill="#8b6c3a" opacity="0.6"/>
+              <rect x="120" y="0" width="8" height="50" rx="3" fill="#8b6c3a" opacity="0.6"/>
+              <rect x="390" y="0" width="8" height="50" rx="3" fill="#8b6c3a" opacity="0.6"/>
+              <rect x="480" y="0" width="8" height="50" rx="3" fill="#8b6c3a" opacity="0.6"/>
+              <!-- Feuillage pergola -->
+              <ellipse cx="80" cy="20" rx="55" ry="22" fill="#2d7a3a" opacity="0.75"/>
+              <ellipse cx="80" cy="15" rx="45" ry="16" fill="#3a9048" opacity="0.6"/>
+              <ellipse cx="440" cy="20" rx="55" ry="22" fill="#2d7a3a" opacity="0.75"/>
+              <ellipse cx="440" cy="15" rx="45" ry="16" fill="#3a9048" opacity="0.6"/>
+              <!-- Fleurs blanches treille -->
+              <circle cx="55" cy="28" r="4" fill="#fff" opacity="0.9"/>
+              <circle cx="70" cy="18" r="3" fill="#fff" opacity="0.85"/>
+              <circle cx="88" cy="24" r="4" fill="#fff" opacity="0.9"/>
+              <circle cx="102" cy="12" r="3" fill="#fff" opacity="0.85"/>
+              <circle cx="415" cy="28" r="4" fill="#fff" opacity="0.9"/>
+              <circle cx="430" cy="14" r="3" fill="#fff" opacity="0.85"/>
+              <circle cx="448" cy="22" r="4" fill="#fff" opacity="0.9"/>
+              <circle cx="462" cy="10" r="3" fill="#fff" opacity="0.85"/>
+              <!-- Rayon de soleil -->
+              <rect x="200" y="0" width="14" height="280" rx="7" fill="#f5d080" opacity="0.09" transform="rotate(-8 207 140)"/>
+              <rect x="300" y="0" width="10" height="260" rx="5" fill="#f5d080" opacity="0.07" transform="rotate(5 305 130)"/>
+              <!-- Label discret -->
+              <text x="260" y="332" text-anchor="middle" font-family="Georgia, serif" font-size="11" fill="#8b6c3a" opacity="0.7" letter-spacing="3">LA TERRASSE</text>
+            </svg>
+            <div class="cp-terrasse-badge">Saison d'été · 2026</div>
           </div>
         </div>
       </div>
