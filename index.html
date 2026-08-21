@@ -1,1520 +1,3733 @@
 <!DOCTYPE html>
-<html lang="fr" data-theme="">
+<html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AquaPoney</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap">
-<style>
-/* ── TOKENS ── */
-:root {
-  --bg:          #F5F2EC;
-  --bg-alt:      #EDE9E1;
-  --surface:     #FFFFFF;
-  --surface-2:   #F9F7F4;
-  --border:      #DDD8CF;
-  --border-focus:#B8924A;
-  --text:        #1C1916;
-  --text-2:      #5C574F;
-  --text-3:      #8A8278;
-  --primary:     #1A3A2E;
-  --primary-hov: #143022;
-  --accent:      #B8924A;
-  --accent-hov:  #9E7A38;
-  --success:     #2A6B45;
-  --success-bg:  #D6EDE0;
-  --danger:      #B33A2A;
-  --danger-bg:   #FAE6E3;
-  --warn:        #8A6020;
-  --warn-bg:     #FDF3DC;
-  --radius-sm:   6px;
-  --radius:      10px;
-  --radius-lg:   16px;
-  --shadow-sm:   0 1px 3px rgba(0,0,0,.07), 0 1px 2px rgba(0,0,0,.05);
-  --shadow:      0 4px 12px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.05);
-  --shadow-lg:   0 12px 32px rgba(0,0,0,.12);
-  --font-display:'Cormorant Garamond', 'Georgia', serif;
-  --font-ui:     'Inter', 'Helvetica Neue', sans-serif;
-  --t:           200ms ease;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg:          #171410;
-    --bg-alt:      #1F1C18;
-    --surface:     #252219;
-    --surface-2:   #2A271F;
-    --border:      #3A3629;
-    --text:        #EDE8DF;
-    --text-2:      #A09890;
-    --text-3:      #6B655D;
-    --primary:     #3A7A58;
-    --primary-hov: #4A9068;
-    --accent:      #C8A460;
-    --accent-hov:  #D8B470;
-    --success:     #4A9A65;
-    --success-bg:  #1A3028;
-    --danger:      #D45040;
-    --danger-bg:   #301A18;
-    --warn:        #C8A040;
-    --warn-bg:     #2A2010;
-  }
-}
-:root[data-theme="dark"] {
-  --bg:          #171410;
-  --bg-alt:      #1F1C18;
-  --surface:     #252219;
-  --surface-2:   #2A271F;
-  --border:      #3A3629;
-  --text:        #EDE8DF;
-  --text-2:      #A09890;
-  --text-3:      #6B655D;
-  --primary:     #3A7A58;
-  --primary-hov: #4A9068;
-  --accent:      #C8A460;
-  --accent-hov:  #D8B470;
-  --success:     #4A9A65;
-  --success-bg:  #1A3028;
-  --danger:      #D45040;
-  --danger-bg:   #301A18;
-  --warn:        #C8A040;
-  --warn-bg:     #2A2010;
-}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AquaPoney</title>
+  <style>
+    :root {
+      --bg: #f5fffd;
+      --bg-strong: #dff7f3;
+      --surface: rgba(255, 255, 255, 0.84);
+      --surface-strong: #ffffff;
+      --text: #12343b;
+      --muted: #5d7f85;
+      --teal-900: #114b5f;
+      --teal-700: #1a7f8a;
+      --teal-500: #2cb1a7;
+      --teal-300: #9be4d7;
+      --coral-600: #eb6f5a;
+      --coral-500: #f48c73;
+      --coral-100: #ffe1da;
+      --gold: #f6c85f;
+      --ok: #2b9348;
+      --danger: #c44536;
+      --pending: #c77900;
+      --shadow: 0 20px 50px rgba(17, 75, 95, 0.15);
+      --radius-xl: 28px;
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --radius-sm: 10px;
+      --border: 1px solid rgba(17, 75, 95, 0.1);
+      --font-display: "Avenir Next", "Trebuchet MS", "Segoe UI", sans-serif;
+      --font-body: "Avenir", "Segoe UI", sans-serif;
+    }
 
-/* ── RESET ── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { font-size: 16px; -webkit-font-smoothing: antialiased; }
-body {
-  font-family: var(--font-ui);
-  background: var(--bg);
-  color: var(--text);
-  line-height: 1.6;
-  min-height: 100dvh;
-}
-img { max-width: 100%; display: block; }
-button { cursor: pointer; font-family: inherit; border: none; background: none; }
-input, textarea, select {
-  font-family: inherit;
-  font-size: inherit;
-  color: inherit;
-  background: var(--surface);
-  border: 1.5px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: .55rem .75rem;
-  width: 100%;
-  transition: border-color var(--t), box-shadow var(--t);
-  outline: none;
-}
-input:focus, textarea:focus, select:focus {
-  border-color: var(--border-focus);
-  box-shadow: 0 0 0 3px rgba(184,146,74,.15);
-}
-textarea { resize: vertical; min-height: 90px; }
-a { color: var(--accent); text-decoration: none; }
-h1,h2,h3,h4 { text-wrap: balance; line-height: 1.2; }
+    * {
+      box-sizing: border-box;
+    }
 
-/* ── PAGES ── */
-.page { display: none; min-height: 100dvh; flex-direction: column; }
-.page.active { display: flex; }
+    html {
+      scroll-behavior: smooth;
+    }
 
-/* ── TOPBAR ── */
-.topbar {
-  position: sticky; top: 0; z-index: 100;
-  background: var(--primary);
-  color: #fff;
-  padding: .75rem 1.25rem;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  box-shadow: var(--shadow);
-}
-.topbar-brand {
-  font-family: var(--font-display);
-  font-size: 1.35rem;
-  font-weight: 500;
-  letter-spacing: .01em;
-  flex: 1;
-}
-.topbar-brand span { opacity: .6; font-size: .85rem; font-family: var(--font-ui); font-weight: 400; display: block; letter-spacing: 0; }
-.btn-back {
-  display: flex; align-items: center; gap: .4rem;
-  font-size: .875rem; font-weight: 500;
-  color: rgba(255,255,255,.8);
-  padding: .35rem .65rem;
-  border-radius: var(--radius-sm);
-  transition: background var(--t), color var(--t);
-  white-space: nowrap;
-}
-.btn-back:hover { background: rgba(255,255,255,.12); color: #fff; }
-.btn-back svg { width: 16px; height: 16px; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: var(--font-body);
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(244, 140, 115, 0.2), transparent 25%),
+        radial-gradient(circle at top right, rgba(44, 177, 167, 0.24), transparent 30%),
+        linear-gradient(180deg, #f9fffe 0%, #eefcf8 100%);
+      overflow-x: hidden;
+    }
 
-/* ── BUTTONS ── */
-.btn {
-  display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
-  font-size: .9rem; font-weight: 500;
-  padding: .6rem 1.2rem;
-  border-radius: var(--radius-sm);
-  transition: background var(--t), transform var(--t), box-shadow var(--t);
-  cursor: pointer;
-}
-.btn:active { transform: translateY(1px); }
-.btn-primary { background: var(--primary); color: #fff; }
-.btn-primary:hover { background: var(--primary-hov); }
-.btn-accent { background: var(--accent); color: #fff; }
-.btn-accent:hover { background: var(--accent-hov); }
-.btn-outline {
-  background: transparent;
-  border: 1.5px solid var(--border);
-  color: var(--text);
-}
-.btn-outline:hover { border-color: var(--accent); color: var(--accent); }
-.btn-ghost { background: transparent; color: var(--text-2); padding: .5rem .75rem; }
-.btn-ghost:hover { background: var(--bg-alt); color: var(--text); }
-.btn-danger { background: var(--danger); color: #fff; }
-.btn-danger:hover { filter: brightness(.9); }
-.btn-sm { font-size: .8rem; padding: .4rem .85rem; }
-.btn-block { width: 100%; }
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      inset: auto;
+      width: 38vw;
+      height: 38vw;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.18;
+      z-index: -1;
+      pointer-events: none;
+    }
 
-/* ── CARD ── */
-.card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  overflow: hidden;
-}
-.card-body { padding: 1.25rem; }
+    body::before {
+      top: -10vw;
+      left: -8vw;
+      background: var(--coral-500);
+    }
 
-/* ── BADGE ── */
-.badge {
-  display: inline-flex; align-items: center; gap: .3rem;
-  font-size: .75rem; font-weight: 600;
-  padding: .2rem .55rem;
-  border-radius: 999px;
-  letter-spacing: .02em;
-  text-transform: uppercase;
-}
-.badge-success { background: var(--success-bg); color: var(--success); }
-.badge-danger  { background: var(--danger-bg);  color: var(--danger);  }
-.badge-warn    { background: var(--warn-bg);    color: var(--warn);    }
-.badge-muted   { background: var(--bg-alt);     color: var(--text-3);  }
+    body::after {
+      bottom: -12vw;
+      right: -8vw;
+      background: var(--teal-500);
+    }
 
-/* ── FORM GROUP ── */
-.form-group { display: flex; flex-direction: column; gap: .4rem; }
-.form-group label { font-size: .83rem; font-weight: 500; color: var(--text-2); }
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
 
-/* ── TOAST ── */
-#toast-container {
-  position: fixed; top: 1rem; right: 1rem; z-index: 9999;
-  display: flex; flex-direction: column; gap: .5rem;
-  pointer-events: none;
-}
-.toast {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-left: 4px solid var(--accent);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-lg);
-  padding: .75rem 1rem;
-  font-size: .875rem;
-  max-width: 320px;
-  opacity: 0;
-  transform: translateX(20px);
-  transition: opacity .25s, transform .25s;
-  pointer-events: all;
-}
-.toast.show { opacity: 1; transform: translateX(0); }
-.toast.toast-error  { border-left-color: var(--danger); }
-.toast.toast-success{ border-left-color: var(--success); }
+    button {
+      cursor: pointer;
+    }
 
-/* ══════════════════════════════════════════════
-   PAGE: HOME
-══════════════════════════════════════════════ */
-#page-home {
-  background: var(--bg);
-}
-.home-hero {
-  background: var(--primary);
-  color: #fff;
-  padding: 2.5rem 1.5rem 3rem;
-  text-align: center;
-  position: relative;
-  overflow: hidden;
-}
-.home-hero::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(ellipse 80% 60% at 50% 120%, rgba(184,146,74,.18) 0%, transparent 70%);
-  pointer-events: none;
-}
-.home-hero-eyebrow {
-  font-size: .78rem;
-  font-weight: 500;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,.55);
-  margin-bottom: .75rem;
-}
-.home-hero h1 {
-  font-family: var(--font-display);
-  font-size: clamp(2.4rem, 7vw, 3.6rem);
-  font-weight: 500;
-  letter-spacing: -.01em;
-  margin-bottom: .5rem;
-}
-.home-hero-sub {
-  font-size: 1rem;
-  color: rgba(255,255,255,.65);
-  font-weight: 300;
-}
-.home-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
-  gap: 1.25rem;
-  padding: 2rem 1.25rem 2.5rem;
-  max-width: 760px;
-  margin: -1.5rem auto 0;
-}
-.home-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
-  padding: 1.75rem 1.5rem;
-  display: flex; flex-direction: column; gap: 1rem;
-  cursor: pointer;
-  transition: box-shadow var(--t), transform var(--t);
-  text-decoration: none; color: inherit;
-}
-.home-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
-.home-card-icon {
-  width: 48px; height: 48px;
-  border-radius: 12px;
-  background: var(--bg-alt);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1.5rem;
-}
-.home-card h2 {
-  font-family: var(--font-display);
-  font-size: 1.4rem;
-  font-weight: 500;
-}
-.home-card p {
-  font-size: .875rem;
-  color: var(--text-2);
-  flex: 1;
-}
-.home-card .btn { align-self: flex-start; margin-top: .25rem; }
+    .confetti-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 120;
+    }
 
-/* ══════════════════════════════════════════════
-   PAGE: AQUAPONEY
-══════════════════════════════════════════════ */
-#page-aquaponey { background: var(--bg); }
-.ap-topbar { background: var(--primary); color: #fff; }
+    .confetti-piece {
+      position: fixed;
+      width: 10px;
+      height: 16px;
+      border-radius: 3px;
+      opacity: 0.92;
+      animation: confettiBurst 900ms ease-out forwards;
+      will-change: transform, opacity;
+    }
 
-.ap-container {
-  max-width: 860px;
-  margin: 0 auto;
-  padding: 1.5rem 1.25rem 3rem;
-}
+    .page {
+      display: none;
+      min-height: 100vh;
+    }
 
-/* Login */
-.ap-login-wrap {
-  min-height: 60vh;
-  display: flex; align-items: center; justify-content: center;
-  padding: 2rem 1rem;
-}
-.ap-login-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
-  padding: 2rem;
-  width: 100%; max-width: 380px;
-}
-.ap-login-card h2 {
-  font-family: var(--font-display);
-  font-size: 1.5rem;
-  margin-bottom: 1.25rem;
-  color: var(--primary);
-}
+    .page.active {
+      display: block;
+      animation: fadeInUp 260ms ease;
+    }
 
-/* Tabs */
-.ap-tabs {
-  display: flex;
-  gap: .25rem;
-  background: var(--bg-alt);
-  border-radius: var(--radius-sm);
-  padding: .25rem;
-  margin-bottom: 1.5rem;
-}
-.ap-tab {
-  flex: 1; text-align: center;
-  font-size: .83rem; font-weight: 500;
-  padding: .45rem;
-  border-radius: 4px;
-  color: var(--text-2);
-  transition: background var(--t), color var(--t);
-  cursor: pointer;
-}
-.ap-tab.active { background: var(--surface); color: var(--text); box-shadow: var(--shadow-sm); }
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(16px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
 
-/* Calendar */
-.ap-section-title {
-  font-family: var(--font-display);
-  font-size: 1.3rem;
-  font-weight: 500;
-  margin-bottom: 1rem;
-  color: var(--primary);
-}
-.cal-nav {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 1rem;
-}
-.cal-month-label {
-  font-weight: 600;
-  font-size: 1rem;
-  text-transform: capitalize;
-}
-.cal-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
-  margin-bottom: 1.25rem;
-}
-.cal-dow {
-  font-size: .7rem; font-weight: 600;
-  text-align: center; color: var(--text-3);
-  text-transform: uppercase; letter-spacing: .05em;
-  padding: .3rem 0;
-}
-.cal-day {
-  aspect-ratio: 1;
-  display: flex; align-items: center; justify-content: center;
-  border-radius: var(--radius-sm);
-  font-size: .875rem;
-  cursor: pointer;
-  transition: background var(--t), color var(--t);
-  border: 1.5px solid transparent;
-  min-height: 36px;
-}
-.cal-day:empty { cursor: default; }
-.cal-day.other-month { color: var(--text-3); }
-.cal-day.today { border-color: var(--accent); font-weight: 600; }
-.cal-day.unavailable { background: var(--danger-bg); color: var(--danger); font-weight: 600; border-color: var(--danger); }
-.cal-day.pending-vacation { background: var(--warn-bg); color: var(--warn); border-color: var(--warn); }
-.cal-day.approved-vacation { background: var(--success-bg); color: var(--success); border-color: var(--success); }
-.cal-day:not(:empty):not(.cal-dow):hover { background: var(--bg-alt); }
+    @keyframes confettiBurst {
+      0% {
+        transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+        opacity: 1;
+      }
+      100% {
+        transform: translate3d(var(--dx), var(--dy), 0) rotate(var(--rot)) scale(0.85);
+        opacity: 0;
+      }
+    }
 
-/* Legend */
-.cal-legend {
-  display: flex; flex-wrap: wrap; gap: .5rem;
-  margin-bottom: 1.25rem;
-}
-.legend-item {
-  display: flex; align-items: center; gap: .35rem;
-  font-size: .78rem; color: var(--text-2);
-}
-.legend-dot {
-  width: 10px; height: 10px;
-  border-radius: 3px;
-  flex-shrink: 0;
-}
+    .home-shell {
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+      padding: 24px;
+    }
 
-/* Request cards */
-.req-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 1rem 1.1rem;
-  margin-bottom: .75rem;
-}
-.req-card-header {
-  display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem;
-  margin-bottom: .5rem;
-}
-.req-card h4 { font-size: .95rem; font-weight: 600; }
-.req-card .meta { font-size: .78rem; color: var(--text-3); margin-bottom: .35rem; }
+    .hero {
+      width: min(1120px, 100%);
+      display: grid;
+      grid-template-columns: 1.2fr 0.9fr;
+      gap: 22px;
+      align-items: stretch;
+    }
 
-/* Admin user list */
-.admin-user-row {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: .75rem 0;
-  border-bottom: 1px solid var(--border);
-  gap: 1rem;
-}
-.admin-user-row:last-child { border-bottom: none; }
-.admin-user-info { flex: 1; min-width: 0; }
-.admin-user-name { font-weight: 600; font-size: .9rem; }
-.admin-user-sub { font-size: .78rem; color: var(--text-3); }
-.admin-actions { display: flex; gap: .5rem; flex-shrink: 0; }
+    .hero-panel,
+    .hero-side,
+    .card {
+      background: var(--surface);
+      border: var(--border);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(20px);
+    }
 
-/* Section panels */
-.ap-panel { display: none; }
-.ap-panel.active { display: block; }
+    .hero-panel {
+      position: relative;
+      overflow: hidden;
+      padding: 42px;
+      background:
+        linear-gradient(140deg, rgba(17, 75, 95, 0.96), rgba(44, 177, 167, 0.88)),
+        var(--surface);
+      color: white;
+    }
 
-/* ══════════════════════════════════════════════
-   PAGE: SAMI
-══════════════════════════════════════════════ */
-#page-sami { background: var(--bg); }
-.sami-container {
-  max-width: 680px;
-  margin: 0 auto;
-  padding: 1.75rem 1.25rem 3rem;
-  display: flex; flex-direction: column; gap: 1.5rem;
-}
+    .hero-panel::before {
+      content: "";
+      position: absolute;
+      top: 30px;
+      right: 42px;
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 35% 35%, #fff9c4 0%, #ffe082 28%, #ffc857 62%, #ff9f1c 100%);
+      box-shadow:
+        0 0 0 10px rgba(255, 211, 105, 0.12),
+        0 0 40px rgba(255, 200, 87, 0.45);
+      animation: sunFloat 5s ease-in-out infinite;
+    }
 
-/* Counter card */
-.sami-counter {
-  background: var(--primary);
-  color: #fff;
-  border-radius: var(--radius-lg);
-  padding: 1.5rem;
-  text-align: center;
-  position: relative;
-  overflow: hidden;
-}
-.sami-counter::before {
-  content: '';
-  position: absolute; inset: 0;
-  background: radial-gradient(circle at 70% 30%, rgba(184,146,74,.25), transparent 60%);
-  pointer-events: none;
-}
-.sami-counter-num {
-  font-family: var(--font-display);
-  font-size: clamp(2.5rem, 8vw, 4rem);
-  font-weight: 500;
-  line-height: 1;
-  margin-bottom: .35rem;
-}
-.sami-counter-label {
-  font-size: .85rem;
-  opacity: .7;
-  margin-bottom: 1rem;
-}
-.sami-resolved-chips {
-  display: flex; flex-wrap: wrap; gap: .4rem; justify-content: center;
-}
-.resolved-chip {
-  background: rgba(255,255,255,.15);
-  backdrop-filter: blur(4px);
-  border: 1px solid rgba(255,255,255,.2);
-  border-radius: 999px;
-  padding: .25rem .65rem;
-  font-size: .78rem;
-  font-weight: 500;
-  color: rgba(255,255,255,.9);
-}
+    .hero-panel::after {
+      content: "";
+      position: absolute;
+      right: -70px;
+      top: -40px;
+      width: 220px;
+      height: 220px;
+      border-radius: 40px;
+      transform: rotate(18deg);
+      background: linear-gradient(135deg, rgba(255,255,255,0.22), rgba(255,255,255,0.04));
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
 
-/* Chips suggestions */
-.sami-suggestions-title {
-  font-size: .8rem; font-weight: 600;
-  text-transform: uppercase; letter-spacing: .08em;
-  color: var(--text-3);
-  margin-bottom: .6rem;
-}
-.sami-chips {
-  display: flex; flex-wrap: wrap; gap: .5rem;
-}
-.sami-chip {
-  background: var(--surface);
-  border: 1.5px solid var(--border);
-  border-radius: 999px;
-  padding: .4rem .9rem;
-  font-size: .83rem;
-  color: var(--text-2);
-  cursor: pointer;
-  transition: border-color var(--t), color var(--t), background var(--t);
-}
-.sami-chip:hover, .sami-chip.active {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: rgba(184,146,74,.06);
-}
+    @keyframes sunFloat {
+      0%, 100% {
+        transform: translateY(0) scale(1);
+      }
+      50% {
+        transform: translateY(-10px) scale(1.04);
+      }
+    }
 
-/* Request form */
-.sami-form-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  padding: 1.5rem;
-  display: flex; flex-direction: column; gap: 1rem;
-}
-.sami-form-title {
-  font-family: var(--font-display);
-  font-size: 1.25rem;
-  font-weight: 500;
-  color: var(--primary);
-}
-.sami-success {
-  text-align: center;
-  padding: 1.5rem;
-  display: none;
-}
-.sami-success-icon { font-size: 2.5rem; margin-bottom: .75rem; }
-.sami-success h3 { font-family: var(--font-display); font-size: 1.3rem; color: var(--success); margin-bottom: .35rem; }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.13);
+      border: 1px solid rgba(255,255,255,0.18);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-size: 0.76rem;
+      font-weight: 800;
+    }
 
-/* Resolved list */
-.sami-resolved-section {}
-.sami-resolved-title {
-  font-family: var(--font-display);
-  font-size: 1.2rem;
-  font-weight: 500;
-  color: var(--primary);
-  margin-bottom: .75rem;
-}
-.sami-resolved-item {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: .9rem 1rem;
-  margin-bottom: .6rem;
-  display: flex; align-items: flex-start; gap: .85rem;
-}
-.sami-resolved-avatar {
-  width: 36px; height: 36px; border-radius: 50%;
-  background: var(--success-bg);
-  color: var(--success);
-  display: flex; align-items: center; justify-content: center;
-  font-weight: 700; font-size: .8rem;
-  flex-shrink: 0;
-}
-.sami-resolved-name { font-weight: 600; font-size: .875rem; }
-.sami-resolved-msg { font-size: .8rem; color: var(--text-2); margin-top: .15rem; }
+    .hero h1 {
+      margin: 18px 0 10px;
+      font-family: var(--font-display);
+      font-size: clamp(2.2rem, 5vw, 4.6rem);
+      line-height: 0.95;
+      letter-spacing: -0.05em;
+      max-width: 8.5ch;
+    }
 
-/* Admin Sami */
-.sami-admin-link {
-  text-align: right;
-  font-size: .75rem;
-  color: var(--text-3);
-}
-.sami-admin-link button {
-  font-size: .75rem; color: var(--text-3);
-  text-decoration: underline;
-  background: none; border: none; cursor: pointer;
-}
-.sami-admin-link button:hover { color: var(--text-2); }
+    .hero p.lead {
+      max-width: 55ch;
+      line-height: 1.7;
+      color: rgba(255,255,255,0.84);
+      font-size: 1.02rem;
+      margin: 0 0 26px;
+    }
 
-.sami-admin-panel { display: none; }
-.sami-admin-panel.active { display: block; }
+    .hero-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 26px;
+    }
 
-.sami-req-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 1rem;
-  margin-bottom: .75rem;
-}
-.sami-req-header {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: .5rem;
-  gap: .75rem;
-}
-.sami-req-name { font-weight: 600; }
-.sami-req-ts { font-size: .75rem; color: var(--text-3); }
-.sami-req-msg { font-size: .875rem; color: var(--text-2); margin-bottom: .75rem; white-space: pre-wrap; }
-.sami-reply-area { display: flex; flex-direction: column; gap: .5rem; }
-.sami-resolved-reply {
-  background: var(--success-bg);
-  border-radius: var(--radius-sm);
-  padding: .5rem .75rem;
-  font-size: .83rem;
-  color: var(--success);
-}
+    .hero-metric {
+      padding: 16px 14px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.16);
+    }
 
-/* ── UTILS ── */
-.mt-1 { margin-top: .5rem; }
-.mt-2 { margin-top: 1rem; }
-.mt-3 { margin-top: 1.5rem; }
-.mb-1 { margin-bottom: .5rem; }
-.mb-2 { margin-bottom: 1rem; }
-.flex { display: flex; }
-.gap-1 { gap: .5rem; }
-.gap-2 { gap: 1rem; }
-.items-center { align-items: center; }
-.justify-between { justify-content: space-between; }
-.text-sm { font-size: .875rem; }
-.text-xs { font-size: .78rem; }
-.text-muted { color: var(--text-2); }
-.text-3 { color: var(--text-3); }
-.font-600 { font-weight: 600; }
-.hidden { display: none !important; }
-.w-full { width: 100%; }
-.empty-state {
-  text-align: center;
-  padding: 2.5rem 1rem;
-  color: var(--text-3);
-  font-size: .875rem;
-}
-.divider {
-  border: none;
-  border-top: 1px solid var(--border);
-  margin: 1.25rem 0;
-}
-.section-sub {
-  font-size: .875rem;
-  color: var(--text-2);
-  margin-top: -.25rem;
-  margin-bottom: 1rem;
-}
-</style>
+    .hero-metric strong {
+      display: block;
+      font-size: 1.55rem;
+      letter-spacing: -0.03em;
+      margin-bottom: 4px;
+    }
+
+    .hero-metric span {
+      font-size: 0.84rem;
+      color: rgba(255,255,255,0.78);
+    }
+
+    .hero-scene {
+      margin-top: 30px;
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 18px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .terrace-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.14);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      font-weight: 800;
+      color: #fff8e8;
+      box-shadow: 0 18px 30px rgba(5, 37, 47, 0.18);
+    }
+
+    .terrace-chip strong {
+      font-size: 1.02rem;
+      letter-spacing: -0.02em;
+    }
+
+    .terrace-chip span {
+      font-size: 0.88rem;
+      color: rgba(255, 248, 232, 0.82);
+    }
+
+    .mascot-wrap {
+      position: relative;
+      width: 180px;
+      height: 148px;
+      flex: 0 0 180px;
+    }
+
+    .mascot-shadow {
+      position: absolute;
+      left: 26px;
+      right: 18px;
+      bottom: 8px;
+      height: 22px;
+      border-radius: 50%;
+      background: rgba(7, 34, 41, 0.26);
+      filter: blur(8px);
+      animation: shadowPulse 2.6s ease-in-out infinite;
+    }
+
+    .mascot {
+      position: absolute;
+      right: 10px;
+      bottom: 18px;
+      width: 132px;
+      height: 112px;
+      animation: mascotBob 2.6s ease-in-out infinite;
+    }
+
+    @keyframes mascotBob {
+      0%, 100% {
+        transform: translateY(0) rotate(-2deg);
+      }
+      50% {
+        transform: translateY(-10px) rotate(2deg);
+      }
+    }
+
+    @keyframes shadowPulse {
+      0%, 100% {
+        transform: scaleX(1);
+        opacity: 0.24;
+      }
+      50% {
+        transform: scaleX(0.9);
+        opacity: 0.14;
+      }
+    }
+
+    .mascot-body {
+      position: absolute;
+      inset: 28px 14px 6px 18px;
+      border-radius: 48% 48% 42% 42%;
+      background: linear-gradient(180deg, #6ae3db 0%, #26b1a7 58%, #167f8a 100%);
+      border: 2px solid rgba(255, 255, 255, 0.22);
+      box-shadow: inset 0 -10px 18px rgba(0, 0, 0, 0.12);
+    }
+
+    .mascot-body::before,
+    .mascot-body::after {
+      content: "";
+      position: absolute;
+      top: -18px;
+      width: 28px;
+      height: 34px;
+      background: linear-gradient(180deg, #88efe7, #3ecabf);
+      border-radius: 70% 70% 30% 30%;
+      border: 2px solid rgba(255, 255, 255, 0.18);
+    }
+
+    .mascot-body::before {
+      left: 18px;
+      transform: rotate(-16deg);
+    }
+
+    .mascot-body::after {
+      right: 20px;
+      transform: rotate(18deg);
+    }
+
+    .mascot-face {
+      position: absolute;
+      inset: 0;
+    }
+
+    .mascot-eye {
+      position: absolute;
+      top: 36px;
+      width: 12px;
+      height: 16px;
+      border-radius: 50%;
+      background: #12343b;
+    }
+
+    .mascot-eye.left {
+      left: 42px;
+    }
+
+    .mascot-eye.right {
+      right: 38px;
+    }
+
+    .mascot-eye::after {
+      content: "";
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.85);
+    }
+
+    .mascot-snout {
+      position: absolute;
+      left: 38px;
+      right: 34px;
+      top: 48px;
+      height: 24px;
+      border-radius: 999px;
+      background: #dff7f3;
+      box-shadow: inset 0 -4px 8px rgba(17, 75, 95, 0.12);
+    }
+
+    .mascot-nostril {
+      position: absolute;
+      top: 8px;
+      width: 6px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(17, 75, 95, 0.55);
+    }
+
+    .mascot-nostril.left {
+      left: 22px;
+    }
+
+    .mascot-nostril.right {
+      right: 22px;
+    }
+
+    .mascot-mouth {
+      position: absolute;
+      left: 52px;
+      top: 76px;
+      width: 26px;
+      height: 14px;
+      border-bottom: 3px solid #12343b;
+      border-radius: 0 0 18px 18px;
+      opacity: 0.8;
+    }
+
+    .mascot-tail {
+      position: absolute;
+      right: 0;
+      top: 52px;
+      width: 30px;
+      height: 30px;
+      border-right: 6px solid #9be4d7;
+      border-top: 6px solid #9be4d7;
+      border-radius: 0 100% 0 0;
+      transform: rotate(18deg);
+      opacity: 0.85;
+    }
+
+    .mascot-water {
+      position: absolute;
+      left: 6px;
+      bottom: 0;
+      width: 108px;
+      height: 22px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.4), rgba(155, 228, 215, 0.25));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.45);
+    }
+
+    .mascot-water::before,
+    .mascot-water::after {
+      content: "";
+      position: absolute;
+      top: 7px;
+      width: 26px;
+      height: 8px;
+      border-top: 2px solid rgba(255,255,255,0.75);
+      border-radius: 999px;
+    }
+
+    .mascot-water::before {
+      left: 18px;
+    }
+
+    .mascot-water::after {
+      right: 18px;
+    }
+
+    .hero-side {
+      padding: 22px;
+      display: grid;
+      gap: 16px;
+      align-content: start;
+    }
+
+    .portal-tile {
+      position: relative;
+      overflow: hidden;
+      padding: 24px;
+      border-radius: 22px;
+      border: var(--border);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,255,255,0.75));
+      transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+    }
+
+    .portal-tile:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 16px 40px rgba(17, 75, 95, 0.16);
+      border-color: rgba(44, 177, 167, 0.35);
+    }
+
+    .portal-tile .icon {
+      width: 54px;
+      height: 54px;
+      display: grid;
+      place-items: center;
+      border-radius: 18px;
+      font-size: 1.55rem;
+      margin-bottom: 14px;
+      background: linear-gradient(135deg, var(--bg-strong), white);
+    }
+
+    .portal-tile.team .icon {
+      color: var(--teal-700);
+      box-shadow: inset 0 0 0 1px rgba(44,177,167,0.14);
+    }
+
+    .portal-tile.admin .icon {
+      color: var(--coral-600);
+      box-shadow: inset 0 0 0 1px rgba(235,111,90,0.16);
+    }
+
+    .portal-tile h2 {
+      margin: 0 0 8px;
+      font-size: 1.25rem;
+      font-family: var(--font-display);
+    }
+
+    .portal-tile p {
+      margin: 0 0 18px;
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: 0.96rem;
+    }
+
+    .portal-tile button,
+    .btn {
+      border: 0;
+      border-radius: 999px;
+      padding: 13px 18px;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+      transition: transform 140ms ease, box-shadow 140ms ease, opacity 140ms ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--teal-700), var(--teal-500));
+      color: white;
+      box-shadow: 0 10px 22px rgba(44, 177, 167, 0.28);
+    }
+
+    .btn-coral {
+      background: linear-gradient(135deg, var(--coral-600), var(--coral-500));
+      color: white;
+      box-shadow: 0 10px 22px rgba(244, 140, 115, 0.3);
+    }
+
+    .btn-soft {
+      background: white;
+      color: var(--teal-900);
+      box-shadow: inset 0 0 0 1px rgba(17, 75, 95, 0.12);
+    }
+
+    .btn-danger {
+      background: #fff1ee;
+      color: var(--danger);
+      box-shadow: inset 0 0 0 1px rgba(196, 69, 54, 0.18);
+    }
+
+    .btn-ok {
+      background: #eaf8ef;
+      color: var(--ok);
+      box-shadow: inset 0 0 0 1px rgba(43, 147, 72, 0.15);
+    }
+
+    .btn-block {
+      width: 100%;
+    }
+
+    .shell {
+      width: min(1240px, 100%);
+      margin: 0 auto;
+      padding: 24px 18px 72px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 22px;
+      padding: 18px 20px;
+      border-radius: 24px;
+      background: rgba(255,255,255,0.8);
+      backdrop-filter: blur(18px);
+      border: var(--border);
+      box-shadow: var(--shadow);
+      position: sticky;
+      top: 14px;
+      z-index: 20;
+    }
+
+    .brand {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .brand strong {
+      display: block;
+      font-size: 1.35rem;
+      font-family: var(--font-display);
+      letter-spacing: -0.03em;
+    }
+
+    .brand span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .badge {
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-size: 0.78rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .badge.team {
+      background: rgba(44,177,167,0.14);
+      color: var(--teal-700);
+    }
+
+    .badge.admin {
+      background: rgba(244,140,115,0.18);
+      color: var(--coral-600);
+    }
+
+    .badge.sun {
+      background: rgba(246, 200, 95, 0.22);
+      color: #9a6111;
+    }
+
+    .grid {
+      display: grid;
+      gap: 18px;
+    }
+
+    .employee-grid {
+      grid-template-columns: 1.2fr 0.8fr;
+      align-items: start;
+    }
+
+    .admin-grid {
+      grid-template-columns: 0.95fr 1.05fr;
+      align-items: start;
+    }
+
+    .card {
+      padding: 22px;
+    }
+
+    .card h3,
+    .card h2 {
+      margin: 0 0 14px;
+      font-family: var(--font-display);
+      letter-spacing: -0.03em;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .section-head .title {
+      font-size: 1.15rem;
+      font-weight: 800;
+    }
+
+    .subtle {
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.6;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .stat {
+      padding: 16px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, #ffffff, #f7fffd);
+      border: var(--border);
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 1.9rem;
+      line-height: 1;
+      margin-bottom: 6px;
+      letter-spacing: -0.04em;
+    }
+
+    .stat span {
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .life-board {
+      display: grid;
+      gap: 12px;
+      padding: 18px;
+      border-radius: 22px;
+      background: linear-gradient(135deg, rgba(17, 75, 95, 0.96), rgba(44, 177, 167, 0.86));
+      color: white;
+    }
+
+    .life-board.warn {
+      background: linear-gradient(135deg, #b85c38, #ef8354);
+    }
+
+    .life-board.empty {
+      background: linear-gradient(135deg, #6b7f86, #90a4ab);
+    }
+
+    .lives {
+      display: flex;
+      gap: 8px;
+      font-size: 2rem;
+    }
+
+    .lives span.off {
+      opacity: 0.2;
+      filter: grayscale(1);
+      transform: scale(0.9);
+    }
+
+    .notice {
+      margin-top: 12px;
+      padding: 14px 16px;
+      border-radius: 16px;
+      background: #fff5ed;
+      color: #8c4c20;
+      border: 1px solid rgba(244, 140, 115, 0.22);
+      line-height: 1.55;
+      font-size: 0.92rem;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 14px;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+      width: 100%;
+      border: 1px solid rgba(17, 75, 95, 0.16);
+      border-radius: 14px;
+      padding: 14px 15px;
+      background: rgba(255,255,255,0.88);
+      color: var(--text);
+      transition: border-color 120ms ease, box-shadow 120ms ease, background 120ms ease;
+    }
+
+    .field textarea {
+      resize: vertical;
+      min-height: 110px;
+    }
+
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus {
+      outline: none;
+      background: white;
+      border-color: var(--teal-500);
+      box-shadow: 0 0 0 4px rgba(44, 177, 167, 0.12);
+    }
+
+    .calendar-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .calendar-head h3 {
+      margin: 0;
+      font-size: 1.18rem;
+      text-transform: capitalize;
+    }
+
+    .calendar-controls {
+      display: flex;
+      gap: 8px;
+    }
+
+    .icon-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      border: 0;
+      background: white;
+      box-shadow: inset 0 0 0 1px rgba(17,75,95,0.1);
+      color: var(--teal-900);
+      font-size: 1.2rem;
+    }
+
+    .calendar {
+      border-radius: 22px;
+      overflow: hidden;
+      border: 1px solid rgba(17,75,95,0.08);
+      background: #dcefed;
+    }
+
+    .calendar-weekdays,
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+    }
+
+    .calendar-weekdays div {
+      padding: 12px 6px;
+      text-align: center;
+      color: white;
+      font-weight: 800;
+      font-size: 0.76rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      background: linear-gradient(135deg, var(--teal-900), var(--teal-700));
+    }
+
+    .calendar-cell {
+      min-height: 92px;
+      padding: 10px 8px 8px;
+      background: rgba(255,255,255,0.92);
+      position: relative;
+      transition: transform 100ms ease, background 100ms ease;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      border-right: 1px solid rgba(17,75,95,0.05);
+      border-bottom: 1px solid rgba(17,75,95,0.05);
+    }
+
+    .calendar-cell.clickable:hover {
+      background: #f7fffd;
+      transform: translateY(-1px);
+    }
+
+    .calendar-cell.blank {
+      background: rgba(235, 244, 243, 0.64);
+    }
+
+    .calendar-cell.blocked {
+      background: rgba(243, 247, 246, 0.95);
+    }
+
+    .calendar-cell.today .day-number {
+      background: var(--coral-600);
+      color: white;
+      box-shadow: 0 8px 18px rgba(235, 111, 90, 0.25);
+    }
+
+    .calendar-cell.has-mine {
+      background: #eafbf7;
+      box-shadow: inset 0 0 0 2px rgba(44, 177, 167, 0.18);
+    }
+
+    .calendar-cell.has-team {
+      background: #f5fffc;
+    }
+
+    .day-number {
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 0.92rem;
+    }
+
+    .cell-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      max-width: 100%;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(17, 75, 95, 0.08);
+      color: var(--teal-900);
+      font-size: 0.67rem;
+      font-weight: 800;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .request-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .request-item {
+      display: grid;
+      grid-template-columns: 68px 1fr auto;
+      gap: 14px;
+      padding: 16px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, #ffffff, #fbfffe);
+      border: var(--border);
+      align-items: start;
+    }
+
+    .date-chip {
+      display: grid;
+      gap: 2px;
+      place-items: center;
+      border-radius: 16px;
+      padding: 12px 8px;
+      color: white;
+      font-weight: 800;
+    }
+
+    .date-chip .day {
+      font-size: 1.45rem;
+      line-height: 1;
+    }
+
+    .date-chip .month {
+      text-transform: uppercase;
+      font-size: 0.7rem;
+      letter-spacing: 0.06em;
+    }
+
+    .request-main h4 {
+      margin: 0 0 5px;
+      font-size: 1rem;
+    }
+
+    .request-main p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 0.92rem;
+    }
+
+    .request-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 8px 0 6px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 0.76rem;
+      font-weight: 800;
+    }
+
+    .pill.pending {
+      background: #fff4dd;
+      color: var(--pending);
+    }
+
+    .pill.approved {
+      background: #eaf8ef;
+      color: var(--ok);
+    }
+
+    .pill.answered {
+      background: rgba(44,177,167,0.12);
+      color: var(--teal-900);
+    }
+
+    .pill.resolved {
+      background: #eaf8ef;
+      color: var(--ok);
+    }
+
+    .pill.refused {
+      background: #fff0ee;
+      color: var(--danger);
+    }
+
+    .request-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-width: 96px;
+    }
+
+    .empty-state {
+      padding: 28px 18px;
+      text-align: center;
+      color: var(--muted);
+      border: 1px dashed rgba(17,75,95,0.16);
+      border-radius: 18px;
+      background: rgba(255,255,255,0.5);
+    }
+
+    .login-wrap {
+      max-width: 460px;
+      margin: 6vh auto 0;
+    }
+
+    .login-card {
+      padding: 28px;
+    }
+
+    .login-card h1 {
+      margin: 0 0 8px;
+      font-family: var(--font-display);
+      letter-spacing: -0.04em;
+    }
+
+    .login-card p {
+      margin: 0 0 22px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip {
+      border: 0;
+      border-radius: 999px;
+      padding: 9px 12px;
+      background: white;
+      color: var(--teal-900);
+      box-shadow: inset 0 0 0 1px rgba(17,75,95,0.14);
+      font-weight: 700;
+      font-size: 0.84rem;
+    }
+
+    .chip.active {
+      background: linear-gradient(135deg, var(--teal-700), var(--teal-500));
+      color: white;
+      box-shadow: none;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(9, 28, 35, 0.48);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      z-index: 60;
+      backdrop-filter: blur(8px);
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal {
+      width: min(520px, 100%);
+      background: white;
+      border-radius: 26px;
+      padding: 24px;
+      box-shadow: 0 32px 60px rgba(0,0,0,0.18);
+      animation: pop 180ms ease;
+    }
+
+    @keyframes pop {
+      from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.98);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .modal h3 {
+      margin: 0 0 6px;
+      font-family: var(--font-display);
+      font-size: 1.35rem;
+    }
+
+    .modal p {
+      margin: 0 0 18px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 18px;
+      flex-wrap: wrap;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 22px;
+      transform: translate(-50%, 110px);
+      background: rgba(12, 29, 35, 0.94);
+      color: white;
+      padding: 13px 16px;
+      border-radius: 999px;
+      font-weight: 700;
+      z-index: 90;
+      transition: transform 180ms ease;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      max-width: min(92vw, 640px);
+      text-align: center;
+    }
+
+    .toast.show {
+      transform: translate(-50%, 0);
+    }
+
+    .inline-note {
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(44,177,167,0.1);
+      color: var(--teal-900);
+      font-size: 0.88rem;
+      line-height: 1.55;
+    }
+
+    .status-line {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #b7ccd2;
+    }
+
+    .status-dot.live {
+      background: var(--ok);
+      box-shadow: 0 0 0 6px rgba(43,147,72,0.12);
+    }
+
+    .landing-shell {
+      width: min(1180px, 100%);
+      display: grid;
+      gap: 22px;
+    }
+
+    .landing-top {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 22px;
+      align-items: stretch;
+    }
+
+    .landing-panel {
+      position: relative;
+      overflow: hidden;
+      padding: 42px;
+      color: white;
+      border-radius: var(--radius-xl);
+      background:
+        linear-gradient(145deg, rgba(17, 75, 95, 0.98), rgba(44, 177, 167, 0.86));
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .landing-panel::before {
+      content: "";
+      position: absolute;
+      inset: auto auto -70px -70px;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.09);
+    }
+
+    .landing-panel h1 {
+      margin: 14px 0 10px;
+      font-size: clamp(2.6rem, 5vw, 4.8rem);
+      letter-spacing: -0.06em;
+      line-height: 0.93;
+      font-family: var(--font-display);
+      max-width: 8ch;
+    }
+
+    .landing-panel p {
+      margin: 0 0 24px;
+      max-width: 55ch;
+      color: rgba(255,255,255,0.85);
+      line-height: 1.7;
+    }
+
+    .landing-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .landing-side {
+      display: grid;
+      gap: 16px;
+    }
+
+    .mini-card {
+      padding: 20px;
+      border-radius: 22px;
+      background: rgba(255,255,255,0.9);
+      border: var(--border);
+      box-shadow: var(--shadow);
+    }
+
+    .mini-card h3 {
+      margin: 0 0 8px;
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+    }
+
+    .mini-card p {
+      margin: 0 0 14px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .process-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .process-card {
+      position: relative;
+      overflow: hidden;
+      padding: 26px;
+      border-radius: 26px;
+      border: var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,0.94), rgba(255,255,255,0.82));
+      box-shadow: var(--shadow);
+    }
+
+    .process-card h2 {
+      margin: 8px 0;
+      font-family: var(--font-display);
+      font-size: 1.45rem;
+    }
+
+    .process-card p {
+      margin: 0 0 18px;
+      line-height: 1.6;
+      color: var(--muted);
+    }
+
+    .process-icon {
+      width: 58px;
+      height: 58px;
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      font-size: 1.6rem;
+      background: linear-gradient(135deg, #ffffff, var(--bg-strong));
+      box-shadow: inset 0 0 0 1px rgba(17,75,95,0.1);
+    }
+
+    .sami-grid {
+      display: grid;
+      grid-template-columns: 0.95fr 1.05fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .sami-stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .sami-card {
+      padding: 16px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, #ffffff, #f9fffd);
+      border: var(--border);
+    }
+
+    .sami-card strong {
+      display: block;
+      font-size: 1.8rem;
+      letter-spacing: -0.04em;
+      margin-bottom: 6px;
+    }
+
+    .example-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .example-chip {
+      border: 0;
+      border-radius: 999px;
+      padding: 10px 14px;
+      background: rgba(44,177,167,0.1);
+      color: var(--teal-900);
+      font-weight: 700;
+      font-size: 0.82rem;
+    }
+
+    .ticker {
+      overflow: hidden;
+      border-radius: 16px;
+      background: linear-gradient(135deg, rgba(17,75,95,0.94), rgba(44,177,167,0.82));
+      color: white;
+      padding: 12px 0;
+      position: relative;
+    }
+
+    .ticker-track {
+      display: inline-flex;
+      gap: 26px;
+      white-space: nowrap;
+      padding-left: 100%;
+      animation: tickerRun 72s linear infinite;
+      font-weight: 700;
+    }
+
+    @keyframes tickerRun {
+      from {
+        transform: translateX(0);
+      }
+      to {
+        transform: translateX(-100%);
+      }
+    }
+
+    .todo-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .todo-item {
+      border-radius: 20px;
+      border: var(--border);
+      background: linear-gradient(180deg, #ffffff, #fbfffe);
+      padding: 18px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .todo-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .todo-head h4 {
+      margin: 0 0 6px;
+      font-size: 1rem;
+    }
+
+    .todo-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .todo-reply {
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(44,177,167,0.09);
+      color: var(--teal-900);
+      line-height: 1.55;
+      font-size: 0.9rem;
+    }
+
+    .todo-private {
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(17,75,95,0.06);
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 0.9rem;
+      border: 1px dashed rgba(17,75,95,0.12);
+    }
+
+    .todo-admin {
+      display: grid;
+      gap: 10px;
+      padding-top: 8px;
+      border-top: 1px dashed rgba(17,75,95,0.12);
+    }
+
+    .todo-admin textarea {
+      min-height: 88px;
+    }
+
+    .todo-admin-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .sami-lock {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .sami-lock input {
+      flex: 1;
+      min-width: 180px;
+      border: 1px solid rgba(17, 75, 95, 0.16);
+      border-radius: 14px;
+      padding: 13px 14px;
+      background: rgba(255,255,255,0.86);
+    }
+
+    .prize-hero {
+      position: relative;
+      overflow: hidden;
+      padding: 34px;
+      border-radius: 28px;
+      color: white;
+      background:
+        radial-gradient(circle at top right, rgba(255,255,255,0.16), transparent 28%),
+        linear-gradient(145deg, #0d3f50, #1a7f8a 52%, #eb6f5a 100%);
+      box-shadow: var(--shadow);
+    }
+
+    .prize-hero h1 {
+      margin: 12px 0 10px;
+      font-family: var(--font-display);
+      font-size: clamp(2.3rem, 5vw, 4.4rem);
+      letter-spacing: -0.05em;
+      line-height: 0.94;
+      max-width: 9ch;
+    }
+
+    .prize-hero p {
+      margin: 0;
+      max-width: 64ch;
+      color: rgba(255,255,255,0.86);
+      line-height: 1.7;
+    }
+
+    .prize-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .winner-wall {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .winner-card {
+      padding: 18px;
+      border-radius: 20px;
+      border: var(--border);
+      background: linear-gradient(180deg, #ffffff, #fffaf4);
+      box-shadow: var(--shadow);
+    }
+
+    .winner-card strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 1.12rem;
+    }
+
+    .winner-card span {
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.55;
+    }
+
+    .prize-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .prize-item {
+      overflow: hidden;
+      padding: 0;
+      border-radius: 20px;
+      border: var(--border);
+      background: linear-gradient(180deg, #ffffff, #fbfffe);
+      box-shadow: var(--shadow);
+    }
+
+    .prize-image {
+      min-height: 150px;
+      display: grid;
+      place-items: center;
+      font-size: 3rem;
+      color: white;
+      text-shadow: 0 4px 18px rgba(0,0,0,0.22);
+    }
+
+    .prize-image.mallmann {
+      background:
+        radial-gradient(circle at top, rgba(255,255,255,0.18), transparent 25%),
+        linear-gradient(145deg, #6c2f1d, #a94624 52%, #ff8c42 100%);
+    }
+
+    .prize-image.italien {
+      background:
+        radial-gradient(circle at top left, rgba(255,255,255,0.16), transparent 25%),
+        linear-gradient(145deg, #1b6b4a, #f3f0d7 50%, #d4483b 100%);
+      color: #fffaf4;
+    }
+
+    .prize-image.tadao {
+      background:
+        radial-gradient(circle at top right, rgba(255,255,255,0.16), transparent 25%),
+        linear-gradient(145deg, #2f6e7f, #58a4b0 48%, #f0c987 100%);
+    }
+
+    .prize-image.terrasse {
+      background:
+        radial-gradient(circle at 30% 30%, #fff4b0 0%, #ffd166 22%, rgba(255,209,102,0.18) 23%, transparent 24%),
+        linear-gradient(145deg, #1b6f78, #2cb1a7 48%, #f6c85f 100%);
+    }
+
+    .prize-content {
+      padding: 18px;
+    }
+
+    .prize-item h3 {
+      margin: 0 0 6px;
+      font-family: var(--font-display);
+      font-size: 1.12rem;
+    }
+
+    .prize-item p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .fun-note {
+      margin-top: 14px;
+      padding: 14px 16px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.14);
+      border: 1px solid rgba(255,255,255,0.16);
+      color: rgba(255,255,255,0.9);
+      line-height: 1.6;
+    }
+
+    .moments-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .moment-card {
+      min-height: 190px;
+      padding: 18px;
+      border-radius: 22px;
+      border: 1px dashed rgba(17,75,95,0.18);
+      background:
+        radial-gradient(circle at top left, rgba(244, 140, 115, 0.08), transparent 30%),
+        linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,255,255,0.72));
+      display: grid;
+      align-content: space-between;
+      gap: 14px;
+    }
+
+    .moment-icon {
+      width: 54px;
+      height: 54px;
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      font-size: 1.5rem;
+      background: linear-gradient(135deg, #ffffff, var(--bg-strong));
+      box-shadow: inset 0 0 0 1px rgba(17,75,95,0.1);
+    }
+
+    .moment-card h3 {
+      margin: 0 0 6px;
+      font-family: var(--font-display);
+    }
+
+    .moment-card p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: 0.92rem;
+    }
+
+    .prize-footnote {
+      padding: 14px 16px;
+      border-radius: 16px;
+      background: rgba(17,75,95,0.08);
+      color: var(--teal-900);
+      line-height: 1.6;
+      font-size: 0.92rem;
+    }
+
+    @media (max-width: 980px) {
+      .hero,
+      .employee-grid,
+      .admin-grid,
+      .landing-top,
+      .sami-grid,
+      .prize-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .hero-scene {
+        align-items: start;
+        flex-direction: column;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .hero-panel,
+      .hero-side,
+      .card {
+        border-radius: 22px;
+      }
+
+      .hero-panel {
+        padding: 28px;
+      }
+
+      .hero-metrics {
+        grid-template-columns: 1fr;
+      }
+
+      .mascot-wrap {
+        width: 154px;
+        height: 132px;
+        align-self: end;
+      }
+
+      .topbar {
+        flex-wrap: wrap;
+        position: static;
+      }
+
+      .request-item {
+        grid-template-columns: 1fr;
+      }
+
+      .request-actions {
+        flex-direction: row;
+        min-width: 0;
+      }
+
+      .calendar-cell {
+        min-height: 76px;
+      }
+
+      .cell-tags .tag {
+        font-size: 0.62rem;
+        padding: 3px 6px;
+      }
+
+      .process-grid,
+      .sami-stats,
+      .winner-wall,
+      .moments-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .shell,
+      .home-shell {
+        padding-left: 14px;
+        padding-right: 14px;
+      }
+
+      .login-card,
+      .card,
+      .modal {
+        padding: 18px;
+      }
+
+      .stats {
+        grid-template-columns: 1fr;
+      }
+
+      .calendar-weekdays div {
+        font-size: 0.64rem;
+        padding: 10px 2px;
+      }
+
+      .calendar-cell {
+        min-height: 70px;
+        padding: 8px 5px 6px;
+      }
+
+      .tag {
+        display: none;
+      }
+
+      .hero-panel::before {
+        width: 74px;
+        height: 74px;
+        top: 22px;
+        right: 24px;
+      }
+
+      .terrace-chip {
+        width: 100%;
+      }
+    }
+  </style>
 </head>
 <body>
+  <section class="page active" id="page-landing">
+    <div class="home-shell">
+      <div class="landing-shell">
+        <div class="landing-top">
+          <div class="landing-panel">
+            <div class="eyebrow">☀️ La Terrasse • Aquawesh</div>
+            <h1>Le coin équipe de Sami.</h1>
+            <p>
+              Un point d’entrée unique pour gérer AquaPoney et les demandes du quotidien.
+              On garde exactement l’univers AquaPoney déjà posé, et on ajoute maintenant un second process simple pour les soucis d’horaires, de badge, et les demandes particulières.
+            </p>
+            <div class="landing-actions">
+              <button class="btn btn-primary" onclick="showPage('home')">Ouvrir AquaPoney</button>
+              <button class="btn btn-coral" onclick="showPage('sami-todo')">Ouvrir la To Do List de Sami</button>
+              <button class="btn btn-soft" onclick="showPage('cash-prize')">Ouvrir Cash Prize</button>
+            </div>
+          </div>
 
-<!-- TOAST CONTAINER -->
-<div id="toast-container"></div>
+          <div class="landing-side">
+            <div class="mini-card">
+              <div class="badge sun">Nouveau process</div>
+              <h3>To Do List de Sami</h3>
+              <p>
+                Les employés peuvent envoyer une demande particulière, voir combien de demandes ont déjà reçu une réponse
+                et suivre les personnes déjà aidées.
+              </p>
+              <button class="btn btn-soft" onclick="showPage('sami-todo')">Voir le process</button>
+            </div>
 
-<!-- ══════════════════════════════════════════
-     PAGE: HOME
-══════════════════════════════════════════ -->
-<div id="page-home" class="page active">
-  <div class="home-hero">
-    <div class="home-hero-eyebrow">Espace équipe</div>
-    <h1>AquaPoney 🐴</h1>
-    <p class="home-hero-sub">La Terrasse · Gestion du personnel</p>
-  </div>
-  <div class="home-cards">
-    <div class="home-card" onclick="showPage('page-aquaponey')">
-      <div class="home-card-icon">📅</div>
-      <h2>Mes indisponibilités</h2>
-      <p>Déclare tes indispos, pose des congés et consulte ton planning.</p>
-      <button class="btn btn-primary">Accéder</button>
-    </div>
-    <div class="home-card" onclick="showPage('page-sami')">
-      <div class="home-card-icon">📋</div>
-      <h2>Demandes à Sami</h2>
-      <p>Envoie une demande directement à Sami : horaires, paie, planning…</p>
-      <button class="btn btn-accent">Accéder</button>
-    </div>
-  </div>
-</div>
+            <div class="mini-card">
+              <div class="badge team">AquaPoney</div>
+              <h3>Portail d’indisponibilités</h3>
+              <p>
+                Le portail existant reste intact : compteur de vies, calendrier, demandes et espace admin.
+              </p>
+              <button class="btn btn-soft" onclick="showPage('home')">Aller vers AquaPoney</button>
+            </div>
 
-<!-- ══════════════════════════════════════════
-     PAGE: AQUAPONEY
-══════════════════════════════════════════ -->
-<div id="page-aquaponey" class="page">
-  <!-- Topbar -->
-  <div class="topbar ap-topbar">
-    <button class="btn-back" onclick="showPage('page-home')">
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13L5 8l5-5"/></svg>
-      Accueil
-    </button>
-    <div class="topbar-brand">AquaPoney 🐴 <span>Mes indisponibilités</span></div>
-    <div id="ap-user-tag" style="font-size:.78rem;opacity:.7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px;"></div>
-  </div>
-
-  <!-- Login -->
-  <div id="ap-login" class="ap-login-wrap">
-    <div class="ap-login-card">
-      <h2>Connexion 🔐</h2>
-      <p class="text-sm text-muted mb-2">Sélectionne ton nom et entre ton code.</p>
-      <div class="form-group mb-2">
-        <label>Ton prénom</label>
-        <select id="ap-login-select">
-          <option value="">— Choisir —</option>
-        </select>
-      </div>
-      <div class="form-group mb-2">
-        <label>Code (4 chiffres)</label>
-        <input type="password" inputmode="numeric" maxlength="4" id="ap-login-code" placeholder="••••" autocomplete="off">
-      </div>
-      <button class="btn btn-primary btn-block" onclick="apLogin()">Se connecter</button>
-      <div id="ap-login-err" class="text-sm" style="color:var(--danger);margin-top:.6rem;display:none;"></div>
-    </div>
-  </div>
-
-  <!-- App (shown after login) -->
-  <div id="ap-app" class="hidden">
-    <div class="ap-container">
-      <!-- Tabs -->
-      <div class="ap-tabs" id="ap-tabs">
-        <div class="ap-tab active" onclick="apTab('cal')">📅 Calendrier</div>
-        <div class="ap-tab" onclick="apTab('requests')">📝 Demandes</div>
-        <div class="ap-tab" id="ap-admin-tab" style="display:none;" onclick="apTab('admin')">⚙️ Admin</div>
-      </div>
-
-      <!-- Calendar panel -->
-      <div id="ap-panel-cal" class="ap-panel active">
-        <div class="cal-nav">
-          <button class="btn btn-ghost btn-sm" onclick="apCalNav(-1)">← Préc.</button>
-          <span class="cal-month-label" id="ap-cal-label"></span>
-          <button class="btn btn-ghost btn-sm" onclick="apCalNav(1)">Suiv. →</button>
-        </div>
-        <div class="cal-grid" id="ap-cal-grid"></div>
-        <div class="cal-legend">
-          <div class="legend-item"><div class="legend-dot" style="background:var(--danger-bg);border:1.5px solid var(--danger)"></div> Indispo</div>
-          <div class="legend-item"><div class="legend-dot" style="background:var(--warn-bg);border:1.5px solid var(--warn)"></div> Congé demandé</div>
-          <div class="legend-item"><div class="legend-dot" style="background:var(--success-bg);border:1.5px solid var(--success)"></div> Congé approuvé</div>
-          <div class="legend-item"><div class="legend-dot" style="background:var(--bg-alt);border:1.5px solid var(--accent)"></div> Aujourd'hui</div>
-        </div>
-
-        <div id="ap-day-modal" class="hidden card" style="margin-bottom:1.5rem;">
-          <div class="card-body">
-            <h3 id="ap-day-modal-title" style="font-family:var(--font-display);font-size:1.1rem;margin-bottom:.75rem;"></h3>
-            <div id="ap-day-current" class="text-sm text-muted mb-2"></div>
-            <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
-              <button class="btn btn-danger btn-sm" onclick="apSetDay('unavailable')">Marquer indispo</button>
-              <button class="btn btn-sm" style="background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn);" onclick="apSetDay('vacation')">Demander congé</button>
-              <button class="btn btn-outline btn-sm" onclick="apSetDay('clear')">Effacer</button>
-              <button class="btn btn-ghost btn-sm" onclick="apCloseModal()">Annuler</button>
+            <div class="mini-card">
+              <div class="badge admin">Cash Prize</div>
+              <h3>Récompenses de la salle</h3>
+              <p>
+                Une page drôle et festive pour les meilleures ventes, l’assiduité, l’ambiance et les best moments de La Terrasse.
+              </p>
+              <button class="btn btn-soft" onclick="showPage('cash-prize')">Voir les récompenses</button>
             </div>
           </div>
         </div>
 
-        <div id="ap-my-days" class="mt-2">
-          <p class="ap-section-title">Mes jours marqués</p>
-          <div id="ap-days-list"></div>
-        </div>
-      </div>
+        <div class="process-grid" style="grid-template-columns:repeat(3,minmax(0,1fr));">
+          <div class="process-card">
+            <div class="process-icon">🐴</div>
+            <h2>AquaPoney</h2>
+            <p>Pour les indisponibilités planifiées avec suivi, validation et historique d’équipe.</p>
+            <button class="btn btn-primary" onclick="showPage('home')">Accéder au portail</button>
+          </div>
 
-      <!-- Requests panel -->
-      <div id="ap-panel-requests" class="ap-panel">
-        <p class="ap-section-title">Mes demandes</p>
-        <p class="section-sub">Historique de tes demandes de congés.</p>
-        <div id="ap-req-list"></div>
-        <div class="card mt-2">
-          <div class="card-body">
-            <p class="font-600 mb-1 text-sm">Nouvelle demande de congé</p>
-            <div class="form-group mb-1">
-              <label>Date de début</label>
-              <input type="date" id="req-start">
-            </div>
-            <div class="form-group mb-1">
-              <label>Date de fin</label>
-              <input type="date" id="req-end">
-            </div>
-            <div class="form-group mb-2">
-              <label>Motif</label>
-              <input type="text" id="req-reason" placeholder="Vacances, RDV médical…">
-            </div>
-            <button class="btn btn-primary btn-sm" onclick="apAddRequest()">Soumettre la demande</button>
+          <div class="process-card">
+            <div class="process-icon">📝</div>
+            <h2>To Do List de Sami</h2>
+            <p>Pour les demandes particulières comme les horaires, le badge ou un besoin opérationnel rapide.</p>
+            <button class="btn btn-coral" onclick="showPage('sami-todo')">Accéder à la liste</button>
+          </div>
+
+          <div class="process-card">
+            <div class="process-icon">🏆</div>
+            <h2>Cash Prize</h2>
+            <p>Pour célébrer les cracks de la salle, les récompenses secrètes et les meilleurs souvenirs de La Terrasse.</p>
+            <button class="btn btn-soft" onclick="showPage('cash-prize')">Accéder aux prix</button>
           </div>
         </div>
       </div>
+    </div>
+  </section>
 
-      <!-- Admin panel -->
-      <div id="ap-panel-admin" class="ap-panel">
-        <p class="ap-section-title">Administration</p>
-        <div class="ap-tabs" style="margin-bottom:1rem;">
-          <div class="ap-tab active" onclick="apAdminSub('requests')">Demandes</div>
-          <div class="ap-tab" onclick="apAdminSub('team')">Équipe</div>
-          <div class="ap-tab" onclick="apAdminSub('extras')">Extras</div>
+  <section class="page" id="page-home">
+    <div class="home-shell">
+      <div class="hero">
+        <div class="hero-panel">
+          <div class="eyebrow">☀️ La Terrasse • AquaPoney</div>
+          <h1>Sami je peux pas, j'ai Aqua Poney...</h1>
+          <p class="lead">
+            Un portail simple pour gérer les indisponibilités de l'équipe, suivre les demandes en temps réel
+            et garder un calendrier clair côté admin comme côté employé.
+          </p>
+          <div class="hero-metrics">
+            <div class="hero-metric">
+              <strong>3</strong>
+              <span>Demandes max par mois et par personne</span>
+            </div>
+            <div class="hero-metric">
+              <strong>10 j</strong>
+              <span>Délai minimum avant la date demandée</span>
+            </div>
+            <div class="hero-metric">
+              <strong>Temps réel</strong>
+              <span>Google Sheets + Apps Script en backend</span>
+            </div>
+          </div>
+          <div class="hero-scene">
+            <div class="terrace-chip">
+              <div style="font-size:1.35rem;">🌞</div>
+              <div>
+                <strong>La Terrasse</strong>
+                <span>Le portail des indisponibilités du restaurant</span>
+              </div>
+            </div>
+            <div class="mascot-wrap" aria-hidden="true">
+              <div class="mascot-shadow"></div>
+              <div class="mascot">
+                <div class="mascot-tail"></div>
+                <div class="mascot-body">
+                  <div class="mascot-face">
+                    <div class="mascot-eye left"></div>
+                    <div class="mascot-eye right"></div>
+                    <div class="mascot-snout">
+                      <div class="mascot-nostril left"></div>
+                      <div class="mascot-nostril right"></div>
+                    </div>
+                    <div class="mascot-mouth"></div>
+                  </div>
+                </div>
+                <div class="mascot-water"></div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <!-- Admin: requests -->
-        <div id="ap-admin-requests" class="ap-panel active">
-          <div id="ap-admin-req-list"></div>
+        <div class="hero-side">
+          <div class="portal-tile team">
+            <div class="icon">👥</div>
+            <h2>Espace Équipe</h2>
+            <p>Connexion prénom + code à 4 chiffres, calendrier perso, dépôt de demande et suivi du statut.</p>
+            <button class="btn btn-primary" onclick="showPage('team-login')">Entrer côté équipe</button>
+          </div>
+
+          <div class="portal-tile admin">
+            <div class="icon">👑</div>
+            <h2>Espace Admin</h2>
+            <p>Vue globale, validation, refus, suppression et lecture par calendrier ou liste complète.</p>
+            <button class="btn btn-coral" onclick="showPage('admin-login')">Entrer côté admin</button>
+          </div>
         </div>
-        <!-- Admin: team -->
-        <div id="ap-admin-team" class="ap-panel">
-          <div id="ap-admin-team-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="page" id="page-team-login">
+    <div class="shell">
+      <div class="topbar">
+        <div class="brand">
+          <strong>AquaPoney</strong>
+          <span>Portail d'indisponibilités de l'équipe</span>
         </div>
-        <!-- Admin: extras -->
-        <div id="ap-admin-extras" class="ap-panel">
-          <p class="text-sm text-muted mb-2">Gestion des employés extras.</p>
-          <div id="ap-extras-list"></div>
-          <div class="card mt-2">
-            <div class="card-body">
-              <p class="font-600 mb-1 text-sm">Ajouter un extra</p>
-              <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
-                <input type="text" id="extra-name" placeholder="Prénom" style="flex:1;min-width:120px;">
-                <input type="text" id="extra-code" placeholder="Code 4 chiffres" maxlength="4" style="flex:1;min-width:120px;">
-                <button class="btn btn-primary btn-sm" onclick="apAddExtra()">Ajouter</button>
+        <div class="badge team">Espace Équipe</div>
+        <button class="btn btn-soft" onclick="showPage('landing')">Retour accueil</button>
+      </div>
+
+      <div class="login-wrap">
+        <div class="card login-card">
+          <h1>Connexion équipe</h1>
+          <p>Entrez votre prénom et votre code à 4 chiffres pour voir votre calendrier personnel.</p>
+          <div class="form-grid">
+            <div class="field">
+              <label for="team-name">Prénom</label>
+              <input id="team-name" type="text" autocomplete="given-name" placeholder="Ex : Maya">
+            </div>
+            <div class="field">
+              <label for="team-pin">Code à 4 chiffres</label>
+              <input id="team-pin" type="password" inputmode="numeric" maxlength="4" placeholder="••••">
+            </div>
+            <button class="btn btn-primary btn-block" id="team-login-btn" onclick="loginEmployee()">Connexion</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="page" id="page-admin-login">
+    <div class="shell">
+      <div class="topbar">
+        <div class="brand">
+          <strong>AquaPoney</strong>
+          <span>Vue manager et validation des demandes</span>
+        </div>
+        <div class="badge admin">Administration</div>
+        <button class="btn btn-soft" onclick="showPage('landing')">Retour accueil</button>
+      </div>
+
+      <div class="login-wrap">
+        <div class="card login-card">
+          <h1>Connexion admin</h1>
+          <p>Entrez le mot de passe admin pour ouvrir la vue globale et gérer les demandes de l'équipe.</p>
+          <div class="form-grid">
+            <div class="field">
+              <label for="admin-pass">Mot de passe admin</label>
+              <input id="admin-pass" type="password" placeholder="••••••">
+            </div>
+            <button class="btn btn-coral btn-block" id="admin-login-btn" onclick="loginAdmin()">Connexion</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="page" id="page-team-app">
+    <div class="shell">
+      <div class="topbar">
+        <div class="brand">
+          <strong>AquaPoney</strong>
+          <span id="employee-greeting">Bonjour</span>
+        </div>
+        <div class="badge team" id="employee-badge">Équipe</div>
+        <div class="status-line"><span class="status-dot" id="team-sync-dot"></span><span id="team-sync-label">Connexion en attente</span></div>
+        <button class="btn btn-soft" onclick="logoutEmployee()">Déconnexion</button>
+      </div>
+
+      <div class="grid employee-grid">
+        <div class="grid">
+          <div class="card">
+            <div class="calendar-head">
+              <h3 id="team-calendar-title">Calendrier</h3>
+              <div class="calendar-controls">
+                <button class="icon-btn" onclick="changeEmployeeMonth(-1)">‹</button>
+                <button class="icon-btn" onclick="changeEmployeeMonth(1)">›</button>
+              </div>
+            </div>
+            <div class="calendar">
+              <div class="calendar-weekdays">
+                <div>Lun</div><div>Mar</div><div>Mer</div><div>Jeu</div><div>Ven</div><div>Sam</div><div>Dim</div>
+              </div>
+              <div class="calendar-grid" id="team-calendar-grid"></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="section-head">
+              <div class="title">Mes demandes</div>
+              <div class="badge team" id="employee-request-count">0 demande</div>
+            </div>
+            <div class="request-list" id="employee-request-list"></div>
+          </div>
+        </div>
+
+        <div class="grid">
+          <div class="life-board" id="life-board">
+            <div class="section-head">
+              <div class="title">Vies du mois</div>
+              <div id="life-label">3 sur 3 disponibles</div>
+            </div>
+            <div class="lives" id="life-icons"></div>
+            <div id="life-copy">Chaque demande posée sur ce mois consomme une vie 🐴.</div>
+          </div>
+
+          <div class="card">
+            <h3>Nouvelle demande</h3>
+            <p class="subtle">Choisissez la date, la plage horaire et la raison. Les demandes doivent être faites au moins 10 jours à l'avance.</p>
+            <div class="form-grid">
+              <div class="field">
+                <label for="req-date">Date</label>
+                <input id="req-date" type="date">
+              </div>
+              <div class="field">
+                <label for="req-slot">Plage horaire</label>
+                <select id="req-slot">
+                  <option value="">Choisir une plage</option>
+                  <option value="Journée entière">Journée entière</option>
+                  <option value="Matin">Matin</option>
+                  <option value="Après-midi">Après-midi</option>
+                  <option value="Soir">Soir</option>
+                </select>
+              </div>
+              <div class="field" id="req-custom-wrap">
+                <label for="req-custom">Horaire libre</label>
+                <input id="req-custom" type="text" placeholder="Ex : 9h-13h ou 19h-23h">
+              </div>
+              <div class="field">
+                <label for="req-reason">Raison</label>
+                <textarea id="req-reason" placeholder="Ex : rendez-vous médical, mariage, formation..."></textarea>
+              </div>
+              <button class="btn btn-primary btn-block" id="request-submit-btn" onclick="createRequest()">Envoyer la demande</button>
+            </div>
+            <div class="notice">La demande reste en attente tant qu'elle n'est pas validée. Une suppression n'est possible que tant qu'elle est en attente.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="page" id="page-admin-app">
+    <div class="shell">
+      <div class="topbar">
+        <div class="brand">
+          <strong>AquaPoney</strong>
+          <span>Vue d'ensemble des indisponibilités</span>
+        </div>
+        <div class="badge admin">Admin connecté</div>
+        <div class="status-line"><span class="status-dot" id="admin-sync-dot"></span><span id="admin-sync-label">Connexion en attente</span></div>
+        <button class="btn btn-soft" onclick="refreshAdmin()">Actualiser</button>
+        <button class="btn btn-soft" onclick="logoutAdmin()">Déconnexion</button>
+      </div>
+
+      <div class="grid">
+        <div class="stats">
+          <div class="stat"><strong id="stat-employees">0</strong><span>Employés</span></div>
+          <div class="stat"><strong id="stat-total">0</strong><span>Demandes</span></div>
+          <div class="stat"><strong id="stat-pending">0</strong><span>En attente</span></div>
+          <div class="stat"><strong id="stat-approved">0</strong><span>Validées</span></div>
+        </div>
+
+        <div class="grid admin-grid">
+          <div class="grid">
+            <div class="card">
+              <div class="calendar-head">
+                <h3 id="admin-calendar-title">Calendrier équipe</h3>
+                <div class="calendar-controls">
+                  <button class="icon-btn" onclick="changeAdminMonth(-1)">‹</button>
+                  <button class="icon-btn" onclick="changeAdminMonth(1)">›</button>
+                </div>
+              </div>
+              <div class="calendar">
+                <div class="calendar-weekdays">
+                  <div>Lun</div><div>Mar</div><div>Mer</div><div>Jeu</div><div>Ven</div><div>Sam</div><div>Dim</div>
+                </div>
+                <div class="calendar-grid" id="admin-calendar-grid"></div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="section-head">
+                <div class="title">Filtres</div>
+                <button class="btn btn-soft" onclick="setAdminFilter('all')">Réinitialiser</button>
+              </div>
+              <div class="chips" id="admin-filters"></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="section-head">
+              <div class="title">Toutes les demandes</div>
+              <div class="badge admin" id="admin-request-count">0 demande</div>
+            </div>
+            <div class="inline-note">Le mot de passe admin de l'interface est vérifié côté Apps Script. Le secret API backend reste côté script pour signer les sessions et ne figure pas dans ce HTML.</div>
+            <div class="request-list" id="admin-request-list" style="margin-top:14px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="page" id="page-sami-todo">
+    <div class="shell">
+      <div class="topbar">
+        <div class="brand">
+          <strong>To Do List de Sami</strong>
+          <span>Demandes particulières, réponses et suivi des problèmes réglés</span>
+        </div>
+        <div class="badge sun">Process équipe</div>
+        <button class="btn btn-soft" onclick="showPage('home')">Voir AquaPoney</button>
+        <button class="btn btn-soft" onclick="showPage('landing')">Retour accueil</button>
+      </div>
+
+      <div class="grid">
+        <div class="sami-stats">
+          <div class="sami-card"><strong id="sami-total">0</strong><span>Demandes reçues</span></div>
+          <div class="sami-card"><strong id="sami-answered">0</strong><span>Demandes répondues</span></div>
+          <div class="sami-card"><strong id="sami-resolved">0</strong><span>Demandes réglées</span></div>
+        </div>
+
+        <div class="grid sami-grid">
+          <div class="grid">
+            <div class="card">
+              <div class="section-head">
+                <div class="title">Nouvelle demande pour Sami</div>
+                <div class="badge team">Visible par l’équipe</div>
+              </div>
+              <p class="subtle">
+                Ici on met les demandes particulières qui ne passent pas par AquaPoney :
+                souci d’horaires, oubli de badge, échange urgent, point administratif ou besoin spécifique.
+              </p>
+              <div class="form-grid">
+                <div class="field">
+                  <label for="sami-name">Prénom</label>
+                  <input id="sami-name" type="text" placeholder="Ex : Maya">
+                </div>
+                <div class="field">
+                  <label for="sami-topic">Sujet</label>
+                  <select id="sami-topic">
+                    <option value="">Choisir un sujet</option>
+                    <option value="Horaires">Horaires</option>
+                    <option value="Badge">Badge</option>
+                    <option value="Planning">Planning</option>
+                    <option value="Administratif">Administratif</option>
+                    <option value="Autre">Autre</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="sami-message">Demande</label>
+                  <textarea id="sami-message" placeholder="Explique ton besoin à Sami..."></textarea>
+                </div>
+                <button class="btn btn-coral btn-block" onclick="submitSamiTask()">Envoyer à Sami</button>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="section-head">
+                <div class="title">Exemples de demandes</div>
+                <div class="badge sun">Aide au remplissage</div>
+              </div>
+              <div class="example-list">
+                <button class="example-chip" onclick="useSamiExample('J’ai un problème avec mes horaires, peux-tu me les changer ?')">Problème d’horaires</button>
+                <button class="example-chip" onclick="useSamiExample('Je n’ai pas badgé, peux-tu vérifier mon heure de début ?')">Oubli de badge</button>
+                <button class="example-chip" onclick="useSamiExample('Je voudrais te signaler une erreur sur mon planning de cette semaine.')">Erreur planning</button>
+                <button class="example-chip" onclick="useSamiExample('J’ai une demande particulière à te faire concernant mon service.')">Demande particulière</button>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="section-head">
+                <div class="title">Mode Sami</div>
+                <div class="badge admin">Répondre et cocher</div>
+              </div>
+              <p class="subtle">Déverrouille ce mode pour répondre aux demandes, les cocher comme traitées et marquer les personnes déjà réglées.</p>
+              <div class="sami-lock" id="sami-lock-box">
+                <input id="sami-pass" type="password" placeholder="Mot de passe admin">
+                <button class="btn btn-soft" onclick="unlockSamiMode()">Déverrouiller</button>
+                <button class="btn btn-soft" id="sami-lock-off" style="display:none" onclick="lockSamiMode()">Quitter le mode Sami</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid">
+            <div class="card">
+              <div class="section-head">
+                <div class="title">Demandes en cours</div>
+                <div class="badge team" id="sami-open-count">0 ouvertes</div>
+              </div>
+              <div class="todo-list" id="sami-request-list"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ticker">
+          <div class="ticker-track" id="sami-ticker-track"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="page" id="page-cash-prize">
+    <div class="shell">
+      <div class="topbar">
+        <div class="brand">
+          <strong>Cash Prize de La Terrasse</strong>
+          <span>Meilleures ventes, assiduité, énergie d’équipe et best moments</span>
+        </div>
+        <div class="badge admin">Cash Prize</div>
+        <button class="btn btn-soft" onclick="showPage('home')">Voir AquaPoney</button>
+        <button class="btn btn-soft" onclick="showPage('landing')">Retour accueil</button>
+      </div>
+
+      <div class="grid">
+        <div class="prize-hero">
+          <div class="eyebrow">🎉 Remise des prix • Salle only</div>
+          <h1>Les cracks de La Terrasse.</h1>
+          <p>
+            Cette page célèbre les meilleures ventes, les personnes les plus assidues, les plus agréables à bosser avec
+            et les grands moments de la salle. Les gagnants sont là, les lots aussi, mais on garde un peu de mystère sur qui repart avec quoi.
+          </p>
+          <div class="fun-note">
+            Samy reçoit le titre officiel de <strong>meilleur manager du monde entier</strong>, avec comme lot spécial :
+            <strong>un sourire de Anizé</strong> (depuis le temps qu’il attend).
+          </div>
+        </div>
+
+        <div class="prize-grid">
+          <div class="card">
+            <div class="section-head">
+              <div class="title">Les gagnants salle</div>
+              <div class="badge sun">Chefs de rang & salle</div>
+            </div>
+            <div class="winner-wall">
+              <div class="winner-card"><strong>Fabien</strong><span>Pour sa gayeté et son talent à mettre un peu de soleil même quand la salle part en toupie.</span></div>
+              <div class="winner-card"><strong>Lisa</strong><span>Pour l’énergie, la fiabilité et le niveau de bonne humeur parfaitement calibré.</span></div>
+              <div class="winner-card"><strong>Lulu</strong><span>Pour la vibe, le sérieux au service et les moments où tout roule mieux avec elle.</span></div>
+              <div class="winner-card"><strong>Camille</strong><span>Pour l’assiduité, le mental et les journées où elle garde tout debout.</span></div>
+              <div class="winner-card"><strong>Maya</strong><span>Pour le rythme, la salle tenue proprement et le sens du timing.</span></div>
+              <div class="winner-card"><strong>François</strong><span>Pour l’impact en service et le calme qui évite trois incendies par soirée.</span></div>
+              <div class="winner-card"><strong>Mila</strong><span>Pour la qualité de présence, l’élégance et le plaisir de travailler ensemble.</span></div>
+              <div class="winner-card"><strong>Marguerite</strong><span>Pour avoir reussi l’exploit d’etre à la fois discrete, efficace et probablement deja au courant avant tout le monde.</span></div>
+              <div class="winner-card"><strong>Samy</strong><span>Meilleur manager du monde entier. Oui, c’est officiel maintenant.</span></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="section-head">
+              <div class="title">Les cash prizes</div>
+              <div class="badge admin">Mystère gardé</div>
+            </div>
+            <div class="prize-list">
+              <div class="prize-item">
+                <div class="prize-image mallmann">🔥</div>
+                <div class="prize-content">
+                  <h3>Repas pour deux au Mallmann</h3>
+                </div>
+              </div>
+              <div class="prize-item">
+                <div class="prize-image italien">🍝</div>
+                <div class="prize-content">
+                  <h3>Repas pour deux à l’Italien</h3>
+                </div>
+              </div>
+              <div class="prize-item">
+                <div class="prize-image tadao">🌊</div>
+                <div class="prize-content">
+                  <h3>Repas pour deux au Tadao Ando</h3>
+                </div>
+              </div>
+              <div class="prize-item">
+                <div class="prize-image terrasse">☀️</div>
+                <div class="prize-content">
+                  <h3>Repas pour quatre à La Terrasse*</h3>
+                </div>
+              </div>
+              <div class="prize-item">
+                <div class="prize-content">
+                  <h3>Cash prizes en main propre</h3>
+                  <p>Il y aura aussi des cash prizes de <strong>100 €</strong>, <strong>75 €</strong> et <strong>50 €</strong> sur le salaire et/ou sur le pourboire, donnés directement en main propre.</p>
+                </div>
+              </div>
+            </div>
+            <div class="prize-footnote" style="margin-top:14px;">
+              <strong>*</strong> Le vin est à la charge du personnel invité, avec remise de <strong>-40 % à La Terrasse</strong> et <strong>-20 % dans les autres restaurants</strong>.
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-head">
+            <div class="title">Best Moments de La Terrasse</div>
+            <div class="badge team">Photos & vidéos à venir</div>
+          </div>
+          <p class="subtle">
+            Cette partie est prête pour les futurs souvenirs. Quand tu m’enverras les photos et les vidéos de l’équipe,
+            on pourra les intégrer ici comme une galerie vivante des meilleurs moments.
+          </p>
+          <div class="moments-grid">
+            <div class="moment-card">
+              <div class="moment-icon">📸</div>
+              <div>
+                <h3>Photo souvenir</h3>
+                <p>Emplacement prévu pour une photo d’équipe, un service mémorable ou un moment drôle de la salle.</p>
+              </div>
+            </div>
+            <div class="moment-card">
+              <div class="moment-icon">🎬</div>
+              <div>
+                <h3>Vidéo best moment</h3>
+                <p>Bloc prêt à recevoir une vidéo courte : anniversaire, rush héroïque ou scène culte de La Terrasse.</p>
+              </div>
+            </div>
+            <div class="moment-card">
+              <div class="moment-icon">✨</div>
+              <div>
+                <h3>Moment légendaire</h3>
+                <p>Une place réservée pour les images qu’on voudra garder affichées comme les grands classiques de la team.</p>
               </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
-</div>
+  </section>
 
-<!-- ══════════════════════════════════════════
-     PAGE: SAMI REQUESTS
-══════════════════════════════════════════ -->
-<div id="page-sami" class="page">
-  <div class="topbar" style="background:var(--primary);">
-    <button class="btn-back" onclick="showPage('page-home')">
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13L5 8l5-5"/></svg>
-      Accueil
-    </button>
-    <div class="topbar-brand" style="flex:1;">Demandes à Sami 📋</div>
-    <button class="btn-ghost" style="color:rgba(255,255,255,.5);font-size:.75rem;white-space:nowrap;" onclick="samiShowAdminPrompt()">Admin</button>
-  </div>
-
-  <div class="sami-container">
-    <!-- Public view -->
-    <div id="sami-public">
-      <!-- Counter -->
-      <div class="sami-counter">
-        <div class="sami-counter-num" id="sami-count">—</div>
-        <div class="sami-counter-label">demandes traitées par Sami</div>
-        <div class="sami-resolved-chips" id="sami-chips-resolved"></div>
-      </div>
-
-      <!-- Suggestions -->
-      <div>
-        <div class="sami-suggestions-title">Choisir un sujet</div>
-        <div class="sami-chips">
-          <div class="sami-chip" onclick="samiChip(this, 'J\'ai un problème avec mes horaires')">Problème d'horaires</div>
-          <div class="sami-chip" onclick="samiChip(this, 'Peux-tu me changer ces horaires ? Je n\'ai pas badgé.')">Je n'ai pas badgé</div>
-          <div class="sami-chip" onclick="samiChip(this, 'Je souhaite modifier mon planning.')">Modifier mon planning</div>
-          <div class="sami-chip" onclick="samiChip(this, 'J\'ai une question sur ma paie.')">Question sur ma paie</div>
-          <div class="sami-chip" onclick="samiChip(this, '')">Autre demande…</div>
-        </div>
-      </div>
-
-      <!-- Form -->
-      <div class="sami-form-card" id="sami-form-wrap">
-        <div class="sami-form-title">Envoyer une demande</div>
-        <div id="sami-form-fields">
-          <div class="form-group mb-1">
-            <label>Ton prénom</label>
-            <input type="text" id="sami-name" placeholder="Marie">
-          </div>
-          <div class="form-group mb-2">
-            <label>Message</label>
-            <textarea id="sami-msg" placeholder="Décris ta demande…" rows="4"></textarea>
-          </div>
-          <button class="btn btn-accent btn-block" onclick="samiSubmit()">Envoyer ma demande →</button>
-        </div>
-        <div class="sami-success" id="sami-success">
-          <div class="sami-success-icon">✅</div>
-          <h3>Demande envoyée !</h3>
-          <p class="text-sm text-muted">Sami a été notifié et reviendra vers toi bientôt.</p>
-          <button class="btn btn-outline btn-sm mt-2" onclick="samiReset()">Nouvelle demande</button>
-        </div>
-      </div>
-
-      <!-- Resolved list (public) -->
-      <div class="sami-resolved-section">
-        <div class="sami-resolved-title">Demandes résolues</div>
-        <div id="sami-resolved-list">
-          <div class="empty-state">Chargement…</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Admin panel -->
-    <div id="sami-admin" class="sami-admin-panel">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
-        <div style="font-family:var(--font-display);font-size:1.3rem;font-weight:500;color:var(--primary);">Vue admin — Sami</div>
-        <button class="btn btn-ghost btn-sm" onclick="samiAdminLogout()">Déconnexion</button>
-      </div>
-      <div id="sami-admin-all-list">
-        <div class="empty-state">Chargement…</div>
-      </div>
+  <div class="modal-backdrop" id="modal-backdrop" onclick="closeModalIfBackdrop(event)">
+    <div class="modal">
+      <h3 id="modal-title">Détail</h3>
+      <p id="modal-subtitle"></p>
+      <div id="modal-body"></div>
+      <div class="modal-actions" id="modal-actions"></div>
     </div>
   </div>
-</div>
 
-<script>
-/* ══════════════════════════════════════════════════════
-   CONFIG
-══════════════════════════════════════════════════════ */
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbzz3bzurKNhnJ3JZS6F7EcvLF-csTIW7WrVgG5CoMTbHFfGulwZJRqQzcrXRUW7P7toJQ/exec';
-const ADMIN_PASSWORD = '1234'; // AquaPoney admin password
-const SAMI_PASS = '244342';
+  <div class="confetti-layer" id="confetti-layer"></div>
+  <div class="toast" id="toast"></div>
 
-const LOCAL_EMPLOYEES = [
-  { name: 'Alice',   code: '1111' },
-  { name: 'Bruno',   code: '2222' },
-  { name: 'Camille', code: '3333' },
-  { name: 'David',   code: '4444' },
-  { name: 'Emma',    code: '5555' },
-  { name: 'Farah',   code: '6666' },
-  { name: 'Gabriel', code: '7777' },
-  { name: 'Hugo',    code: '8888' },
-  { name: 'Inès',    code: '9999' },
-  { name: 'Jade',    code: '0000' },
-];
+  <script>
+    const CONFIG = {
+      scriptUrl: "https://script.google.com/macros/s/AKfycbyYVoBNlhcwzJLgmduKclrBdE9vLeL5T-I6-wbtSN1k1tejNSL653MFq_yQZ4TIh0fb/exec",
+      backendMode: "legacy",
+      backendApiPassword: "aquaponey2026"
+    };
 
-// Extras stored in localStorage
-function getExtras() {
-  try { return JSON.parse(localStorage.getItem('ap_extras') || '[]'); } catch { return []; }
-}
-function setExtras(e) { localStorage.setItem('ap_extras', JSON.stringify(e)); }
+    const LOCAL_EMPLOYEES = {
+      "Maya": "9009",
+      "Test": "0000",
+      "Sebastien": "1357",
+      "Camille": "1610",
+      "Agnese": "2604",
+      "Margeurite": "2131",
+      "Christian": "0314",
+      "Lisa": "2468",
+      "Lulu": "2468",
+      "Hugo": "2912",
+      "François": "7483",
+      "Sasha": "3156",
+      "Julien": "8742",
+      "Fabien": "2468"
+    };
 
-function getAllEmployees() {
-  return [...LOCAL_EMPLOYEES, ...getExtras()];
-}
+    const LOCAL_ADMIN_PASSWORD = "244342";
+    const SAMI_FUN_RESPONSES = [
+      "☕ Fabien a pu avoir un cafe frappe pour son anniversaire.",
+      "🍸 Julien a pu etre reengage 2 apres avoir ete vire pour lenteur au bar (humour).",
+      "🕺 Christian a pu recuperer un service ou il etait annonce en vacances depuis 2004.",
+      "🎯 Maya a pu faire corriger un horaire qui etait parti vivre sa propre vie.",
+      "🧾 Lisa a pu retrouver un badge qui avait officiellement disparu dans une autre dimension.",
+      "🥐 Hugo a pu obtenir un petit dej de champion apres son ouverture heroique.",
+      "📣 Camille a pu faire reconnaitre qu'elle n'etait pas en retard, juste en decalage artistique.",
+      "🛟 Sebastien a pu etre sauve d'un planning ecrit avec les pieds.",
+      "🎉 Lulu a pu recuperer une pause legitime apres une journee turbo.",
+      "🧠 Sasha a pu faire valider qu'un oubli de badge ne retire pas le cerveau."
+    ];
 
-/* ══════════════════════════════════════════════════════
-   TOAST
-══════════════════════════════════════════════════════ */
-function toast(msg, type = 'info') {
-  const c = document.getElementById('toast-container');
-  const t = document.createElement('div');
-  t.className = 'toast toast-' + type;
-  t.textContent = msg;
-  c.appendChild(t);
-  requestAnimationFrame(() => requestAnimationFrame(() => t.classList.add('show')));
-  setTimeout(() => {
-    t.classList.remove('show');
-    setTimeout(() => t.remove(), 300);
-  }, 3800);
-}
+    const APP = {
+      employee: {
+        token: "",
+        name: "",
+        requests: [],
+        viewYear: 0,
+        viewMonth: 0
+      },
+      admin: {
+        token: "",
+        requests: [],
+        employees: [],
+        filter: "all",
+        viewYear: 0,
+        viewMonth: 0
+      },
+      colors: {},
+      months: ["janvier", "fevrier", "mars", "avril", "mai", "juin", "juillet", "aout", "septembre", "octobre", "novembre", "decembre"],
+      monthsLabel: ["Janvier", "Fevrier", "Mars", "Avril", "Mai", "Juin", "Juillet", "Aout", "Septembre", "Octobre", "Novembre", "Decembre"],
+      weekdaysLabel: ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"],
+      palette: ["#114b5f", "#eb6f5a", "#2cb1a7", "#6a4c93", "#9c6644", "#3a86ff", "#5f0f40", "#588157", "#bc4749", "#277da1"]
+    };
 
-/* ══════════════════════════════════════════════════════
-   PAGE NAVIGATION
-══════════════════════════════════════════════════════ */
-function showPage(id) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  window.scrollTo(0, 0);
-}
+    const STORAGE_KEYS = {
+      employeeToken: "aquaponey.employee.token",
+      employeeName: "aquaponey.employee.name",
+      adminToken: "aquaponey.admin.token",
+      localRequests: "aquaponey.local.requests",
+      samiTasks: "aquaponey.sami.tasks",
+      samiUnlocked: "aquaponey.sami.unlocked"
+    };
 
-/* ══════════════════════════════════════════════════════
-   GAS API
-══════════════════════════════════════════════════════ */
-async function gasGet(params) {
-  const url = GAS_URL + '?' + new URLSearchParams(params).toString();
-  try {
-    const r = await fetch(url);
-    return await r.json();
-  } catch (e) {
-    return { error: e.message };
-  }
-}
-async function gasPost(data) {
-  try {
-    const r = await fetch(GAS_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    // no-cors returns opaque response — assume success
-    return { ok: true };
-  } catch (e) {
-    return { error: e.message };
-  }
-}
+    document.addEventListener("DOMContentLoaded", init);
+    document.getElementById("req-slot").addEventListener("change", toggleCustomSlot);
+    document.getElementById("team-name").addEventListener("keydown", onLoginKeydown);
+    document.getElementById("team-pin").addEventListener("keydown", onLoginKeydown);
+    document.getElementById("admin-pass").addEventListener("keydown", onAdminKeydown);
+    document.addEventListener("click", handleGlobalButtonConfetti);
 
-/* ══════════════════════════════════════════════════════
-   AQUAPONEY — STATE
-══════════════════════════════════════════════════════ */
-let apUser = null; // { name, isAdmin }
-let apCalDate = new Date();
-let apSelectedDay = null; // 'YYYY-MM-DD'
+    function init() {
+      const today = new Date();
+      APP.employee.viewYear = today.getFullYear();
+      APP.employee.viewMonth = today.getMonth();
+      APP.admin.viewYear = today.getFullYear();
+      APP.admin.viewMonth = today.getMonth();
 
-// Stored days: { 'YYYY-MM-DD': 'unavailable'|'vacation'|'approved' }
-function getDays(name) {
-  try { return JSON.parse(localStorage.getItem('ap_days_' + name) || '{}'); } catch { return {}; }
-}
-function setDays(name, d) { localStorage.setItem('ap_days_' + name, JSON.stringify(d)); }
+      const minDate = toDateInputValue(addDays(startOfDay(new Date()), 10));
+      document.getElementById("req-date").min = minDate;
+      document.getElementById("req-custom-wrap").style.display = "none";
+      updateLocalModeBanner();
+      loadSamiState();
+      renderSamiPage();
 
-function getRequests(name) {
-  try { return JSON.parse(localStorage.getItem('ap_req_' + name) || '[]'); } catch { return []; }
-}
-function setRequests(name, r) { localStorage.setItem('ap_req_' + name, JSON.stringify(r)); }
-
-/* ══════════════════════════════════════════════════════
-   AQUAPONEY — LOGIN
-══════════════════════════════════════════════════════ */
-function apInitSelect() {
-  const sel = document.getElementById('ap-login-select');
-  getAllEmployees().forEach(e => {
-    const o = document.createElement('option');
-    o.value = e.name; o.textContent = e.name;
-    sel.appendChild(o);
-  });
-}
-
-function apLogin() {
-  const name = document.getElementById('ap-login-select').value;
-  const code = document.getElementById('ap-login-code').value.trim();
-  const err  = document.getElementById('ap-login-err');
-  err.style.display = 'none';
-
-  if (!name) { err.textContent = 'Sélectionne ton prénom.'; err.style.display = ''; return; }
-
-  // Admin?
-  if (code === ADMIN_PASSWORD) {
-    apUser = { name, isAdmin: true };
-    apStartApp();
-    return;
-  }
-
-  const emp = getAllEmployees().find(e => e.name === name);
-  if (!emp || emp.code !== code) {
-    err.textContent = 'Code incorrect. Réessaie.';
-    err.style.display = '';
-    return;
-  }
-  apUser = { name, isAdmin: false };
-  apStartApp();
-}
-
-function apStartApp() {
-  document.getElementById('ap-login').style.display = 'none';
-  document.getElementById('ap-app').classList.remove('hidden');
-  document.getElementById('ap-user-tag').textContent = apUser.name;
-  if (apUser.isAdmin) {
-    document.getElementById('ap-admin-tab').style.display = '';
-  }
-  apCalDate = new Date();
-  apRenderCal();
-  apRenderDaysList();
-  apRenderRequests();
-  if (apUser.isAdmin) apRenderAdminAll();
-}
-
-/* ══════════════════════════════════════════════════════
-   AQUAPONEY — TABS
-══════════════════════════════════════════════════════ */
-function apTab(id) {
-  document.querySelectorAll('.ap-tabs .ap-tab').forEach((t, i) => {
-    const ids = ['cal', 'requests', 'admin'];
-    t.classList.toggle('active', ids[i] === id);
-  });
-  document.querySelectorAll('#ap-app .ap-panel').forEach(p => {
-    const key = p.id.replace('ap-panel-', '');
-    p.classList.toggle('active', key === id);
-  });
-  if (id === 'admin') {
-    apAdminSub('requests');
-    apRenderAdminAll();
-    apRenderTeam();
-    apRenderExtras();
-  }
-}
-
-function apAdminSub(id) {
-  const panels = ['requests', 'team', 'extras'];
-  document.querySelectorAll('#ap-panel-admin .ap-tabs .ap-tab').forEach((t, i) => {
-    t.classList.toggle('active', panels[i] === id);
-  });
-  panels.forEach(p => {
-    const el = document.getElementById('ap-admin-' + p);
-    if (el) el.classList.toggle('active', p === id);
-  });
-}
-
-/* ══════════════════════════════════════════════════════
-   AQUAPONEY — CALENDAR
-══════════════════════════════════════════════════════ */
-function apCalNav(dir) {
-  apCalDate = new Date(apCalDate.getFullYear(), apCalDate.getMonth() + dir, 1);
-  apRenderCal();
-  apCloseModal();
-}
-
-function apRenderCal() {
-  const y = apCalDate.getFullYear(), m = apCalDate.getMonth();
-  const label = new Date(y, m, 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-  document.getElementById('ap-cal-label').textContent = label.charAt(0).toUpperCase() + label.slice(1);
-
-  const grid = document.getElementById('ap-cal-grid');
-  grid.innerHTML = '';
-  const dows = ['Lu', 'Ma', 'Me', 'Je', 'Ve', 'Sa', 'Di'];
-  dows.forEach(d => {
-    const el = document.createElement('div');
-    el.className = 'cal-dow'; el.textContent = d;
-    grid.appendChild(el);
-  });
-
-  const firstDay = new Date(y, m, 1);
-  let startDow = firstDay.getDay(); // 0=Sun
-  startDow = (startDow === 0) ? 6 : startDow - 1; // Mon-based
-  const daysInMonth = new Date(y, m + 1, 0).getDate();
-  const today = new Date();
-
-  const days = apUser ? getDays(apUser.name) : {};
-
-  // Fill blanks
-  for (let i = 0; i < startDow; i++) {
-    const el = document.createElement('div');
-    el.className = 'cal-day'; grid.appendChild(el);
-  }
-
-  for (let d = 1; d <= daysInMonth; d++) {
-    const date = new Date(y, m, d);
-    const key = toKey(date);
-    const el = document.createElement('div');
-    el.className = 'cal-day';
-    el.textContent = d;
-
-    if (sameDay(date, today)) el.classList.add('today');
-    const state = days[key];
-    if (state === 'unavailable') el.classList.add('unavailable');
-    else if (state === 'vacation') el.classList.add('pending-vacation');
-    else if (state === 'approved') el.classList.add('approved-vacation');
-
-    el.onclick = () => apSelectDay(key, d, date);
-    grid.appendChild(el);
-  }
-}
-
-function toKey(d) {
-  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-}
-function sameDay(a, b) { return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
-
-function apSelectDay(key, dayNum, date) {
-  apSelectedDay = key;
-  const modal = document.getElementById('ap-day-modal');
-  modal.classList.remove('hidden');
-  const label = date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-  document.getElementById('ap-day-modal-title').textContent = label.charAt(0).toUpperCase() + label.slice(1);
-  const days = getDays(apUser.name);
-  const cur = days[key];
-  const stateLabel = { unavailable: 'Indisponible', vacation: 'Congé demandé', approved: 'Congé approuvé' };
-  document.getElementById('ap-day-current').textContent = cur ? 'Statut actuel : ' + stateLabel[cur] : 'Pas de statut défini.';
-  modal.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}
-
-function apCloseModal() {
-  document.getElementById('ap-day-modal').classList.add('hidden');
-  apSelectedDay = null;
-}
-
-function apSetDay(state) {
-  if (!apSelectedDay) return;
-  const days = getDays(apUser.name);
-  if (state === 'clear') delete days[apSelectedDay];
-  else days[apSelectedDay] = state;
-  setDays(apUser.name, days);
-  apCloseModal();
-  apRenderCal();
-  apRenderDaysList();
-  if (apUser.isAdmin) apRenderTeam();
-}
-
-function apRenderDaysList() {
-  const days = getDays(apUser.name);
-  const keys = Object.keys(days).sort();
-  const el = document.getElementById('ap-days-list');
-  if (keys.length === 0) {
-    el.innerHTML = '<div class="empty-state">Aucun jour marqué.</div>';
-    return;
-  }
-  const stateLabel = { unavailable: ['Indisponible','badge-danger'], vacation: ['Congé demandé','badge-warn'], approved: ['Congé approuvé','badge-success'] };
-  el.innerHTML = keys.map(k => {
-    const date = new Date(k + 'T00:00:00');
-    const label = date.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
-    const [txt, cls] = stateLabel[days[k]] || ['Inconnu', 'badge-muted'];
-    return `<div class="req-card" style="display:flex;align-items:center;justify-content:space-between;gap:.75rem;">
-      <span class="text-sm">${label}</span>
-      <span class="badge ${cls}">${txt}</span>
-    </div>`;
-  }).join('');
-}
-
-/* ══════════════════════════════════════════════════════
-   AQUAPONEY — REQUESTS
-══════════════════════════════════════════════════════ */
-function apRenderRequests() {
-  const reqs = getRequests(apUser.name);
-  const el = document.getElementById('ap-req-list');
-  if (reqs.length === 0) {
-    el.innerHTML = '<div class="empty-state mb-2">Aucune demande.</div>';
-    return;
-  }
-  const stateLabel = { pending: ['En attente','badge-warn'], approved: ['Approuvée','badge-success'], rejected: ['Refusée','badge-danger'] };
-  el.innerHTML = reqs.map((r, i) => {
-    const [txt, cls] = stateLabel[r.status] || ['Inconnu','badge-muted'];
-    return `<div class="req-card">
-      <div class="req-card-header">
-        <div>
-          <h4>${r.start} → ${r.end}</h4>
-          <div class="meta">${r.reason || 'Sans motif'} · ${new Date(r.ts).toLocaleDateString('fr-FR')}</div>
-        </div>
-        <span class="badge ${cls}">${txt}</span>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function apAddRequest() {
-  const start  = document.getElementById('req-start').value;
-  const end    = document.getElementById('req-end').value;
-  const reason = document.getElementById('req-reason').value.trim();
-  if (!start || !end) { toast('Dates manquantes.', 'error'); return; }
-  if (start > end) { toast('La date de fin doit être après le début.', 'error'); return; }
-  const reqs = getRequests(apUser.name);
-  reqs.unshift({ start, end, reason, status: 'pending', ts: Date.now() });
-  setRequests(apUser.name, reqs);
-  // Mark calendar days
-  const days = getDays(apUser.name);
-  let cur = new Date(start + 'T00:00:00');
-  const endD = new Date(end + 'T00:00:00');
-  while (cur <= endD) {
-    days[toKey(cur)] = 'vacation';
-    cur = new Date(cur.getTime() + 86400000);
-  }
-  setDays(apUser.name, days);
-  document.getElementById('req-start').value = '';
-  document.getElementById('req-end').value = '';
-  document.getElementById('req-reason').value = '';
-  apRenderRequests();
-  apRenderCal();
-  toast('Demande envoyée !', 'success');
-  // Try to post to GAS
-  gasPost({ action: 'addVacationRequest', employee: apUser.name, start, end, reason });
-}
-
-/* ══════════════════════════════════════════════════════
-   AQUAPONEY — ADMIN
-══════════════════════════════════════════════════════ */
-function apRenderAdminAll() {
-  const el = document.getElementById('ap-admin-req-list');
-  const employees = getAllEmployees();
-  let html = '';
-  let any = false;
-  employees.forEach(emp => {
-    const reqs = getRequests(emp.name);
-    reqs.forEach((r, i) => {
-      any = true;
-      const stateLabel = { pending: ['En attente','badge-warn'], approved: ['Approuvée','badge-success'], rejected: ['Refusée','badge-danger'] };
-      const [txt, cls] = stateLabel[r.status] || ['Inconnu','badge-muted'];
-      html += `<div class="req-card">
-        <div class="req-card-header">
-          <div>
-            <h4>${emp.name} · ${r.start} → ${r.end}</h4>
-            <div class="meta">${r.reason || 'Sans motif'} · ${new Date(r.ts).toLocaleDateString('fr-FR')}</div>
-          </div>
-          <span class="badge ${cls}">${txt}</span>
-        </div>
-        ${r.status === 'pending' ? `<div style="display:flex;gap:.5rem;margin-top:.5rem;">
-          <button class="btn btn-sm" style="background:var(--success-bg);color:var(--success);" onclick="apAdminDecide('${emp.name}',${i},'approved')">Approuver</button>
-          <button class="btn btn-sm" style="background:var(--danger-bg);color:var(--danger);" onclick="apAdminDecide('${emp.name}',${i},'rejected')">Refuser</button>
-        </div>` : ''}
-      </div>`;
-    });
-  });
-  el.innerHTML = any ? html : '<div class="empty-state">Aucune demande.</div>';
-}
-
-function apAdminDecide(name, idx, status) {
-  const reqs = getRequests(name);
-  if (!reqs[idx]) return;
-  reqs[idx].status = status;
-  setRequests(name, reqs);
-  // Update calendar
-  if (status === 'approved') {
-    const days = getDays(name);
-    let cur = new Date(reqs[idx].start + 'T00:00:00');
-    const end = new Date(reqs[idx].end + 'T00:00:00');
-    while (cur <= end) { days[toKey(cur)] = 'approved'; cur = new Date(cur.getTime() + 86400000); }
-    setDays(name, days);
-  }
-  apRenderAdminAll();
-  toast(status === 'approved' ? 'Demande approuvée ✓' : 'Demande refusée.', status === 'approved' ? 'success' : 'error');
-}
-
-function apRenderTeam() {
-  const el = document.getElementById('ap-admin-team-list');
-  const emps = getAllEmployees();
-  el.innerHTML = emps.map(e => {
-    const daysCount = Object.keys(getDays(e.name)).length;
-    const reqPending = getRequests(e.name).filter(r => r.status === 'pending').length;
-    return `<div class="admin-user-row">
-      <div class="admin-user-info">
-        <div class="admin-user-name">${e.name}</div>
-        <div class="admin-user-sub">${daysCount} jour(s) marqué(s) · ${reqPending} en attente</div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function apRenderExtras() {
-  const extras = getExtras();
-  const el = document.getElementById('ap-extras-list');
-  if (extras.length === 0) { el.innerHTML = '<div class="empty-state mb-1">Aucun extra.</div>'; return; }
-  el.innerHTML = extras.map((e, i) => `
-    <div class="admin-user-row">
-      <div class="admin-user-info">
-        <div class="admin-user-name">${e.name}</div>
-        <div class="admin-user-sub">Code : ${e.code}</div>
-      </div>
-      <button class="btn btn-ghost btn-sm" style="color:var(--danger);" onclick="apDeleteExtra(${i})">Suppr.</button>
-    </div>`).join('');
-}
-
-function apAddExtra() {
-  const name = document.getElementById('extra-name').value.trim();
-  const code = document.getElementById('extra-code').value.trim();
-  if (!name || !code) { toast('Nom et code requis.', 'error'); return; }
-  if (!/^\d{4}$/.test(code)) { toast('Le code doit être 4 chiffres.', 'error'); return; }
-  const extras = getExtras();
-  extras.push({ name, code });
-  setExtras(extras);
-  document.getElementById('extra-name').value = '';
-  document.getElementById('extra-code').value = '';
-  apRenderExtras();
-  // Refresh login select
-  const sel = document.getElementById('ap-login-select');
-  const opt = document.createElement('option');
-  opt.value = name; opt.textContent = name;
-  sel.appendChild(opt);
-  toast(name + ' ajouté.', 'success');
-}
-
-function apDeleteExtra(i) {
-  const extras = getExtras();
-  extras.splice(i, 1);
-  setExtras(extras);
-  apRenderExtras();
-}
-
-/* ══════════════════════════════════════════════════════
-   SAMI REQUESTS
-══════════════════════════════════════════════════════ */
-let samiAdminLoggedIn = false;
-
-async function samiLoadPublic() {
-  try {
-    const data = await gasGet({ action: 'getSamiPublic' });
-    if (data.error || !data.count) throw new Error('Données indisponibles');
-    document.getElementById('sami-count').textContent = data.count;
-    const chips = document.getElementById('sami-chips-resolved');
-    if (data.resolved) {
-      chips.innerHTML = data.resolved.slice(0, 12).map(r =>
-        `<div class="resolved-chip">${escHtml(r.name)} ✓</div>`
-      ).join('');
+      restoreSession();
     }
-    renderResolvedList(data.resolved || []);
-  } catch {
-    // Fallback: show demo data
-    document.getElementById('sami-count').textContent = '0';
-    document.getElementById('sami-chips-resolved').innerHTML = '';
-    document.getElementById('sami-resolved-list').innerHTML = '<div class="empty-state">Pas de demandes résolues pour l\'instant.</div>';
-  }
-}
 
-function renderResolvedList(resolved) {
-  const el = document.getElementById('sami-resolved-list');
-  if (!resolved || resolved.length === 0) {
-    el.innerHTML = '<div class="empty-state">Pas encore de demandes résolues.</div>';
-    return;
-  }
-  el.innerHTML = resolved.map(r => `
-    <div class="sami-resolved-item">
-      <div class="sami-resolved-avatar">${escHtml(r.name.charAt(0).toUpperCase())}</div>
-      <div>
-        <div class="sami-resolved-name">${escHtml(r.name)}</div>
-        <div class="sami-resolved-msg">${escHtml(r.message.substring(0, 90))}${r.message.length > 90 ? '…' : ''}</div>
-      </div>
-      <div style="margin-left:auto;flex-shrink:0;"><span class="badge badge-success">✓ Résolu</span></div>
-    </div>`).join('');
-}
+    function restoreSession() {
+      const employeeToken = localStorage.getItem(STORAGE_KEYS.employeeToken) || "";
+      const employeeName = localStorage.getItem(STORAGE_KEYS.employeeName) || "";
+      const adminToken = localStorage.getItem(STORAGE_KEYS.adminToken) || "";
 
-function samiChip(el, msg) {
-  document.querySelectorAll('.sami-chip').forEach(c => c.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('sami-msg').value = msg;
-  document.getElementById('sami-msg').focus();
-}
+      if (employeeToken && employeeName) {
+        APP.employee.token = employeeToken;
+        APP.employee.name = employeeName;
+        openEmployeeApp();
+        return;
+      }
 
-async function samiSubmit() {
-  const name = document.getElementById('sami-name').value.trim();
-  const msg  = document.getElementById('sami-msg').value.trim();
-  if (!name) { toast('Entre ton prénom.', 'error'); return; }
-  if (!msg)  { toast('Le message est vide.', 'error'); return; }
+      if (adminToken) {
+        APP.admin.token = adminToken;
+        openAdminApp();
+      }
+    }
 
-  const id = Date.now() + '_' + Math.random().toString(36).slice(2, 7);
-  const row = {
-    id,
-    employee: name,
-    message: msg,
-    status: 'pending',
-    timestamp: new Date().toISOString(),
-  };
+    function showPage(name) {
+      document.querySelectorAll(".page").forEach((page) => page.classList.remove("active"));
+      document.getElementById("page-" + name).classList.add("active");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      if (name === "sami-todo") {
+        renderSamiPage();
+      }
+    }
 
-  const res = await gasPost({ action: 'addSamiRequest', row });
-  if (res.error) {
-    toast('Erreur réseau. Demande peut-être non envoyée.', 'error');
-  }
+    function onLoginKeydown(event) {
+      if (event.key === "Enter") {
+        loginEmployee();
+      }
+    }
 
-  // Show success regardless (optimistic)
-  document.getElementById('sami-form-fields').style.display = 'none';
-  document.getElementById('sami-success').style.display = 'block';
-  toast('Demande envoyée à Sami !', 'success');
-}
+    function onAdminKeydown(event) {
+      if (event.key === "Enter") {
+        loginAdmin();
+      }
+    }
 
-function samiReset() {
-  document.getElementById('sami-name').value = '';
-  document.getElementById('sami-msg').value = '';
-  document.querySelectorAll('.sami-chip').forEach(c => c.classList.remove('active'));
-  document.getElementById('sami-form-fields').style.display = '';
-  document.getElementById('sami-success').style.display = 'none';
-}
+    async function loginEmployee() {
+      const firstName = document.getElementById("team-name").value.trim();
+      const pin = document.getElementById("team-pin").value.trim();
 
-function samiShowAdminPrompt() {
-  const pw = prompt('Mot de passe admin Sami :');
-  if (pw !== SAMI_PASS) { if (pw !== null) toast('Mot de passe incorrect.', 'error'); return; }
-  samiAdminLoggedIn = true;
-  document.getElementById('sami-public').style.display = 'none';
-  document.getElementById('sami-admin').classList.add('active');
-  samiLoadAdmin();
-}
+      if (!firstName || !pin) {
+        toast("Entrez votre prenom et votre code a 4 chiffres.");
+        return;
+      }
 
-function samiAdminLogout() {
-  samiAdminLoggedIn = false;
-  document.getElementById('sami-public').style.display = '';
-  document.getElementById('sami-admin').classList.remove('active');
-}
+      withButtonLoading("team-login-btn", true, "Connexion...");
+      try {
+        const response = await api("loginEmployee", { firstName, pin });
+        APP.employee.token = response.token;
+        APP.employee.name = response.employee.firstName;
+        localStorage.setItem(STORAGE_KEYS.employeeToken, response.token);
+        localStorage.setItem(STORAGE_KEYS.employeeName, response.employee.firstName);
+        await openEmployeeApp();
+      } catch (error) {
+        toast(error.message || "Connexion employee impossible.");
+      } finally {
+        withButtonLoading("team-login-btn", false, "Connexion");
+      }
+    }
 
-async function samiLoadAdmin() {
-  const el = document.getElementById('sami-admin-all-list');
-  el.innerHTML = '<div class="empty-state">Chargement…</div>';
-  try {
-    const data = await gasGet({ action: 'getSamiRequests', pass: SAMI_PASS });
-    if (data.error || !data.requests) throw new Error('');
-    renderAdminRequests(data.requests);
-  } catch {
-    el.innerHTML = '<div class="empty-state">Impossible de charger les demandes (le script GAS ne gère pas encore cette action).<br><br>Les demandes apparaîtront ici une fois le backend configuré.</div>';
-  }
-}
+    async function loginAdmin() {
+      const password = document.getElementById("admin-pass").value;
+      if (!password) {
+        toast("Entrez le mot de passe admin.");
+        return;
+      }
 
-function renderAdminRequests(reqs) {
-  const el = document.getElementById('sami-admin-all-list');
-  if (!reqs || reqs.length === 0) { el.innerHTML = '<div class="empty-state">Aucune demande.</div>'; return; }
-  el.innerHTML = reqs.map((r, i) => {
-    const isPending = r.status === 'pending';
-    const ts = r.timestamp ? new Date(r.timestamp).toLocaleString('fr-FR') : '';
-    return `<div class="sami-req-card">
-      <div class="sami-req-header">
-        <div>
-          <span class="sami-req-name">${escHtml(r.employee || r.name || '?')}</span>
-          <span class="sami-req-ts" style="margin-left:.5rem;">${ts}</span>
-        </div>
-        <span class="badge ${isPending ? 'badge-warn' : 'badge-success'}">${isPending ? 'En attente' : '✓ Résolu'}</span>
-      </div>
-      <div class="sami-req-msg">${escHtml(r.message || '')}</div>
-      ${isPending ? `
-        <div class="sami-reply-area">
-          <textarea id="sami-reply-${i}" placeholder="Réponse (optionnelle)…" rows="2"></textarea>
-          <button class="btn btn-sm" style="background:var(--success-bg);color:var(--success);align-self:flex-start;" onclick="samiResolve('${escHtml(r.id || i)}', ${i})">Marquer comme résolu</button>
-        </div>` : r.reply ? `<div class="sami-resolved-reply">Réponse : ${escHtml(r.reply)}</div>` : ''}
-    </div>`;
-  }).join('');
-}
+      withButtonLoading("admin-login-btn", true, "Connexion...");
+      try {
+        const response = await api("loginAdmin", { password });
+        APP.admin.token = response.token;
+        localStorage.setItem(STORAGE_KEYS.adminToken, response.token);
+        await openAdminApp();
+      } catch (error) {
+        toast(error.message || "Connexion admin impossible.");
+      } finally {
+        withButtonLoading("admin-login-btn", false, "Connexion");
+      }
+    }
 
-async function samiResolve(id, idx) {
-  const reply = (document.getElementById('sami-reply-' + idx) || {}).value || '';
-  const res = await gasPost({ action: 'updateSamiRequest', id, reply, pass: SAMI_PASS });
-  if (res.error) { toast('Erreur réseau.', 'error'); return; }
-  toast('Demande marquée comme résolue.', 'success');
-  samiLoadAdmin();
-}
+    async function openEmployeeApp() {
+      document.getElementById("employee-greeting").textContent = "Bonjour " + APP.employee.name;
+      document.getElementById("employee-badge").textContent = APP.employee.name;
+      showPage("team-app");
+      setSyncState("team", false, isBackendConfigured() ? "Synchronisation..." : "Mode local actif");
+      try {
+        const response = await api("getMyRequests", { token: APP.employee.token });
+        APP.employee.requests = normalizeRequests(response.requests || []);
+        renderEmployeeApp();
+        setSyncState("team", true, isBackendConfigured() ? "Synchronise avec le backend" : "Sauvegarde sur cet appareil");
+      } catch (error) {
+        logoutEmployee(false);
+        toast(error.message || "Session employee expiree.");
+        showPage("team-login");
+      }
+    }
 
-/* ══════════════════════════════════════════════════════
-   UTILS
-══════════════════════════════════════════════════════ */
-function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
+    async function openAdminApp() {
+      showPage("admin-app");
+      await refreshAdmin();
+    }
 
-/* ══════════════════════════════════════════════════════
-   INIT
-══════════════════════════════════════════════════════ */
-document.addEventListener('DOMContentLoaded', () => {
-  apInitSelect();
-  samiLoadPublic();
-});
-</script>
+    async function refreshAdmin() {
+      setSyncState("admin", false, isBackendConfigured() ? "Synchronisation..." : "Mode local actif");
+      try {
+        const response = await api("getAllRequests", { token: APP.admin.token });
+        APP.admin.requests = normalizeRequests(response.requests || []);
+        APP.admin.employees = response.employees || extractEmployees(APP.admin.requests);
+        assignEmployeeColors(APP.admin.employees);
+        renderAdminApp();
+        setSyncState("admin", true, isBackendConfigured() ? "Synchronise avec le backend" : "Sauvegarde sur cet appareil");
+      } catch (error) {
+        logoutAdmin(false);
+        toast(error.message || "Session admin expiree.");
+        showPage("admin-login");
+      }
+    }
+
+    function logoutEmployee(jump = true) {
+      APP.employee.token = "";
+      APP.employee.name = "";
+      APP.employee.requests = [];
+      localStorage.removeItem(STORAGE_KEYS.employeeToken);
+      localStorage.removeItem(STORAGE_KEYS.employeeName);
+      if (jump) {
+        showPage("team-login");
+      }
+    }
+
+    function logoutAdmin(jump = true) {
+      APP.admin.token = "";
+      APP.admin.requests = [];
+      APP.admin.employees = [];
+      APP.admin.filter = "all";
+      localStorage.removeItem(STORAGE_KEYS.adminToken);
+      if (jump) {
+        showPage("admin-login");
+      }
+    }
+
+    function renderEmployeeApp() {
+      renderLifeBoard();
+      renderEmployeeCalendar();
+      renderEmployeeRequests();
+    }
+
+    function renderLifeBoard() {
+      const year = APP.employee.viewYear;
+      const month = APP.employee.viewMonth + 1;
+      const used = countRequestsInMonth(APP.employee.requests, APP.employee.name, year, month);
+      const left = Math.max(0, 3 - used);
+      const board = document.getElementById("life-board");
+      board.className = "life-board" + (left === 0 ? " empty" : left === 1 ? " warn" : "");
+
+      document.getElementById("life-label").textContent = left + " sur 3 disponibles";
+
+      const icons = document.getElementById("life-icons");
+      icons.innerHTML = "";
+      for (let i = 0; i < 3; i += 1) {
+        const icon = document.createElement("span");
+        icon.textContent = "🐴";
+        if (i >= left) icon.classList.add("off");
+        icons.appendChild(icon);
+      }
+
+      const copy = left === 0
+        ? "Quota atteint pour ce mois. Vous pourrez refaire une demande au mois suivant."
+        : left === 1
+          ? "Il ne reste qu'une vie sur ce mois. Choisissez bien votre prochaine date."
+          : "Chaque demande posee sur ce mois consomme une vie 🐴.";
+      document.getElementById("life-copy").textContent = copy;
+    }
+
+    function renderEmployeeCalendar() {
+      document.getElementById("team-calendar-title").textContent = APP.monthsLabel[APP.employee.viewMonth] + " " + APP.employee.viewYear;
+      const grid = document.getElementById("team-calendar-grid");
+      grid.innerHTML = "";
+
+      buildCalendar(grid, APP.employee.viewYear, APP.employee.viewMonth, (cellDate, key, cell, dayTags) => {
+        const dayRequests = APP.employee.requests.filter((request) => request.dateKey === key);
+
+        if (dayRequests.length) {
+          cell.classList.add("has-mine");
+          dayRequests.forEach((request) => {
+            dayTags.appendChild(makeTag(request.slotLabel, request.status));
+          });
+        }
+
+        if (!cell.classList.contains("blank")) {
+          cell.classList.add("clickable");
+          cell.addEventListener("click", () => pickDate(cellDate));
+        }
+      });
+    }
+
+    function renderEmployeeRequests() {
+      const list = document.getElementById("employee-request-list");
+      const sorted = [...APP.employee.requests].sort(sortByDateThenCreated);
+      document.getElementById("employee-request-count").textContent = sorted.length + (sorted.length > 1 ? " demandes" : " demande");
+
+      if (!sorted.length) {
+        list.innerHTML = '<div class="empty-state">Aucune demande pour le moment. Choisissez une date dans le calendrier ou via le formulaire.</div>';
+        return;
+      }
+
+      list.innerHTML = "";
+      sorted.forEach((request) => {
+        const item = buildRequestCard(request, false);
+        if (request.status === "pending") {
+          const button = document.createElement("button");
+          button.className = "btn btn-danger";
+          button.textContent = "Supprimer";
+          button.onclick = () => deleteEmployeeRequest(request.id);
+          item.querySelector(".request-actions").appendChild(button);
+        }
+        list.appendChild(item);
+      });
+    }
+
+    function renderAdminApp() {
+      renderAdminStats();
+      renderAdminFilters();
+      renderAdminCalendar();
+      renderAdminRequests();
+    }
+
+    function renderAdminStats() {
+      const requests = APP.admin.requests;
+      const employees = extractEmployees(requests);
+      document.getElementById("stat-employees").textContent = employees.length;
+      document.getElementById("stat-total").textContent = requests.length;
+      document.getElementById("stat-pending").textContent = requests.filter((request) => request.status === "pending").length;
+      document.getElementById("stat-approved").textContent = requests.filter((request) => request.status === "approved").length;
+    }
+
+    function renderAdminFilters() {
+      const wrap = document.getElementById("admin-filters");
+      const employees = extractEmployees(APP.admin.requests);
+      wrap.innerHTML = "";
+      employees.forEach((employee) => {
+        const button = document.createElement("button");
+        button.className = "chip" + (APP.admin.filter === employee ? " active" : "");
+        button.textContent = employee;
+        button.onclick = () => setAdminFilter(employee);
+        wrap.appendChild(button);
+      });
+    }
+
+    function setAdminFilter(value) {
+      APP.admin.filter = value;
+      renderAdminApp();
+    }
+
+    function renderAdminCalendar() {
+      document.getElementById("admin-calendar-title").textContent = APP.monthsLabel[APP.admin.viewMonth] + " " + APP.admin.viewYear;
+      const grid = document.getElementById("admin-calendar-grid");
+      grid.innerHTML = "";
+
+      const visible = getFilteredAdminRequests();
+      buildCalendar(grid, APP.admin.viewYear, APP.admin.viewMonth, (cellDate, key, cell, dayTags) => {
+        const dayRequests = visible.filter((request) => request.dateKey === key);
+        if (!dayRequests.length) return;
+
+        cell.classList.add("has-team");
+        const uniqueEmployees = [...new Set(dayRequests.map((request) => request.employee))];
+        uniqueEmployees.slice(0, 3).forEach((employee) => {
+          dayTags.appendChild(makeTag(employee, "employee", APP.colors[employee]));
+        });
+
+        if (dayRequests.length > 3) {
+          dayTags.appendChild(makeTag("+" + (dayRequests.length - 3), "employee", "#6b7f86"));
+        }
+
+        cell.classList.add("clickable");
+        cell.addEventListener("click", () => {
+          APP.admin.filter = "all";
+          renderAdminApp();
+          document.getElementById("admin-request-list").scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+      });
+    }
+
+    function renderAdminRequests() {
+      const list = document.getElementById("admin-request-list");
+      const visible = [...getFilteredAdminRequests()].sort(sortByDateThenCreated);
+      document.getElementById("admin-request-count").textContent = visible.length + (visible.length > 1 ? " demandes" : " demande");
+
+      if (!visible.length) {
+        list.innerHTML = '<div class="empty-state">Aucune demande visible avec le filtre actuel.</div>';
+        return;
+      }
+
+      list.innerHTML = "";
+      visible.forEach((request) => {
+        const item = buildRequestCard(request, true);
+        const actions = item.querySelector(".request-actions");
+
+        if (request.status === "pending") {
+          const approve = document.createElement("button");
+          approve.className = "btn btn-ok";
+          approve.textContent = "Valider";
+          approve.onclick = () => updateRequestStatus(request.id, "approved");
+
+          const refuse = document.createElement("button");
+          refuse.className = "btn btn-danger";
+          refuse.textContent = "Refuser";
+          refuse.onclick = () => updateRequestStatus(request.id, "refused");
+
+          actions.appendChild(approve);
+          actions.appendChild(refuse);
+        }
+
+        const remove = document.createElement("button");
+        remove.className = "btn btn-soft";
+        remove.textContent = "Supprimer";
+        remove.onclick = () => confirmDeleteRequest(request);
+        actions.appendChild(remove);
+
+        item.querySelector(".request-main").addEventListener("click", () => openAdminDetail(request));
+        list.appendChild(item);
+      });
+    }
+
+    function buildRequestCard(request, isAdmin) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "request-item";
+
+      const chip = document.createElement("div");
+      chip.className = "date-chip";
+      chip.style.background = isAdmin ? (APP.colors[request.employee] || "#114b5f") : "linear-gradient(135deg, #114b5f, #2cb1a7)";
+      chip.innerHTML = '<div class="day">' + request.dayOfMonth + '</div><div class="month">' + request.monthShort + "</div>";
+
+      const main = document.createElement("div");
+      main.className = "request-main";
+      const title = isAdmin
+        ? request.employee + " • " + request.dateLabel
+        : request.dateLabel;
+
+      main.innerHTML = [
+        "<h4>" + escapeHtml(title) + "</h4>",
+        '<div class="request-meta">',
+        '<span class="pill ' + request.status + '">' + statusLabel(request.status) + "</span>",
+        '<span class="pill" style="background: rgba(17,75,95,0.08); color: var(--teal-900);">' + escapeHtml(request.slotLabel) + "</span>",
+        "</div>",
+        "<p>" + escapeHtml(request.reason) + "</p>"
+      ].join("");
+
+      const actions = document.createElement("div");
+      actions.className = "request-actions";
+
+      wrapper.appendChild(chip);
+      wrapper.appendChild(main);
+      wrapper.appendChild(actions);
+
+      return wrapper;
+    }
+
+    function openAdminDetail(request) {
+      const body = [
+        '<div class="inline-note" style="margin-bottom:12px;">Soumis le ' + escapeHtml(formatDateTime(request.createdAt)) + '</div>',
+        "<p><strong>Employe :</strong> " + escapeHtml(request.employee) + "</p>",
+        "<p><strong>Date :</strong> " + escapeHtml(request.dateLabel) + "</p>",
+        "<p><strong>Plage :</strong> " + escapeHtml(request.slotLabel) + "</p>",
+        "<p><strong>Raison :</strong> " + escapeHtml(request.reason) + "</p>"
+      ].join("");
+
+      const actions = [];
+      if (request.status === "pending") {
+        actions.push({ label: "Valider", cls: "btn btn-ok", onClick: () => updateRequestStatus(request.id, "approved", true) });
+        actions.push({ label: "Refuser", cls: "btn btn-danger", onClick: () => updateRequestStatus(request.id, "refused", true) });
+      }
+      actions.push({ label: "Supprimer", cls: "btn btn-soft", onClick: () => confirmDeleteRequest(request, true) });
+      actions.push({ label: "Fermer", cls: "btn btn-primary", onClick: closeModal });
+
+      openModal("Demande de " + request.employee, request.dateLabel, body, actions);
+    }
+
+    function confirmDeleteRequest(request, closeFirst = false) {
+      if (closeFirst) closeModal();
+      openModal(
+        "Supprimer la demande",
+        request.employee + " • " + request.dateLabel,
+        "<p>Cette action supprimera definitivement la demande.</p>",
+        [
+          { label: "Annuler", cls: "btn btn-soft", onClick: closeModal },
+          { label: "Supprimer", cls: "btn btn-danger", onClick: () => deleteAdminRequest(request.id) }
+        ]
+      );
+    }
+
+    async function createRequest() {
+      const dateKey = document.getElementById("req-date").value;
+      const slotBase = document.getElementById("req-slot").value;
+      const custom = document.getElementById("req-custom").value.trim();
+      const reason = document.getElementById("req-reason").value.trim();
+
+      if (!dateKey || !slotBase || !reason) {
+        toast("Remplissez la date, la plage horaire et la raison.");
+        return;
+      }
+
+      const slotLabel = slotBase === "Journée entière" || !custom
+        ? slotBase
+        : slotBase + " (" + custom + ")";
+
+      const localCheck = validateLocalRequest(APP.employee.requests, APP.employee.name, dateKey);
+      if (!localCheck.ok) {
+        toast(localCheck.message);
+        return;
+      }
+
+      withButtonLoading("request-submit-btn", true, "Envoi...");
+      try {
+        await api("createRequest", {
+          token: APP.employee.token,
+          dateKey,
+          slotBase,
+          customSlot: custom,
+          reason
+        });
+
+        await openEmployeeApp();
+        resetEmployeeForm();
+        toast("Demande envoyee.");
+      } catch (error) {
+        toast(error.message || "Impossible d'envoyer la demande.");
+      } finally {
+        withButtonLoading("request-submit-btn", false, "Envoyer la demande");
+      }
+    }
+
+    async function deleteEmployeeRequest(requestId) {
+      try {
+        await api("deleteMyRequest", { token: APP.employee.token, requestId });
+        APP.employee.requests = APP.employee.requests.filter((request) => request.id !== requestId);
+        renderEmployeeApp();
+        toast("Demande supprimee.");
+      } catch (error) {
+        toast(error.message || "Suppression impossible.");
+      }
+    }
+
+    async function updateRequestStatus(requestId, status, closeAfter = false) {
+      try {
+        await api("setRequestStatus", { token: APP.admin.token, requestId, status });
+        if (closeAfter) closeModal();
+        await refreshAdmin();
+        toast(status === "approved" ? "Demande validee." : "Demande refusee.");
+      } catch (error) {
+        toast(error.message || "Mise a jour impossible.");
+      }
+    }
+
+    async function deleteAdminRequest(requestId) {
+      closeModal();
+      try {
+        await api("deleteRequest", { token: APP.admin.token, requestId });
+        await refreshAdmin();
+        toast("Demande supprimee.");
+      } catch (error) {
+        toast(error.message || "Suppression impossible.");
+      }
+    }
+
+    function changeEmployeeMonth(delta) {
+      const next = new Date(APP.employee.viewYear, APP.employee.viewMonth + delta, 1);
+      APP.employee.viewYear = next.getFullYear();
+      APP.employee.viewMonth = next.getMonth();
+      renderEmployeeApp();
+    }
+
+    function changeAdminMonth(delta) {
+      const next = new Date(APP.admin.viewYear, APP.admin.viewMonth + delta, 1);
+      APP.admin.viewYear = next.getFullYear();
+      APP.admin.viewMonth = next.getMonth();
+      renderAdminApp();
+    }
+
+    function pickDate(date) {
+      document.getElementById("req-date").value = toDateInputValue(date);
+      document.getElementById("req-date").scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    function toggleCustomSlot() {
+      const wrap = document.getElementById("req-custom-wrap");
+      const slot = document.getElementById("req-slot").value;
+      wrap.style.display = slot && slot !== "Journée entière" ? "block" : "none";
+    }
+
+    function resetEmployeeForm() {
+      document.getElementById("req-date").value = "";
+      document.getElementById("req-slot").value = "";
+      document.getElementById("req-custom").value = "";
+      document.getElementById("req-reason").value = "";
+      toggleCustomSlot();
+    }
+
+    function getFilteredAdminRequests() {
+      return APP.admin.filter === "all"
+        ? APP.admin.requests
+        : APP.admin.requests.filter((request) => request.employee === APP.admin.filter);
+    }
+
+    function buildCalendar(grid, year, month, onCell) {
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      const mondayOffset = (firstDay.getDay() + 6) % 7;
+      const todayKey = toDateInputValue(new Date());
+      const minAllowed = addDays(startOfDay(new Date()), 10);
+
+      for (let i = 0; i < mondayOffset; i += 1) {
+        const blank = document.createElement("div");
+        blank.className = "calendar-cell blank";
+        grid.appendChild(blank);
+      }
+
+      for (let day = 1; day <= lastDay.getDate(); day += 1) {
+        const current = new Date(year, month, day);
+        const key = toDateInputValue(current);
+
+        const cell = document.createElement("div");
+        cell.className = "calendar-cell";
+        if (startOfDay(current) < minAllowed) cell.classList.add("blocked");
+        if (key === todayKey) cell.classList.add("today");
+
+        const number = document.createElement("div");
+        number.className = "day-number";
+        number.textContent = day;
+
+        const tags = document.createElement("div");
+        tags.className = "cell-tags";
+
+        cell.appendChild(number);
+        cell.appendChild(tags);
+        onCell(current, key, cell, tags);
+        grid.appendChild(cell);
+      }
+    }
+
+    function makeTag(text, status, color) {
+      const tag = document.createElement("span");
+      tag.className = "tag";
+      tag.textContent = text;
+
+      if (status === "approved") {
+        tag.style.background = "#eaf8ef";
+        tag.style.color = "var(--ok)";
+      } else if (status === "refused") {
+        tag.style.background = "#fff0ee";
+        tag.style.color = "var(--danger)";
+      } else if (status === "pending") {
+        tag.style.background = "#fff4dd";
+        tag.style.color = "var(--pending)";
+      } else if (status === "employee" && color) {
+        tag.style.background = color;
+        tag.style.color = "white";
+      }
+      return tag;
+    }
+
+    function validateLocalRequest(requests, employeeName, dateKey) {
+      const date = parseDateKey(dateKey);
+      const minDate = addDays(startOfDay(new Date()), 10);
+      if (date < minDate) {
+        return { ok: false, message: "La demande doit etre faite au minimum 10 jours a l'avance." };
+      }
+
+      const used = countRequestsInMonth(requests, employeeName, date.getFullYear(), date.getMonth() + 1);
+      if (used >= 3) {
+        return { ok: false, message: "Quota atteint : 3 demandes maximum sur ce mois." };
+      }
+
+      return { ok: true };
+    }
+
+    function countRequestsInMonth(requests, employeeName, year, month) {
+      return requests.filter((request) => {
+        const date = parseDateKey(request.dateKey);
+        return request.employee === employeeName && date.getFullYear() === year && (date.getMonth() + 1) === month;
+      }).length;
+    }
+
+    function normalizeRequests(requests) {
+      return requests.map((request) => {
+        const fixedDate = (request.dateKey || "").slice(0, 10);
+        const parsed = parseDateKey(fixedDate);
+        return {
+          id: request.id,
+          employee: request.employee,
+          dateKey: fixedDate,
+          dateLabel: request.dateLabel || formatDateLabel(parsed),
+          slotBase: request.slotBase || extractSlotBase(request.slotLabel || request.slot || ""),
+          slotLabel: request.slotLabel || request.slot || "",
+          customSlot: request.customSlot || "",
+          reason: request.reason || "",
+          status: request.status || "pending",
+          createdAt: request.createdAt || request.timestamp || new Date().toISOString(),
+          dayOfMonth: String(parsed.getDate()),
+          monthShort: APP.monthsLabel[parsed.getMonth()].slice(0, 3)
+        };
+      });
+    }
+
+    function extractSlotBase(label) {
+      const match = label.match(/^(Journée entière|Matin|Après-midi|Soir)/);
+      return match ? match[1] : label;
+    }
+
+    function sortByDateThenCreated(a, b) {
+      if (a.dateKey === b.dateKey) return String(a.createdAt).localeCompare(String(b.createdAt));
+      return a.dateKey.localeCompare(b.dateKey);
+    }
+
+    function statusLabel(status) {
+      if (status === "approved") return "Validee";
+      if (status === "refused") return "Refusee";
+      return "En attente";
+    }
+
+    function setSyncState(scope, live, label) {
+      document.getElementById(scope + "-sync-dot").className = "status-dot" + (live ? " live" : "");
+      document.getElementById(scope + "-sync-label").textContent = label;
+    }
+
+    async function api(action, payload) {
+      if (!isBackendConfigured()) {
+        return localApi(action, payload);
+      }
+
+       if (CONFIG.backendMode === "legacy") {
+        return legacyApi(action, payload);
+      }
+
+      const response = await fetch(CONFIG.scriptUrl, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action, payload })
+      });
+
+      const data = await response.json();
+      if (!data.ok) {
+        throw new Error(data.error || "Erreur API.");
+      }
+      return data;
+    }
+
+    function isBackendConfigured() {
+      return Boolean(CONFIG.scriptUrl) && !CONFIG.scriptUrl.includes("PASTE_YOUR");
+    }
+
+    function updateLocalModeBanner() {
+      const note = !isBackendConfigured()
+        ? "Mode local actif : les comptes fonctionnent deja, mais les donnees restent sur ce telephone tant que l'URL Apps Script n'est pas renseignee."
+        : CONFIG.backendMode === "legacy"
+          ? "Backend Google Sheets connecte : cette interface lit et modifie les demandes deja presentes dans ton ancien AquaPoney."
+          : "Backend Google Apps Script connecte.";
+      const adminNote = document.querySelector("#page-admin-app .inline-note");
+      if (adminNote) {
+        adminNote.textContent = note;
+      }
+    }
+
+    async function legacyApi(action, payload) {
+      switch (action) {
+        case "loginEmployee":
+          return localLoginEmployee(payload);
+        case "loginAdmin":
+          return localLoginAdmin(payload);
+        case "getMyRequests":
+          return legacyGetMyRequests(payload);
+        case "createRequest":
+          return legacyCreateRequest(payload);
+        case "deleteMyRequest":
+          return legacyDeleteRequest(payload);
+        case "getAllRequests":
+          return legacyGetAllRequests(payload);
+        case "setRequestStatus":
+          return legacySetRequestStatus(payload);
+        case "deleteRequest":
+          return legacyDeleteRequest(payload);
+        default:
+          throw new Error("Action backend legacy inconnue.");
+      }
+    }
+
+    async function legacyGetMyRequests(payload) {
+      const employee = localRequireEmployee(payload.token);
+      const response = await fetch(CONFIG.scriptUrl + "?action=get&employee=" + encodeURIComponent(employee));
+      const data = await response.json();
+      return { ok: true, requests: data.rows || [] };
+    }
+
+    async function legacyCreateRequest(payload) {
+      const employee = localRequireEmployee(payload.token);
+      const dateKey = String(payload.dateKey || "");
+      const slotBase = String(payload.slotBase || "");
+      const customSlot = String(payload.customSlot || "").trim();
+      const reason = String(payload.reason || "").trim();
+      const slotLabel = slotBase === "Journée entière" || !customSlot ? slotBase : slotBase + " (" + customSlot + ")";
+      const requestDate = parseDateKey(dateKey);
+      const row = {
+        id: "r" + Date.now(),
+        employee,
+        dateKey,
+        dateLabel: formatDateLabel(requestDate),
+        slot: slotLabel,
+        reason,
+        status: "pending",
+        timestamp: new Date().toISOString()
+      };
+
+      const response = await fetch(CONFIG.scriptUrl, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "add", row })
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error("Erreur reseau.");
+      }
+      if (data && data.id) {
+        row.id = data.id;
+      }
+      return { ok: true, request: row };
+    }
+
+    async function legacyGetAllRequests(payload) {
+      localRequireAdmin(payload.token);
+      const response = await fetch(
+        CONFIG.scriptUrl + "?action=getAll&pass=" + encodeURIComponent(CONFIG.backendApiPassword)
+      );
+      const data = await response.json();
+      return {
+        ok: true,
+        employees: Object.keys(LOCAL_EMPLOYEES).sort((a, b) => a.localeCompare(b, "fr")),
+        requests: data.rows || []
+      };
+    }
+
+    async function legacySetRequestStatus(payload) {
+      localRequireAdmin(payload.token);
+      const response = await fetch(CONFIG.scriptUrl, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          action: "status",
+          id: payload.requestId,
+          status: payload.status,
+          pass: CONFIG.backendApiPassword
+        })
+      });
+      if (!response.ok) {
+        throw new Error("Impossible de mettre a jour la demande.");
+      }
+      let data = {};
+      try {
+        data = await response.json();
+      } catch (error) {
+        data = {};
+      }
+      if (data && data.ok === false) {
+        throw new Error(data.error || "Impossible de mettre a jour la demande.");
+      }
+      return { ok: true };
+    }
+
+    async function legacyDeleteRequest(payload) {
+      if (payload.token === "local-admin") {
+        localRequireAdmin(payload.token);
+      } else {
+        localRequireEmployee(payload.token);
+      }
+      const response = await fetch(CONFIG.scriptUrl, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          action: "delete",
+          id: payload.requestId
+        })
+      });
+      if (!response.ok) {
+        throw new Error("Impossible de supprimer la demande.");
+      }
+      let data = {};
+      try {
+        data = await response.json();
+      } catch (error) {
+        data = {};
+      }
+      if (data && data.ok === false) {
+        throw new Error(data.error || "Impossible de supprimer la demande.");
+      }
+      return { ok: true };
+    }
+
+    async function localApi(action, payload) {
+      switch (action) {
+        case "loginEmployee":
+          return localLoginEmployee(payload);
+        case "loginAdmin":
+          return localLoginAdmin(payload);
+        case "getMyRequests":
+          return localGetMyRequests(payload);
+        case "createRequest":
+          return localCreateRequest(payload);
+        case "deleteMyRequest":
+          return localDeleteMyRequest(payload);
+        case "getAllRequests":
+          return localGetAllRequests(payload);
+        case "setRequestStatus":
+          return localSetRequestStatus(payload);
+        case "deleteRequest":
+          return localDeleteRequest(payload);
+        default:
+          throw new Error("Action locale inconnue.");
+      }
+    }
+
+    function localLoginEmployee(payload) {
+      const firstName = String(payload.firstName || "").trim();
+      const pin = String(payload.pin || "").trim();
+      if (!LOCAL_EMPLOYEES[firstName] || LOCAL_EMPLOYEES[firstName] !== pin) {
+        throw new Error("Prenom ou code incorrect.");
+      }
+      return {
+        ok: true,
+        token: "local-employee:" + encodeURIComponent(firstName),
+        employee: { firstName }
+      };
+    }
+
+    function localLoginAdmin(payload) {
+      const password = String(payload.password || "");
+      if (password !== LOCAL_ADMIN_PASSWORD) {
+        throw new Error("Mot de passe admin incorrect.");
+      }
+      return {
+        ok: true,
+        token: "local-admin"
+      };
+    }
+
+    function localGetMyRequests(payload) {
+      const employee = localRequireEmployee(payload.token);
+      const rows = loadLocalRequests().filter((request) => request.employee === employee);
+      return { ok: true, requests: rows };
+    }
+
+    function localCreateRequest(payload) {
+      const employee = localRequireEmployee(payload.token);
+      const dateKey = String(payload.dateKey || "");
+      const slotBase = String(payload.slotBase || "");
+      const customSlot = String(payload.customSlot || "").trim();
+      const reason = String(payload.reason || "").trim();
+      const existing = loadLocalRequests();
+      const localCheck = validateLocalRequest(existing, employee, dateKey);
+      if (!localCheck.ok) {
+        throw new Error(localCheck.message);
+      }
+      const slotLabel = slotBase === "Journée entière" || !customSlot ? slotBase : slotBase + " (" + customSlot + ")";
+      const requestDate = parseDateKey(dateKey);
+      const row = {
+        id: "local-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8),
+        employee,
+        dateKey,
+        dateLabel: formatDateLabel(requestDate),
+        slotBase,
+        slotLabel,
+        customSlot,
+        reason,
+        status: "pending",
+        createdAt: new Date().toISOString()
+      };
+      existing.push(row);
+      saveLocalRequests(existing);
+      return { ok: true, request: row };
+    }
+
+    function localDeleteMyRequest(payload) {
+      const employee = localRequireEmployee(payload.token);
+      const requestId = String(payload.requestId || "");
+      const existing = loadLocalRequests();
+      const request = existing.find((row) => row.id === requestId);
+      if (!request) {
+        throw new Error("Demande introuvable.");
+      }
+      if (request.employee !== employee) {
+        throw new Error("Action non autorisee.");
+      }
+      if (request.status !== "pending") {
+        throw new Error("Seules les demandes en attente peuvent etre supprimees.");
+      }
+      saveLocalRequests(existing.filter((row) => row.id !== requestId));
+      return { ok: true };
+    }
+
+    function localGetAllRequests(payload) {
+      localRequireAdmin(payload.token);
+      return {
+        ok: true,
+        employees: Object.keys(LOCAL_EMPLOYEES).sort((a, b) => a.localeCompare(b, "fr")),
+        requests: loadLocalRequests()
+      };
+    }
+
+    function localSetRequestStatus(payload) {
+      localRequireAdmin(payload.token);
+      const requestId = String(payload.requestId || "");
+      const status = String(payload.status || "");
+      if (!["approved", "refused"].includes(status)) {
+        throw new Error("Statut invalide.");
+      }
+      const existing = loadLocalRequests();
+      const index = existing.findIndex((row) => row.id === requestId);
+      if (index === -1) {
+        throw new Error("Demande introuvable.");
+      }
+      existing[index].status = status;
+      saveLocalRequests(existing);
+      return { ok: true };
+    }
+
+    function localDeleteRequest(payload) {
+      localRequireAdmin(payload.token);
+      const requestId = String(payload.requestId || "");
+      const existing = loadLocalRequests();
+      if (!existing.some((row) => row.id === requestId)) {
+        throw new Error("Demande introuvable.");
+      }
+      saveLocalRequests(existing.filter((row) => row.id !== requestId));
+      return { ok: true };
+    }
+
+    function localRequireEmployee(token) {
+      const raw = String(token || "");
+      if (!raw.startsWith("local-employee:")) {
+        throw new Error("Session employee invalide.");
+      }
+      const employee = decodeURIComponent(raw.slice("local-employee:".length));
+      if (!LOCAL_EMPLOYEES[employee]) {
+        throw new Error("Session employee invalide.");
+      }
+      return employee;
+    }
+
+    function localRequireAdmin(token) {
+      if (String(token || "") !== "local-admin") {
+        throw new Error("Session admin invalide.");
+      }
+      return true;
+    }
+
+    function loadLocalRequests() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEYS.localRequests) || "[]");
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function saveLocalRequests(rows) {
+      localStorage.setItem(STORAGE_KEYS.localRequests, JSON.stringify(rows));
+    }
+
+    function loadSamiState() {
+      APP.sami = {
+        items: loadSamiTasks(),
+        unlocked: localStorage.getItem(STORAGE_KEYS.samiUnlocked) === "true"
+      };
+    }
+
+    function loadSamiTasks() {
+      try {
+        const rows = JSON.parse(localStorage.getItem(STORAGE_KEYS.samiTasks) || "[]");
+        return Array.isArray(rows) ? rows : [];
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function saveSamiTasks() {
+      localStorage.setItem(STORAGE_KEYS.samiTasks, JSON.stringify(APP.sami.items));
+    }
+
+    function renderSamiPage() {
+      if (!APP.sami) loadSamiState();
+      const items = [...APP.sami.items].sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+      const answered = items.filter((item) => item.status === "answered" || item.status === "resolved").length;
+      const resolved = items.filter((item) => item.status === "resolved").length;
+      const open = items.filter((item) => item.status === "pending").length;
+      const resolvedDisplay = 102;
+
+      document.getElementById("sami-total").textContent = items.length;
+      document.getElementById("sami-answered").textContent = answered;
+      document.getElementById("sami-resolved").textContent = resolvedDisplay;
+      document.getElementById("sami-open-count").textContent = open + (open > 1 ? " ouvertes" : " ouverte");
+
+      const tickerTrack = document.getElementById("sami-ticker-track");
+      const solvedNames = [...new Set(items.filter((item) => item.status === "resolved").map((item) => item.name))];
+      const funItems = [
+        ...SAMI_FUN_RESPONSES,
+        ...solvedNames.map((name) => "✅ " + name + " a deja ete regle par Sami.")
+      ];
+      const tickerItems = (funItems.length ? funItems : ["Sami a deja regle 102 demandes, la legende est vivante."]);
+      tickerTrack.innerHTML = tickerItems.concat(tickerItems).map((text) => "<span>" + escapeHtml(text) + "</span>").join("");
+
+      document.getElementById("sami-lock-off").style.display = APP.sami.unlocked ? "inline-flex" : "none";
+
+      const list = document.getElementById("sami-request-list");
+      if (!items.length) {
+        list.innerHTML = '<div class="empty-state">Aucune demande particulière pour le moment.</div>';
+        return;
+      }
+
+      list.innerHTML = "";
+      items.forEach((item) => {
+        const row = document.createElement("div");
+        row.className = "todo-item";
+        const canSeeDetails = APP.sami.unlocked;
+        row.innerHTML = [
+          '<div class="todo-head">',
+          '  <div>',
+          '    <h4>' + escapeHtml(item.name) + ' • ' + escapeHtml(item.topic) + '</h4>',
+          '    <div class="todo-meta">',
+          '      <span class="pill ' + item.status + '">' + samiStatusLabel(item.status) + '</span>',
+          '      <span class="pill" style="background: rgba(17,75,95,0.08); color: var(--teal-900);">' + escapeHtml(formatDateTime(item.createdAt)) + '</span>',
+          '    </div>',
+          '  </div>',
+          '</div>',
+          canSeeDetails
+            ? '<p style="margin:0; color: var(--text); line-height:1.65;">' + escapeHtml(item.message) + '</p>'
+            : '<div class="todo-private">Le contenu de cette demande est privé. L’équipe peut voir qu’une demande existe, mais seul Sami peut lire le détail et la réponse.</div>',
+          canSeeDetails && item.reply ? '<div class="todo-reply"><strong>Réponse de Sami :</strong><br>' + escapeHtml(item.reply) + '</div>' : ''
+        ].join("");
+
+        if (APP.sami.unlocked) {
+          const adminBox = document.createElement("div");
+          adminBox.className = "todo-admin";
+          adminBox.innerHTML = [
+            '<div class="field" style="margin:0;">',
+            '  <label for="reply-' + item.id + '">Réponse</label>',
+            '  <textarea id="reply-' + item.id + '" placeholder="Écris la réponse de Sami...">' + escapeHtml(item.reply || "") + '</textarea>',
+            '</div>',
+            '<div class="todo-admin-actions">',
+            '  <button class="btn btn-soft" data-action="save">Sauvegarder la réponse</button>',
+            '  <button class="btn btn-primary" data-action="answered">Marquer répondu</button>',
+            '  <button class="btn btn-ok" data-action="resolved">Marquer réglé</button>',
+            '  <button class="btn btn-danger" data-action="pending">Remettre en attente</button>',
+            '</div>'
+          ].join("");
+
+          adminBox.querySelector('[data-action="save"]').onclick = () => saveSamiReply(item.id);
+          adminBox.querySelector('[data-action="answered"]').onclick = () => setSamiStatus(item.id, "answered");
+          adminBox.querySelector('[data-action="resolved"]').onclick = () => setSamiStatus(item.id, "resolved");
+          adminBox.querySelector('[data-action="pending"]').onclick = () => setSamiStatus(item.id, "pending");
+          row.appendChild(adminBox);
+        }
+
+        list.appendChild(row);
+      });
+    }
+
+    function useSamiExample(text) {
+      document.getElementById("sami-message").value = text;
+      document.getElementById("sami-message").focus();
+    }
+
+    function submitSamiTask() {
+      const name = document.getElementById("sami-name").value.trim();
+      const topic = document.getElementById("sami-topic").value;
+      const message = document.getElementById("sami-message").value.trim();
+      if (!name || !topic || !message) {
+        toast("Remplissez le prénom, le sujet et la demande pour Sami.");
+        return;
+      }
+
+      APP.sami.items.push({
+        id: "sami-" + Date.now() + "-" + Math.random().toString(36).slice(2, 7),
+        name,
+        topic,
+        message,
+        status: "pending",
+        reply: "",
+        createdAt: new Date().toISOString()
+      });
+      saveSamiTasks();
+      document.getElementById("sami-name").value = "";
+      document.getElementById("sami-topic").value = "";
+      document.getElementById("sami-message").value = "";
+      renderSamiPage();
+      toast("Demande envoyée à la To Do List de Sami.");
+    }
+
+    function unlockSamiMode() {
+      const password = document.getElementById("sami-pass").value;
+      if (password !== LOCAL_ADMIN_PASSWORD) {
+        toast("Mot de passe admin incorrect.");
+        return;
+      }
+      APP.sami.unlocked = true;
+      localStorage.setItem(STORAGE_KEYS.samiUnlocked, "true");
+      document.getElementById("sami-pass").value = "";
+      renderSamiPage();
+      toast("Mode Sami déverrouillé.");
+    }
+
+    function lockSamiMode() {
+      APP.sami.unlocked = false;
+      localStorage.removeItem(STORAGE_KEYS.samiUnlocked);
+      renderSamiPage();
+      toast("Mode Sami refermé.");
+    }
+
+    function saveSamiReply(itemId) {
+      const target = APP.sami.items.find((item) => item.id === itemId);
+      if (!target) return;
+      const textarea = document.getElementById("reply-" + itemId);
+      target.reply = textarea ? textarea.value.trim() : target.reply;
+      saveSamiTasks();
+      renderSamiPage();
+      toast("Réponse sauvegardée.");
+    }
+
+    function setSamiStatus(itemId, status) {
+      const target = APP.sami.items.find((item) => item.id === itemId);
+      if (!target) return;
+      const textarea = document.getElementById("reply-" + itemId);
+      if (textarea) {
+        target.reply = textarea.value.trim();
+      }
+      if ((status === "answered" || status === "resolved") && !target.reply) {
+        toast("Ajoute d’abord une réponse avant de valider ce statut.");
+        return;
+      }
+      target.status = status;
+      saveSamiTasks();
+      renderSamiPage();
+      toast(status === "resolved" ? "Demande marquée comme réglée." : status === "answered" ? "Demande marquée comme répondue." : "Demande remise en attente.");
+    }
+
+    function samiStatusLabel(status) {
+      if (status === "resolved") return "Réglée";
+      if (status === "answered") return "Répondue";
+      return "En attente";
+    }
+
+    function handleGlobalButtonConfetti(event) {
+      const button = event.target.closest("button");
+      if (!button) return;
+      launchConfetti(event.clientX || window.innerWidth / 2, event.clientY || window.innerHeight / 2);
+    }
+
+    function launchConfetti(x, y) {
+      const layer = document.getElementById("confetti-layer");
+      if (!layer) return;
+      const colors = ["#2cb1a7", "#eb6f5a", "#f6c85f", "#114b5f", "#9be4d7", "#ff9f1c"];
+      for (let i = 0; i < 24; i += 1) {
+        const piece = document.createElement("span");
+        piece.className = "confetti-piece";
+        piece.style.left = x + "px";
+        piece.style.top = y + "px";
+        piece.style.background = colors[i % colors.length];
+        piece.style.setProperty("--dx", (Math.random() * 240 - 120).toFixed(0) + "px");
+        piece.style.setProperty("--dy", (Math.random() * 180 + 40).toFixed(0) + "px");
+        piece.style.setProperty("--rot", (Math.random() * 720 - 360).toFixed(0) + "deg");
+        piece.style.animationDelay = (Math.random() * 80).toFixed(0) + "ms";
+        layer.appendChild(piece);
+        setTimeout(() => piece.remove(), 1000);
+      }
+    }
+
+    function openModal(title, subtitle, bodyHtml, actions) {
+      document.getElementById("modal-title").textContent = title;
+      document.getElementById("modal-subtitle").textContent = subtitle || "";
+      document.getElementById("modal-body").innerHTML = bodyHtml || "";
+
+      const actionsWrap = document.getElementById("modal-actions");
+      actionsWrap.innerHTML = "";
+      actions.forEach((action) => {
+        const button = document.createElement("button");
+        button.className = action.cls;
+        button.textContent = action.label;
+        button.onclick = action.onClick;
+        actionsWrap.appendChild(button);
+      });
+
+      document.getElementById("modal-backdrop").classList.add("open");
+    }
+
+    function closeModal() {
+      document.getElementById("modal-backdrop").classList.remove("open");
+    }
+
+    function closeModalIfBackdrop(event) {
+      if (event.target.id === "modal-backdrop") {
+        closeModal();
+      }
+    }
+
+    function toast(message) {
+      const element = document.getElementById("toast");
+      element.textContent = message;
+      element.classList.add("show");
+      clearTimeout(toast._timer);
+      toast._timer = setTimeout(() => element.classList.remove("show"), 3200);
+    }
+
+    function withButtonLoading(id, loading, label) {
+      const button = document.getElementById(id);
+      button.disabled = loading;
+      button.textContent = label;
+    }
+
+    function assignEmployeeColors(employees) {
+      APP.colors = {};
+      employees.forEach((employee, index) => {
+        APP.colors[employee] = APP.palette[index % APP.palette.length];
+      });
+    }
+
+    function extractEmployees(requests) {
+      return [...new Set(requests.map((request) => request.employee))].sort((a, b) => a.localeCompare(b, "fr"));
+    }
+
+    function parseDateKey(value) {
+      const parts = String(value).split("-").map(Number);
+      return new Date(parts[0], parts[1] - 1, parts[2]);
+    }
+
+    function startOfDay(date) {
+      const clone = new Date(date);
+      clone.setHours(0, 0, 0, 0);
+      return clone;
+    }
+
+    function addDays(date, days) {
+      const clone = new Date(date);
+      clone.setDate(clone.getDate() + days);
+      return clone;
+    }
+
+    function toDateInputValue(date) {
+      const normalized = startOfDay(date);
+      return normalized.getFullYear() + "-" + String(normalized.getMonth() + 1).padStart(2, "0") + "-" + String(normalized.getDate()).padStart(2, "0");
+    }
+
+    function formatDateLabel(date) {
+      return APP.weekdaysLabel[date.getDay()] + " " + date.getDate() + " " + APP.monthsLabel[date.getMonth()] + " " + date.getFullYear();
+    }
+
+    function formatDateTime(value) {
+      return new Date(value).toLocaleString("fr-FR");
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+  </script>
 </body>
 </html>
