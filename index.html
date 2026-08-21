@@ -108,6 +108,62 @@
       will-change: transform, opacity;
     }
 
+    .portal-wipe {
+      position: fixed;
+      inset: 0;
+      z-index: 190;
+      display: grid;
+      place-items: center;
+      clip-path: inset(0 0 100% 0);
+      pointer-events: none;
+    }
+
+    .portal-wipe.run {
+      animation: portalWipeUp 1.15s cubic-bezier(.76,0,.24,1) forwards;
+    }
+
+    .portal-wipe.home-theme {
+      background: #ffffff;
+      color: var(--teal-900);
+    }
+
+    .portal-wipe.aquaponey-theme {
+      background: linear-gradient(145deg, #114b5f, #2cb1a7);
+      color: #ffffff;
+    }
+
+    .portal-wipe.todo-theme {
+      background: linear-gradient(145deg, #eb6f5a, #f6a08a);
+      color: #ffffff;
+    }
+
+    .portal-wipe-content {
+      display: grid;
+      gap: 12px;
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    .portal-wipe-content strong {
+      font-family: var(--font-display);
+      font-size: clamp(2.6rem, 8vw, 6.8rem);
+      line-height: .9;
+      letter-spacing: -.06em;
+    }
+
+    .portal-wipe-content span {
+      font-size: .72rem;
+      font-weight: 800;
+      letter-spacing: .24em;
+      opacity: .62;
+    }
+
+    @keyframes portalWipeUp {
+      0% { clip-path: inset(0 0 0 0); }
+      52% { clip-path: inset(0 0 0 0); }
+      100% { clip-path: inset(0 0 100% 0); }
+    }
+
     .page {
       display: none;
       min-height: 100vh;
@@ -585,6 +641,12 @@
       background: linear-gradient(135deg, var(--coral-600), var(--coral-500));
       color: white;
       box-shadow: 0 10px 22px rgba(244, 140, 115, 0.3);
+    }
+
+    .btn-violet {
+      background: linear-gradient(135deg, #6f5aa8, #9278ca);
+      color: white;
+      box-shadow: 0 10px 24px rgba(111, 90, 168, 0.3);
     }
 
     .btn-soft {
@@ -1208,7 +1270,28 @@
     .landing-shell {
       width: min(1180px, 100%);
       display: grid;
-      gap: 22px;
+      gap: 34px;
+    }
+
+    .landing-intro {
+      text-align: center;
+      padding: 18px 20px 0;
+    }
+
+    .landing-intro h1 {
+      margin: 12px auto 14px;
+      font-family: var(--font-display);
+      font-size: clamp(2.7rem, 7vw, 5.8rem);
+      line-height: .95;
+      letter-spacing: -.065em;
+      color: var(--teal-900);
+    }
+
+    .landing-intro p {
+      max-width: 620px;
+      margin: 0 auto;
+      color: var(--muted);
+      line-height: 1.7;
     }
 
     .landing-top {
@@ -1289,7 +1372,7 @@
 
     .process-grid {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 18px;
     }
 
@@ -1301,7 +1384,19 @@
       border: var(--border);
       background: linear-gradient(180deg, rgba(255,255,255,0.94), rgba(255,255,255,0.82));
       box-shadow: var(--shadow);
+      min-height: 330px;
+      display: flex;
+      flex-direction: column;
+      transition: transform 220ms ease, box-shadow 220ms ease;
     }
+
+    .process-card:hover {
+      transform: translateY(-7px);
+      box-shadow: 0 28px 60px rgba(17,75,95,.2);
+    }
+
+    .process-card p { flex: 1; }
+
 
     .process-card h2 {
       margin: 8px 0;
@@ -1385,6 +1480,11 @@
       padding-left: 100%;
       animation: tickerRun 72s linear infinite;
       font-weight: 700;
+    }
+
+    .landing-ticker {
+      margin-top: 2px;
+      box-shadow: 0 16px 34px rgba(17,75,95,.16);
     }
 
     @keyframes tickerRun {
@@ -1874,6 +1974,21 @@
       color: rgba(255,255,255,0.35);
       font-size: 0.9rem;
     }
+    .cg-admin-hint {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(184,146,74,0.16);
+      border-radius: 12px;
+      color: rgba(240,208,128,0.2);
+      font-size: 0.8rem;
+      user-select: none;
+      pointer-events: none;
+    }
     .cg-btn {
       border: 1px solid rgba(184,146,74,0.6);
       border-radius: 999px;
@@ -1908,6 +2023,44 @@
         radial-gradient(ellipse 35% 50% at 90% 60%, rgba(184,146,74,0.07) 0%, transparent 60%);
       color: #f0ece4;
       min-height: 100vh;
+      position: relative;
+      overflow: hidden;
+      isolation: isolate;
+    }
+    #page-cash-prize::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      opacity: 0.35;
+      background-image:
+        linear-gradient(rgba(184,146,74,0.09) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(184,146,74,0.09) 1px, transparent 1px);
+      background-size: min(25vw, 295px) 132px;
+      mask-image: linear-gradient(to bottom, black, transparent 88%);
+    }
+    .cp-intro-wipe {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      display: grid;
+      place-items: center;
+      background: #b8924a;
+      color: #0c0c0c;
+      font-weight: 900;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      clip-path: inset(0 0 0 0);
+      pointer-events: none;
+    }
+    .cp-intro-wipe.run {
+      animation: cpWipe 1.15s cubic-bezier(.76,0,.24,1) forwards;
+    }
+    @keyframes cpWipe {
+      0% { clip-path: inset(0 0 0 0); }
+      52% { clip-path: inset(0 0 0 0); }
+      100% { clip-path: inset(0 0 100% 0); }
     }
     .cp-shell {
       max-width: 1180px;
@@ -1969,6 +2122,23 @@
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
+    .cp-h1-line {
+      display: block;
+      overflow: hidden;
+      padding-bottom: 0.08em;
+    }
+    .cp-h1-line > span {
+      display: block;
+      transform: translateY(115%) rotate(2deg);
+      opacity: 0;
+    }
+    .cp-motion-ready .cp-h1-line > span {
+      animation: cpTitleIn 1s cubic-bezier(.16,1,.3,1) forwards;
+    }
+    .cp-motion-ready .cp-h1-line:nth-child(2) > span { animation-delay: .12s; }
+    @keyframes cpTitleIn {
+      to { transform: translateY(0) rotate(0); opacity: 1; }
+    }
     .cp-desc {
       margin: 0 0 28px;
       color: rgba(240,236,228,0.65);
@@ -1990,8 +2160,12 @@
       font-weight: 600;
       color: rgba(240,236,228,0.55);
       letter-spacing: 0.04em;
-      animation: kwFadeIn 0.5s ease both;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity .65s ease, transform .65s cubic-bezier(.16,1,.3,1), background .25s ease, color .25s ease;
     }
+    .cp-motion-ready .cp-keywords span { opacity: 1; transform: translateY(0); }
+    .cp-keywords span:hover { background: #b8924a; color: #0c0c0c; }
     @keyframes kwFadeIn {
       from{opacity:0;transform:translateY(8px);}
       to{opacity:1;transform:none;}
@@ -2006,8 +2180,8 @@
     .cp-keywords span:nth-child(8){animation-delay:0.4s}
     .cp-trophy-wrap {
       position: relative;
-      width: 160px;
-      height: 160px;
+      width: min(34vw, 360px);
+      height: min(34vw, 360px);
       display: grid;
       place-items: center;
     }
@@ -2022,12 +2196,53 @@
       0%,100%{transform:scale(1);opacity:0.7;}
       50%{transform:scale(1.18);opacity:1;}
     }
-    .cp-trophy {
-      font-size: 5.5rem;
+    .cp-orb-canvas {
+      width: 100%;
+      height: 100%;
       position: relative;
       z-index: 1;
-      animation: cgFloat 3s ease-in-out infinite;
-      filter: drop-shadow(0 8px 32px rgba(184,146,74,0.6));
+      filter: drop-shadow(0 0 26px rgba(184,146,74,0.28));
+    }
+    .cp-orb-label {
+      position: absolute;
+      z-index: 2;
+      font-size: 0.62rem;
+      letter-spacing: 0.22em;
+      color: rgba(240,208,128,0.52);
+      text-transform: uppercase;
+    }
+    .cp-orb-label.top { top: 8%; right: -4%; }
+    .cp-orb-label.bottom { bottom: 7%; left: -2%; }
+    .cp-orb-cross {
+      position: absolute;
+      inset: 50% auto auto 50%;
+      width: 18px;
+      height: 18px;
+      z-index: 3;
+      transform: translate(-50%, -50%);
+    }
+    .cp-orb-cross::before, .cp-orb-cross::after {
+      content: "";
+      position: absolute;
+      background: rgba(240,208,128,0.55);
+    }
+    .cp-orb-cross::before { left: 8px; top: 0; width: 1px; height: 18px; }
+    .cp-orb-cross::after { left: 0; top: 8px; width: 18px; height: 1px; }
+    .cp-index-line {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin: 0 0 28px;
+      color: rgba(240,208,128,0.44);
+      font-size: 0.65rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+    .cp-index-line::after {
+      content: "";
+      height: 1px;
+      flex: 1;
+      background: linear-gradient(90deg, rgba(184,146,74,.38), transparent);
     }
 
     /* SECTION LABEL */
@@ -2052,7 +2267,11 @@
       height: 240px;
       cursor: pointer;
       perspective: 1000px;
+      opacity: 0;
+      transform: translateY(55px);
+      transition: opacity .85s ease, transform .85s cubic-bezier(.16,1,.3,1);
     }
+    .cp-flip-card.cp-visible { opacity: 1; transform: translateY(0); }
     .cp-flip-inner {
       width: 100%;
       height: 100%;
@@ -2135,6 +2354,13 @@
       overflow: hidden;
       background: linear-gradient(180deg, #141414, #0f0f0f);
       transition: transform 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
+      opacity: 0;
+      transform: translateY(55px);
+    }
+    .cp-prize.cp-visible {
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity .85s ease, transform .85s cubic-bezier(.16,1,.3,1), border-color 200ms ease, box-shadow 200ms ease;
     }
     .cp-prize:hover {
       transform: translateY(-5px);
@@ -2151,6 +2377,17 @@
     .cp-italien .cp-prize-icon  { background: linear-gradient(145deg, #0a1a0e, #07130a); }
     .cp-tanao .cp-prize-icon    { background: linear-gradient(145deg, #081522, #050e18); }
     .cp-terrasse-prize .cp-prize-icon { background: linear-gradient(145deg, #1a1408, #120f05); filter:drop-shadow(0 0 20px rgba(240,208,80,0.3)); }
+    .cp-cash-40 .cp-prize-icon { background: linear-gradient(145deg, #171208, #0f0c06); }
+    .cp-cash-60 .cp-prize-icon { background: linear-gradient(145deg, #21180a, #120d06); filter: drop-shadow(0 0 18px rgba(184,146,74,.24)); }
+    .cp-cash-80 .cp-prize-icon { background: linear-gradient(145deg, #2c200b, #151006); filter: drop-shadow(0 0 24px rgba(240,208,128,.32)); }
+    .cp-cash-amount {
+      display: inline-block;
+      font-size: clamp(2.3rem, 5vw, 3.5rem);
+      line-height: 1;
+      font-weight: 800;
+      letter-spacing: -.06em;
+      color: #f0d080;
+    }
     .cp-prize-body {
       padding: 4px 22px 24px;
     }
@@ -2187,73 +2424,51 @@
     /* FOOTNOTE */
     .cp-footnote {
       text-align: center;
-      font-size: 0.75rem;
-      letter-spacing: 0.1em;
-      color: rgba(255,255,255,0.2);
-      padding: 0 20px;
-      line-height: 1.8;
+      max-width: 920px;
+      margin: 0 auto;
+      font-size: 0.82rem;
+      letter-spacing: 0.035em;
+      color: rgba(240,236,228,0.48);
+      padding: 22px 20px 0;
+      border-top: 1px solid rgba(184,146,74,0.18);
+      line-height: 1.9;
     }
 
     @media (max-width: 768px) {
       .cp-hero { grid-template-columns: 1fr; }
-      .cp-trophy-wrap { display: none; }
+      .cp-trophy-wrap { width: min(82vw, 330px); height: min(82vw, 330px); margin: -12px auto 0; }
       .cp-cards-grid { grid-template-columns: repeat(2, 1fr); }
       .cg-unit { min-width: 72px; padding: 14px 16px; }
       .cg-unit span { font-size: 2.2rem; }
     }
+    @media (prefers-reduced-motion: reduce) {
+      .cp-intro-wipe, .portal-wipe { display: none; }
+      .cp-h1-line > span, .cp-flip-card, .cp-prize, .cp-keywords span {
+        animation: none !important;
+        transition: none !important;
+        opacity: 1 !important;
+        transform: none !important;
+      }
+    }
   </style>
 </head>
 <body>
+  <div class="portal-wipe home-theme" id="portal-wipe" aria-hidden="true">
+    <div class="portal-wipe-content">
+      <strong id="portal-wipe-title">La Terrasse</strong>
+      <span id="portal-wipe-subtitle">Espace équipe</span>
+    </div>
+  </div>
   <section class="page active" id="page-landing">
     <div class="home-shell">
       <div class="landing-shell">
-        <div class="landing-top">
-          <div class="landing-panel">
-            <div class="eyebrow">☀️ La Terrasse • Aquawesh</div>
-            <h1>Le coin équipe de Sami.</h1>
-            <p>
-              Un point d’entrée unique pour gérer AquaPoney et les demandes du quotidien.
-              On garde exactement l’univers AquaPoney déjà posé, et on ajoute maintenant un second process simple pour les soucis d’horaires, de badge, et les demandes particulières.
-            </p>
-            <div class="landing-actions">
-              <button class="btn btn-primary" onclick="showPage('home')">Ouvrir AquaPoney</button>
-              <button class="btn btn-coral" onclick="showPage('sami-todo')">Ouvrir la To Do List de Sami</button>
-              <button class="btn btn-soft" onclick="showPage('cash-prize')">Ouvrir Cash Prize</button>
-            </div>
-          </div>
-
-          <div class="landing-side">
-            <div class="mini-card">
-              <div class="badge sun">Nouveau process</div>
-              <h3>To Do List de Sami</h3>
-              <p>
-                Les employés peuvent envoyer une demande particulière, voir combien de demandes ont déjà reçu une réponse
-                et suivre les personnes déjà aidées.
-              </p>
-              <button class="btn btn-soft" onclick="showPage('sami-todo')">Voir le process</button>
-            </div>
-
-            <div class="mini-card">
-              <div class="badge team">AquaPoney</div>
-              <h3>Portail d’indisponibilités</h3>
-              <p>
-                Le portail existant reste intact : compteur de vies, calendrier, demandes et espace admin.
-              </p>
-              <button class="btn btn-soft" onclick="showPage('home')">Aller vers AquaPoney</button>
-            </div>
-
-            <div class="mini-card">
-              <div class="badge admin">Cash Prize</div>
-              <h3>Récompenses de la salle</h3>
-              <p>
-                Une page drôle et festive pour les meilleures ventes, l’assiduité, l’ambiance et les best moments de La Terrasse.
-              </p>
-              <button class="btn btn-soft" onclick="showPage('cash-prize')">Voir les récompenses</button>
-            </div>
-          </div>
+        <div class="landing-intro">
+          <div class="eyebrow" style="background:rgba(17,75,95,.08);color:var(--teal-900);border-color:rgba(17,75,95,.12);">☀️ La Terrasse • Espace équipe</div>
+          <h1>Où veux-tu aller&nbsp;?</h1>
+          <p>Trois espaces, trois usages. Choisis simplement celui dont tu as besoin.</p>
         </div>
 
-        <div class="process-grid" style="grid-template-columns:repeat(3,minmax(0,1fr));">
+        <div class="process-grid">
           <div class="process-card">
             <div class="process-icon">🐴</div>
             <h2>AquaPoney</h2>
@@ -2272,8 +2487,12 @@
             <div class="process-icon">🏆</div>
             <h2>Cash Prize</h2>
             <p>Pour célébrer les cracks de la salle, les récompenses secrètes et les meilleurs souvenirs de La Terrasse.</p>
-            <button class="btn btn-soft" onclick="showPage('cash-prize')">Accéder aux prix</button>
+            <button class="btn btn-violet" onclick="showPage('cash-prize')">Accéder aux prix</button>
           </div>
+        </div>
+
+        <div class="ticker landing-ticker" aria-label="Les nouvelles décalées de l’équipe">
+          <div class="ticker-track" id="landing-ticker-track"></div>
         </div>
       </div>
     </div>
@@ -2669,25 +2888,27 @@
           <div class="cg-unit"><span id="cg-s">00</span><small>sec</small></div>
         </div>
         <p class="cg-hint" id="cg-hint">Reviens quand le compteur atteint zéro.</p>
-        <button class="cg-btn" id="cg-enter-btn" style="display:none" onclick="showPage(‘cash-prize’)">Entrer ✦</button>
+        <button class="cg-btn" id="cg-enter-btn" style="display:none" onclick="openCashPrize()">Entrer ✦</button>
       </div>
       <!-- Code caché admin -->
+      <div class="cg-admin-hint" aria-hidden="true">•••</div>
       <input id="cg-secret" type="password" inputmode="numeric" maxlength="6"
         oninput="checkSecretCode(this.value)"
         style="position:fixed;bottom:18px;right:18px;width:36px;height:36px;
                opacity:0.12;border:1px solid rgba(255,255,255,0.15);border-radius:10px;
                background:transparent;color:transparent;font-size:1px;cursor:default;
                outline:none;padding:0;text-align:center;z-index:99;"
-        autocomplete="off" aria-hidden="true">
+        autocomplete="off" aria-label="Accès privé">
     </div>
   </section>
 
   <section class="page" id="page-cash-prize">
+    <div class="cp-intro-wipe" id="cp-intro-wipe">La Terrasse · 2026</div>
     <div class="cp-shell">
       <!-- TOPBAR -->
       <div class="cp-topbar">
-        <button class="cp-back" onclick="showPage(‘landing’)">← Accueil</button>
-        <div class="cp-brand">✦ Cash Prize · La Terrasse ✦</div>
+        <button class="cp-back" onclick="showPage('landing')">← Accueil</button>
+        <div class="cp-brand">✦ Cash Prize · La Terrasse · Saison d’été ✦</div>
         <div></div>
       </div>
 
@@ -2695,8 +2916,8 @@
       <div class="cp-hero">
         <div class="cp-hero-left">
           <div class="cp-pill">✦ Réservé à l’équipe salle ✦</div>
-          <h1 class="cp-h1">Merci.<br>Vraiment.</h1>
-          <p class="cp-desc">Ces récompenses ne célèbrent pas un classement.<br>Elles disent <em>merci</em> aux personnes les plus agréables à travailler avec — celles avec qui la salle tourne mieux, les sourires qui restent même quand c’est chaud, et le travail qu’on ne voit pas mais qu’on ressent.</p>
+          <h1 class="cp-h1"><span class="cp-h1-line"><span>Merci.</span></span><span class="cp-h1-line"><span>Vraiment.</span></span></h1>
+          <p class="cp-desc">Ici, aucune compétition et aucun classement. Ces récompenses disent simplement <em>merci</em> à celles et ceux qui donnent le meilleur d’eux-mêmes à La Terrasse&nbsp;: les plus patients, les plus agréables au service, les présences sur lesquelles l’équipe peut compter et tout ce travail discret que l’on ressent chaque soir.</p>
           <div class="cp-keywords">
             <span>Bonne humeur</span><span>Fiabilité</span><span>Élégance</span><span>Présence</span><span>Équipe</span><span>Effort</span><span>Timing</span><span>Vente</span>
           </div>
@@ -2704,67 +2925,72 @@
         <div class="cp-hero-right">
           <div class="cp-trophy-wrap">
             <div class="cp-trophy-glow"></div>
-            <div class="cp-trophy">🏆</div>
+            <canvas class="cp-orb-canvas" id="cp-orb" width="720" height="720" aria-label="Forme dorée animée représentant l'énergie de l'équipe"></canvas>
+            <div class="cp-orb-cross" aria-hidden="true"></div>
+            <span class="cp-orb-label top">Sales · 2026</span>
+            <span class="cp-orb-label bottom">La Terrasse · Ensemble</span>
           </div>
         </div>
       </div>
 
       <!-- PARTICIPANTS -->
+      <div class="cp-index-line"><span>01</span><span>Présences remarquées</span></div>
       <div class="cp-section-label">✦ Les participants ✦</div>
       <div class="cp-cards-grid">
 
-        <div class="cp-flip-card" onclick="this.classList.toggle(‘flipped’)">
+        <div class="cp-flip-card" tabindex="0" role="button" aria-label="Découvrir Fabien" onclick="flipParticipant(this)" onkeydown="flipParticipantKey(event, this)">
           <div class="cp-flip-inner">
             <div class="cp-flip-front"><span>?</span><small>Touche pour découvrir</small></div>
-            <div class="cp-flip-back"><strong>Fabien</strong><p>Pour sa gayeté et son talent à mettre un peu de soleil même quand la salle part en toupie.</p></div>
+            <div class="cp-flip-back"><strong>Fabien</strong><p>Pour sa Gayté et son talent à mettre un peu de soleil même quand la salle part en toupie.</p></div>
           </div>
         </div>
 
-        <div class="cp-flip-card" onclick="this.classList.toggle(‘flipped’)">
+        <div class="cp-flip-card" tabindex="0" role="button" aria-label="Découvrir Marguerite" onclick="flipParticipant(this)" onkeydown="flipParticipantKey(event, this)">
           <div class="cp-flip-inner">
             <div class="cp-flip-front"><span>?</span><small>Touche pour découvrir</small></div>
-            <div class="cp-flip-back"><strong>Marguerite</strong><p>Pour avoir réussi l’exploit d’être à la fois discrète, efficace et probablement déjà au courant avant tout le monde.</p></div>
+            <div class="cp-flip-back"><strong>Marguerite</strong><p>Pour avoir réussi l’exploit d’être à la fois discrète, efficace et probablement déjà au courant avant tout le monde. (J’ai pas d’inspi.)</p></div>
           </div>
         </div>
 
-        <div class="cp-flip-card" onclick="this.classList.toggle(‘flipped’)">
+        <div class="cp-flip-card" tabindex="0" role="button" aria-label="Découvrir Milla" onclick="flipParticipant(this)" onkeydown="flipParticipantKey(event, this)">
           <div class="cp-flip-inner">
             <div class="cp-flip-front"><span>?</span><small>Touche pour découvrir</small></div>
-            <div class="cp-flip-back"><strong>Mila</strong><p>Pour la qualité de présence, l’élégance et le plaisir de travailler ensemble.</p></div>
+            <div class="cp-flip-back"><strong>Milla</strong><p>Pour sa présence et sa capacité à gérer quelconque malaise en salle.</p></div>
           </div>
         </div>
 
-        <div class="cp-flip-card" onclick="this.classList.toggle(‘flipped’)">
+        <div class="cp-flip-card" tabindex="0" role="button" aria-label="Découvrir Maya" onclick="flipParticipant(this)" onkeydown="flipParticipantKey(event, this)">
           <div class="cp-flip-inner">
             <div class="cp-flip-front"><span>?</span><small>Touche pour découvrir</small></div>
-            <div class="cp-flip-back"><strong>Maya</strong><p>Pour le rythme, la salle tenue proprement et le sens du timing.</p></div>
+            <div class="cp-flip-back"><strong>Maya</strong><p>Pour le rythme, la salle tenue proprement et le SENS DU TIMING&nbsp;!!!</p></div>
           </div>
         </div>
 
-        <div class="cp-flip-card" onclick="this.classList.toggle(‘flipped’)">
+        <div class="cp-flip-card" tabindex="0" role="button" aria-label="Découvrir François" onclick="flipParticipant(this)" onkeydown="flipParticipantKey(event, this)">
           <div class="cp-flip-inner">
             <div class="cp-flip-front"><span>?</span><small>Touche pour découvrir</small></div>
-            <div class="cp-flip-back"><strong>François</strong><p>Pour l’impact en service et le calme qui évite trois incendies par soirée.</p></div>
+            <div class="cp-flip-back"><strong>François</strong><p>Pour l’impact, le service et le fait de proposer à ses proches de venir à 15 le samedi à 19&nbsp;h&nbsp;30 lorsque le resto est plein.</p></div>
           </div>
         </div>
 
-        <div class="cp-flip-card" onclick="this.classList.toggle(‘flipped’)">
+        <div class="cp-flip-card" tabindex="0" role="button" aria-label="Découvrir Lulu" onclick="flipParticipant(this)" onkeydown="flipParticipantKey(event, this)">
           <div class="cp-flip-inner">
             <div class="cp-flip-front"><span>?</span><small>Touche pour découvrir</small></div>
-            <div class="cp-flip-back"><strong>Lulu</strong><p>Pour la vibe, le sérieux au service et les moments où tout roule mieux avec elle.</p></div>
+            <div class="cp-flip-back"><strong>Lulu</strong><p>Pour son sérieux au Bââââaar et son assiduité en vacances.</p></div>
           </div>
         </div>
 
-        <div class="cp-flip-card" onclick="this.classList.toggle(‘flipped’)">
+        <div class="cp-flip-card" tabindex="0" role="button" aria-label="Découvrir Lisa" onclick="flipParticipant(this)" onkeydown="flipParticipantKey(event, this)">
           <div class="cp-flip-inner">
             <div class="cp-flip-front"><span>?</span><small>Touche pour découvrir</small></div>
-            <div class="cp-flip-back"><strong>Lisa</strong><p>Pour l’énergie, la fiabilité et le niveau de bonne humeur parfaitement calibré.</p></div>
+            <div class="cp-flip-back"><strong>Lisa</strong><p>Pour l’énergie, la fiabilité, le niveau de bonne humeur parfaitement calibré et ses chemises trouées.</p></div>
           </div>
         </div>
 
       </div>
 
       <!-- PRIZES -->
+      <div class="cp-index-line"><span>02</span><span>Expériences offertes</span></div>
       <div class="cp-section-label">✦ Les récompenses ✦</div>
       <div class="cp-prizes-grid">
 
@@ -2774,7 +3000,7 @@
             <div class="cp-prize-tag">Dîner pour 2</div>
             <h3>Mallmann</h3>
             <p>Restaurant argentin de caractère. Une table pour deux, une expérience feu et braise à partager.</p>
-            <div class="cp-prize-cond">Alcool à la charge des invités · <strong>-20% à La Terrasse</strong></div>
+            <div class="cp-prize-cond">Alcool à la charge des invités.</div>
           </div>
         </div>
 
@@ -2784,7 +3010,7 @@
             <div class="cp-prize-tag">Dîner pour 2</div>
             <h3>L’Italien</h3>
             <p>Le meilleur de la cuisine italienne, une table pour deux dans une ambiance chaleureuse.</p>
-            <div class="cp-prize-cond">Alcool à la charge des invités · <strong>-20% à La Terrasse</strong></div>
+            <div class="cp-prize-cond">Alcool à la charge des invités.</div>
           </div>
         </div>
 
@@ -2792,9 +3018,9 @@
           <div class="cp-prize-icon">🌊</div>
           <div class="cp-prize-body">
             <div class="cp-prize-tag">Dîner pour 2</div>
-            <h3>Tanao</h3>
+            <h3>Tadao</h3>
             <p>Cuisine méditerranéenne raffinée. Une escapade pour deux autour des saveurs du bassin.</p>
-            <div class="cp-prize-cond">Alcool à la charge des invités · <strong>-20% à La Terrasse</strong></div>
+            <div class="cp-prize-cond">Alcool à la charge des invités.</div>
           </div>
         </div>
 
@@ -2804,13 +3030,40 @@
             <div class="cp-prize-tag">Dîner pour 4</div>
             <h3>La Terrasse</h3>
             <p>Une table pour quatre chez nous. Le grand format, pour partager la maison avec qui tu veux.</p>
-            <div class="cp-prize-cond">Alcool à la charge des invités · <strong>-40% sur les boissons</strong></div>
+            <div class="cp-prize-cond">Alcool à la charge des invités.</div>
+          </div>
+        </div>
+
+        <div class="cp-prize cp-cash-40">
+          <div class="cp-prize-icon"><span class="cp-cash-amount">40 €</span></div>
+          <div class="cp-prize-body">
+            <div class="cp-prize-tag">Cash Prize</div>
+            <h3>Prime de 40 euros</h3>
+            <p>Un geste concret pour remercier une implication remarquée et les efforts fournis au service.</p>
+          </div>
+        </div>
+
+        <div class="cp-prize cp-cash-60">
+          <div class="cp-prize-icon"><span class="cp-cash-amount">60 €</span></div>
+          <div class="cp-prize-body">
+            <div class="cp-prize-tag">Cash Prize</div>
+            <h3>Prime de 60 euros</h3>
+            <p>Une attention particulière pour saluer la constance, la patience et l’esprit d’équipe.</p>
+          </div>
+        </div>
+
+        <div class="cp-prize cp-cash-80">
+          <div class="cp-prize-icon"><span class="cp-cash-amount">80 €</span></div>
+          <div class="cp-prize-body">
+            <div class="cp-prize-tag">Cash Prize</div>
+            <h3>Prime de 80 euros</h3>
+            <p>Une récompense forte pour remercier un engagement précieux et un travail qui fait la différence.</p>
           </div>
         </div>
 
       </div>
 
-      <div class="cp-footnote">✦ &nbsp; Ces récompenses sont attribuées par Sami, sans classement ni compétition — uniquement à hauteur de l’effort, de la bonne humeur et du plaisir de travailler ensemble. &nbsp; ✦</div>
+      <div class="cp-footnote">Ce programme est une attention exceptionnelle&nbsp;: il n’est ni un dû, ni un avantage acquis — la rémunération de chacun reconnaît déjà le travail accompli.<br>Il a simplement été imaginé pour saluer la réalité exigeante de La Terrasse et offrir, à la hauteur de cet engagement, un vrai moment de plaisir à l’équipe.</div>
 
     </div>
   </section>
@@ -2854,7 +3107,7 @@
     const LOCAL_ADMIN_PASSWORD = "244342";
     const SAMI_FUN_RESPONSES = [
       "☕ Fabien a pu avoir un cafe frappe pour son anniversaire.",
-      "🍸 Julien a pu etre reengage 2 apres avoir ete vire pour lenteur au bar (humour).",
+      "🍸 Julien a pu etre reengage apres avoir ete vire pour lenteur au bar (humour).",
       "🕺 Christian a pu recuperer un service ou il etait annonce en vacances depuis 2004.",
       "🎯 Maya a pu faire corriger un horaire qui etait parti vivre sa propre vie.",
       "🧾 Lisa a pu retrouver un badge qui avait officiellement disparu dans une autre dimension.",
@@ -2917,6 +3170,7 @@
       updateLocalModeBanner();
       loadSamiState();
       renderSamiPage();
+      playPortalWipe("landing");
 
       restoreSession();
     }
@@ -2951,9 +3205,31 @@
       document.querySelectorAll(".page").forEach((page) => page.classList.remove("active"));
       document.getElementById("page-" + name).classList.add("active");
       window.scrollTo({ top: 0, behavior: "smooth" });
+      playPortalWipe(name);
       if (name === "sami-todo") {
         renderSamiPage();
       }
+    }
+
+    function playPortalWipe(name) {
+      const wipe = document.getElementById("portal-wipe");
+      const title = document.getElementById("portal-wipe-title");
+      const subtitle = document.getElementById("portal-wipe-subtitle");
+      if (!wipe || !title || !subtitle) return;
+
+      const transitions = {
+        landing: { theme: "home-theme", title: "La Terrasse", subtitle: "Espace équipe" },
+        home: { theme: "aquaponey-theme", title: "AquaPoney", subtitle: "Indisponibilités" },
+        "sami-todo": { theme: "todo-theme", title: "To Do List", subtitle: "Le coin de Sami" }
+      };
+      const transition = transitions[name];
+      if (!transition) return;
+
+      wipe.className = "portal-wipe " + transition.theme;
+      title.textContent = transition.title;
+      subtitle.textContent = transition.subtitle;
+      void wipe.offsetWidth;
+      wipe.classList.add("run");
     }
 
     // ── COUNTDOWN ──────────────────────────────
@@ -2961,21 +3237,29 @@
     let countdownTimer = null;
 
     function startCountdown() {
-      // Vérifie si déjà déverrouillé
+      // Le premier passage lance un décompte de 23 h 59, conservé sur l'appareil.
       const until = parseInt(localStorage.getItem(UNLOCK_KEY) || "0");
       if (until && Date.now() < until) {
+        tickCountdown(until);
+        updateCountdown(until);
+        return;
+      }
+      if (until && Date.now() >= until) {
         revealEntry();
         return;
       }
-      // Fixe le déverrouillage à maintenant + 24h (modifiable)
-      const target = Date.now() + 24 * 60 * 60 * 1000;
+      const target = Date.now() + ((23 * 60 + 59) * 60 * 1000);
       try { localStorage.setItem(UNLOCK_KEY, String(target)); } catch(e){}
       tickCountdown(target);
+      updateCountdown(target);
     }
 
     function tickCountdown(target) {
       if (countdownTimer) clearInterval(countdownTimer);
-      countdownTimer = setInterval(() => {
+      countdownTimer = setInterval(() => updateCountdown(target), 1000);
+    }
+
+    function updateCountdown(target) {
         const diff = target - Date.now();
         if (diff <= 0) {
           clearInterval(countdownTimer);
@@ -2991,16 +3275,119 @@
         document.getElementById("cg-h").textContent = String(h).padStart(2, "0");
         document.getElementById("cg-m").textContent = String(m).padStart(2, "0");
         document.getElementById("cg-s").textContent = String(s).padStart(2, "0");
-      }, 1000);
+    }
+
+    function openCashPrize() {
+      document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+      const cashPage = document.getElementById("page-cash-prize");
+      cashPage.classList.add("active");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      prepareCashMotion(cashPage);
+    }
+
+    function prepareCashMotion(cashPage) {
+      const wipe = document.getElementById("cp-intro-wipe");
+      cashPage.classList.remove("cp-motion-ready");
+      if (wipe) {
+        wipe.classList.remove("run");
+        void wipe.offsetWidth;
+        wipe.classList.add("run");
+      }
+      requestAnimationFrame(() => requestAnimationFrame(() => cashPage.classList.add("cp-motion-ready")));
+      startCashOrb();
+
+      const revealItems = cashPage.querySelectorAll(".cp-flip-card, .cp-prize");
+      revealItems.forEach((item, index) => item.style.transitionDelay = ((index % 4) * 80) + "ms");
+      if (!("IntersectionObserver" in window)) {
+        revealItems.forEach(item => item.classList.add("cp-visible"));
+        return;
+      }
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("cp-visible");
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.14, rootMargin: "0px 0px -5% 0px" });
+      revealItems.forEach(item => observer.observe(item));
+    }
+
+    let cashOrbFrame = null;
+    function startCashOrb() {
+      const canvas = document.getElementById("cp-orb");
+      if (!canvas || canvas.dataset.running === "true") return;
+      const context = canvas.getContext("2d");
+      if (!context) return;
+      canvas.dataset.running = "true";
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const points = 96;
+
+      function draw(time) {
+        const t = reduceMotion ? 0 : time * 0.00055;
+        const w = canvas.width;
+        const h = canvas.height;
+        const cx = w / 2;
+        const cy = h / 2;
+        context.clearRect(0, 0, w, h);
+
+        for (let ring = 0; ring < 18; ring += 1) {
+          const progress = ring / 18;
+          const radius = 202 - ring * 6.4;
+          context.beginPath();
+          for (let i = 0; i <= points; i += 1) {
+            const a = (i / points) * Math.PI * 2;
+            const wave = Math.sin(a * 3 + t * 2.1 + progress * 2.8) * 22
+              + Math.cos(a * 5 - t * 1.35 + ring * .18) * 11
+              + Math.sin(a * 2 - t) * 8;
+            const squash = 1 + Math.sin(a + t * .8) * .07;
+            const r = (radius + wave * (1 - progress * .32)) * squash;
+            const x = cx + Math.cos(a) * r;
+            const y = cy + Math.sin(a) * r * .87;
+            if (i === 0) context.moveTo(x, y); else context.lineTo(x, y);
+          }
+          context.closePath();
+          context.strokeStyle = "rgba(240, 208, 128," + (0.055 + progress * .022) + ")";
+          context.lineWidth = ring % 4 === 0 ? 1.5 : .8;
+          context.stroke();
+        }
+
+        const gradient = context.createRadialGradient(cx - 55, cy - 70, 8, cx, cy, 230);
+        gradient.addColorStop(0, "rgba(255,248,220,.16)");
+        gradient.addColorStop(.52, "rgba(184,146,74,.055)");
+        gradient.addColorStop(1, "rgba(184,146,74,0)");
+        context.fillStyle = gradient;
+        context.beginPath();
+        context.arc(cx, cy, 230, 0, Math.PI * 2);
+        context.fill();
+
+        if (!reduceMotion && document.getElementById("page-cash-prize").classList.contains("active")) {
+          cashOrbFrame = requestAnimationFrame(draw);
+        } else {
+          canvas.dataset.running = "false";
+        }
+      }
+      if (cashOrbFrame) cancelAnimationFrame(cashOrbFrame);
+      cashOrbFrame = requestAnimationFrame(draw);
     }
 
     function checkSecretCode(val) {
       if (val === "244342") {
-        document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
-        document.getElementById("page-cash-prize").classList.add("active");
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        openCashPrize();
         const el = document.getElementById("cg-secret");
         if (el) el.value = "";
+      }
+    }
+
+    function flipParticipant(card) {
+      card.classList.toggle("flipped");
+      card.setAttribute("aria-pressed", card.classList.contains("flipped") ? "true" : "false");
+    }
+
+    function flipParticipantKey(event, card) {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        flipParticipant(card);
       }
     }
 
@@ -3985,14 +4372,17 @@
       document.getElementById("sami-resolved").textContent = resolvedDisplay;
       document.getElementById("sami-open-count").textContent = open + (open > 1 ? " ouvertes" : " ouverte");
 
-      const tickerTrack = document.getElementById("sami-ticker-track");
       const solvedNames = [...new Set(items.filter((item) => item.status === "resolved").map((item) => item.name))];
       const funItems = [
         ...SAMI_FUN_RESPONSES,
         ...solvedNames.map((name) => "✅ " + name + " a deja ete regle par Sami.")
       ];
       const tickerItems = (funItems.length ? funItems : ["Sami a deja regle 102 demandes, la legende est vivante."]);
-      tickerTrack.innerHTML = tickerItems.concat(tickerItems).map((text) => "<span>" + escapeHtml(text) + "</span>").join("");
+      const tickerHtml = tickerItems.concat(tickerItems).map((text) => "<span>" + escapeHtml(text) + "</span>").join("");
+      ["sami-ticker-track", "landing-ticker-track"].forEach((id) => {
+        const tickerTrack = document.getElementById(id);
+        if (tickerTrack) tickerTrack.innerHTML = tickerHtml;
+      });
 
       document.getElementById("sami-lock-off").style.display = APP.sami.unlocked ? "inline-flex" : "none";
 
