@@ -90,6 +90,80 @@
       cursor: pointer;
     }
 
+    .confetti-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 120;
+    }
+
+    .confetti-piece {
+      position: fixed;
+      width: 10px;
+      height: 16px;
+      border-radius: 3px;
+      opacity: 0.92;
+      animation: confettiBurst 900ms ease-out forwards;
+      will-change: transform, opacity;
+    }
+
+    .portal-wipe {
+      position: fixed;
+      inset: 0;
+      z-index: 190;
+      display: grid;
+      place-items: center;
+      clip-path: inset(0 0 100% 0);
+      pointer-events: none;
+    }
+
+    .portal-wipe.run {
+      animation: portalWipeUp 1.15s cubic-bezier(.76,0,.24,1) forwards;
+    }
+
+    .portal-wipe.home-theme {
+      background: #ffffff;
+      color: var(--teal-900);
+    }
+
+    .portal-wipe.aquaponey-theme {
+      background: linear-gradient(145deg, #114b5f, #2cb1a7);
+      color: #ffffff;
+    }
+
+    .portal-wipe.todo-theme {
+      background: linear-gradient(145deg, #eb6f5a, #f6a08a);
+      color: #ffffff;
+    }
+
+    .portal-wipe-content {
+      display: grid;
+      gap: 12px;
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    .portal-wipe-content strong {
+      font-family: var(--font-display);
+      font-size: clamp(2.6rem, 8vw, 6.8rem);
+      line-height: .9;
+      letter-spacing: -.06em;
+    }
+
+    .portal-wipe-content span {
+      font-size: .72rem;
+      font-weight: 800;
+      letter-spacing: .24em;
+      opacity: .62;
+    }
+
+    @keyframes portalWipeUp {
+      0% { clip-path: inset(0 0 0 0); }
+      52% { clip-path: inset(0 0 0 0); }
+      100% { clip-path: inset(0 0 100% 0); }
+    }
+
     .page {
       display: none;
       min-height: 100vh;
@@ -108,6 +182,17 @@
       to {
         opacity: 1;
         transform: translateY(0);
+      }
+    }
+
+    @keyframes confettiBurst {
+      0% {
+        transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+        opacity: 1;
+      }
+      100% {
+        transform: translate3d(var(--dx), var(--dy), 0) rotate(var(--rot)) scale(0.85);
+        opacity: 0;
       }
     }
 
@@ -558,6 +643,12 @@
       box-shadow: 0 10px 22px rgba(244, 140, 115, 0.3);
     }
 
+    .btn-violet {
+      background: linear-gradient(135deg, #6f5aa8, #9278ca);
+      color: white;
+      box-shadow: 0 10px 24px rgba(111, 90, 168, 0.3);
+    }
+
     .btn-soft {
       background: white;
       color: var(--teal-900);
@@ -636,6 +727,11 @@
     .badge.admin {
       background: rgba(244,140,115,0.18);
       color: var(--coral-600);
+    }
+
+    .badge.sun {
+      background: rgba(246, 200, 95, 0.22);
+      color: #9a6111;
     }
 
     .grid {
@@ -990,6 +1086,16 @@
       color: var(--ok);
     }
 
+    .pill.answered {
+      background: rgba(44,177,167,0.12);
+      color: var(--teal-900);
+    }
+
+    .pill.resolved {
+      background: #eaf8ef;
+      color: var(--ok);
+    }
+
     .pill.refused {
       background: #fff0ee;
       color: var(--danger);
@@ -1161,10 +1267,512 @@
       box-shadow: 0 0 0 6px rgba(43,147,72,0.12);
     }
 
+    .landing-shell {
+      width: min(1180px, 100%);
+      display: grid;
+      gap: 34px;
+    }
+
+    .landing-intro {
+      text-align: center;
+      padding: 18px 20px 0;
+    }
+
+    .landing-intro h1 {
+      margin: 12px auto 14px;
+      font-family: var(--font-display);
+      font-size: clamp(2.7rem, 7vw, 5.8rem);
+      line-height: .95;
+      letter-spacing: -.065em;
+      color: var(--teal-900);
+    }
+
+    .landing-intro p {
+      max-width: 620px;
+      margin: 0 auto;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .landing-top {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 22px;
+      align-items: stretch;
+    }
+
+    .landing-panel {
+      position: relative;
+      overflow: hidden;
+      padding: 42px;
+      color: white;
+      border-radius: var(--radius-xl);
+      background:
+        linear-gradient(145deg, rgba(17, 75, 95, 0.98), rgba(44, 177, 167, 0.86));
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .landing-panel::before {
+      content: "";
+      position: absolute;
+      inset: auto auto -70px -70px;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.09);
+    }
+
+    .landing-panel h1 {
+      margin: 14px 0 10px;
+      font-size: clamp(2.6rem, 5vw, 4.8rem);
+      letter-spacing: -0.06em;
+      line-height: 0.93;
+      font-family: var(--font-display);
+      max-width: 8ch;
+    }
+
+    .landing-panel p {
+      margin: 0 0 24px;
+      max-width: 55ch;
+      color: rgba(255,255,255,0.85);
+      line-height: 1.7;
+    }
+
+    .landing-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .landing-side {
+      display: grid;
+      gap: 16px;
+    }
+
+    .mini-card {
+      padding: 20px;
+      border-radius: 22px;
+      background: rgba(255,255,255,0.9);
+      border: var(--border);
+      box-shadow: var(--shadow);
+    }
+
+    .mini-card h3 {
+      margin: 0 0 8px;
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+    }
+
+    .mini-card p {
+      margin: 0 0 14px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .process-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .process-card {
+      position: relative;
+      overflow: hidden;
+      padding: 26px;
+      border-radius: 26px;
+      border: var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,0.94), rgba(255,255,255,0.82));
+      box-shadow: var(--shadow);
+      min-height: 330px;
+      display: flex;
+      flex-direction: column;
+      transition: transform 220ms ease, box-shadow 220ms ease;
+    }
+
+    .process-card:hover {
+      transform: translateY(-7px);
+      box-shadow: 0 28px 60px rgba(17,75,95,.2);
+    }
+
+    .process-card p { flex: 1; }
+
+
+    .process-card h2 {
+      margin: 8px 0;
+      font-family: var(--font-display);
+      font-size: 1.45rem;
+    }
+
+    .process-card p {
+      margin: 0 0 18px;
+      line-height: 1.6;
+      color: var(--muted);
+    }
+
+    .process-icon {
+      width: 58px;
+      height: 58px;
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      font-size: 1.6rem;
+      background: linear-gradient(135deg, #ffffff, var(--bg-strong));
+      box-shadow: inset 0 0 0 1px rgba(17,75,95,0.1);
+    }
+
+    .sami-grid {
+      display: grid;
+      grid-template-columns: 0.95fr 1.05fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .sami-stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .sami-card {
+      padding: 16px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, #ffffff, #f9fffd);
+      border: var(--border);
+    }
+
+    .sami-card strong {
+      display: block;
+      font-size: 1.8rem;
+      letter-spacing: -0.04em;
+      margin-bottom: 6px;
+    }
+
+    .example-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .example-chip {
+      border: 0;
+      border-radius: 999px;
+      padding: 10px 14px;
+      background: rgba(44,177,167,0.1);
+      color: var(--teal-900);
+      font-weight: 700;
+      font-size: 0.82rem;
+    }
+
+    .ticker {
+      overflow: hidden;
+      border-radius: 16px;
+      background: linear-gradient(135deg, rgba(17,75,95,0.94), rgba(44,177,167,0.82));
+      color: white;
+      padding: 12px 0;
+      position: relative;
+    }
+
+    .ticker-track {
+      display: inline-flex;
+      gap: 26px;
+      white-space: nowrap;
+      padding-left: 100%;
+      animation: tickerRun 72s linear infinite;
+      font-weight: 700;
+    }
+
+    .landing-ticker {
+      margin-top: 2px;
+      box-shadow: 0 16px 34px rgba(17,75,95,.16);
+    }
+
+    @keyframes tickerRun {
+      from {
+        transform: translateX(0);
+      }
+      to {
+        transform: translateX(-100%);
+      }
+    }
+
+    .todo-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .todo-item {
+      border-radius: 20px;
+      border: var(--border);
+      background: linear-gradient(180deg, #ffffff, #fbfffe);
+      padding: 18px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .todo-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .todo-head h4 {
+      margin: 0 0 6px;
+      font-size: 1rem;
+    }
+
+    .todo-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .todo-reply {
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(44,177,167,0.09);
+      color: var(--teal-900);
+      line-height: 1.55;
+      font-size: 0.9rem;
+    }
+
+    .todo-private {
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(17,75,95,0.06);
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 0.9rem;
+      border: 1px dashed rgba(17,75,95,0.12);
+    }
+
+    .todo-admin {
+      display: grid;
+      gap: 10px;
+      padding-top: 8px;
+      border-top: 1px dashed rgba(17,75,95,0.12);
+    }
+
+    .todo-admin textarea {
+      min-height: 88px;
+    }
+
+    .todo-admin-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .sami-lock {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .sami-lock input {
+      flex: 1;
+      min-width: 180px;
+      border: 1px solid rgba(17, 75, 95, 0.16);
+      border-radius: 14px;
+      padding: 13px 14px;
+      background: rgba(255,255,255,0.86);
+    }
+
+    .prize-hero {
+      position: relative;
+      overflow: hidden;
+      padding: 34px;
+      border-radius: 28px;
+      color: white;
+      background:
+        radial-gradient(circle at top right, rgba(255,255,255,0.16), transparent 28%),
+        linear-gradient(145deg, #0d3f50, #1a7f8a 52%, #eb6f5a 100%);
+      box-shadow: var(--shadow);
+    }
+
+    .prize-hero h1 {
+      margin: 12px 0 10px;
+      font-family: var(--font-display);
+      font-size: clamp(2.3rem, 5vw, 4.4rem);
+      letter-spacing: -0.05em;
+      line-height: 0.94;
+      max-width: 9ch;
+    }
+
+    .prize-hero p {
+      margin: 0;
+      max-width: 64ch;
+      color: rgba(255,255,255,0.86);
+      line-height: 1.7;
+    }
+
+    .prize-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .winner-wall {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .winner-card {
+      padding: 18px;
+      border-radius: 20px;
+      border: var(--border);
+      background: linear-gradient(180deg, #ffffff, #fffaf4);
+      box-shadow: var(--shadow);
+    }
+
+    .winner-card strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 1.12rem;
+    }
+
+    .winner-card span {
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.55;
+    }
+
+    .prize-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .prize-item {
+      overflow: hidden;
+      padding: 0;
+      border-radius: 20px;
+      border: var(--border);
+      background: linear-gradient(180deg, #ffffff, #fbfffe);
+      box-shadow: var(--shadow);
+    }
+
+    .prize-image {
+      min-height: 150px;
+      display: grid;
+      place-items: center;
+      font-size: 3rem;
+      color: white;
+      text-shadow: 0 4px 18px rgba(0,0,0,0.22);
+    }
+
+    .prize-image.mallmann {
+      background:
+        radial-gradient(circle at top, rgba(255,255,255,0.18), transparent 25%),
+        linear-gradient(145deg, #6c2f1d, #a94624 52%, #ff8c42 100%);
+    }
+
+    .prize-image.italien {
+      background:
+        radial-gradient(circle at top left, rgba(255,255,255,0.16), transparent 25%),
+        linear-gradient(145deg, #1b6b4a, #f3f0d7 50%, #d4483b 100%);
+      color: #fffaf4;
+    }
+
+    .prize-image.tadao {
+      background:
+        radial-gradient(circle at top right, rgba(255,255,255,0.16), transparent 25%),
+        linear-gradient(145deg, #2f6e7f, #58a4b0 48%, #f0c987 100%);
+    }
+
+    .prize-image.terrasse {
+      background:
+        radial-gradient(circle at 30% 30%, #fff4b0 0%, #ffd166 22%, rgba(255,209,102,0.18) 23%, transparent 24%),
+        linear-gradient(145deg, #1b6f78, #2cb1a7 48%, #f6c85f 100%);
+    }
+
+    .prize-content {
+      padding: 18px;
+    }
+
+    .prize-item h3 {
+      margin: 0 0 6px;
+      font-family: var(--font-display);
+      font-size: 1.12rem;
+    }
+
+    .prize-item p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .fun-note {
+      margin-top: 14px;
+      padding: 14px 16px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.14);
+      border: 1px solid rgba(255,255,255,0.16);
+      color: rgba(255,255,255,0.9);
+      line-height: 1.6;
+    }
+
+    .moments-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .moment-card {
+      min-height: 190px;
+      padding: 18px;
+      border-radius: 22px;
+      border: 1px dashed rgba(17,75,95,0.18);
+      background:
+        radial-gradient(circle at top left, rgba(244, 140, 115, 0.08), transparent 30%),
+        linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,255,255,0.72));
+      display: grid;
+      align-content: space-between;
+      gap: 14px;
+    }
+
+    .moment-icon {
+      width: 54px;
+      height: 54px;
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      font-size: 1.5rem;
+      background: linear-gradient(135deg, #ffffff, var(--bg-strong));
+      box-shadow: inset 0 0 0 1px rgba(17,75,95,0.1);
+    }
+
+    .moment-card h3 {
+      margin: 0 0 6px;
+      font-family: var(--font-display);
+    }
+
+    .moment-card p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: 0.92rem;
+    }
+
+    .prize-footnote {
+      padding: 14px 16px;
+      border-radius: 16px;
+      background: rgba(17,75,95,0.08);
+      color: var(--teal-900);
+      line-height: 1.6;
+      font-size: 0.92rem;
+    }
+
     @media (max-width: 980px) {
       .hero,
       .employee-grid,
-      .admin-grid {
+      .admin-grid,
+      .landing-top,
+      .sami-grid,
+      .prize-grid {
         grid-template-columns: 1fr;
       }
 
@@ -1221,6 +1829,13 @@
         font-size: 0.62rem;
         padding: 3px 6px;
       }
+
+      .process-grid,
+      .sami-stats,
+      .winner-wall,
+      .moments-grid {
+        grid-template-columns: 1fr;
+      }
     }
 
     @media (max-width: 520px) {
@@ -1265,10 +1880,625 @@
         width: 100%;
       }
     }
+
+    /* ═══════════════════════════════════════════
+       CASH PRIZE — COUNTDOWN GATE
+    ═══════════════════════════════════════════ */
+    .countdown-gate {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: #0a0a0a;
+      background-image:
+        radial-gradient(ellipse 60% 50% at 50% 0%, rgba(184,146,74,0.18) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 40% at 80% 80%, rgba(184,146,74,0.08) 0%, transparent 60%);
+    }
+    .cg-inner {
+      text-align: center;
+      color: #fff;
+      padding: 48px 24px;
+      display: grid;
+      gap: 20px;
+      place-items: center;
+    }
+    .cg-eyebrow {
+      font-size: 0.75rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: #b8924a;
+      font-weight: 600;
+    }
+    .cg-logo {
+      font-size: 4.5rem;
+      animation: cgFloat 3s ease-in-out infinite;
+      filter: drop-shadow(0 0 32px rgba(184,146,74,0.55));
+    }
+    @keyframes cgFloat {
+      0%,100%{transform:translateY(0) scale(1);}
+      50%{transform:translateY(-12px) scale(1.04);}
+    }
+    .cg-title {
+      margin: 0;
+      font-size: clamp(3rem, 10vw, 6rem);
+      font-weight: 800;
+      letter-spacing: -0.06em;
+      background: linear-gradient(135deg, #f0d080, #b8924a 40%, #fff8e8 70%, #b8924a);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .cg-sub {
+      margin: 0;
+      color: rgba(255,255,255,0.55);
+      font-size: 1rem;
+    }
+    .cg-clock {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .cg-unit {
+      display: grid;
+      place-items: center;
+      gap: 6px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(184,146,74,0.3);
+      border-radius: 16px;
+      padding: 18px 22px;
+      min-width: 90px;
+    }
+    .cg-unit span {
+      font-size: 2.8rem;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      background: linear-gradient(135deg, #f0d080, #b8924a);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+    }
+    .cg-unit small {
+      font-size: 0.68rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.4);
+    }
+    .cg-sep {
+      font-size: 2rem;
+      color: rgba(184,146,74,0.5);
+      font-weight: 800;
+      margin-bottom: 16px;
+    }
+    .cg-hint {
+      margin: 0;
+      color: rgba(255,255,255,0.35);
+      font-size: 0.9rem;
+    }
+    .cg-admin-hint {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(184,146,74,0.16);
+      border-radius: 12px;
+      color: rgba(240,208,128,0.2);
+      font-size: 0.8rem;
+      user-select: none;
+      pointer-events: none;
+    }
+    .cg-btn {
+      border: 1px solid rgba(184,146,74,0.6);
+      border-radius: 999px;
+      padding: 16px 42px;
+      background: linear-gradient(135deg, rgba(184,146,74,0.2), rgba(184,146,74,0.05));
+      color: #f0d080;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 200ms ease;
+      animation: cgPulse 2s ease-in-out infinite;
+    }
+    .cg-btn:hover {
+      background: linear-gradient(135deg, rgba(184,146,74,0.4), rgba(184,146,74,0.15));
+      transform: translateY(-2px);
+      box-shadow: 0 12px 36px rgba(184,146,74,0.25);
+    }
+    @keyframes cgPulse {
+      0%,100%{box-shadow:0 0 0 0 rgba(184,146,74,0.3);}
+      50%{box-shadow:0 0 0 10px rgba(184,146,74,0);}
+    }
+
+    /* ═══════════════════════════════════════════
+       CASH PRIZE — MAIN PAGE
+    ═══════════════════════════════════════════ */
+    #page-cash-prize {
+      background: #0c0c0c;
+      background-image:
+        radial-gradient(ellipse 70% 40% at 50% 0%, rgba(184,146,74,0.14) 0%, transparent 65%),
+        radial-gradient(ellipse 35% 50% at 90% 60%, rgba(184,146,74,0.07) 0%, transparent 60%);
+      color: #f0ece4;
+      min-height: 100vh;
+      position: relative;
+      overflow: hidden;
+      isolation: isolate;
+    }
+    #page-cash-prize::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      opacity: 0.35;
+      background-image:
+        linear-gradient(rgba(184,146,74,0.09) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(184,146,74,0.09) 1px, transparent 1px);
+      background-size: min(25vw, 295px) 132px;
+      mask-image: linear-gradient(to bottom, black, transparent 88%);
+    }
+    .cp-intro-wipe {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      display: grid;
+      place-items: center;
+      background: #b8924a;
+      color: #0c0c0c;
+      font-weight: 900;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      clip-path: inset(0 0 0 0);
+      pointer-events: none;
+    }
+    .cp-intro-wipe.run {
+      animation: cpWipe 1.15s cubic-bezier(.76,0,.24,1) forwards;
+    }
+    @keyframes cpWipe {
+      0% { clip-path: inset(0 0 0 0); }
+      52% { clip-path: inset(0 0 0 0); }
+      100% { clip-path: inset(0 0 100% 0); }
+    }
+    .cp-shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 0 20px 80px;
+    }
+    .cp-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 24px 0 16px;
+    }
+    .cp-back {
+      background: none;
+      border: 1px solid rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.5);
+      border-radius: 999px;
+      padding: 10px 18px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 150ms;
+    }
+    .cp-back:hover { color: #fff; border-color: rgba(255,255,255,0.25); }
+    .cp-brand {
+      font-size: 0.72rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: #b8924a;
+      font-weight: 600;
+    }
+
+    /* HERO */
+    .cp-hero {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 48px;
+      align-items: center;
+      padding: 48px 0 64px;
+    }
+    .cp-pill {
+      display: inline-block;
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #b8924a;
+      border: 1px solid rgba(184,146,74,0.35);
+      border-radius: 999px;
+      padding: 7px 16px;
+      margin-bottom: 20px;
+    }
+    .cp-h1 {
+      margin: 0 0 18px;
+      font-size: clamp(3.5rem, 8vw, 6.5rem);
+      font-weight: 800;
+      letter-spacing: -0.06em;
+      line-height: 0.92;
+      background: linear-gradient(135deg, #f0ece4 30%, #b8924a 70%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .cp-h1-line {
+      display: block;
+      overflow: hidden;
+      padding-bottom: 0.08em;
+    }
+    .cp-h1-line > span {
+      display: block;
+      transform: translateY(115%) rotate(2deg);
+      opacity: 0;
+    }
+    .cp-motion-ready .cp-h1-line > span {
+      animation: cpTitleIn 1s cubic-bezier(.16,1,.3,1) forwards;
+    }
+    .cp-motion-ready .cp-h1-line:nth-child(2) > span { animation-delay: .12s; }
+    @keyframes cpTitleIn {
+      to { transform: translateY(0) rotate(0); opacity: 1; }
+    }
+    .cp-desc {
+      margin: 0 0 28px;
+      color: rgba(240,236,228,0.65);
+      font-size: 1.05rem;
+      line-height: 1.75;
+      max-width: 56ch;
+    }
+    .cp-desc em { color: #f0d080; font-style: normal; }
+    .cp-keywords {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .cp-keywords span {
+      border: 1px solid rgba(184,146,74,0.3);
+      border-radius: 999px;
+      padding: 7px 16px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: rgba(240,236,228,0.55);
+      letter-spacing: 0.04em;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity .65s ease, transform .65s cubic-bezier(.16,1,.3,1), background .25s ease, color .25s ease;
+    }
+    .cp-motion-ready .cp-keywords span { opacity: 1; transform: translateY(0); }
+    .cp-keywords span:hover { background: #b8924a; color: #0c0c0c; }
+    @keyframes kwFadeIn {
+      from{opacity:0;transform:translateY(8px);}
+      to{opacity:1;transform:none;}
+    }
+    .cp-keywords span:nth-child(1){animation-delay:0.05s}
+    .cp-keywords span:nth-child(2){animation-delay:0.1s}
+    .cp-keywords span:nth-child(3){animation-delay:0.15s}
+    .cp-keywords span:nth-child(4){animation-delay:0.2s}
+    .cp-keywords span:nth-child(5){animation-delay:0.25s}
+    .cp-keywords span:nth-child(6){animation-delay:0.3s}
+    .cp-keywords span:nth-child(7){animation-delay:0.35s}
+    .cp-keywords span:nth-child(8){animation-delay:0.4s}
+    .cp-trophy-wrap {
+      position: relative;
+      width: min(34vw, 360px);
+      height: min(34vw, 360px);
+      display: grid;
+      place-items: center;
+    }
+    .cp-trophy-glow {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(184,146,74,0.35) 0%, transparent 70%);
+      animation: glowPulse 2.5s ease-in-out infinite;
+    }
+    @keyframes glowPulse {
+      0%,100%{transform:scale(1);opacity:0.7;}
+      50%{transform:scale(1.18);opacity:1;}
+    }
+    .cp-orb-canvas {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      z-index: 1;
+      filter: drop-shadow(0 0 26px rgba(184,146,74,0.28));
+    }
+    .cp-orb-label {
+      position: absolute;
+      z-index: 2;
+      font-size: 0.62rem;
+      letter-spacing: 0.22em;
+      color: rgba(240,208,128,0.52);
+      text-transform: uppercase;
+    }
+    .cp-orb-label.top { top: 8%; right: -4%; }
+    .cp-orb-label.bottom { bottom: 7%; left: -2%; }
+    .cp-orb-cross {
+      position: absolute;
+      inset: 50% auto auto 50%;
+      width: 18px;
+      height: 18px;
+      z-index: 3;
+      transform: translate(-50%, -50%);
+    }
+    .cp-orb-cross::before, .cp-orb-cross::after {
+      content: "";
+      position: absolute;
+      background: rgba(240,208,128,0.55);
+    }
+    .cp-orb-cross::before { left: 8px; top: 0; width: 1px; height: 18px; }
+    .cp-orb-cross::after { left: 0; top: 8px; width: 18px; height: 1px; }
+    .cp-index-line {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin: 0 0 28px;
+      color: rgba(240,208,128,0.44);
+      font-size: 0.65rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+    .cp-index-line::after {
+      content: "";
+      height: 1px;
+      flex: 1;
+      background: linear-gradient(90deg, rgba(184,146,74,.38), transparent);
+    }
+
+    /* SECTION LABEL */
+    .cp-section-label {
+      text-align: center;
+      font-size: 0.72rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: #b8924a;
+      margin: 0 0 32px;
+    }
+
+    /* FLIP CARDS */
+    .cp-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 18px;
+      margin-bottom: 72px;
+      perspective: 1000px;
+    }
+    .cp-flip-card {
+      height: 240px;
+      cursor: pointer;
+      perspective: 1000px;
+      opacity: 0;
+      transform: translateY(55px);
+      transition: opacity .85s ease, transform .85s cubic-bezier(.16,1,.3,1);
+    }
+    .cp-flip-card.cp-visible { opacity: 1; transform: translateY(0); }
+    .cp-flip-inner {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.65s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .cp-flip-card.flipped .cp-flip-inner {
+      transform: rotateY(180deg);
+    }
+    .cp-flip-front, .cp-flip-back {
+      position: absolute;
+      inset: 0;
+      border-radius: 20px;
+      backface-visibility: hidden;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 24px;
+    }
+    .cp-flip-front {
+      background: linear-gradient(145deg, #1a1a1a, #111);
+      border: 1px solid rgba(184,146,74,0.25);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .cp-flip-front span {
+      font-size: 3.5rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #f0d080, #b8924a);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .cp-flip-front small {
+      font-size: 0.68rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.25);
+    }
+    .cp-flip-back {
+      background: linear-gradient(145deg, #1c160a, #18120a);
+      border: 1px solid rgba(184,146,74,0.45);
+      transform: rotateY(180deg);
+      flex-direction: column;
+      gap: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .cp-flip-back strong {
+      font-size: 1.45rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, #f0d080, #b8924a);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .cp-flip-back p {
+      margin: 0;
+      font-size: 0.85rem;
+      line-height: 1.6;
+      color: rgba(240,236,228,0.65);
+    }
+
+    /* PRIZES */
+    .cp-prizes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 18px;
+      margin-bottom: 48px;
+    }
+    .cp-prize {
+      border-radius: 22px;
+      border: 1px solid rgba(184,146,74,0.2);
+      overflow: hidden;
+      background: linear-gradient(180deg, #141414, #0f0f0f);
+      transition: transform 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
+      opacity: 0;
+      transform: translateY(55px);
+    }
+    .cp-prize.cp-visible {
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity .85s ease, transform .85s cubic-bezier(.16,1,.3,1), border-color 200ms ease, box-shadow 200ms ease;
+    }
+    .cp-prize:hover {
+      transform: translateY(-5px);
+      border-color: rgba(184,146,74,0.5);
+      box-shadow: 0 20px 50px rgba(184,146,74,0.12);
+    }
+    .cp-prize-icon {
+      font-size: 3rem;
+      padding: 32px 24px 20px;
+      display: block;
+      text-align: center;
+    }
+    .cp-mallmann .cp-prize-icon { background: linear-gradient(145deg, #2a0e08, #1a0a06); filter:drop-shadow(0 0 20px rgba(220,80,30,0.4)); }
+    .cp-italien .cp-prize-icon  { background: linear-gradient(145deg, #0a1a0e, #07130a); }
+    .cp-tanao .cp-prize-icon    { background: linear-gradient(145deg, #081522, #050e18); }
+    .cp-terrasse-prize .cp-prize-icon { background: linear-gradient(145deg, #1a1408, #120f05); filter:drop-shadow(0 0 20px rgba(240,208,80,0.3)); }
+    .cp-cash-40 .cp-prize-icon { background: linear-gradient(145deg, #171208, #0f0c06); }
+    .cp-cash-60 .cp-prize-icon { background: linear-gradient(145deg, #21180a, #120d06); filter: drop-shadow(0 0 18px rgba(184,146,74,.24)); }
+    .cp-cash-80 .cp-prize-icon { background: linear-gradient(145deg, #2c200b, #151006); filter: drop-shadow(0 0 24px rgba(240,208,128,.32)); }
+    .cp-cash-amount {
+      display: inline-block;
+      font-size: clamp(2.3rem, 5vw, 3.5rem);
+      line-height: 1;
+      font-weight: 800;
+      letter-spacing: -.06em;
+      color: #f0d080;
+    }
+    .cp-prize-body {
+      padding: 4px 22px 24px;
+    }
+    .cp-prize-tag {
+      display: inline-block;
+      font-size: 0.64rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: #b8924a;
+      border: 1px solid rgba(184,146,74,0.3);
+      border-radius: 999px;
+      padding: 5px 12px;
+      margin-bottom: 10px;
+    }
+    .cp-prize h3 {
+      margin: 0 0 8px;
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #f0ece4;
+    }
+    .cp-prize p {
+      margin: 0 0 14px;
+      color: rgba(240,236,228,0.5);
+      font-size: 0.88rem;
+      line-height: 1.65;
+    }
+    .cp-prize-cond {
+      font-size: 0.75rem;
+      color: rgba(184,146,74,0.75);
+      line-height: 1.55;
+    }
+    .cp-prize-cond strong { color: #b8924a; }
+
+    /* FOOTNOTE */
+    .cp-footnote {
+      text-align: center;
+      max-width: 920px;
+      margin: 0 auto;
+      font-size: 0.82rem;
+      letter-spacing: 0.035em;
+      color: rgba(240,236,228,0.48);
+      padding: 22px 20px 0;
+      border-top: 1px solid rgba(184,146,74,0.18);
+      line-height: 1.9;
+    }
+
+    @media (max-width: 768px) {
+      .cp-hero { grid-template-columns: 1fr; }
+      .cp-trophy-wrap { width: min(82vw, 330px); height: min(82vw, 330px); margin: -12px auto 0; }
+      .cp-cards-grid { grid-template-columns: repeat(2, 1fr); }
+      .cg-unit { min-width: 72px; padding: 14px 16px; }
+      .cg-unit span { font-size: 2.2rem; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .cp-intro-wipe, .portal-wipe { display: none; }
+      .cp-h1-line > span, .cp-flip-card, .cp-prize, .cp-keywords span {
+        animation: none !important;
+        transition: none !important;
+        opacity: 1 !important;
+        transform: none !important;
+      }
+    }
   </style>
 </head>
 <body>
-  <section class="page active" id="page-home">
+  <div class="portal-wipe home-theme" id="portal-wipe" aria-hidden="true">
+    <div class="portal-wipe-content">
+      <strong id="portal-wipe-title">La Terrasse</strong>
+      <span id="portal-wipe-subtitle">Espace équipe</span>
+    </div>
+  </div>
+  <section class="page active" id="page-landing">
+    <div class="home-shell">
+      <div class="landing-shell">
+        <div class="landing-intro">
+          <div class="eyebrow" style="background:rgba(17,75,95,.08);color:var(--teal-900);border-color:rgba(17,75,95,.12);">☀️ La Terrasse • Espace équipe</div>
+          <h1>Où veux-tu aller&nbsp;?</h1>
+          <p>Trois espaces, trois usages. Choisis simplement celui dont tu as besoin.</p>
+        </div>
+
+        <div class="process-grid">
+          <div class="process-card">
+            <div class="process-icon">🐴</div>
+            <h2>AquaPoney</h2>
+            <p>Pour les indisponibilités planifiées avec suivi, validation et historique d’équipe.</p>
+            <button class="btn btn-primary" onclick="showPage('home')">Accéder au portail</button>
+          </div>
+
+          <div class="process-card">
+            <div class="process-icon">📝</div>
+            <h2>To Do List de Sami</h2>
+            <p>Pour les demandes particulières comme les horaires, le badge ou un besoin opérationnel rapide.</p>
+            <button class="btn btn-coral" onclick="showPage('sami-todo')">Accéder à la liste</button>
+          </div>
+
+          <div class="process-card">
+            <div class="process-icon">🏆</div>
+            <h2>Cash Prize</h2>
+            <p>Pour célébrer les cracks de la salle, les récompenses secrètes et les meilleurs souvenirs de La Terrasse.</p>
+            <button class="btn btn-violet" onclick="showPage('cash-prize')">Accéder aux prix</button>
+          </div>
+        </div>
+
+        <div class="ticker landing-ticker" aria-label="Les nouvelles décalées de l’équipe">
+          <div class="ticker-track" id="landing-ticker-track"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="page" id="page-home">
     <div class="home-shell">
       <div class="hero">
         <div class="hero-panel">
@@ -1348,7 +2578,7 @@
           <span>Portail d'indisponibilités de l'équipe</span>
         </div>
         <div class="badge team">Espace Équipe</div>
-        <button class="btn btn-soft" onclick="showPage('home')">Retour accueil</button>
+        <button class="btn btn-soft" onclick="showPage('landing')">Retour accueil</button>
       </div>
 
       <div class="login-wrap">
@@ -1358,9 +2588,9 @@
           <div class="form-grid">
             <div class="field">
               <label for="team-name">Prénom</label>
-              <input id="team-name" type="text" autocomplete="given-name" placeholder="Ex : Maya" oninput="onNameInput()">
+              <input id="team-name" type="text" autocomplete="given-name" placeholder="Ex : Maya">
             </div>
-            <div class="field" id="pin-field">
+            <div class="field">
               <label for="team-pin">Code à 4 chiffres</label>
               <input id="team-pin" type="password" inputmode="numeric" maxlength="4" placeholder="••••">
             </div>
@@ -1379,7 +2609,7 @@
           <span>Vue manager et validation des demandes</span>
         </div>
         <div class="badge admin">Administration</div>
-        <button class="btn btn-soft" onclick="showPage('home')">Retour accueil</button>
+        <button class="btn btn-soft" onclick="showPage('landing')">Retour accueil</button>
       </div>
 
       <div class="login-wrap">
@@ -1543,6 +2773,301 @@
     </div>
   </section>
 
+  <section class="page" id="page-sami-todo">
+    <div class="shell">
+      <div class="topbar">
+        <div class="brand">
+          <strong>To Do List de Sami</strong>
+          <span>Demandes particulières, réponses et suivi des problèmes réglés</span>
+        </div>
+        <div class="badge sun">Process équipe</div>
+        <button class="btn btn-soft" onclick="showPage('home')">Voir AquaPoney</button>
+        <button class="btn btn-soft" onclick="showPage('landing')">Retour accueil</button>
+      </div>
+
+      <div class="grid">
+        <div class="sami-stats">
+          <div class="sami-card"><strong id="sami-total">0</strong><span>Demandes reçues</span></div>
+          <div class="sami-card"><strong id="sami-answered">0</strong><span>Demandes répondues</span></div>
+          <div class="sami-card"><strong id="sami-resolved">0</strong><span>Demandes réglées</span></div>
+        </div>
+
+        <div class="grid sami-grid">
+          <div class="grid">
+            <div class="card">
+              <div class="section-head">
+                <div class="title">Nouvelle demande pour Sami</div>
+                <div class="badge team">Visible par l’équipe</div>
+              </div>
+              <p class="subtle">
+                Ici on met les demandes particulières qui ne passent pas par AquaPoney :
+                souci d’horaires, oubli de badge, échange urgent, point administratif ou besoin spécifique.
+              </p>
+              <div class="form-grid">
+                <div class="field">
+                  <label for="sami-name">Prénom</label>
+                  <input id="sami-name" type="text" placeholder="Ex : Maya">
+                </div>
+                <div class="field">
+                  <label for="sami-topic">Sujet</label>
+                  <select id="sami-topic">
+                    <option value="">Choisir un sujet</option>
+                    <option value="Horaires">Horaires</option>
+                    <option value="Badge">Badge</option>
+                    <option value="Planning">Planning</option>
+                    <option value="Administratif">Administratif</option>
+                    <option value="Autre">Autre</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="sami-message">Demande</label>
+                  <textarea id="sami-message" placeholder="Explique ton besoin à Sami..."></textarea>
+                </div>
+                <button class="btn btn-coral btn-block" onclick="submitSamiTask()">Envoyer à Sami</button>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="section-head">
+                <div class="title">Exemples de demandes</div>
+                <div class="badge sun">Aide au remplissage</div>
+              </div>
+              <div class="example-list">
+                <button class="example-chip" onclick="useSamiExample('J’ai un problème avec mes horaires, peux-tu me les changer ?')">Problème d’horaires</button>
+                <button class="example-chip" onclick="useSamiExample('Je n’ai pas badgé, peux-tu vérifier mon heure de début ?')">Oubli de badge</button>
+                <button class="example-chip" onclick="useSamiExample('Je voudrais te signaler une erreur sur mon planning de cette semaine.')">Erreur planning</button>
+                <button class="example-chip" onclick="useSamiExample('J’ai une demande particulière à te faire concernant mon service.')">Demande particulière</button>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="section-head">
+                <div class="title">Mode Sami</div>
+                <div class="badge admin">Répondre et cocher</div>
+              </div>
+              <p class="subtle">Déverrouille ce mode pour répondre aux demandes, les cocher comme traitées et marquer les personnes déjà réglées.</p>
+              <div class="sami-lock" id="sami-lock-box">
+                <input id="sami-pass" type="password" placeholder="Mot de passe admin">
+                <button class="btn btn-soft" onclick="unlockSamiMode()">Déverrouiller</button>
+                <button class="btn btn-soft" id="sami-lock-off" style="display:none" onclick="lockSamiMode()">Quitter le mode Sami</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid">
+            <div class="card">
+              <div class="section-head">
+                <div class="title">Demandes en cours</div>
+                <div class="badge team" id="sami-open-count">0 ouvertes</div>
+              </div>
+              <div class="todo-list" id="sami-request-list"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ticker">
+          <div class="ticker-track" id="sami-ticker-track"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CASH PRIZE COUNTDOWN GATE -->
+  <section class="page" id="page-cash-countdown">
+    <div class="countdown-gate">
+      <div class="cg-inner">
+        <div class="cg-eyebrow">✦ La Terrasse · Exclusif ✦</div>
+        <div class="cg-logo">🏆</div>
+        <h1 class="cg-title">Cash Prize</h1>
+        <p class="cg-sub">Cette page se déverrouille dans&nbsp;:</p>
+        <div class="cg-clock" id="cg-clock">
+          <div class="cg-unit"><span id="cg-h">00</span><small>heures</small></div>
+          <div class="cg-sep">:</div>
+          <div class="cg-unit"><span id="cg-m">00</span><small>min</small></div>
+          <div class="cg-sep">:</div>
+          <div class="cg-unit"><span id="cg-s">00</span><small>sec</small></div>
+        </div>
+        <p class="cg-hint" id="cg-hint">Reviens quand le compteur atteint zéro.</p>
+        <button class="cg-btn" id="cg-enter-btn" style="display:none" onclick="openCashPrize()">Entrer ✦</button>
+      </div>
+      <!-- Code caché admin -->
+      <div class="cg-admin-hint" aria-hidden="true">•••</div>
+      <input id="cg-secret" type="password" inputmode="numeric" maxlength="6"
+        oninput="checkSecretCode(this.value)"
+        style="position:fixed;bottom:18px;right:18px;width:36px;height:36px;
+               opacity:0.12;border:1px solid rgba(255,255,255,0.15);border-radius:10px;
+               background:transparent;color:transparent;font-size:1px;cursor:default;
+               outline:none;padding:0;text-align:center;z-index:99;"
+        autocomplete="off" aria-label="Accès privé">
+    </div>
+  </section>
+
+  <section class="page" id="page-cash-prize">
+    <div class="cp-intro-wipe" id="cp-intro-wipe">La Terrasse · 2026</div>
+    <div class="cp-shell">
+      <!-- TOPBAR -->
+      <div class="cp-topbar">
+        <button class="cp-back" onclick="showPage('landing')">← Accueil</button>
+        <div class="cp-brand">✦ Cash Prize · La Terrasse · Saison d’été ✦</div>
+        <div></div>
+      </div>
+
+      <!-- HERO -->
+      <div class="cp-hero">
+        <div class="cp-hero-left">
+          <div class="cp-pill">✦ Réservé à l’équipe salle ✦</div>
+          <h1 class="cp-h1"><span class="cp-h1-line"><span>Merci.</span></span><span class="cp-h1-line"><span>Vraiment.</span></span></h1>
+          <p class="cp-desc">Ici, aucune compétition et aucun classement. Ces récompenses disent simplement <em>merci</em> à celles et ceux qui donnent le meilleur d’eux-mêmes à La Terrasse&nbsp;: les plus patients, les plus agréables au service, les présences sur lesquelles l’équipe peut compter et tout ce travail discret que l’on ressent chaque soir.</p>
+          <div class="cp-keywords">
+            <span>Bonne humeur</span><span>Fiabilité</span><span>Élégance</span><span>Présence</span><span>Équipe</span><span>Effort</span><span>Timing</span><span>Vente</span>
+          </div>
+        </div>
+        <div class="cp-hero-right">
+          <div class="cp-trophy-wrap">
+            <div class="cp-trophy-glow"></div>
+            <canvas class="cp-orb-canvas" id="cp-orb" width="720" height="720" aria-label="Forme dorée animée représentant l'énergie de l'équipe"></canvas>
+            <div class="cp-orb-cross" aria-hidden="true"></div>
+            <span class="cp-orb-label top">Sales · 2026</span>
+            <span class="cp-orb-label bottom">La Terrasse · Ensemble</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- PARTICIPANTS -->
+      <div class="cp-index-line"><span>01</span><span>Présences remarquées</span></div>
+      <div class="cp-section-label">✦ Les participants ✦</div>
+      <div class="cp-cards-grid">
+
+        <div class="cp-flip-card" tabindex="0" role="button" aria-label="Découvrir Fabien" onclick="flipParticipant(this)" onkeydown="flipParticipantKey(event, this)">
+          <div class="cp-flip-inner">
+            <div class="cp-flip-front"><span>?</span><small>Touche pour découvrir</small></div>
+            <div class="cp-flip-back"><strong>Fabien</strong><p>Pour sa Gayté et son talent à mettre un peu de soleil même quand la salle part en toupie.</p></div>
+          </div>
+        </div>
+
+        <div class="cp-flip-card" tabindex="0" role="button" aria-label="Découvrir Marguerite" onclick="flipParticipant(this)" onkeydown="flipParticipantKey(event, this)">
+          <div class="cp-flip-inner">
+            <div class="cp-flip-front"><span>?</span><small>Touche pour découvrir</small></div>
+            <div class="cp-flip-back"><strong>Marguerite</strong><p>Pour avoir réussi l’exploit d’être à la fois discrète, efficace et probablement déjà au courant avant tout le monde. (J’ai pas d’inspi.)</p></div>
+          </div>
+        </div>
+
+        <div class="cp-flip-card" tabindex="0" role="button" aria-label="Découvrir Milla" onclick="flipParticipant(this)" onkeydown="flipParticipantKey(event, this)">
+          <div class="cp-flip-inner">
+            <div class="cp-flip-front"><span>?</span><small>Touche pour découvrir</small></div>
+            <div class="cp-flip-back"><strong>Milla</strong><p>Pour sa présence et sa capacité à gérer quelconque malaise en salle.</p></div>
+          </div>
+        </div>
+
+        <div class="cp-flip-card" tabindex="0" role="button" aria-label="Découvrir Maya" onclick="flipParticipant(this)" onkeydown="flipParticipantKey(event, this)">
+          <div class="cp-flip-inner">
+            <div class="cp-flip-front"><span>?</span><small>Touche pour découvrir</small></div>
+            <div class="cp-flip-back"><strong>Maya</strong><p>Pour le rythme, la salle tenue proprement et le SENS DU TIMING&nbsp;!!!</p></div>
+          </div>
+        </div>
+
+        <div class="cp-flip-card" tabindex="0" role="button" aria-label="Découvrir François" onclick="flipParticipant(this)" onkeydown="flipParticipantKey(event, this)">
+          <div class="cp-flip-inner">
+            <div class="cp-flip-front"><span>?</span><small>Touche pour découvrir</small></div>
+            <div class="cp-flip-back"><strong>François</strong><p>Pour l’impact, le service et le fait de proposer à ses proches de venir à 15 le samedi à 19&nbsp;h&nbsp;30 lorsque le resto est plein.</p></div>
+          </div>
+        </div>
+
+        <div class="cp-flip-card" tabindex="0" role="button" aria-label="Découvrir Lulu" onclick="flipParticipant(this)" onkeydown="flipParticipantKey(event, this)">
+          <div class="cp-flip-inner">
+            <div class="cp-flip-front"><span>?</span><small>Touche pour découvrir</small></div>
+            <div class="cp-flip-back"><strong>Lulu</strong><p>Pour son sérieux au Bââââaar et son assiduité en vacances.</p></div>
+          </div>
+        </div>
+
+        <div class="cp-flip-card" tabindex="0" role="button" aria-label="Découvrir Lisa" onclick="flipParticipant(this)" onkeydown="flipParticipantKey(event, this)">
+          <div class="cp-flip-inner">
+            <div class="cp-flip-front"><span>?</span><small>Touche pour découvrir</small></div>
+            <div class="cp-flip-back"><strong>Lisa</strong><p>Pour l’énergie, la fiabilité, le niveau de bonne humeur parfaitement calibré et ses chemises trouées.</p></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- PRIZES -->
+      <div class="cp-index-line"><span>02</span><span>Expériences offertes</span></div>
+      <div class="cp-section-label">✦ Les récompenses ✦</div>
+      <div class="cp-prizes-grid">
+
+        <div class="cp-prize cp-mallmann">
+          <div class="cp-prize-icon">🔥</div>
+          <div class="cp-prize-body">
+            <div class="cp-prize-tag">Dîner pour 2</div>
+            <h3>Mallmann</h3>
+            <p>Restaurant argentin de caractère. Une table pour deux, une expérience feu et braise à partager.</p>
+            <div class="cp-prize-cond">Alcool à la charge des invités.</div>
+          </div>
+        </div>
+
+        <div class="cp-prize cp-italien">
+          <div class="cp-prize-icon">🍝</div>
+          <div class="cp-prize-body">
+            <div class="cp-prize-tag">Dîner pour 2</div>
+            <h3>L’Italien</h3>
+            <p>Le meilleur de la cuisine italienne, une table pour deux dans une ambiance chaleureuse.</p>
+            <div class="cp-prize-cond">Alcool à la charge des invités.</div>
+          </div>
+        </div>
+
+        <div class="cp-prize cp-tanao">
+          <div class="cp-prize-icon">🌊</div>
+          <div class="cp-prize-body">
+            <div class="cp-prize-tag">Dîner pour 2</div>
+            <h3>Tadao</h3>
+            <p>Cuisine méditerranéenne raffinée. Une escapade pour deux autour des saveurs du bassin.</p>
+            <div class="cp-prize-cond">Alcool à la charge des invités.</div>
+          </div>
+        </div>
+
+        <div class="cp-prize cp-terrasse-prize">
+          <div class="cp-prize-icon">☀️</div>
+          <div class="cp-prize-body">
+            <div class="cp-prize-tag">Dîner pour 4</div>
+            <h3>La Terrasse</h3>
+            <p>Une table pour quatre chez nous. Le grand format, pour partager la maison avec qui tu veux.</p>
+            <div class="cp-prize-cond">Alcool à la charge des invités.</div>
+          </div>
+        </div>
+
+        <div class="cp-prize cp-cash-40">
+          <div class="cp-prize-icon"><span class="cp-cash-amount">40 €</span></div>
+          <div class="cp-prize-body">
+            <div class="cp-prize-tag">Cash Prize</div>
+            <h3>Prime de 40 euros</h3>
+            <p>Un geste concret pour remercier une implication remarquée et les efforts fournis au service.</p>
+          </div>
+        </div>
+
+        <div class="cp-prize cp-cash-60">
+          <div class="cp-prize-icon"><span class="cp-cash-amount">60 €</span></div>
+          <div class="cp-prize-body">
+            <div class="cp-prize-tag">Cash Prize</div>
+            <h3>Prime de 60 euros</h3>
+            <p>Une attention particulière pour saluer la constance, la patience et l’esprit d’équipe.</p>
+          </div>
+        </div>
+
+        <div class="cp-prize cp-cash-80">
+          <div class="cp-prize-icon"><span class="cp-cash-amount">80 €</span></div>
+          <div class="cp-prize-body">
+            <div class="cp-prize-tag">Cash Prize</div>
+            <h3>Prime de 80 euros</h3>
+            <p>Une récompense forte pour remercier un engagement précieux et un travail qui fait la différence.</p>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="cp-footnote">Ce programme est une attention exceptionnelle&nbsp;: il n’est ni un dû, ni un avantage acquis — la rémunération de chacun reconnaît déjà le travail accompli.<br>Il a simplement été imaginé pour saluer la réalité exigeante de La Terrasse et offrir, à la hauteur de cet engagement, un vrai moment de plaisir à l’équipe.</div>
+
+    </div>
+  </section>
+
   <div class="modal-backdrop" id="modal-backdrop" onclick="closeModalIfBackdrop(event)">
     <div class="modal">
       <h3 id="modal-title">Détail</h3>
@@ -1552,17 +3077,15 @@
     </div>
   </div>
 
+  <div class="confetti-layer" id="confetti-layer"></div>
   <div class="toast" id="toast"></div>
 
   <script>
     const CONFIG = {
-      scriptUrl: "https://script.google.com/macros/s/AKfycbzz3bzurKNhnJ3JZS6F7EcvLF-csTIW7WrVgG5CoMTbHFfGulwZJRqQzcrXRUW7P7toJQ/exec",
+      scriptUrl: "https://script.google.com/macros/s/AKfycbyYVoBNlhcwzJLgmduKclrBdE9vLeL5T-I6-wbtSN1k1tejNSL653MFq_yQZ4TIh0fb/exec",
       backendMode: "legacy",
-      backendApiPassword: "244342"
+      backendApiPassword: "aquaponey2026"
     };
-
-    // Extras : connexion sans code, vies illimitées
-    const EXTRA_EMPLOYEES = ["Elisa", "Ezen", "Seb", "Jeanne", "Bastien", "Marie", "Paul", "Phoebe"];
 
     const LOCAL_EMPLOYEES = {
       "Maya": "9009",
@@ -1578,11 +3101,22 @@
       "François": "7483",
       "Sasha": "3156",
       "Julien": "8742",
-      "Fabien": "2468",
-      "Milla": "5291"
+      "Fabien": "2468"
     };
 
     const LOCAL_ADMIN_PASSWORD = "244342";
+    const SAMI_FUN_RESPONSES = [
+      "☕ Fabien a pu avoir un cafe frappe pour son anniversaire.",
+      "🍸 Julien a pu etre reengage apres avoir ete vire pour lenteur au bar (humour).",
+      "🕺 Christian a pu recuperer un service ou il etait annonce en vacances depuis 2004.",
+      "🎯 Maya a pu faire corriger un horaire qui etait parti vivre sa propre vie.",
+      "🧾 Lisa a pu retrouver un badge qui avait officiellement disparu dans une autre dimension.",
+      "🥐 Hugo a pu obtenir un petit dej de champion apres son ouverture heroique.",
+      "📣 Camille a pu faire reconnaitre qu'elle n'etait pas en retard, juste en decalage artistique.",
+      "🛟 Sebastien a pu etre sauve d'un planning ecrit avec les pieds.",
+      "🎉 Lulu a pu recuperer une pause legitime apres une journee turbo.",
+      "🧠 Sasha a pu faire valider qu'un oubli de badge ne retire pas le cerveau."
+    ];
 
     const APP = {
       employee: {
@@ -1611,7 +3145,9 @@
       employeeToken: "aquaponey.employee.token",
       employeeName: "aquaponey.employee.name",
       adminToken: "aquaponey.admin.token",
-      localRequests: "aquaponey.local.requests"
+      localRequests: "aquaponey.local.requests",
+      samiTasks: "aquaponey.sami.tasks",
+      samiUnlocked: "aquaponey.sami.unlocked"
     };
 
     document.addEventListener("DOMContentLoaded", init);
@@ -1619,12 +3155,7 @@
     document.getElementById("team-name").addEventListener("keydown", onLoginKeydown);
     document.getElementById("team-pin").addEventListener("keydown", onLoginKeydown);
     document.getElementById("admin-pass").addEventListener("keydown", onAdminKeydown);
-
-    function onNameInput() {
-      const firstName = document.getElementById("team-name").value.trim();
-      const isExtra = EXTRA_EMPLOYEES.some(e => e.toLowerCase() === firstName.toLowerCase());
-      document.getElementById("pin-field").style.display = isExtra ? "none" : "";
-    }
+    document.addEventListener("click", handleGlobalButtonConfetti);
 
     function init() {
       const today = new Date();
@@ -1637,6 +3168,9 @@
       document.getElementById("req-date").min = minDate;
       document.getElementById("req-custom-wrap").style.display = "none";
       updateLocalModeBanner();
+      loadSamiState();
+      renderSamiPage();
+      playPortalWipe("landing");
 
       restoreSession();
     }
@@ -1660,9 +3194,209 @@
     }
 
     function showPage(name) {
+      // Si on demande cash-prize, on passe par le countdown d'abord
+      if (name === "cash-prize") {
+        startCountdown();
+        document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+        document.getElementById("page-cash-countdown").classList.add("active");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
       document.querySelectorAll(".page").forEach((page) => page.classList.remove("active"));
       document.getElementById("page-" + name).classList.add("active");
       window.scrollTo({ top: 0, behavior: "smooth" });
+      playPortalWipe(name);
+      if (name === "sami-todo") {
+        renderSamiPage();
+      }
+    }
+
+    function playPortalWipe(name) {
+      const wipe = document.getElementById("portal-wipe");
+      const title = document.getElementById("portal-wipe-title");
+      const subtitle = document.getElementById("portal-wipe-subtitle");
+      if (!wipe || !title || !subtitle) return;
+
+      const transitions = {
+        landing: { theme: "home-theme", title: "La Terrasse", subtitle: "Espace équipe" },
+        home: { theme: "aquaponey-theme", title: "AquaPoney", subtitle: "Indisponibilités" },
+        "sami-todo": { theme: "todo-theme", title: "To Do List", subtitle: "Le coin de Sami" }
+      };
+      const transition = transitions[name];
+      if (!transition) return;
+
+      wipe.className = "portal-wipe " + transition.theme;
+      title.textContent = transition.title;
+      subtitle.textContent = transition.subtitle;
+      void wipe.offsetWidth;
+      wipe.classList.add("run");
+    }
+
+    // ── COUNTDOWN ──────────────────────────────
+    const UNLOCK_KEY = "cp_unlock_until";
+    let countdownTimer = null;
+
+    function startCountdown() {
+      // Le premier passage lance un décompte de 23 h 59, conservé sur l'appareil.
+      const until = parseInt(localStorage.getItem(UNLOCK_KEY) || "0");
+      if (until && Date.now() < until) {
+        tickCountdown(until);
+        updateCountdown(until);
+        return;
+      }
+      if (until && Date.now() >= until) {
+        revealEntry();
+        return;
+      }
+      const target = Date.now() + ((23 * 60 + 59) * 60 * 1000);
+      try { localStorage.setItem(UNLOCK_KEY, String(target)); } catch(e){}
+      tickCountdown(target);
+      updateCountdown(target);
+    }
+
+    function tickCountdown(target) {
+      if (countdownTimer) clearInterval(countdownTimer);
+      countdownTimer = setInterval(() => updateCountdown(target), 1000);
+    }
+
+    function updateCountdown(target) {
+        const diff = target - Date.now();
+        if (diff <= 0) {
+          clearInterval(countdownTimer);
+          document.getElementById("cg-h").textContent = "00";
+          document.getElementById("cg-m").textContent = "00";
+          document.getElementById("cg-s").textContent = "00";
+          revealEntry();
+          return;
+        }
+        const h = Math.floor(diff / 3600000);
+        const m = Math.floor((diff % 3600000) / 60000);
+        const s = Math.floor((diff % 60000) / 1000);
+        document.getElementById("cg-h").textContent = String(h).padStart(2, "0");
+        document.getElementById("cg-m").textContent = String(m).padStart(2, "0");
+        document.getElementById("cg-s").textContent = String(s).padStart(2, "0");
+    }
+
+    function openCashPrize() {
+      document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+      const cashPage = document.getElementById("page-cash-prize");
+      cashPage.classList.add("active");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      prepareCashMotion(cashPage);
+    }
+
+    function prepareCashMotion(cashPage) {
+      const wipe = document.getElementById("cp-intro-wipe");
+      cashPage.classList.remove("cp-motion-ready");
+      if (wipe) {
+        wipe.classList.remove("run");
+        void wipe.offsetWidth;
+        wipe.classList.add("run");
+      }
+      requestAnimationFrame(() => requestAnimationFrame(() => cashPage.classList.add("cp-motion-ready")));
+      startCashOrb();
+
+      const revealItems = cashPage.querySelectorAll(".cp-flip-card, .cp-prize");
+      revealItems.forEach((item, index) => item.style.transitionDelay = ((index % 4) * 80) + "ms");
+      if (!("IntersectionObserver" in window)) {
+        revealItems.forEach(item => item.classList.add("cp-visible"));
+        return;
+      }
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("cp-visible");
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.14, rootMargin: "0px 0px -5% 0px" });
+      revealItems.forEach(item => observer.observe(item));
+    }
+
+    let cashOrbFrame = null;
+    function startCashOrb() {
+      const canvas = document.getElementById("cp-orb");
+      if (!canvas || canvas.dataset.running === "true") return;
+      const context = canvas.getContext("2d");
+      if (!context) return;
+      canvas.dataset.running = "true";
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const points = 96;
+
+      function draw(time) {
+        const t = reduceMotion ? 0 : time * 0.00055;
+        const w = canvas.width;
+        const h = canvas.height;
+        const cx = w / 2;
+        const cy = h / 2;
+        context.clearRect(0, 0, w, h);
+
+        for (let ring = 0; ring < 18; ring += 1) {
+          const progress = ring / 18;
+          const radius = 202 - ring * 6.4;
+          context.beginPath();
+          for (let i = 0; i <= points; i += 1) {
+            const a = (i / points) * Math.PI * 2;
+            const wave = Math.sin(a * 3 + t * 2.1 + progress * 2.8) * 22
+              + Math.cos(a * 5 - t * 1.35 + ring * .18) * 11
+              + Math.sin(a * 2 - t) * 8;
+            const squash = 1 + Math.sin(a + t * .8) * .07;
+            const r = (radius + wave * (1 - progress * .32)) * squash;
+            const x = cx + Math.cos(a) * r;
+            const y = cy + Math.sin(a) * r * .87;
+            if (i === 0) context.moveTo(x, y); else context.lineTo(x, y);
+          }
+          context.closePath();
+          context.strokeStyle = "rgba(240, 208, 128," + (0.055 + progress * .022) + ")";
+          context.lineWidth = ring % 4 === 0 ? 1.5 : .8;
+          context.stroke();
+        }
+
+        const gradient = context.createRadialGradient(cx - 55, cy - 70, 8, cx, cy, 230);
+        gradient.addColorStop(0, "rgba(255,248,220,.16)");
+        gradient.addColorStop(.52, "rgba(184,146,74,.055)");
+        gradient.addColorStop(1, "rgba(184,146,74,0)");
+        context.fillStyle = gradient;
+        context.beginPath();
+        context.arc(cx, cy, 230, 0, Math.PI * 2);
+        context.fill();
+
+        if (!reduceMotion && document.getElementById("page-cash-prize").classList.contains("active")) {
+          cashOrbFrame = requestAnimationFrame(draw);
+        } else {
+          canvas.dataset.running = "false";
+        }
+      }
+      if (cashOrbFrame) cancelAnimationFrame(cashOrbFrame);
+      cashOrbFrame = requestAnimationFrame(draw);
+    }
+
+    function checkSecretCode(val) {
+      if (val === "244342") {
+        openCashPrize();
+        const el = document.getElementById("cg-secret");
+        if (el) el.value = "";
+      }
+    }
+
+    function flipParticipant(card) {
+      card.classList.toggle("flipped");
+      card.setAttribute("aria-pressed", card.classList.contains("flipped") ? "true" : "false");
+    }
+
+    function flipParticipantKey(event, card) {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        flipParticipant(card);
+      }
+    }
+
+    function revealEntry() {
+      const hint = document.getElementById("cg-hint");
+      const btn  = document.getElementById("cg-enter-btn");
+      if (hint) hint.style.display = "none";
+      if (btn)  btn.style.display  = "inline-block";
+      try { localStorage.setItem(UNLOCK_KEY, "0"); } catch(e){}
     }
 
     function onLoginKeydown(event) {
@@ -1681,15 +3415,14 @@
       const firstName = document.getElementById("team-name").value.trim();
       const pin = document.getElementById("team-pin").value.trim();
 
-      const isExtra = EXTRA_EMPLOYEES.some(e => e.toLowerCase() === firstName.toLowerCase());
-      if (!firstName || (!isExtra && !pin)) {
+      if (!firstName || !pin) {
         toast("Entrez votre prenom et votre code a 4 chiffres.");
         return;
       }
 
       withButtonLoading("team-login-btn", true, "Connexion...");
       try {
-        const response = await api("loginEmployee", { firstName, pin: isExtra ? "EXTRA" : pin });
+        const response = await api("loginEmployee", { firstName, pin });
         APP.employee.token = response.token;
         APP.employee.name = response.employee.firstName;
         localStorage.setItem(STORAGE_KEYS.employeeToken, response.token);
@@ -1783,168 +3516,23 @@
     }
 
     function renderEmployeeApp() {
-      const isExtra = EXTRA_EMPLOYEES.some(e => e.toLowerCase() === (APP.employee.name || "").toLowerCase());
-      if (isExtra) {
-        renderExtraApp();
-      } else {
-        renderLifeBoard();
-        renderEmployeeCalendar();
-        renderEmployeeRequests();
-      }
-    }
-
-    function renderExtraApp() {
-      // Masque les blocs standard, affiche uniquement le calendrier extra
-      document.querySelector(".employee-grid").innerHTML = `
-        <div class="grid">
-          <div class="card">
-            <div class="calendar-head">
-              <h3 id="extra-calendar-title"></h3>
-              <div class="calendar-controls">
-                <button class="icon-btn" onclick="changeExtraMonth(-1)">‹</button>
-                <button class="icon-btn" onclick="changeExtraMonth(1)">›</button>
-              </div>
-            </div>
-            <p class="subtle" style="margin:0 0 12px">Appuyez sur un jour pour le marquer <strong>indisponible</strong>. Appuyez à nouveau pour annuler.</p>
-            <div class="calendar">
-              <div class="calendar-weekdays">
-                <div>Lun</div><div>Mar</div><div>Mer</div><div>Jeu</div><div>Ven</div><div>Sam</div><div>Dim</div>
-              </div>
-              <div class="calendar-grid" id="extra-calendar-grid"></div>
-            </div>
-          </div>
-          <div class="card">
-            <div class="section-head">
-              <div class="title">Mes indisponibilités</div>
-              <div class="badge team" id="extra-count">0</div>
-            </div>
-            <div class="request-list" id="extra-list"></div>
-          </div>
-        </div>`;
-      renderExtraCalendar();
-    }
-
-    function renderExtraCalendar() {
-      const title = document.getElementById("extra-calendar-title");
-      if (title) title.textContent = APP.monthsLabel[APP.employee.viewMonth] + " " + APP.employee.viewYear;
-      const grid = document.getElementById("extra-calendar-grid");
-      if (!grid) return;
-      grid.innerHTML = "";
-
-      buildCalendar(grid, APP.employee.viewYear, APP.employee.viewMonth, (cellDate, key, cell) => {
-        const isUnavailable = APP.employee.requests.some(r => r.dateKey === key);
-        if (isUnavailable) {
-          cell.classList.add("has-mine");
-          const tag = document.createElement("div");
-          tag.className = "day-tag pending";
-          tag.textContent = "Indispo";
-          cell.appendChild(tag);
-        }
-        if (!cell.classList.contains("blank")) {
-          cell.classList.add("clickable");
-          cell.addEventListener("click", () => toggleExtraDay(cellDate, key, isUnavailable));
-        }
-      });
-
-      // Liste des indisponibilités
-      const list = document.getElementById("extra-list");
-      const count = document.getElementById("extra-count");
-      const sorted = [...APP.employee.requests].sort(sortByDateThenCreated);
-      if (count) count.textContent = sorted.length + (sorted.length > 1 ? " jours" : " jour");
-      if (!list) return;
-      if (!sorted.length) {
-        list.innerHTML = '<div class="empty-state">Aucune indisponibilité. Tapez sur un jour pour en ajouter une.</div>';
-        return;
-      }
-      list.innerHTML = "";
-      sorted.forEach(r => {
-        const item = buildRequestCard(r, false);
-        const actions = item.querySelector(".request-actions");
-        if (actions && r.status === "pending") {
-          const btn = document.createElement("button");
-          btn.className = "btn btn-danger";
-          btn.textContent = "Annuler";
-          btn.onclick = () => deleteEmployeeRequest(r.id);
-          actions.appendChild(btn);
-        }
-        list.appendChild(item);
-      });
-    }
-
-    async function toggleExtraDay(cellDate, key, isUnavailable) {
-      if (isUnavailable) {
-        const existing = APP.employee.requests.find(r => r.dateKey === key);
-        if (!existing) return;
-        // Optimiste : retire immédiatement
-        APP.employee.requests = APP.employee.requests.filter(r => r.id !== existing.id);
-        renderExtraCalendar();
-        api("deleteMyRequest", { token: APP.employee.token, requestId: existing.id }).catch(err => {
-          // Revert si erreur
-          APP.employee.requests.push(existing);
-          renderExtraCalendar();
-          toast(err.message || "Erreur lors de la suppression.");
-        });
-        return;
-      }
-      const minDate = addDays(startOfDay(new Date()), 1);
-      if (cellDate < minDate) { toast("Impossible de marquer un jour passé."); return; }
-      // Optimiste : ajoute immédiatement un placeholder
-      const tempId = "temp-" + key;
-      const tempReq = {
-        id: tempId, employee: APP.employee.name, dateKey: key,
-        dateLabel: key, slotBase: "Indisponible", slotLabel: "Indisponible",
-        reason: "", status: "pending", timestamp: new Date().toISOString()
-      };
-      APP.employee.requests.push(tempReq);
-      renderExtraCalendar();
-      api("createRequest", {
-        token: APP.employee.token, dateKey: key,
-        slotBase: "Indisponible", customSlot: "", reason: ""
-      }).then(res => {
-        // Remplace le placeholder par le vrai ID
-        const real = res && res.request ? res.request : null;
-        APP.employee.requests = APP.employee.requests.filter(r => r.id !== tempId);
-        if (real) APP.employee.requests.push(normalizeRequests([real])[0]);
-        renderExtraCalendar();
-      }).catch(err => {
-        // Revert si erreur
-        APP.employee.requests = APP.employee.requests.filter(r => r.id !== tempId);
-        renderExtraCalendar();
-        toast(err.message || "Erreur.");
-      });
-    }
-
-    function changeExtraMonth(dir) {
-      APP.employee.viewMonth += dir;
-      if (APP.employee.viewMonth < 0) { APP.employee.viewMonth = 11; APP.employee.viewYear--; }
-      if (APP.employee.viewMonth > 11) { APP.employee.viewMonth = 0; APP.employee.viewYear++; }
-      renderExtraCalendar();
+      renderLifeBoard();
+      renderEmployeeCalendar();
+      renderEmployeeRequests();
     }
 
     function renderLifeBoard() {
       const year = APP.employee.viewYear;
       const month = APP.employee.viewMonth + 1;
-      const isExtra = EXTRA_EMPLOYEES.some(e => e.toLowerCase() === (APP.employee.name || "").toLowerCase());
-      const board = document.getElementById("life-board");
-      const icons = document.getElementById("life-icons");
-      icons.innerHTML = "";
-
-      if (isExtra) {
-        board.className = "life-board";
-        document.getElementById("life-label").textContent = "Vies illimitées ∞";
-        const icon = document.createElement("span");
-        icon.textContent = "🐴";
-        icons.appendChild(icon);
-        document.getElementById("life-copy").textContent = "Vous etes en extra : pas de limite de demandes ce mois-ci.";
-        return;
-      }
-
       const used = countRequestsInMonth(APP.employee.requests, APP.employee.name, year, month);
       const left = Math.max(0, 3 - used);
+      const board = document.getElementById("life-board");
       board.className = "life-board" + (left === 0 ? " empty" : left === 1 ? " warn" : "");
 
       document.getElementById("life-label").textContent = left + " sur 3 disponibles";
 
+      const icons = document.getElementById("life-icons");
+      icons.innerHTML = "";
       for (let i = 0; i < 3; i += 1) {
         const icon = document.createElement("span");
         icon.textContent = "🐴";
@@ -2349,18 +3937,14 @@
 
     function validateLocalRequest(requests, employeeName, dateKey) {
       const date = parseDateKey(dateKey);
-      const isExtra = EXTRA_EMPLOYEES.some(e => e.toLowerCase() === (employeeName || "").toLowerCase());
-      const minDate = addDays(startOfDay(new Date()), isExtra ? 1 : 10);
+      const minDate = addDays(startOfDay(new Date()), 10);
       if (date < minDate) {
-        return { ok: false, message: isExtra ? "Impossible de marquer un jour passe." : "La demande doit etre faite au minimum 10 jours a l'avance." };
+        return { ok: false, message: "La demande doit etre faite au minimum 10 jours a l'avance." };
       }
 
-
-      if (!isExtra) {
-        const used = countRequestsInMonth(requests, employeeName, date.getFullYear(), date.getMonth() + 1);
-        if (used >= 3) {
-          return { ok: false, message: "Quota atteint : 3 demandes maximum sur ce mois." };
-        }
+      const used = countRequestsInMonth(requests, employeeName, date.getFullYear(), date.getMonth() + 1);
+      if (used >= 3) {
+        return { ok: false, message: "Quota atteint : 3 demandes maximum sur ce mois." };
       }
 
       return { ok: true };
@@ -2426,7 +4010,6 @@
 
       const response = await fetch(CONFIG.scriptUrl, {
         method: "POST",
-        redirect: "follow",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({ action, payload })
       });
@@ -2479,7 +4062,7 @@
 
     async function legacyGetMyRequests(payload) {
       const employee = localRequireEmployee(payload.token);
-      const response = await fetch(CONFIG.scriptUrl + "?action=get&employee=" + encodeURIComponent(employee), { redirect: "follow" });
+      const response = await fetch(CONFIG.scriptUrl + "?action=get&employee=" + encodeURIComponent(employee));
       const data = await response.json();
       return { ok: true, requests: data.rows || [] };
     }
@@ -2505,7 +4088,6 @@
 
       const response = await fetch(CONFIG.scriptUrl, {
         method: "POST",
-        redirect: "follow",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({ action: "add", row })
       });
@@ -2522,8 +4104,7 @@
     async function legacyGetAllRequests(payload) {
       localRequireAdmin(payload.token);
       const response = await fetch(
-        CONFIG.scriptUrl + "?action=getAll&pass=" + encodeURIComponent(CONFIG.backendApiPassword),
-        { redirect: "follow" }
+        CONFIG.scriptUrl + "?action=getAll&pass=" + encodeURIComponent(CONFIG.backendApiPassword)
       );
       const data = await response.json();
       return {
@@ -2537,7 +4118,6 @@
       localRequireAdmin(payload.token);
       const response = await fetch(CONFIG.scriptUrl, {
         method: "POST",
-        redirect: "follow",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({
           action: "status",
@@ -2569,7 +4149,6 @@
       }
       const response = await fetch(CONFIG.scriptUrl, {
         method: "POST",
-        redirect: "follow",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({
           action: "delete",
@@ -2617,15 +4196,6 @@
     function localLoginEmployee(payload) {
       const firstName = String(payload.firstName || "").trim();
       const pin = String(payload.pin || "").trim();
-      const isExtra = EXTRA_EMPLOYEES.some(e => e.toLowerCase() === firstName.toLowerCase());
-      if (isExtra) {
-        const canonical = EXTRA_EMPLOYEES.find(e => e.toLowerCase() === firstName.toLowerCase());
-        return {
-          ok: true,
-          token: "local-employee:" + encodeURIComponent(canonical),
-          employee: { firstName: canonical }
-        };
-      }
       if (!LOCAL_EMPLOYEES[firstName] || LOCAL_EMPLOYEES[firstName] !== pin) {
         throw new Error("Prenom ou code incorrect.");
       }
@@ -2744,8 +4314,7 @@
         throw new Error("Session employee invalide.");
       }
       const employee = decodeURIComponent(raw.slice("local-employee:".length));
-      const isExtra = EXTRA_EMPLOYEES.some(e => e.toLowerCase() === employee.toLowerCase());
-      if (!LOCAL_EMPLOYEES[employee] && !isExtra) {
+      if (!LOCAL_EMPLOYEES[employee]) {
         throw new Error("Session employee invalide.");
       }
       return employee;
@@ -2768,6 +4337,216 @@
 
     function saveLocalRequests(rows) {
       localStorage.setItem(STORAGE_KEYS.localRequests, JSON.stringify(rows));
+    }
+
+    function loadSamiState() {
+      APP.sami = {
+        items: loadSamiTasks(),
+        unlocked: localStorage.getItem(STORAGE_KEYS.samiUnlocked) === "true"
+      };
+    }
+
+    function loadSamiTasks() {
+      try {
+        const rows = JSON.parse(localStorage.getItem(STORAGE_KEYS.samiTasks) || "[]");
+        return Array.isArray(rows) ? rows : [];
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function saveSamiTasks() {
+      localStorage.setItem(STORAGE_KEYS.samiTasks, JSON.stringify(APP.sami.items));
+    }
+
+    function renderSamiPage() {
+      if (!APP.sami) loadSamiState();
+      const items = [...APP.sami.items].sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+      const answered = items.filter((item) => item.status === "answered" || item.status === "resolved").length;
+      const resolved = items.filter((item) => item.status === "resolved").length;
+      const open = items.filter((item) => item.status === "pending").length;
+      const resolvedDisplay = 102;
+
+      document.getElementById("sami-total").textContent = items.length;
+      document.getElementById("sami-answered").textContent = answered;
+      document.getElementById("sami-resolved").textContent = resolvedDisplay;
+      document.getElementById("sami-open-count").textContent = open + (open > 1 ? " ouvertes" : " ouverte");
+
+      const solvedNames = [...new Set(items.filter((item) => item.status === "resolved").map((item) => item.name))];
+      const funItems = [
+        ...SAMI_FUN_RESPONSES,
+        ...solvedNames.map((name) => "✅ " + name + " a deja ete regle par Sami.")
+      ];
+      const tickerItems = (funItems.length ? funItems : ["Sami a deja regle 102 demandes, la legende est vivante."]);
+      const tickerHtml = tickerItems.concat(tickerItems).map((text) => "<span>" + escapeHtml(text) + "</span>").join("");
+      ["sami-ticker-track", "landing-ticker-track"].forEach((id) => {
+        const tickerTrack = document.getElementById(id);
+        if (tickerTrack) tickerTrack.innerHTML = tickerHtml;
+      });
+
+      document.getElementById("sami-lock-off").style.display = APP.sami.unlocked ? "inline-flex" : "none";
+
+      const list = document.getElementById("sami-request-list");
+      if (!items.length) {
+        list.innerHTML = '<div class="empty-state">Aucune demande particulière pour le moment.</div>';
+        return;
+      }
+
+      list.innerHTML = "";
+      items.forEach((item) => {
+        const row = document.createElement("div");
+        row.className = "todo-item";
+        const canSeeDetails = APP.sami.unlocked;
+        row.innerHTML = [
+          '<div class="todo-head">',
+          '  <div>',
+          '    <h4>' + escapeHtml(item.name) + ' • ' + escapeHtml(item.topic) + '</h4>',
+          '    <div class="todo-meta">',
+          '      <span class="pill ' + item.status + '">' + samiStatusLabel(item.status) + '</span>',
+          '      <span class="pill" style="background: rgba(17,75,95,0.08); color: var(--teal-900);">' + escapeHtml(formatDateTime(item.createdAt)) + '</span>',
+          '    </div>',
+          '  </div>',
+          '</div>',
+          canSeeDetails
+            ? '<p style="margin:0; color: var(--text); line-height:1.65;">' + escapeHtml(item.message) + '</p>'
+            : '<div class="todo-private">Le contenu de cette demande est privé. L’équipe peut voir qu’une demande existe, mais seul Sami peut lire le détail et la réponse.</div>',
+          canSeeDetails && item.reply ? '<div class="todo-reply"><strong>Réponse de Sami :</strong><br>' + escapeHtml(item.reply) + '</div>' : ''
+        ].join("");
+
+        if (APP.sami.unlocked) {
+          const adminBox = document.createElement("div");
+          adminBox.className = "todo-admin";
+          adminBox.innerHTML = [
+            '<div class="field" style="margin:0;">',
+            '  <label for="reply-' + item.id + '">Réponse</label>',
+            '  <textarea id="reply-' + item.id + '" placeholder="Écris la réponse de Sami...">' + escapeHtml(item.reply || "") + '</textarea>',
+            '</div>',
+            '<div class="todo-admin-actions">',
+            '  <button class="btn btn-soft" data-action="save">Sauvegarder la réponse</button>',
+            '  <button class="btn btn-primary" data-action="answered">Marquer répondu</button>',
+            '  <button class="btn btn-ok" data-action="resolved">Marquer réglé</button>',
+            '  <button class="btn btn-danger" data-action="pending">Remettre en attente</button>',
+            '</div>'
+          ].join("");
+
+          adminBox.querySelector('[data-action="save"]').onclick = () => saveSamiReply(item.id);
+          adminBox.querySelector('[data-action="answered"]').onclick = () => setSamiStatus(item.id, "answered");
+          adminBox.querySelector('[data-action="resolved"]').onclick = () => setSamiStatus(item.id, "resolved");
+          adminBox.querySelector('[data-action="pending"]').onclick = () => setSamiStatus(item.id, "pending");
+          row.appendChild(adminBox);
+        }
+
+        list.appendChild(row);
+      });
+    }
+
+    function useSamiExample(text) {
+      document.getElementById("sami-message").value = text;
+      document.getElementById("sami-message").focus();
+    }
+
+    function submitSamiTask() {
+      const name = document.getElementById("sami-name").value.trim();
+      const topic = document.getElementById("sami-topic").value;
+      const message = document.getElementById("sami-message").value.trim();
+      if (!name || !topic || !message) {
+        toast("Remplissez le prénom, le sujet et la demande pour Sami.");
+        return;
+      }
+
+      APP.sami.items.push({
+        id: "sami-" + Date.now() + "-" + Math.random().toString(36).slice(2, 7),
+        name,
+        topic,
+        message,
+        status: "pending",
+        reply: "",
+        createdAt: new Date().toISOString()
+      });
+      saveSamiTasks();
+      document.getElementById("sami-name").value = "";
+      document.getElementById("sami-topic").value = "";
+      document.getElementById("sami-message").value = "";
+      renderSamiPage();
+      toast("Demande envoyée à la To Do List de Sami.");
+    }
+
+    function unlockSamiMode() {
+      const password = document.getElementById("sami-pass").value;
+      if (password !== LOCAL_ADMIN_PASSWORD) {
+        toast("Mot de passe admin incorrect.");
+        return;
+      }
+      APP.sami.unlocked = true;
+      localStorage.setItem(STORAGE_KEYS.samiUnlocked, "true");
+      document.getElementById("sami-pass").value = "";
+      renderSamiPage();
+      toast("Mode Sami déverrouillé.");
+    }
+
+    function lockSamiMode() {
+      APP.sami.unlocked = false;
+      localStorage.removeItem(STORAGE_KEYS.samiUnlocked);
+      renderSamiPage();
+      toast("Mode Sami refermé.");
+    }
+
+    function saveSamiReply(itemId) {
+      const target = APP.sami.items.find((item) => item.id === itemId);
+      if (!target) return;
+      const textarea = document.getElementById("reply-" + itemId);
+      target.reply = textarea ? textarea.value.trim() : target.reply;
+      saveSamiTasks();
+      renderSamiPage();
+      toast("Réponse sauvegardée.");
+    }
+
+    function setSamiStatus(itemId, status) {
+      const target = APP.sami.items.find((item) => item.id === itemId);
+      if (!target) return;
+      const textarea = document.getElementById("reply-" + itemId);
+      if (textarea) {
+        target.reply = textarea.value.trim();
+      }
+      if ((status === "answered" || status === "resolved") && !target.reply) {
+        toast("Ajoute d’abord une réponse avant de valider ce statut.");
+        return;
+      }
+      target.status = status;
+      saveSamiTasks();
+      renderSamiPage();
+      toast(status === "resolved" ? "Demande marquée comme réglée." : status === "answered" ? "Demande marquée comme répondue." : "Demande remise en attente.");
+    }
+
+    function samiStatusLabel(status) {
+      if (status === "resolved") return "Réglée";
+      if (status === "answered") return "Répondue";
+      return "En attente";
+    }
+
+    function handleGlobalButtonConfetti(event) {
+      const button = event.target.closest("button");
+      if (!button) return;
+      launchConfetti(event.clientX || window.innerWidth / 2, event.clientY || window.innerHeight / 2);
+    }
+
+    function launchConfetti(x, y) {
+      const layer = document.getElementById("confetti-layer");
+      if (!layer) return;
+      const colors = ["#2cb1a7", "#eb6f5a", "#f6c85f", "#114b5f", "#9be4d7", "#ff9f1c"];
+      for (let i = 0; i < 24; i += 1) {
+        const piece = document.createElement("span");
+        piece.className = "confetti-piece";
+        piece.style.left = x + "px";
+        piece.style.top = y + "px";
+        piece.style.background = colors[i % colors.length];
+        piece.style.setProperty("--dx", (Math.random() * 240 - 120).toFixed(0) + "px");
+        piece.style.setProperty("--dy", (Math.random() * 180 + 40).toFixed(0) + "px");
+        piece.style.setProperty("--rot", (Math.random() * 720 - 360).toFixed(0) + "deg");
+        piece.style.animationDelay = (Math.random() * 80).toFixed(0) + "ms";
+        layer.appendChild(piece);
+        setTimeout(() => piece.remove(), 1000);
+      }
     }
 
     function openModal(title, subtitle, bodyHtml, actions) {
