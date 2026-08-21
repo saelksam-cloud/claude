@@ -3194,12 +3194,19 @@
     }
 
     function showPage(name) {
-      // Si on demande cash-prize, on passe par le countdown d'abord
+      // Si on demande cash-prize, on vérifie si le countdown est terminé
       if (name === "cash-prize") {
-        startCountdown();
-        document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
-        document.getElementById("page-cash-countdown").classList.add("active");
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        if (Date.now() >= CASH_UNLOCK_TIME) {
+          // Décompte terminé → accès direct pour tout le monde
+          document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+          document.getElementById("page-cash-prize").classList.add("active");
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        } else {
+          startCountdown();
+          document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+          document.getElementById("page-cash-countdown").classList.add("active");
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
         return;
       }
       document.querySelectorAll(".page").forEach((page) => page.classList.remove("active"));
@@ -3233,25 +3240,18 @@
     }
 
     // ── COUNTDOWN ──────────────────────────────
-    const UNLOCK_KEY = "cp_unlock_until";
+    // Date fixe de déverrouillage — identique pour TOUS les visiteurs
+    // Réglée à 24h après le déploiement : 2026-08-22 à 20h00 UTC (22h Paris)
+    const CASH_UNLOCK_TIME = new Date("2026-08-22T20:00:00Z").getTime();
     let countdownTimer = null;
 
     function startCountdown() {
-      // Le premier passage lance un décompte de 23 h 59, conservé sur l'appareil.
-      const until = parseInt(localStorage.getItem(UNLOCK_KEY) || "0");
-      if (until && Date.now() < until) {
-        tickCountdown(until);
-        updateCountdown(until);
-        return;
-      }
-      if (until && Date.now() >= until) {
+      if (Date.now() >= CASH_UNLOCK_TIME) {
         revealEntry();
         return;
       }
-      const target = Date.now() + ((23 * 60 + 59) * 60 * 1000);
-      try { localStorage.setItem(UNLOCK_KEY, String(target)); } catch(e){}
-      tickCountdown(target);
-      updateCountdown(target);
+      tickCountdown(CASH_UNLOCK_TIME);
+      updateCountdown(CASH_UNLOCK_TIME);
     }
 
     function tickCountdown(target) {
