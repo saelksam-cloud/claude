@@ -3013,6 +3013,13 @@
           </div>
         </div>
 
+        <div class="cp-flip-card" tabindex="0" role="button" aria-label="Découvrir Camille" onclick="flipParticipant(this)" onkeydown="flipParticipantKey(event, this)">
+          <div class="cp-flip-inner">
+            <div class="cp-flip-front"><span>?</span><small>Touche pour découvrir</small></div>
+            <div class="cp-flip-back"><strong>Camille</strong><p>La dictatrice — parce que quand elle décide, ça roule, et que personne ne s’en plaint vraiment.</p></div>
+          </div>
+        </div>
+
       </div>
 
       <!-- PRIZES -->
@@ -3268,7 +3275,7 @@
     // ── COUNTDOWN ──────────────────────────────
     // Date fixe de déverrouillage — identique pour TOUS les visiteurs
     // Réglée à 24h après le déploiement : 2026-08-22 à 20h00 UTC (22h Paris)
-    const CASH_UNLOCK_TIME = new Date("2026-08-22T20:00:00Z").getTime();
+    const CASH_UNLOCK_TIME = new Date("2026-08-22T15:00:00Z").getTime();
     let countdownTimer = null;
 
     function startCountdown() {
