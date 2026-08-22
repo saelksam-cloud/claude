@@ -2094,10 +2094,9 @@
 
     /* HERO */
     .cp-hero {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 48px;
-      align-items: center;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
       padding: 48px 0 64px;
     }
     .cp-pill {
@@ -2956,15 +2955,6 @@
           <p class="cp-desc">Ici, aucune compétition et aucun classement. Ces récompenses disent simplement <em>merci</em> à celles et ceux qui donnent le meilleur d’eux-mêmes à La Terrasse&nbsp;: les plus patients, les plus agréables au service, les présences sur lesquelles l’équipe peut compter et tout ce travail discret que l’on ressent chaque soir.</p>
           <div class="cp-keywords">
             <span>Bonne humeur</span><span>Fiabilité</span><span>Élégance</span><span>Présence</span><span>Équipe</span><span>Effort</span><span>Timing</span><span>Vente</span>
-          </div>
-        </div>
-        <div class="cp-hero-right">
-          <div class="cp-trophy-wrap">
-            <div class="cp-trophy-glow"></div>
-            <canvas class="cp-orb-canvas" id="cp-orb" width="720" height="720" aria-label="Forme dorée animée représentant l'énergie de l'équipe"></canvas>
-            <div class="cp-orb-cross" aria-hidden="true"></div>
-            <span class="cp-orb-label top">Sales · 2026</span>
-            <span class="cp-orb-label bottom">La Terrasse · Ensemble</span>
           </div>
         </div>
       </div>
