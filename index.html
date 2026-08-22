@@ -3230,10 +3230,8 @@
       // Si on demande cash-prize, on vérifie si le countdown est terminé
       if (name === "cash-prize") {
         if (Date.now() >= CASH_UNLOCK_TIME) {
-          // Décompte terminé → accès direct pour tout le monde
-          document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
-          document.getElementById("page-cash-prize").classList.add("active");
-          window.scrollTo({ top: 0, behavior: "smooth" });
+          // Décompte terminé → accès direct pour tout le monde (avec animation wipe)
+          openCashPrize();
         } else {
           startCountdown();
           document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
