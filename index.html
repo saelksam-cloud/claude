@@ -109,12 +109,33 @@
     }
 
     .portal-wipe {
-      display: none; /* transition remplacée par fadeInUp natif sur .page.active */
+      position: fixed;
+      inset: 0;
+      z-index: 140;
+      display: grid;
+      place-items: center;
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(100%);
+      visibility: hidden;
+      overflow: hidden;
+    }
+
+    .portal-wipe::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px);
+      background-size: 100% 88px, 88px 100%;
+      opacity: 0.35;
+      mix-blend-mode: screen;
     }
 
     .portal-wipe.home-theme {
-      background: #ffffff;
-      color: var(--teal-900);
+      background: linear-gradient(145deg, #fff6dd, #f6c85f 50%, #fff2c2);
+      color: #7a4f00;
     }
 
     .portal-wipe.aquaponey-theme {
@@ -127,11 +148,20 @@
       color: #ffffff;
     }
 
+    .portal-wipe.cash-theme {
+      background: linear-gradient(145deg, #16120b, #5e4721 42%, #b8924a 100%);
+      color: #fff6db;
+    }
+
     .portal-wipe-content {
+      position: relative;
+      z-index: 1;
       display: grid;
       gap: 12px;
       text-align: center;
       text-transform: uppercase;
+      transform: translateY(28px) scale(0.96);
+      opacity: 0;
     }
 
     .portal-wipe-content strong {
@@ -148,10 +178,44 @@
       opacity: .62;
     }
 
-    @keyframes portalWipeUp {
-      0% { clip-path: inset(0 0 0 0); }
-      52% { clip-path: inset(0 0 0 0); }
-      100% { clip-path: inset(0 0 100% 0); }
+    .portal-wipe.run {
+      visibility: visible;
+      opacity: 1;
+      animation: portalWipeSlide 820ms cubic-bezier(.16,1,.3,1) forwards;
+    }
+
+    .portal-wipe.run .portal-wipe-content {
+      animation: portalWipeContent 620ms cubic-bezier(.16,1,.3,1) 90ms forwards;
+    }
+
+    @keyframes portalWipeSlide {
+      0% {
+        opacity: 0;
+        transform: translateY(100%);
+      }
+      18% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      78% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(-100%);
+      }
+    }
+
+    @keyframes portalWipeContent {
+      0% {
+        opacity: 0;
+        transform: translateY(28px) scale(0.96);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
     }
 
     .page {
@@ -164,6 +228,12 @@
       animation: fadeInUp 220ms ease;
     }
 
+    #page-cash-countdown.active,
+    #page-cash-prize.active {
+      animation: cashPageReveal 520ms cubic-bezier(.16,1,.3,1);
+      transform-origin: center bottom;
+    }
+
     @keyframes fadeInUp {
       from {
         opacity: 0;
@@ -172,6 +242,24 @@
       to {
         opacity: 1;
         transform: translateY(0);
+      }
+    }
+
+    @keyframes cashPageReveal {
+      0% {
+        opacity: 0;
+        transform: translateY(32px) scale(0.985);
+        filter: blur(8px) saturate(0.92);
+      }
+      55% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0) saturate(1);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0) saturate(1);
       }
     }
 
@@ -1878,10 +1966,11 @@
       min-height: 100vh;
       display: grid;
       place-items: center;
-      background: #0a0a0a;
+      background: #090909;
       background-image:
-        radial-gradient(ellipse 60% 50% at 50% 0%, rgba(184,146,74,0.18) 0%, transparent 70%),
-        radial-gradient(ellipse 40% 40% at 80% 80%, rgba(184,146,74,0.08) 0%, transparent 60%);
+        radial-gradient(ellipse 58% 46% at 50% 0%, rgba(184,146,74,0.12) 0%, transparent 68%),
+        radial-gradient(ellipse 34% 38% at 82% 82%, rgba(184,146,74,0.05) 0%, transparent 58%),
+        linear-gradient(180deg, rgba(255,255,255,0.015), transparent 30%);
     }
     .cg-inner {
       text-align: center;
@@ -1890,6 +1979,20 @@
       display: grid;
       gap: 20px;
       place-items: center;
+      animation: cashGateInnerReveal 620ms cubic-bezier(.16,1,.3,1);
+    }
+
+    @keyframes cashGateInnerReveal {
+      from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.992);
+        filter: blur(6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0);
+      }
     }
     .cg-eyebrow {
       font-size: 0.75rem;
@@ -2065,10 +2168,14 @@
 
     /* HERO */
     .cp-hero {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
+      display: grid;
+      grid-template-columns: minmax(0, 1.04fr) minmax(300px, 0.82fr);
+      align-items: center;
+      gap: 40px;
       padding: 48px 0 64px;
+    }
+    .cp-hero-left {
+      min-width: 0;
     }
     .cp-pill {
       display: inline-block;
@@ -2182,6 +2289,85 @@
       padding: 6px 12px;
       border-radius: 999px;
       backdrop-filter: blur(8px);
+    }
+    .cp-hero-media {
+      min-width: 0;
+      display: flex;
+      justify-content: flex-end;
+    }
+    .cp-hero-photo {
+      width: min(100%, 420px);
+      aspect-ratio: 4 / 5;
+      position: relative;
+      border-radius: 22px;
+      overflow: hidden;
+      border: 1px solid rgba(184,146,74,0.3);
+      box-shadow:
+        0 0 0 1px rgba(184,146,74,0.12),
+        0 24px 70px rgba(0,0,0,0.44),
+        0 0 60px rgba(184,146,74,0.12);
+      background:
+        radial-gradient(circle at top, rgba(184,146,74,0.16), transparent 28%),
+        linear-gradient(160deg, rgba(20,18,16,0.98), rgba(13,12,11,0.92));
+    }
+    .cp-hero-photo::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(rgba(184,146,74,0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(184,146,74,0.08) 1px, transparent 1px);
+      background-size: 100% 72px, 72px 100%;
+      mask-image: linear-gradient(to bottom, rgba(0,0,0,0.92), transparent 94%);
+      pointer-events: none;
+    }
+    .cp-hero-photo img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+      object-position: center;
+      filter: saturate(1.02) contrast(1.02);
+    }
+    .cp-hero-photo-inner {
+      position: absolute;
+      inset: 14px;
+      border-radius: 16px;
+      border: 1px dashed rgba(184,146,74,0.24);
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 24px;
+      color: rgba(240,236,228,0.78);
+      background:
+        radial-gradient(circle at 50% 28%, rgba(184,146,74,0.12), transparent 36%),
+        linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0));
+    }
+    .cp-hero-photo-inner strong {
+      display: block;
+      margin-bottom: 8px;
+      color: #f0d080;
+      font-size: 1.04rem;
+      letter-spacing: -0.02em;
+    }
+    .cp-hero-photo-inner span {
+      display: block;
+      font-size: 0.9rem;
+      line-height: 1.7;
+    }
+    .cp-hero-photo-badge {
+      position: absolute;
+      right: 16px;
+      bottom: 16px;
+      z-index: 2;
+      background: rgba(10,8,6,0.78);
+      border: 1px solid rgba(184,146,74,0.22);
+      color: #f0d080;
+      border-radius: 999px;
+      padding: 7px 12px;
+      font-size: 0.68rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
     }
     .cp-trophy-wrap {
       position: relative;
@@ -2440,7 +2626,9 @@
     }
 
     @media (max-width: 768px) {
-      .cp-hero { grid-template-columns: 1fr; }
+      .cp-hero { grid-template-columns: 1fr; gap: 24px; }
+      .cp-hero-media { justify-content: flex-start; }
+      .cp-hero-photo { width: min(100%, 520px); }
       .cp-trophy-wrap { width: min(82vw, 330px); height: min(82vw, 330px); margin: -12px auto 0; }
       .cp-terrasse-frame { width: min(90vw, 420px); margin: 0 auto; }
       .cp-cards-grid { grid-template-columns: repeat(2, 1fr); }
@@ -2928,6 +3116,12 @@
             <span>Bonne humeur</span><span>Fiabilité</span><span>Élégance</span><span>Présence</span><span>Équipe</span><span>Effort</span><span>Timing</span><span>Vente</span>
           </div>
         </div>
+        <div class="cp-hero-media">
+          <div class="cp-hero-photo" aria-label="Emplacement image équipe">
+            <img src="/Users/sam/Desktop/Capture d’écran 2026-08-22 à 18.17.34.png" alt="Terrasse ensoleillée avec fontaine et tables extérieures">
+            <div class="cp-hero-photo-badge">Photo équipe</div>
+          </div>
+        </div>
       </div>
 
       <!-- PARTICIPANTS -->
@@ -3201,44 +3395,57 @@
       // Si on demande cash-prize, on vérifie si le countdown est terminé
       if (name === "cash-prize") {
         if (Date.now() >= CASH_UNLOCK_TIME) {
-          // Décompte terminé → accès direct pour tout le monde (avec animation wipe)
-          openCashPrize();
+          playPortalWipe("cash-prize", () => openCashPrize());
         } else {
           startCountdown();
-          document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
-          document.getElementById("page-cash-countdown").classList.add("active");
-          window.scrollTo({ top: 0, behavior: "smooth" });
+          playPortalWipe("cash-prize", () => {
+            document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+            document.getElementById("page-cash-countdown").classList.add("active");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          });
         }
         return;
       }
-      document.querySelectorAll(".page").forEach((page) => page.classList.remove("active"));
-      document.getElementById("page-" + name).classList.add("active");
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      playPortalWipe(name);
-      if (name === "sami-todo") {
-        renderSamiPage();
-      }
+      playPortalWipe(name, () => {
+        document.querySelectorAll(".page").forEach((page) => page.classList.remove("active"));
+        document.getElementById("page-" + name).classList.add("active");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        if (name === "sami-todo") {
+          renderSamiPage();
+        }
+      });
     }
 
-    function playPortalWipe(name) {
+    function playPortalWipe(name, onComplete) {
       const wipe = document.getElementById("portal-wipe");
       const title = document.getElementById("portal-wipe-title");
       const subtitle = document.getElementById("portal-wipe-subtitle");
-      if (!wipe || !title || !subtitle) return;
+      if (!wipe || !title || !subtitle) {
+        if (typeof onComplete === "function") onComplete();
+        return;
+      }
 
       const transitions = {
         landing: { theme: "home-theme", title: "La Terrasse", subtitle: "Espace équipe" },
         home: { theme: "aquaponey-theme", title: "AquaPoney", subtitle: "Indisponibilités" },
-        "sami-todo": { theme: "todo-theme", title: "To Do List", subtitle: "Le coin de Sami" }
+        "sami-todo": { theme: "todo-theme", title: "To Do List", subtitle: "Le coin de Sami" },
+        "cash-prize": { theme: "cash-theme", title: "Cash Prize", subtitle: "La Terrasse" }
       };
       const transition = transitions[name];
-      if (!transition) return;
+      if (!transition) {
+        if (typeof onComplete === "function") onComplete();
+        return;
+      }
 
       wipe.className = "portal-wipe " + transition.theme;
       title.textContent = transition.title;
       subtitle.textContent = transition.subtitle;
       void wipe.offsetWidth;
       wipe.classList.add("run");
+      clearTimeout(playPortalWipe._timer);
+      playPortalWipe._timer = setTimeout(() => {
+        if (typeof onComplete === "function") onComplete();
+      }, 360);
     }
 
     // ── COUNTDOWN ──────────────────────────────
