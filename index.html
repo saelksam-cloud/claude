@@ -2041,26 +2041,7 @@
       mask-image: linear-gradient(to bottom, black, transparent 88%);
     }
     .cp-intro-wipe {
-      position: fixed;
-      inset: 0;
-      z-index: 200;
-      display: grid;
-      place-items: center;
-      background: #b8924a;
-      color: #0c0c0c;
-      font-weight: 900;
-      letter-spacing: 0.22em;
-      text-transform: uppercase;
-      clip-path: inset(0 0 0 0);
-      pointer-events: none;
-    }
-    .cp-intro-wipe.run {
-      animation: cpWipe 1.15s cubic-bezier(.76,0,.24,1) forwards;
-    }
-    @keyframes cpWipe {
-      0% { clip-path: inset(0 0 0 0); }
-      52% { clip-path: inset(0 0 0 0); }
-      100% { clip-path: inset(0 0 100% 0); }
+      display: none; /* désactivé — remplacé par fadeInUp de .page.active */
     }
     .cp-shell {
       max-width: 1180px;
