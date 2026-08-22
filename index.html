@@ -109,17 +109,7 @@
     }
 
     .portal-wipe {
-      position: fixed;
-      inset: 0;
-      z-index: 190;
-      display: grid;
-      place-items: center;
-      clip-path: inset(0 0 100% 0);
-      pointer-events: none;
-    }
-
-    .portal-wipe.run {
-      animation: portalWipeUp 1.15s cubic-bezier(.76,0,.24,1) forwards;
+      display: none; /* transition remplacée par fadeInUp natif sur .page.active */
     }
 
     .portal-wipe.home-theme {
@@ -171,7 +161,7 @@
 
     .page.active {
       display: block;
-      animation: fadeInUp 260ms ease;
+      animation: fadeInUp 220ms ease;
     }
 
     @keyframes fadeInUp {
