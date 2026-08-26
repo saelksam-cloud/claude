@@ -2571,6 +2571,7 @@
     .cp-cash-40 .cp-prize-icon { background: linear-gradient(145deg, #171208, #0f0c06); }
     .cp-cash-60 .cp-prize-icon { background: linear-gradient(145deg, #21180a, #120d06); filter: drop-shadow(0 0 18px rgba(184,146,74,.24)); }
     .cp-cash-80 .cp-prize-icon { background: linear-gradient(145deg, #2c200b, #151006); filter: drop-shadow(0 0 24px rgba(240,208,128,.32)); }
+    .cp-creme .cp-prize-icon { background: linear-gradient(145deg, #2b1807, #140b04); filter: drop-shadow(0 0 22px rgba(246,197,90,.24)); }
     .cp-cash-amount {
       display: inline-block;
       font-size: clamp(2.3rem, 5vw, 3.5rem);
@@ -2612,6 +2613,230 @@
     }
     .cp-prize-cond strong { color: #b8924a; }
 
+    /* LIKE LAB */
+    .cp-like-lab {
+      margin: 0 0 48px;
+      border-radius: 28px;
+      border: 1px solid rgba(184,146,74,0.22);
+      background:
+        radial-gradient(circle at top right, rgba(184,146,74,0.14), transparent 24%),
+        linear-gradient(180deg, #151311, #0f0e0d);
+      padding: 24px;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.22);
+      opacity: 0;
+      transform: translateY(55px);
+    }
+    .cp-like-lab.cp-visible {
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity .85s ease, transform .85s cubic-bezier(.16,1,.3,1);
+    }
+    .cp-like-head {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .cp-like-head h3 {
+      margin: 0;
+      font-size: clamp(1.5rem, 3vw, 2.2rem);
+      color: #f0ece4;
+      letter-spacing: -.04em;
+    }
+    .cp-like-head p {
+      margin: 0;
+      max-width: 70ch;
+      color: rgba(240,236,228,0.64);
+      line-height: 1.7;
+      font-size: 0.92rem;
+    }
+    .cp-like-head .cp-prize-tag {
+      width: fit-content;
+      margin-bottom: 0;
+    }
+    .cp-like-layout {
+      display: grid;
+      grid-template-columns: 0.95fr 1.05fr;
+      gap: 18px;
+      align-items: start;
+    }
+    .cp-like-panel {
+      border-radius: 22px;
+      border: 1px solid rgba(184,146,74,0.16);
+      background: rgba(255,255,255,0.02);
+      padding: 18px;
+    }
+    .cp-like-panel h4 {
+      margin: 0 0 12px;
+      color: #f0ece4;
+      font-size: 1rem;
+      letter-spacing: .02em;
+    }
+    .cp-like-trend-list,
+    .cp-like-summary {
+      display: grid;
+      gap: 12px;
+    }
+    .cp-like-summary-card,
+    .cp-like-trend-card {
+      border-radius: 18px;
+      border: 1px solid rgba(184,146,74,0.14);
+      background: rgba(255,255,255,0.025);
+      padding: 14px 14px 12px;
+    }
+    .cp-like-summary-top,
+    .cp-like-trend-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: baseline;
+      color: #f0ece4;
+      font-size: 0.92rem;
+      margin-bottom: 10px;
+    }
+    .cp-like-summary-top strong,
+    .cp-like-trend-top strong {
+      font-size: 0.98rem;
+    }
+    .cp-like-bar {
+      width: 100%;
+      height: 9px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.06);
+      overflow: hidden;
+    }
+    .cp-like-bar > span {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #b8924a, #f0d080);
+      box-shadow: 0 0 18px rgba(240,208,128,0.18);
+    }
+    .cp-like-note {
+      margin-top: 14px;
+      padding: 14px;
+      border-radius: 16px;
+      background: rgba(184,146,74,0.08);
+      color: rgba(240,236,228,0.72);
+      font-size: 0.84rem;
+      line-height: 1.65;
+    }
+    .cp-prize-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 18px;
+    }
+    .cp-like-btn {
+      border: 1px solid rgba(184,146,74,0.18);
+      background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.015));
+      color: #f0ece4;
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+    }
+    .cp-like-btn:hover {
+      transform: translateY(-2px);
+      border-color: rgba(240,208,128,0.42);
+      box-shadow: 0 14px 28px rgba(184,146,74,0.12);
+    }
+    .cp-like-btn .heart {
+      font-size: 1rem;
+      color: #ff8f8f;
+    }
+    .cp-like-count {
+      font-size: 0.8rem;
+      color: rgba(240,236,228,0.58);
+      white-space: nowrap;
+    }
+    .cp-prize-tag-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    .cp-trending-flame {
+      display: none;
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #f6c55a;
+      border: 1px solid rgba(246,197,90,0.24);
+      border-radius: 999px;
+      padding: 5px 10px;
+      background: rgba(246,197,90,0.08);
+      transform-origin: center;
+    }
+    .cp-prize.is-trending .cp-trending-flame {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .cp-prize.flame-1 .cp-trending-flame {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      animation: flamePulseSoft 1.8s ease-in-out infinite;
+    }
+    .cp-prize.flame-2 .cp-trending-flame {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      padding: 6px 12px;
+      background: rgba(246,197,90,0.13);
+      border-color: rgba(246,197,90,0.36);
+      box-shadow: 0 0 22px rgba(246,197,90,0.14);
+      animation: flamePulseMedium 1.35s ease-in-out infinite;
+    }
+    .cp-prize.flame-3 .cp-trending-flame {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.84rem;
+      padding: 7px 14px;
+      background: rgba(246,197,90,0.18);
+      border-color: rgba(246,197,90,0.5);
+      box-shadow: 0 0 30px rgba(246,197,90,0.22);
+      animation: flamePulseHot 1s ease-in-out infinite;
+    }
+    .cp-prize.is-trending {
+      border-color: rgba(246,197,90,0.42);
+      box-shadow: 0 24px 52px rgba(184,146,74,0.16);
+    }
+    .cp-like-hero-number {
+      font-size: clamp(2.2rem, 5vw, 3.6rem);
+      line-height: 1;
+      letter-spacing: -.06em;
+      color: #f0d080;
+      font-weight: 800;
+    }
+    .cp-like-hero-label {
+      color: rgba(240,236,228,0.6);
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+    }
+
+    @keyframes flamePulseSoft {
+      0%, 100% { transform: scale(1); opacity: 0.9; }
+      50% { transform: scale(1.06); opacity: 1; }
+    }
+    @keyframes flamePulseMedium {
+      0%, 100% { transform: scale(1); opacity: 0.95; }
+      50% { transform: scale(1.12); opacity: 1; }
+    }
+    @keyframes flamePulseHot {
+      0%, 100% { transform: scale(1); opacity: 0.95; }
+      50% { transform: scale(1.18); opacity: 1; }
+    }
+
     /* FOOTNOTE */
     .cp-footnote {
       text-align: center;
@@ -2632,6 +2857,7 @@
       .cp-trophy-wrap { width: min(82vw, 330px); height: min(82vw, 330px); margin: -12px auto 0; }
       .cp-terrasse-frame { width: min(90vw, 420px); margin: 0 auto; }
       .cp-cards-grid { grid-template-columns: repeat(2, 1fr); }
+      .cp-like-layout { grid-template-columns: 1fr; }
       .cg-unit { min-width: 72px; padding: 14px 16px; }
       .cg-unit span { font-size: 2.2rem; }
     }
@@ -3132,14 +3358,21 @@
         <div class="cp-flip-card" tabindex="0" role="button" aria-label="Découvrir Fabien" onclick="flipParticipant(this)" onkeydown="flipParticipantKey(event, this)">
           <div class="cp-flip-inner">
             <div class="cp-flip-front"><span>?</span><small>Touche pour découvrir</small></div>
-            <div class="cp-flip-back"><strong>Fabien</strong><p>Pour sa Gayté et son talent à mettre un peu de soleil même quand la salle part en toupie.</p></div>
+            <div class="cp-flip-back"><strong>Fabien</strong><p>Pour sa GAYté &lt;3</p></div>
+          </div>
+        </div>
+
+        <div class="cp-flip-card" tabindex="0" role="button" aria-label="Découvrir Agnese" onclick="flipParticipant(this)" onkeydown="flipParticipantKey(event, this)">
+          <div class="cp-flip-inner">
+            <div class="cp-flip-front"><span>?</span><small>Touche pour découvrir</small></div>
+            <div class="cp-flip-back"><strong>Agnese</strong><p>Pour son sourire même quand on lui dit qu’elle a un joli accent espagnol.</p></div>
           </div>
         </div>
 
         <div class="cp-flip-card" tabindex="0" role="button" aria-label="Découvrir Marguerite" onclick="flipParticipant(this)" onkeydown="flipParticipantKey(event, this)">
           <div class="cp-flip-inner">
             <div class="cp-flip-front"><span>?</span><small>Touche pour découvrir</small></div>
-            <div class="cp-flip-back"><strong>Marguerite</strong><p>Pour avoir réussi l’exploit d’être à la fois discrète, efficace et probablement déjà au courant avant tout le monde. (J’ai pas d’inspi.)</p></div>
+            <div class="cp-flip-back"><strong>Marguerite</strong><p>Pour un service presque aussi bien brosse et aligne que ses sourcils, avec ce petit cote net et pique qu’on reconnait tout de suite.</p></div>
           </div>
         </div>
 
@@ -3161,6 +3394,20 @@
           <div class="cp-flip-inner">
             <div class="cp-flip-front"><span>?</span><small>Touche pour découvrir</small></div>
             <div class="cp-flip-back"><strong>François</strong><p>Pour l’impact, le service et le fait de proposer à ses proches de venir à 15 le samedi à 19&nbsp;h&nbsp;30 lorsque le resto est plein.</p></div>
+          </div>
+        </div>
+
+        <div class="cp-flip-card" tabindex="0" role="button" aria-label="Découvrir Hugo" onclick="flipParticipant(this)" onkeydown="flipParticipantKey(event, this)">
+          <div class="cp-flip-inner">
+            <div class="cp-flip-front"><span>?</span><small>Touche pour découvrir</small></div>
+            <div class="cp-flip-back"><strong>Hugo</strong><p>Le runner cuisto, toujours entre deux mondes, capable d’envoyer un plat, un sourire et un sprint dans la meme minute.</p></div>
+          </div>
+        </div>
+
+        <div class="cp-flip-card" tabindex="0" role="button" aria-label="Découvrir Julien" onclick="flipParticipant(this)" onkeydown="flipParticipantKey(event, this)">
+          <div class="cp-flip-inner">
+            <div class="cp-flip-front"><span>?</span><small>Touche pour découvrir</small></div>
+            <div class="cp-flip-back"><strong>Julien</strong><p>Pire barman de la saison, mais sah sans lui on aurait tous fini par poser un arret maladie. Attachiant, epuisant, indispensable.</p></div>
           </div>
         </div>
 
@@ -3192,73 +3439,121 @@
       <div class="cp-section-label">✦ Les récompenses ✦</div>
       <div class="cp-prizes-grid">
 
-        <div class="cp-prize cp-mallmann">
+        <div class="cp-prize cp-mallmann" data-prize-id="mallmann">
           <div class="cp-prize-icon">🔥</div>
           <div class="cp-prize-body">
-            <div class="cp-prize-tag">Dîner pour 2</div>
+            <div class="cp-prize-tag-row"><div class="cp-prize-tag">Dîner pour 2</div><div class="cp-trending-flame">🔥 Ça chauffe</div></div>
             <h3>Mallmann</h3>
             <p>Restaurant argentin de caractère. Une table pour deux, une expérience feu et braise à partager.</p>
             <div class="cp-prize-cond">Alcool à la charge des invités.</div>
+            <div class="cp-prize-actions"><button class="cp-like-btn" type="button" onclick="likeCashPrize('mallmann')"><span class="heart">♥</span><span>J’aime fort</span></button><div class="cp-like-count" id="cp-like-count-mallmann">0 likes</div></div>
           </div>
         </div>
 
-        <div class="cp-prize cp-italien">
+        <div class="cp-prize cp-italien" data-prize-id="italien">
           <div class="cp-prize-icon">🍝</div>
           <div class="cp-prize-body">
-            <div class="cp-prize-tag">Dîner pour 2</div>
+            <div class="cp-prize-tag-row"><div class="cp-prize-tag">Dîner pour 2</div><div class="cp-trending-flame">🔥 Ça chauffe</div></div>
             <h3>L’Italien</h3>
             <p>Le meilleur de la cuisine italienne, une table pour deux dans une ambiance chaleureuse.</p>
             <div class="cp-prize-cond">Alcool à la charge des invités.</div>
+            <div class="cp-prize-actions"><button class="cp-like-btn" type="button" onclick="likeCashPrize('italien')"><span class="heart">♥</span><span>J’aime fort</span></button><div class="cp-like-count" id="cp-like-count-italien">0 likes</div></div>
           </div>
         </div>
 
-        <div class="cp-prize cp-tanao">
+        <div class="cp-prize cp-tanao" data-prize-id="tadao">
           <div class="cp-prize-icon">🌊</div>
           <div class="cp-prize-body">
-            <div class="cp-prize-tag">Dîner pour 2</div>
+            <div class="cp-prize-tag-row"><div class="cp-prize-tag">Dîner pour 2</div><div class="cp-trending-flame">🔥 Ça chauffe</div></div>
             <h3>Tadao</h3>
             <p>Cuisine méditerranéenne raffinée. Une escapade pour deux autour des saveurs du bassin.</p>
             <div class="cp-prize-cond">Alcool à la charge des invités.</div>
+            <div class="cp-prize-actions"><button class="cp-like-btn" type="button" onclick="likeCashPrize('tadao')"><span class="heart">♥</span><span>J’aime fort</span></button><div class="cp-like-count" id="cp-like-count-tadao">0 likes</div></div>
           </div>
         </div>
 
-        <div class="cp-prize cp-terrasse-prize">
+        <div class="cp-prize cp-terrasse-prize" data-prize-id="terrasse">
           <div class="cp-prize-icon">☀️</div>
           <div class="cp-prize-body">
-            <div class="cp-prize-tag">Dîner pour 4</div>
+            <div class="cp-prize-tag-row"><div class="cp-prize-tag">Dîner pour 4</div><div class="cp-trending-flame">🔥 Ça chauffe</div></div>
             <h3>La Terrasse</h3>
             <p>Une table pour quatre chez nous. Le grand format, pour partager la maison avec qui tu veux.</p>
             <div class="cp-prize-cond">Alcool à la charge des invités.</div>
+            <div class="cp-prize-actions"><button class="cp-like-btn" type="button" onclick="likeCashPrize('terrasse')"><span class="heart">♥</span><span>J’aime fort</span></button><div class="cp-like-count" id="cp-like-count-terrasse">0 likes</div></div>
           </div>
         </div>
 
-        <div class="cp-prize cp-cash-40">
+        <div class="cp-prize cp-cash-40" data-prize-id="cash40">
           <div class="cp-prize-icon"><span class="cp-cash-amount">40 €</span></div>
           <div class="cp-prize-body">
-            <div class="cp-prize-tag">Cash Prize</div>
+            <div class="cp-prize-tag-row"><div class="cp-prize-tag">Cash Prize</div><div class="cp-trending-flame">🔥 Ça chauffe</div></div>
             <h3>Prime de 40 euros</h3>
             <p>Un geste concret pour remercier une implication remarquée et les efforts fournis au service.</p>
+            <div class="cp-prize-actions"><button class="cp-like-btn" type="button" onclick="likeCashPrize('cash40')"><span class="heart">♥</span><span>J’aime fort</span></button><div class="cp-like-count" id="cp-like-count-cash40">0 likes</div></div>
           </div>
         </div>
 
-        <div class="cp-prize cp-cash-60">
+        <div class="cp-prize cp-cash-60" data-prize-id="cash60">
           <div class="cp-prize-icon"><span class="cp-cash-amount">60 €</span></div>
           <div class="cp-prize-body">
-            <div class="cp-prize-tag">Cash Prize</div>
+            <div class="cp-prize-tag-row"><div class="cp-prize-tag">Cash Prize</div><div class="cp-trending-flame">🔥 Ça chauffe</div></div>
             <h3>Prime de 60 euros</h3>
             <p>Une attention particulière pour saluer la constance, la patience et l’esprit d’équipe.</p>
+            <div class="cp-prize-actions"><button class="cp-like-btn" type="button" onclick="likeCashPrize('cash60')"><span class="heart">♥</span><span>J’aime fort</span></button><div class="cp-like-count" id="cp-like-count-cash60">0 likes</div></div>
           </div>
         </div>
 
-        <div class="cp-prize cp-cash-80">
+        <div class="cp-prize cp-cash-80" data-prize-id="cash80">
           <div class="cp-prize-icon"><span class="cp-cash-amount">80 €</span></div>
           <div class="cp-prize-body">
-            <div class="cp-prize-tag">Cash Prize</div>
+            <div class="cp-prize-tag-row"><div class="cp-prize-tag">Cash Prize</div><div class="cp-trending-flame">🔥 Ça chauffe</div></div>
             <h3>Prime de 80 euros</h3>
             <p>Une récompense forte pour remercier un engagement précieux et un travail qui fait la différence.</p>
+            <div class="cp-prize-actions"><button class="cp-like-btn" type="button" onclick="likeCashPrize('cash80')"><span class="heart">♥</span><span>J’aime fort</span></button><div class="cp-like-count" id="cp-like-count-cash80">0 likes</div></div>
           </div>
         </div>
 
+        <div class="cp-prize cp-creme" data-prize-id="creme">
+          <div class="cp-prize-icon">🍮</div>
+          <div class="cp-prize-body">
+            <div class="cp-prize-tag-row"><div class="cp-prize-tag">Bonus maison</div><div class="cp-trending-flame">🔥 Ça chauffe</div></div>
+            <h3>Crème brûlée offerte</h3>
+            <p>Le petit cash prize gourmand qui fait toujours son effet, simple, chic et très Terrasse.</p>
+            <div class="cp-prize-actions"><button class="cp-like-btn" type="button" onclick="likeCashPrize('creme')"><span class="heart">♥</span><span>J’aime fort</span></button><div class="cp-like-count" id="cp-like-count-creme">0 likes</div></div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="cp-index-line"><span>03</span><span>Tendance de l’équipe</span></div>
+      <div class="cp-like-lab" id="cp-like-lab">
+        <div class="cp-like-head">
+          <div class="cp-prize-tag">Les coups de coeur de l’équipe</div>
+          <h3>Ce que l’équipe aime le plus en ce moment</h3>
+          <p>Chacun peut liker les cash prizes qu’il trouve les plus cools. La tendance se forme naturellement, et les récompenses qui chauffent prennent une flamme directement dans la page.</p>
+        </div>
+
+        <div class="cp-like-layout">
+          <div class="cp-like-panel">
+            <h4>Tendance générale du moment</h4>
+            <div class="cp-like-summary">
+              <div class="cp-like-summary-card">
+                <div class="cp-like-summary-top"><strong id="cp-like-top-name">Mallmann pour 2</strong><span id="cp-like-top-share">0%</span></div>
+                <div class="cp-like-bar"><span id="cp-like-top-bar" style="width:0%"></span></div>
+              </div>
+              <div class="cp-like-summary-card">
+                <div class="cp-like-hero-number" id="cp-like-total">0</div>
+                <div class="cp-like-hero-label">Likes cumulés</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="cp-like-panel">
+            <h4>Les propositions qui montent</h4>
+            <div class="cp-like-trend-list" id="cp-like-trend-list"></div>
+            <div class="cp-like-note" id="cp-like-note">Tape des likes sur les récompenses juste au-dessus pour voir la tendance se former. Les cash prizes les plus aimés récupèrent une flamme.</div>
+          </div>
+        </div>
       </div>
 
       <div class="cp-footnote">Ce programme est une attention exceptionnelle&nbsp;: il n’est ni un dû, ni un avantage acquis — la rémunération de chacun reconnaît déjà le travail accompli.<br>Il a simplement été imaginé pour saluer la réalité exigeante de La Terrasse et offrir, à la hauteur de cet engagement, un vrai moment de plaisir à l’équipe.</div>
@@ -3332,6 +3627,9 @@
         viewYear: 0,
         viewMonth: 0
       },
+      cashLikes: {
+        values: {}
+      },
       colors: {},
       months: ["janvier", "fevrier", "mars", "avril", "mai", "juin", "juillet", "aout", "septembre", "octobre", "novembre", "decembre"],
       monthsLabel: ["Janvier", "Fevrier", "Mars", "Avril", "Mai", "Juin", "Juillet", "Aout", "Septembre", "Octobre", "Novembre", "Decembre"],
@@ -3345,7 +3643,30 @@
       adminToken: "aquaponey.admin.token",
       localRequests: "aquaponey.local.requests",
       samiTasks: "aquaponey.sami.tasks",
-      samiUnlocked: "aquaponey.sami.unlocked"
+      samiUnlocked: "aquaponey.sami.unlocked",
+      cashPrizeLikes: "aquaponey.cashprize.likes"
+    };
+
+    const CASH_PRIZE_OPTIONS = [
+      { id: "mallmann", label: "Mallmann pour 2", hint: "Le cash prize braise et feu de bois, très gros lot énergie." },
+      { id: "italien", label: "L’Italien pour 2", hint: "La valeur sûre romantique, chic et ultra partageable." },
+      { id: "tadao", label: "Tadao pour 2", hint: "Le lot plus raffiné, plus belle soirée, plus wow." },
+      { id: "terrasse", label: "La Terrasse pour 4", hint: "Le gros format maison, parfait pour ramener sa team." },
+      { id: "cash40", label: "Prime de 40 euros", hint: "Le petit boost concret qui fait plaisir." },
+      { id: "cash60", label: "Prime de 60 euros", hint: "Le milieu de tableau très respectable." },
+      { id: "cash80", label: "Prime de 80 euros", hint: "Le cash prize qui commence à devenir très sérieux." },
+      { id: "creme", label: "Crème brûlée offerte", hint: "Le bonus maison, simple, drôle, et impossible à détester." }
+    ];
+
+    const CASH_PRIZE_BASE_LIKES = {
+      mallmann: 28,
+      italien: 24,
+      tadao: 21,
+      terrasse: 31,
+      cash40: 14,
+      cash60: 18,
+      cash80: 16,
+      creme: 26
     };
 
     document.addEventListener("DOMContentLoaded", init);
@@ -3368,6 +3689,8 @@
       updateLocalModeBanner();
       loadSamiState();
       renderSamiPage();
+      loadCashLikeState();
+      renderCashLikeLab();
       playPortalWipe("landing");
 
       restoreSession();
@@ -3505,7 +3828,8 @@
       requestAnimationFrame(() => requestAnimationFrame(() => cashPage.classList.add("cp-motion-ready")));
       startCashOrb();
 
-      const revealItems = cashPage.querySelectorAll(".cp-flip-card, .cp-prize");
+      renderCashLikeLab();
+      const revealItems = cashPage.querySelectorAll(".cp-flip-card, .cp-prize, .cp-like-lab");
       revealItems.forEach((item, index) => item.style.transitionDelay = ((index % 4) * 80) + "ms");
       if (!("IntersectionObserver" in window)) {
         revealItems.forEach(item => item.classList.add("cp-visible"));
@@ -4725,6 +5049,113 @@
       saveSamiTasks();
       renderSamiPage();
       toast(status === "resolved" ? "Demande marquée comme réglée." : status === "answered" ? "Demande marquée comme répondue." : "Demande remise en attente.");
+    }
+
+    function loadCashLikeState() {
+      APP.cashLikes.values = {};
+      localStorage.removeItem(STORAGE_KEYS.cashPrizeLikes);
+    }
+
+    function saveCashLikeState() {
+      localStorage.setItem(STORAGE_KEYS.cashPrizeLikes, JSON.stringify(APP.cashLikes.values));
+    }
+
+    function likeCashPrize(prizeId) {
+      APP.cashLikes.values[prizeId] = (APP.cashLikes.values[prizeId] || 0) + 1;
+      saveCashLikeState();
+      renderCashLikeLab();
+      toast("Like ajouté sur " + (cashPrizeOptionById(prizeId)?.label || "ce cash prize") + ".");
+    }
+
+    function renderCashLikeLab() {
+      const trendList = document.getElementById("cp-like-trend-list");
+      const topName = document.getElementById("cp-like-top-name");
+      const topShare = document.getElementById("cp-like-top-share");
+      const topBar = document.getElementById("cp-like-top-bar");
+      const totalNode = document.getElementById("cp-like-total");
+      const noteNode = document.getElementById("cp-like-note");
+      if (!trendList || !topName || !topShare || !topBar || !totalNode || !noteNode) return;
+
+      const ranking = computeCashLikeRanking();
+      const totalLikes = ranking.reduce((sum, item) => sum + item.totalLikes, 0);
+      const leader = ranking[0];
+
+      document.querySelectorAll(".cp-prize[data-prize-id]").forEach((card) => {
+        const prizeId = card.getAttribute("data-prize-id");
+        const entry = ranking.find((item) => item.id === prizeId);
+        const countNode = document.getElementById("cp-like-count-" + prizeId);
+        const localLikes = APP.cashLikes.values[prizeId] || 0;
+        const flameNode = card.querySelector(".cp-trending-flame");
+        if (countNode) {
+          countNode.textContent = localLikes + " likes";
+        }
+        card.classList.remove("is-trending", "flame-1", "flame-2", "flame-3");
+        if (leader && leader.id === prizeId && leader.totalLikes > 0) {
+          card.classList.add("is-trending");
+        }
+        const flameLevel = cashLikeFlameLevel(localLikes);
+        if (flameLevel > 0) {
+          card.classList.add("flame-" + flameLevel);
+        }
+        if (flameNode) {
+          flameNode.innerHTML = cashLikeFlameLabel(localLikes);
+        }
+      });
+
+      topName.textContent = leader ? leader.label : "Aucune tendance";
+      topShare.textContent = leader ? leader.share + "%" : "0%";
+      topBar.style.width = leader ? leader.share + "%" : "0%";
+      totalNode.textContent = totalLikes;
+
+      trendList.innerHTML = "";
+      ranking.slice(0, 5).forEach((entry, index) => {
+        const row = document.createElement("div");
+        row.className = "cp-like-trend-card";
+        row.innerHTML = [
+          '<div class="cp-like-trend-top"><strong>' + escapeHtml((index + 1) + ". " + entry.label) + '</strong><span>' + entry.share + '%</span></div>',
+          '<div class="cp-like-bar"><span style="width:' + entry.share + '%"></span></div>'
+        ].join("");
+        trendList.appendChild(row);
+      });
+
+      noteNode.textContent = leader && leader.totalLikes > 0
+        ? leader.label + " est la proposition la plus aimée du moment. Plus ça like, plus la flamme reste affichée sur la carte. Le principe est plus léger qu’un vote: on voit juste ce que l’équipe trouve le plus cool."
+        : "Clique sur les coeurs des cash prizes au-dessus pour faire monter une tendance. Ici, on ne choisit pas une personne, on montre juste ce que l’équipe aime le plus.";
+    }
+
+    function computeCashLikeRanking() {
+      const totals = CASH_PRIZE_OPTIONS.map((option) => {
+        const localLikes = APP.cashLikes.values[option.id] || 0;
+        const baseLikes = 0;
+        return {
+          id: option.id,
+          label: option.label,
+          totalLikes: baseLikes + localLikes
+        };
+      }).sort((a, b) => b.totalLikes - a.totalLikes || a.label.localeCompare(b.label, "fr"));
+      const grandTotal = totals.reduce((sum, item) => sum + item.totalLikes, 0) || 1;
+      return totals.map((item) => ({
+        ...item,
+        share: Math.round((item.totalLikes / grandTotal) * 100)
+      }));
+    }
+
+    function cashPrizeOptionById(prizeId) {
+      return CASH_PRIZE_OPTIONS.find((option) => option.id === prizeId) || null;
+    }
+
+    function cashLikeFlameLevel(likes) {
+      if (likes >= 12) return 3;
+      if (likes >= 6) return 2;
+      if (likes >= 1) return 1;
+      return 0;
+    }
+
+    function cashLikeFlameLabel(likes) {
+      if (likes >= 12) return "🔥🔥🔥 En feu";
+      if (likes >= 6) return "🔥🔥 Ça monte";
+      if (likes >= 1) return "🔥 Ça chauffe";
+      return "🔥 Ça chauffe";
     }
 
     function samiStatusLabel(status) {
