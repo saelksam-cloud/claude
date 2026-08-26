@@ -3012,8 +3012,9 @@
             </div>
             <div class="field">
               <label for="team-pin">Code à 4 chiffres</label>
-              <input id="team-pin" type="password" inputmode="numeric" maxlength="4" placeholder="••••">
+              <input id="team-pin" type="password" inputmode="numeric" maxlength="4" placeholder="•••• (optionnel pour les extras)">
             </div>
+            <p class="subtle" style="margin-top:-4px;">Extras : entre simplement ton prénom. Le code reste demandé pour l’équipe principale.</p>
             <button class="btn btn-primary btn-block" id="team-login-btn" onclick="loginEmployee()">Connexion</button>
           </div>
         </div>
@@ -3386,7 +3387,7 @@
         <div class="cp-flip-card" tabindex="0" role="button" aria-label="Découvrir Maya" onclick="flipParticipant(this)" onkeydown="flipParticipantKey(event, this)">
           <div class="cp-flip-inner">
             <div class="cp-flip-front"><span>?</span><small>Touche pour découvrir</small></div>
-            <div class="cp-flip-back"><strong>Maya</strong><p>Pour le rythme, la salle tenue proprement et le SENS DU TIMING&nbsp;!!!</p></div>
+            <div class="cp-flip-back"><strong>Maya</strong><p>Vì nhịp độ ổn định, cách giữ phòng luôn gọn gàng và cảm giác timing quá đỉnh ❤</p></div>
           </div>
         </div>
 
@@ -3596,6 +3597,8 @@
       "Julien": "8742",
       "Fabien": "2468"
     };
+
+    const EXTRA_EMPLOYEES = ["Calypso", "Clara", "Arthur", "Maxime", "Erin"];
 
     const LOCAL_ADMIN_PASSWORD = "244342";
     const SAMI_FUN_RESPONSES = [
@@ -3948,8 +3951,8 @@
       const firstName = document.getElementById("team-name").value.trim();
       const pin = document.getElementById("team-pin").value.trim();
 
-      if (!firstName || !pin) {
-        toast("Entrez votre prenom et votre code a 4 chiffres.");
+      if (!firstName || (!pin && !isExtraEmployee(firstName))) {
+        toast(isExtraEmployee(firstName) ? "Entrez votre prenom." : "Entrez votre prenom et votre code a 4 chiffres.");
         return;
       }
 
@@ -4055,6 +4058,21 @@
     }
 
     function renderLifeBoard() {
+      if (isExtraEmployee(APP.employee.name)) {
+        const board = document.getElementById("life-board");
+        board.className = "life-board";
+        document.getElementById("life-label").textContent = "Illimité";
+        const icons = document.getElementById("life-icons");
+        icons.innerHTML = "";
+        for (let i = 0; i < 3; i += 1) {
+          const icon = document.createElement("span");
+          icon.textContent = "∞";
+          icons.appendChild(icon);
+        }
+        document.getElementById("life-copy").textContent = "Mode extra : demandes sans limite de vies sur le mois.";
+        return;
+      }
+
       const year = APP.employee.viewYear;
       const month = APP.employee.viewMonth + 1;
       const used = countRequestsInMonth(APP.employee.requests, APP.employee.name, year, month);
@@ -4475,6 +4493,10 @@
         return { ok: false, message: "La demande doit etre faite au minimum 10 jours a l'avance." };
       }
 
+       if (isExtraEmployee(employeeName)) {
+        return { ok: true };
+      }
+
       const used = countRequestsInMonth(requests, employeeName, date.getFullYear(), date.getMonth() + 1);
       if (used >= 3) {
         return { ok: false, message: "Quota atteint : 3 demandes maximum sur ce mois." };
@@ -4533,29 +4555,66 @@
     }
 
     async function api(action, payload) {
-      if (!isBackendConfigured()) {
+      if (!isBackendConfigured() || shouldUseLocalMode(action, payload)) {
         return localApi(action, payload);
       }
 
-       if (CONFIG.backendMode === "legacy") {
-        return legacyApi(action, payload);
+      if (CONFIG.backendMode === "legacy") {
+        try {
+          return await legacyApi(action, payload);
+        } catch (error) {
+          if (shouldFallbackToLocal(error, action, payload)) {
+            return localApi(action, payload);
+          }
+          throw error;
+        }
       }
 
-      const response = await fetch(CONFIG.scriptUrl, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({ action, payload })
-      });
+      try {
+        const response = await fetch(CONFIG.scriptUrl, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action, payload })
+        });
 
-      const data = await response.json();
-      if (!data.ok) {
-        throw new Error(data.error || "Erreur API.");
+        const data = await response.json();
+        if (!data.ok) {
+          throw new Error(data.error || "Erreur API.");
+        }
+        return data;
+      } catch (error) {
+        if (shouldFallbackToLocal(error, action, payload)) {
+          return localApi(action, payload);
+        }
+        throw error;
       }
-      return data;
     }
 
     function isBackendConfigured() {
       return Boolean(CONFIG.scriptUrl) && !CONFIG.scriptUrl.includes("PASTE_YOUR");
+    }
+
+    function shouldUseLocalMode(action, payload) {
+      if (action === "loginEmployee") {
+        return isExtraEmployee(payload && payload.firstName);
+      }
+      if (!payload || !payload.token) {
+        return false;
+      }
+      try {
+        const employee = localRequireEmployee(payload.token);
+        return isExtraEmployee(employee);
+      } catch (error) {
+        return false;
+      }
+    }
+
+    function shouldFallbackToLocal(error, action, payload) {
+      const message = String(error && error.message || "");
+      if (message.includes("Failed to fetch") || message.includes("NetworkError") || message.includes("Load failed")) {
+        return true;
+      }
+      return shouldUseLocalMode(action, payload);
     }
 
     function updateLocalModeBanner() {
@@ -4642,7 +4701,7 @@
       const data = await response.json();
       return {
         ok: true,
-        employees: Object.keys(LOCAL_EMPLOYEES).sort((a, b) => a.localeCompare(b, "fr")),
+        employees: Object.keys(LOCAL_EMPLOYEES).concat(EXTRA_EMPLOYEES).sort((a, b) => a.localeCompare(b, "fr")),
         requests: data.rows || []
       };
     }
@@ -4729,6 +4788,13 @@
     function localLoginEmployee(payload) {
       const firstName = String(payload.firstName || "").trim();
       const pin = String(payload.pin || "").trim();
+      if (isExtraEmployee(firstName)) {
+        return {
+          ok: true,
+          token: "local-employee:" + encodeURIComponent(firstName),
+          employee: { firstName }
+        };
+      }
       if (!LOCAL_EMPLOYEES[firstName] || LOCAL_EMPLOYEES[firstName] !== pin) {
         throw new Error("Prenom ou code incorrect.");
       }
@@ -4808,7 +4874,7 @@
       localRequireAdmin(payload.token);
       return {
         ok: true,
-        employees: Object.keys(LOCAL_EMPLOYEES).sort((a, b) => a.localeCompare(b, "fr")),
+        employees: Object.keys(LOCAL_EMPLOYEES).concat(EXTRA_EMPLOYEES).sort((a, b) => a.localeCompare(b, "fr")),
         requests: loadLocalRequests()
       };
     }
@@ -4847,7 +4913,7 @@
         throw new Error("Session employee invalide.");
       }
       const employee = decodeURIComponent(raw.slice("local-employee:".length));
-      if (!LOCAL_EMPLOYEES[employee]) {
+      if (!LOCAL_EMPLOYEES[employee] && !isExtraEmployee(employee)) {
         throw new Error("Session employee invalide.");
       }
       return employee;
@@ -4870,6 +4936,10 @@
 
     function saveLocalRequests(rows) {
       localStorage.setItem(STORAGE_KEYS.localRequests, JSON.stringify(rows));
+    }
+
+    function isExtraEmployee(name) {
+      return EXTRA_EMPLOYEES.includes(String(name || "").trim());
     }
 
     function loadSamiState() {
