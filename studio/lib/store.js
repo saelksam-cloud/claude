@@ -12,17 +12,38 @@ export const now = () => new Date().toISOString();
 
 export async function loadDb() {
   const db = await dbStore().get('db', { type: 'json' });
-  if (db) return db;
-  const fresh = { clients: [], posts: [], veille: [], analyses: [] };
-  const client = createClient(fresh, seed.client);
+  if (db) return migrate(db);
+  const fresh = { clients: [], posts: [], veille: [], analyses: [], profiles: [] };
+  const client = createClient(fresh, { niche: 'BTP', ...seed.client });
   importPosts(fresh, client.id, seed.posts);
   await saveDb(fresh);
   return fresh;
 }
 
+// La veille appartenait à un client ; elle est maintenant partagée et classée par niche.
+export function guessNiche(c) {
+  const s = `${c.sector} ${c.company} ${c.name}`.toLowerCase();
+  if (/btp|chantier|construction/.test(s)) return 'BTP';
+  if (/ghostwrit|link motion/.test(s)) return 'Ghostwriting';
+  if (/consult/.test(s)) return 'Consulting';
+  return (c.sector || '').split(/[,(]/)[0].trim().slice(0, 40);
+}
+
+function migrate(db) {
+  db.profiles ||= [];
+  for (const c of db.clients) if (c.niche === undefined) c.niche = guessNiche(c);
+  const nicheOf = (clientId) => db.clients.find((c) => c.id === clientId)?.niche || '';
+  for (const v of db.veille) {
+    if (v.niche === undefined) v.niche = nicheOf(v.clientId);
+    v.source ||= 'example';
+  }
+  for (const a of db.analyses) if (a.niche === undefined) a.niche = nicheOf(a.clientId);
+  return db;
+}
+
 export const saveDb = (db) => dbStore().setJSON('db', db);
 
-export const CLIENT_FIELDS = ['name', 'company', 'sector', 'offer', 'audience', 'tone', 'themes', 'dos', 'donts'];
+export const CLIENT_FIELDS = ['name', 'company', 'niche', 'sector', 'offer', 'audience', 'tone', 'themes', 'dos', 'donts'];
 export function pickClientFields(data = {}) {
   const out = {};
   for (const k of CLIENT_FIELDS) if (typeof data[k] === 'string') out[k] = data[k];
@@ -98,6 +119,8 @@ export async function loadSettings() {
     linkedinClientSecret: s.linkedinClientSecret || process.env.LINKEDIN_CLIENT_SECRET || '',
     openaiKey: s.openaiKey || process.env.OPENAI_API_KEY || '',
     openaiModel: s.openaiModel || '',
+    apifyToken: s.apifyToken || process.env.APIFY_TOKEN || '',
+    apifyActor: s.apifyActor || '',
     modules: s.modules || [],
   };
 }
@@ -110,5 +133,7 @@ export const publicSettings = (s) => ({
   hasOpenaiKey: Boolean(s.openaiKey),
   openaiKeyHint: s.openaiKey ? `…${s.openaiKey.slice(-4)}` : '',
   openaiModel: s.openaiModel,
+  hasApifyToken: Boolean(s.apifyToken),
+  apifyActor: s.apifyActor,
   modules: s.modules,
 });

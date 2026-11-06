@@ -5,7 +5,8 @@ import {
   pickClientFields, pickPostFields, loadSettings, saveSettings, publicSettings,
 } from './store.js';
 import * as linkedin from './linkedin.js';
-import { writePost } from './ai.js';
+import { writePost, analyzeNiche, testKey } from './ai.js';
+import * as apify from './apify.js';
 
 const liCfg = (settings) => ({ clientId: settings.linkedinClientId, clientSecret: settings.linkedinClientSecret });
 
@@ -92,6 +93,11 @@ export async function publishDuePosts() {
     await publishPost(db, post, settings);
     changed = true;
   }
+  // Récupère aussi les analyses de profils terminées.
+  for (const profile of db.profiles.filter((x) => x.status === 'running')) {
+    await refreshProfile(db, settings, profile);
+    changed = true;
+  }
   if (changed) await saveDb(db);
   return due.length;
 }
@@ -106,6 +112,7 @@ route('GET', '/api/state', async ({ db, settings }) => json({
   clients: db.clients.map(publicClient),
   posts: db.posts,
   veille: db.veille,
+  profiles: db.profiles,
   analyses: db.analyses,
   linkedinConfigured: linkedin.isConfigured(liCfg(settings)),
   redirectUri: linkedin.redirectUri(),
@@ -220,10 +227,9 @@ route('POST', '/api/posts/:id/publish-now', async ({ db, post, settings }) => {
 });
 
 route('POST', '/api/veille', async ({ db, body }) => {
-  const { clientId, author = '', url = '', text = '', likes = '', comments = '', notes = '' } = body;
-  if (!db.clients.some((c) => c.id === clientId)) throw new HttpError(404, 'Client introuvable');
+  const { niche = '', author = '', url = '', text = '', likes = '', comments = '', notes = '' } = body;
   if (!String(text).trim()) throw new HttpError(400, 'Colle au moins le texte du post.');
-  const item = { id: newId('vei'), clientId, author, url, text, likes, comments, notes, createdAt: now() };
+  const item = { id: newId('vei'), source: 'example', niche: niche.trim(), author, url, text, likes, comments, notes, createdAt: now() };
   db.veille.unshift(item);
   return json(item);
 });
@@ -234,12 +240,83 @@ route('DELETE', '/api/veille/:id', async ({ db, params }) => {
 });
 
 route('POST', '/api/analyses', async ({ db, body }) => {
-  const { clientId, content = '' } = body;
-  if (!db.clients.some((c) => c.id === clientId)) throw new HttpError(404, 'Client introuvable');
+  const { niche = '', content = '' } = body;
   if (!content.trim()) throw new HttpError(400, 'Analyse vide');
-  const item = { id: newId('ana'), clientId, content, createdAt: now() };
+  const item = { id: newId('ana'), niche: niche.trim(), content, createdAt: now() };
   db.analyses.unshift(item);
   return json(item);
+});
+
+// L'IA analyse ce qui marche dans une niche (ou toute la veille).
+route('POST', '/api/analyze', async ({ db, settings, body }) => {
+  const niche = String(body.niche || '').trim();
+  const items = niche ? db.veille.filter((v) => (v.niche || '').toLowerCase() === niche.toLowerCase()) : db.veille;
+  if (items.length < 3) throw new HttpError(400, 'Il faut au moins 3 posts dans la veille de cette niche pour lancer une analyse.');
+  const content = await analyzeNiche(settings, niche, items);
+  const item = { id: newId('ana'), niche, content, auto: true, createdAt: now() };
+  db.analyses.unshift(item);
+  return json(item);
+});
+
+// ---------- Profils LinkedIn analysés (via Apify) ----------
+const LI_PROFILE = /^https:\/\/([a-z]{2,3}\.)?linkedin\.com\/(in|company)\/[^/?#]+/i;
+
+async function refreshProfile(db, settings, profile) {
+  if (profile.status !== 'running') return;
+  try {
+    const run = await apify.getRun(settings.apifyToken, profile.runId);
+    if (['READY', 'RUNNING'].includes(run.status)) return;
+    if (run.status !== 'SUCCEEDED') throw new Error(`l'analyse a échoué (${run.status})`);
+    const posts = await apify.getPosts(settings.apifyToken, run.datasetId || profile.datasetId);
+    const known = new Set(db.veille.filter((v) => v.url).map((v) => v.url));
+    const fresh = posts.filter((p) => !p.url || !known.has(p.url));
+    db.veille.unshift(...fresh.map((p) => ({
+      id: newId('vei'), source: 'profile', profileId: profile.id, niche: profile.niche,
+      author: p.author || profile.name, url: p.url, text: p.text, likes: String(p.likes || ''), comments: String(p.comments || ''),
+      notes: p.hasImage ? 'Post avec image' : '', postedAt: p.postedAt, createdAt: now(),
+    })));
+    if (!profile.name) profile.name = posts.find((p) => p.author)?.author || '';
+    profile.status = 'done';
+    profile.postCount = db.veille.filter((v) => v.profileId === profile.id).length;
+    profile.error = posts.length ? '' : "Aucun post trouvé : vérifie que le lien est un profil public avec des posts récents.";
+  } catch (e) {
+    profile.status = 'error';
+    profile.error = e.message;
+  }
+  profile.updatedAt = now();
+}
+
+async function startProfile(settings, profile) {
+  if (!settings.apifyToken) throw new HttpError(400, "Ajoute ta clé Apify dans l'onglet Réglages pour analyser des profils.");
+  const run = await apify.startProfileRun(settings.apifyToken, settings.apifyActor, profile.url, 50);
+  Object.assign(profile, { status: 'running', runId: run.runId, datasetId: run.datasetId, error: '', updatedAt: now() });
+}
+
+route('POST', '/api/profiles', async ({ db, settings, body }) => {
+  const url = String(body.url || '').trim().split('?')[0];
+  if (!LI_PROFILE.test(url)) throw new HttpError(400, 'Colle le lien d\'un profil LinkedIn (https://www.linkedin.com/in/…).');
+  if (db.profiles.some((p) => p.url.toLowerCase() === url.toLowerCase())) throw new HttpError(400, 'Ce profil est déjà suivi : clique « Relancer ».');
+  const profile = { id: newId('pro'), url, niche: String(body.niche || '').trim(), name: '', status: 'new', createdAt: now() };
+  await startProfile(settings, profile);
+  db.profiles.unshift(profile);
+  return json(profile);
+});
+
+route('POST', '/api/profiles/refresh', async ({ db, settings }) => {
+  for (const p of db.profiles.filter((x) => x.status === 'running')) await refreshProfile(db, settings, p);
+  return json({ ok: true });
+});
+
+route('POST', '/api/profiles/:id/rerun', async ({ db, settings, params }) => {
+  const profile = db.profiles.find((p) => p.id === params.id);
+  if (!profile) throw new HttpError(404, 'Profil introuvable');
+  await startProfile(settings, profile);
+  return json(profile);
+});
+
+route('DELETE', '/api/profiles/:id', async ({ db, params }) => {
+  db.profiles = db.profiles.filter((p) => p.id !== params.id);
+  return json({ ok: true });
 });
 
 route('DELETE', '/api/analyses/:id', async ({ db, params }) => {
@@ -255,6 +332,8 @@ route('PUT', '/api/settings', async ({ settings, body }) => {
   if (body.linkedinClientSecret?.trim()) next.linkedinClientSecret = body.linkedinClientSecret.trim();
   if (body.openaiKey?.trim()) next.openaiKey = body.openaiKey.trim();
   if (body.clearOpenaiKey) next.openaiKey = '';
+  if (body.apifyToken?.trim()) next.apifyToken = body.apifyToken.trim();
+  if (typeof body.apifyActor === 'string') next.apifyActor = body.apifyActor.trim().replace('/', '~');
   if (typeof body.openaiModel === 'string') next.openaiModel = /^[\w.:-]*$/.test(body.openaiModel.trim()) ? body.openaiModel.trim() : '';
   if (Array.isArray(body.modules)) {
     next.modules = body.modules
@@ -274,18 +353,47 @@ route('PUT', '/api/settings', async ({ settings, body }) => {
 // ---------- Rédaction par IA ----------
 const findModule = (settings, id) => settings.modules.find((m) => m.id === id) || null;
 
+route('POST', '/api/settings/test-openai', async ({ settings }) => {
+  const model = await testKey(settings);
+  return json({ ok: true, model });
+});
+
+// Prochain jour ouvré libre à 8 h 30 (heure de Paris) après le dernier post programmé du client.
+function parisISO(y, m, d, hh, mm) {
+  const lastSunday = (month) => { const t = new Date(Date.UTC(y, month + 1, 0)); return t.getUTCDate() - t.getUTCDay(); };
+  const summer = (m > 2 && m < 9) || (m === 2 && d >= lastSunday(2)) || (m === 9 && d < lastSunday(9));
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${y}-${pad(m + 1)}-${pad(d)}T${pad(hh)}:${pad(mm)}:00${summer ? '+02:00' : '+01:00'}`;
+}
+function nextFreeSlot(db, clientId) {
+  const taken = new Set(db.posts.filter((p) => p.clientId === clientId && p.scheduledAt && p.status !== 'rejected')
+    .map((p) => new Date(p.scheduledAt).toLocaleDateString('fr-CA', { timeZone: 'Europe/Paris' })));
+  const day = new Date(Date.now() + 24 * 3600_000);
+  for (let i = 0; i < 400; i++, day.setUTCDate(day.getUTCDate() + 1)) {
+    const key = day.toLocaleDateString('fr-CA', { timeZone: 'Europe/Paris' });
+    const wd = new Date(`${key}T12:00:00Z`).getUTCDay();
+    if (wd === 0 || wd === 6 || taken.has(key)) continue;
+    const [y, m, d] = key.split('-').map(Number);
+    return parisISO(y, m - 1, d, 8, 30);
+  }
+  return null;
+}
+
+const latestAnalysis = (db, niche) => db.analyses.find((a) => niche && (a.niche || '').toLowerCase() === niche.toLowerCase())?.content;
+
 route('POST', '/api/generate', async ({ db, settings, body }) => {
   const client = db.clients.find((c) => c.id === body.clientId);
   if (!client) throw new HttpError(404, 'Client introuvable');
-  if (!String(body.subject || '').trim()) throw new HttpError(400, 'Donne un sujet au post.');
   const module = findModule(settings, body.moduleId);
-  const text = await writePost(settings, {
-    client, module, subject: body.subject, format: body.format,
-    veille: db.veille.filter((v) => v.clientId === client.id),
+  const inspiration = body.inspirationId ? db.veille.find((v) => v.id === body.inspirationId) : null;
+  const { text, theme } = await writePost(settings, {
+    client, module, subject: body.subject, format: body.format, inspiration,
+    veille: db.veille, analysis: latestAnalysis(db, client.niche),
+    avoidThemes: db.posts.filter((p) => p.clientId === client.id).map((p) => p.theme).filter(Boolean),
   });
-  const scheduledAt = body.scheduledAt && !Number.isNaN(Date.parse(body.scheduledAt)) ? body.scheduledAt : null;
-  const [post] = importPosts(db, client.id, [{ text, theme: body.subject.slice(0, 60), format: body.format || 'Texte', scheduledAt }]);
-  post.history = [{ at: now(), action: `Rédigé par l'IA${module ? ` (module « ${module.name} »)` : ''}` }];
+  const scheduledAt = body.scheduledAt && !Number.isNaN(Date.parse(body.scheduledAt)) ? body.scheduledAt : nextFreeSlot(db, client.id);
+  const [post] = importPosts(db, client.id, [{ text, theme, format: body.format || 'Texte', scheduledAt }]);
+  post.history = [{ at: now(), action: `Rédigé par l'IA${module ? ` (module « ${module.name} »)` : ''}${inspiration ? ' à partir d\'un post de la veille' : ''}` }];
   return json(post);
 });
 
@@ -293,7 +401,8 @@ route('POST', '/api/posts/:id/rewrite', async ({ db, settings, post, body }) => 
   if (post.status === 'published') throw new HttpError(400, 'Post déjà publié');
   const client = db.clients.find((c) => c.id === post.clientId);
   const module = findModule(settings, body.moduleId);
-  post.text = await writePost(settings, { client, module, previous: post.text, feedback: body.feedback || post.feedback });
+  const out = await writePost(settings, { client, module, previous: post.text, feedback: body.feedback || post.feedback, veille: db.veille, analysis: latestAnalysis(db, client.niche) });
+  post.text = out.text;
   post.status = 'review';
   post.feedback = '';
   log(post, `Réécrit par l'IA${module ? ` (module « ${module.name} »)` : ''}`);
