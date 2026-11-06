@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Link Motion Studio</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Syne:wght@700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
@@ -18,18 +18,17 @@
   </header>
 
   <nav class="tabs" id="tabs">
-    <button data-view="clients">Clients</button>
-    <button data-view="posts">Validation</button>
-    <button data-view="calendar">Calendrier</button>
+    <button data-view="create">Créer</button>
+    <button data-view="posts">Posts</button>
     <button data-view="veille">Veille</button>
-    <button data-view="client">Profil &amp; LinkedIn</button>
+    <button data-view="study">Étude de marché</button>
     <button data-view="settings">Réglages</button>
   </nav>
 
   <div id="banner"></div>
-  <div id="job"></div>
   <main id="view"></main>
   <div id="toast" class="toast" hidden></div>
+  <div id="tip" class="tip" hidden></div>
 
   <dialog id="dialog"><form method="dialog" id="dialogForm"></form></dialog>
 

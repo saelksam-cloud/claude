@@ -5,7 +5,8 @@ import {
   pickClientFields, pickPostFields, loadSettings, saveSettings, publicSettings,
 } from './store.js';
 import * as linkedin from './linkedin.js';
-import { writePost, analyzeNiche, testKey } from './ai.js';
+import { writePost, analyzeNiche, testKey, hookPass, extractPosts, studyFeedback } from './ai.js';
+import { engagement, statsText } from './stats.js';
 import * as apify from './apify.js';
 
 const liCfg = (settings) => ({ clientId: settings.linkedinClientId, clientSecret: settings.linkedinClientSecret });
@@ -143,7 +144,9 @@ route('POST', '/api/clients/:id/move-linkedin', async ({ db, client, body }) => 
 route('POST', '/api/clients/:id/import', async ({ db, client, body }) => {
   const posts = Array.isArray(body) ? body : body?.posts;
   if (!Array.isArray(posts)) throw new HttpError(400, 'JSON attendu : { "posts": [ { "text": "...", "scheduledAt": "..." } ] }');
-  return json({ imported: importPosts(db, client.id, posts).length });
+  const created = importPosts(db, client.id, posts);
+  for (const p of created) if (!p.scheduledAt) p.scheduledAt = nextFreeSlot(db, client.id);
+  return json({ imported: created.length, ids: created.map((p) => p.id) });
 });
 
 route('POST', '/api/posts', async ({ db, body }) => {
@@ -341,6 +344,7 @@ route('PUT', '/api/settings', async ({ settings, body }) => {
       .map((m) => ({
         id: m.id || newId('mod'),
         name: String(m.name).trim(),
+        role: ['content', 'hooker'].includes(m.role) ? m.role : '',
         url: /^https:\/\/chatgpt\.com\//.test(String(m.url || '').trim()) ? String(m.url).trim() : '',
         instructions: String(m.instructions || '').slice(0, MAX_MODULE_CHARS),
         knowledge: String(m.knowledge || '').slice(0, MAX_MODULE_CHARS),
@@ -352,6 +356,23 @@ route('PUT', '/api/settings', async ({ settings, body }) => {
 
 // ---------- Rédaction par IA ----------
 const findModule = (settings, id) => settings.modules.find((m) => m.id === id) || null;
+// Mode content écrit, Mode hooker retravaille l'accroche.
+const moduleByRole = (settings, role) =>
+  settings.modules.find((m) => m.role === role) || settings.modules.find((m) => new RegExp(role === 'hooker' ? 'hook' : 'content', 'i').test(m.name)) || null;
+const nicheItems = (db, niche) => db.veille.filter((v) => niche && (v.niche || '').trim().toLowerCase() === niche.trim().toLowerCase());
+const topHooks = (db, niche) => nicheItems(db, niche).filter((v) => v.hook).sort((a, b) => engagement(b) - engagement(a)).slice(0, 12).map((v) => v.hook);
+
+async function writeFull(db, settings, client, opts) {
+  const content = opts.moduleId ? findModule(settings, opts.moduleId) : moduleByRole(settings, 'content');
+  const out = await writePost(settings, {
+    client, module: content, veille: db.veille, analysis: latestAnalysis(db, client.niche),
+    avoidThemes: db.posts.filter((p) => p.clientId === client.id).map((p) => p.theme).filter(Boolean), ...opts,
+  });
+  const hooker = moduleByRole(settings, 'hooker');
+  const hooks = topHooks(db, client.niche);
+  if (hooker || hooks.length) out.text = await hookPass(settings, { text: out.text, module: hooker, topHooks: hooks });
+  return { ...out, used: [content?.name, hooker?.name].filter(Boolean) };
+}
 
 route('POST', '/api/settings/test-openai', async ({ settings }) => {
   const model = await testKey(settings);
@@ -384,24 +405,70 @@ const latestAnalysis = (db, niche) => db.analyses.find((a) => niche && (a.niche 
 route('POST', '/api/generate', async ({ db, settings, body }) => {
   const client = db.clients.find((c) => c.id === body.clientId);
   if (!client) throw new HttpError(404, 'Client introuvable');
-  const module = findModule(settings, body.moduleId);
   const inspiration = body.inspirationId ? db.veille.find((v) => v.id === body.inspirationId) : null;
-  const { text, theme } = await writePost(settings, {
-    client, module, subject: body.subject, format: body.format, inspiration,
-    veille: db.veille, analysis: latestAnalysis(db, client.niche),
-    avoidThemes: db.posts.filter((p) => p.clientId === client.id).map((p) => p.theme).filter(Boolean),
+  const { text, theme, used } = await writeFull(db, settings, client, {
+    subject: body.subject, format: body.format, inspiration, instruction: body.instruction || '', moduleId: body.moduleId,
   });
   const scheduledAt = body.scheduledAt && !Number.isNaN(Date.parse(body.scheduledAt)) ? body.scheduledAt : nextFreeSlot(db, client.id);
   const [post] = importPosts(db, client.id, [{ text, theme, format: body.format || 'Texte', scheduledAt }]);
-  post.history = [{ at: now(), action: `Rédigé par l'IA${module ? ` (module « ${module.name} »)` : ''}${inspiration ? ' à partir d\'un post de la veille' : ''}` }];
+  post.history = [{ at: now(), action: `Écrit par l'IA${used.length ? ` (${used.join(' + ')})` : ''}` }];
   return json(post);
+});
+
+// Feedback sur un post : mémorisé pour les prochains posts du client, puis le post est refait.
+route('POST', '/api/posts/:id/feedback', async ({ db, settings, post, body }) => {
+  const feedback = String(body.feedback || '').trim();
+  if (!feedback) throw new HttpError(400, 'Écris ou dicte ton retour.');
+  if (post.status === 'published') throw new HttpError(400, 'Post déjà publié');
+  const client = db.clients.find((c) => c.id === post.clientId);
+  client.feedbackLog = [...(client.feedbackLog || []), { at: now(), text: feedback }].slice(-30);
+  const out = await writeFull(db, settings, client, { previous: post.text, feedback });
+  post.text = out.text;
+  post.status = 'review';
+  post.feedback = feedback;
+  post.error = '';
+  log(post, `Refait avec ton retour : « ${feedback} »`);
+  return json(post);
+});
+
+// ---------- Veille : copier-coller analysé par l'IA ----------
+route('POST', '/api/veille/paste', async ({ db, settings, body }) => {
+  const text = String(body.text || '').trim();
+  const niche = String(body.niche || '').trim();
+  if (text.length < 40) throw new HttpError(400, 'Colle au moins un post complet.');
+  const knownTopics = [...new Set(nicheItems(db, niche).map((v) => v.topic).filter(Boolean))];
+  const posts = await extractPosts(settings, { text, niche, knownTopics });
+  const key = (v) => `${(v.author || '').toLowerCase()}|${(v.hook || '').toLowerCase().slice(0, 80)}`;
+  const known = new Set(db.veille.map(key));
+  const fresh = posts.filter((p) => !known.has(key(p)));
+  const toNum = (x) => Number(String(x ?? '').replace(/[^\d]/g, '')) || 0;
+  db.veille.unshift(...fresh.map((p) => ({
+    id: newId('vei'), source: 'paste', niche, author: String(p.author || '').slice(0, 80), hook: String(p.hook || '').slice(0, 300),
+    text: String(p.excerpt || p.hook || '').slice(0, 1200), likes: toNum(p.likes), comments: toNum(p.comments), reposts: toNum(p.reposts),
+    length: toNum(p.length), topic: String(p.topic || '').slice(0, 40), hookType: String(p.hookType || '').slice(0, 30),
+    format: String(p.format || '').slice(0, 30), createdAt: now(),
+  })));
+  return json({ found: posts.length, added: fresh.length });
+});
+
+// ---------- Étude de marché : retour écrit par l'IA ----------
+route('POST', '/api/study', async ({ db, settings, body }) => {
+  const niche = String(body.niche || '').trim();
+  const items = nicheItems(db, niche);
+  if (items.length < 5) throw new HttpError(400, `Il faut au moins 5 posts dans la veille « ${niche || '—'} » (il y en a ${items.length}).`);
+  const sorted = [...items].sort((a, b) => engagement(b) - engagement(a));
+  const pick = (v) => ({ ...v, hook: v.hook || v.text.split('\n')[0] });
+  const content = await studyFeedback(settings, { niche, stats: statsText(items), top: sorted.slice(0, 10).map(pick), flop: sorted.slice(-6).map(pick) });
+  const item = { id: newId('ana'), niche, content, kind: 'study', count: items.length, createdAt: now() };
+  db.analyses.unshift(item);
+  return json(item);
 });
 
 route('POST', '/api/posts/:id/rewrite', async ({ db, settings, post, body }) => {
   if (post.status === 'published') throw new HttpError(400, 'Post déjà publié');
   const client = db.clients.find((c) => c.id === post.clientId);
   const module = findModule(settings, body.moduleId);
-  const out = await writePost(settings, { client, module, previous: post.text, feedback: body.feedback || post.feedback, veille: db.veille, analysis: latestAnalysis(db, client.niche) });
+  const out = await writeFull(db, settings, client, { previous: post.text, feedback: body.feedback || post.feedback, moduleId: module?.id });
   post.text = out.text;
   post.status = 'review';
   post.feedback = '';
