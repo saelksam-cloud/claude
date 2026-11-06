@@ -418,7 +418,7 @@ function renderStudy() {
       ${study ? `<div class="small">Basé sur ${study.count || '?'} posts · ${fmtDate(study.createdAt)}</div><div class="feedback">${esc(study.content)}</div>`
         : '<p class="small" style="margin:0">L\'IA lit les chiffres ci-dessous et te dit ce qui marche, ce qui marche moins, les hooks qui reviennent et quoi faire dans tes posts.</p>'}
     </div>
-    <p class="small" style="margin:0 0 10px">Engagement moyen par post = réactions + 2 × commentaires. <b style="color:var(--accent)">Vert foncé</b> = au-dessus de la moyenne de la niche (${nf(overall)}), vert clair = en dessous. Survole une barre pour le détail.</p>
+    <p class="small" style="margin:0 0 10px">Engagement moyen par post = réactions + 2 × commentaires. <b style="color:var(--accent)">Vert vif</b> = au-dessus de la moyenne de la niche (${nf(overall)}), vert atténué = en dessous. Survole une barre pour le détail.</p>
     <div class="charts">
       ${barChart('Par sujet', groupBy(items, (v) => v.topic), overall)}
       ${barChart('Par type de hook', groupBy(items, (v) => v.hookType), overall)}
@@ -758,6 +758,23 @@ document.addEventListener('submit', run(async (e) => {
   }
   await refresh();
 }));
+
+// ---------- Mode jour / nuit ----------
+const isDark = () => document.documentElement.dataset.theme === 'dark'
+  || (!document.documentElement.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches);
+const syncThemeIcon = () => {
+  const btn = $('#themeToggle');
+  btn.textContent = isDark() ? '☀️' : '🌙';
+  btn.title = isDark() ? 'Passer en mode jour' : 'Passer en mode nuit';
+};
+$('#themeToggle').addEventListener('click', () => {
+  const next = isDark() ? 'light' : 'dark';
+  document.documentElement.dataset.theme = next;
+  store.set('theme', next);
+  syncThemeIcon();
+});
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', syncThemeIcon);
+syncThemeIcon();
 
 // Info-bulle des graphiques
 document.addEventListener('mousemove', (e) => {

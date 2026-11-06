@@ -7,14 +7,21 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css">
+  <script>
+    // Applique le thème choisi avant l'affichage (évite un flash blanc la nuit).
+    try { const t = JSON.parse(localStorage.getItem('theme')); if (t === 'dark' || t === 'light') document.documentElement.dataset.theme = t; } catch {}
+  </script>
 </head>
 <body>
   <header class="topbar">
     <div class="brand"><span class="logo">LM</span><span>Link Motion <em>Studio</em></span></div>
-    <label class="client-select">
-      <span>Client</span>
-      <select id="clientSelect"></select>
-    </label>
+    <div class="top-right">
+      <label class="client-select">
+        <span>Client</span>
+        <select id="clientSelect"></select>
+      </label>
+      <button class="btn theme-toggle" id="themeToggle" type="button" title="Mode jour / nuit" aria-label="Mode jour / nuit">🌙</button>
+    </div>
   </header>
 
   <nav class="tabs" id="tabs">
