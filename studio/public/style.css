@@ -194,3 +194,9 @@ body.locked .topbar .client-select, body.locked .tabs, body.locked #banner { dis
 .module { border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin: 0 0 12px; display: flex; flex-direction: column; gap: 10px; }
 a.btn { text-decoration: none; color: var(--text); }
 @media (max-width: 900px) { .settings-grid { grid-template-columns: 1fr; } }
+
+/* Dictée vocale */
+.voice-wrap { display: flex; flex-direction: column; gap: 6px; }
+.voice-wrap .mic { align-self: flex-start; }
+.mic.rec { background: #3A1515; border-color: var(--danger); color: #FFB1B1; animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 50% { box-shadow: 0 0 0 6px rgba(239, 90, 90, .15); } }

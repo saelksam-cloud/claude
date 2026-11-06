@@ -518,7 +518,12 @@ function ask({ title, intro = '', fields, submit = 'OK' }) {
   const form = $('#dialogForm');
   const control = (f) => {
     if (f.options) return `<select name="${f.name}">${f.options.map((o) => `<option value="${esc(o.value)}" ${o.value === f.value ? 'selected' : ''}>${esc(o.label)}</option>`).join('')}</select>`;
-    if (f.rows) return `<textarea name="${f.name}" rows="${f.rows}" placeholder="${esc(f.placeholder || '')}">${esc(f.value || '')}</textarea>`;
+    if (f.rows) {
+      const ta = `<textarea name="${f.name}" rows="${f.rows}" placeholder="${esc(f.placeholder || '')}">${esc(f.value || '')}</textarea>`;
+      return SpeechRec && f.name !== 'json'
+        ? `<div class="voice-wrap">${ta}<button type="button" class="btn small mic" data-action="dictate">🎤 Dicter</button></div>`
+        : ta;
+    }
     return `<input name="${f.name}" type="${f.type || 'text'}" value="${esc(f.value || '')}" placeholder="${esc(f.placeholder || '')}">`;
   };
   form.innerHTML = `<h3>${title}</h3>${intro ? `<p class="sub" style="margin:0 0 12px">${intro}</p>` : ''}<div class="stack">${fields.map((f) => `<label class="f">${f.label}${control(f)}</label>`).join('')}</div>
@@ -526,9 +531,42 @@ function ask({ title, intro = '', fields, submit = 'OK' }) {
   dlg.showModal();
   return new Promise((resolve) => {
     dlg.addEventListener('close', () => {
+      stopDictation();
       resolve(dlg.returnValue === 'ok' ? Object.fromEntries(new FormData(form)) : null);
     }, { once: true });
   });
+}
+
+// ---------- Dictée vocale (Web Speech API du navigateur) ----------
+const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognition = null;
+const stopDictation = () => recognition?.stop();
+
+function startDictation(btn) {
+  const ta = btn.closest('.voice-wrap').querySelector('textarea');
+  const base = ta.value.trim() ? `${ta.value.trim()} ` : '';
+  const rec = new SpeechRec();
+  rec.lang = 'fr-FR';
+  rec.continuous = true;
+  rec.interimResults = true;
+  rec.onresult = (e) => {
+    // On reconstruit tout le texte à chaque résultat : évite les doublons sur mobile.
+    ta.value = base + [...e.results].map((res) => res[0].transcript).join(' ').replace(/\s+/g, ' ').trimStart();
+    ta.scrollTop = ta.scrollHeight;
+  };
+  rec.onerror = (e) => {
+    if (e.error === 'no-speech' || e.error === 'aborted') return;
+    toast(e.error === 'not-allowed' || e.error === 'service-not-allowed' ? "Autorise l'accès au micro pour dicter." : `Dictée interrompue (${e.error})`, true);
+  };
+  rec.onend = () => {
+    recognition = null;
+    btn.classList.remove('rec');
+    btn.textContent = '🎤 Dicter';
+  };
+  recognition = rec;
+  rec.start();
+  btn.classList.add('rec');
+  btn.textContent = '⏹ Arrêter la dictée';
 }
 
 // ---------- actions ----------
@@ -540,6 +578,10 @@ const run = (fn) => async (...args) => {
 };
 
 const actions = {
+  dictate(_id, btn) {
+    if (recognition) { stopDictation(); return; }
+    startDictation(btn);
+  },
   async 'copy-brief'() { await navigator.clipboard.writeText($('#briefText').value); toast('Brief copié : colle-le dans ton GPT'); },
   async 'move-linkedin'() {
     const others = ui.data.clients.filter((c) => c.id !== ui.clientId);
