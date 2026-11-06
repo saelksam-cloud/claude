@@ -86,3 +86,29 @@ export function publicClient(c) {
       : { connected: false },
   };
 }
+
+// ---------- Réglages (clés API, modules d'écriture) ----------
+// Stockés à part ; les secrets ne sont jamais renvoyés au navigateur.
+const settingsStore = () => getStore({ name: 'settings', consistency: 'strong' });
+
+export async function loadSettings() {
+  const s = (await settingsStore().get('settings', { type: 'json' })) || {};
+  return {
+    linkedinClientId: s.linkedinClientId || process.env.LINKEDIN_CLIENT_ID || '',
+    linkedinClientSecret: s.linkedinClientSecret || process.env.LINKEDIN_CLIENT_SECRET || '',
+    openaiKey: s.openaiKey || process.env.OPENAI_API_KEY || '',
+    openaiModel: s.openaiModel || '',
+    modules: s.modules || [],
+  };
+}
+
+export const saveSettings = (s) => settingsStore().setJSON('settings', s);
+
+export const publicSettings = (s) => ({
+  linkedinClientId: s.linkedinClientId,
+  hasLinkedinSecret: Boolean(s.linkedinClientSecret),
+  hasOpenaiKey: Boolean(s.openaiKey),
+  openaiKeyHint: s.openaiKey ? `…${s.openaiKey.slice(-4)}` : '',
+  openaiModel: s.openaiModel,
+  modules: s.modules,
+});

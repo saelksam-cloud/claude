@@ -21,7 +21,8 @@ const store = {
 const ui = {
   data: null,
   clientId: store.get('clientId', null),
-  view: store.get('view', 'posts'),
+  view: store.get('view', 'clients'),
+  search: '',
   filter: 'all',
   editing: new Set(),
   expanded: new Set(),
@@ -92,12 +93,13 @@ function render() {
   document.querySelectorAll('#tabs button').forEach((b) => b.classList.toggle('active', b.dataset.view === ui.view));
 
   const banners = [];
-  if (!ui.data.linkedinConfigured) banners.push("L'app LinkedIn n'est pas encore configurée : tu peux tout préparer et valider, mais rien ne sera publié tant que LINKEDIN_CLIENT_ID et LINKEDIN_CLIENT_SECRET ne sont pas renseignés dans Netlify (voir l'onglet Profil &amp; LinkedIn).");
-  else if (client() && !client().linkedin.connected) banners.push(`${esc(client().name)} n'a pas encore connecté son LinkedIn : envoie-lui son lien d'invitation (onglet Profil &amp; LinkedIn).`);
+  if (!ui.data.linkedinConfigured) banners.push("L'app LinkedIn n'est pas encore branchée : tu peux tout préparer et valider, mais rien ne sera publié tant qu'elle n'est pas renseignée dans l'onglet <b>Réglages</b>.");
+  else if (client() && !client().linkedin.connected && !['clients', 'settings'].includes(ui.view)) banners.push(`${esc(client().name)} n'a pas encore connecté son LinkedIn : onglet Profil &amp; LinkedIn.`);
   $('#banner').innerHTML = banners.map((b) => `<div class="banner">${b}</div>`).join('');
 
-  if (!client()) { view.innerHTML = '<p class="empty">Crée ton premier client avec le menu « Client ».</p>'; return; }
-  ({ posts: renderPosts, calendar: renderCalendar, veille: renderVeille, client: renderClient })[ui.view]();
+  const views = { clients: renderClients, posts: renderPosts, calendar: renderCalendar, veille: renderVeille, client: renderClient, settings: renderSettings };
+  if (!client() && !['clients', 'settings'].includes(ui.view)) ui.view = 'clients';
+  (views[ui.view] || renderClients)();
 }
 
 // ---------- Validation ----------
@@ -124,6 +126,7 @@ function renderPosts() {
       <div class="group">
         ${reviewable.length ? `<button class="btn ok" data-action="bulk-approve">✓ Valider les ${reviewable.length} posts « à valider »</button>` : ''}
         <button class="btn" data-action="import">Importer (JSON)</button>
+        <button class="btn" data-action="ai-write">✨ Écrire avec l'IA</button>
         <button class="btn primary" data-action="new-post">+ Nouveau post</button>
       </div>
     </div>
@@ -182,6 +185,7 @@ function renderPost(p) {
         ${p.status !== 'approved' ? `<button class="btn ok small" data-action="approve" data-id="${p.id}" ${hasPlaceholder ? 'disabled' : ''}>✓ Valider</button>` : `<button class="btn small" data-action="unapprove" data-id="${p.id}">↩ Retirer de la file</button>`}
         ${p.status !== 'rejected' ? `<button class="btn danger small" data-action="reject" data-id="${p.id}">✕ À retravailler</button>` : ''}
         ${editing ? '' : `<button class="btn small" data-action="edit" data-id="${p.id}">✎ Modifier</button>`}
+        <button class="btn small" data-action="ai-rewrite" data-id="${p.id}">✨ Réécrire avec l'IA</button>
         <label class="btn small">🖼 ${p.image ? 'Changer' : 'Ajouter'} l'image<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" data-action="upload" data-id="${p.id}" hidden></label>
         ${p.image ? `<button class="btn small ghost" data-action="remove-image" data-id="${p.id}">Retirer l'image</button>` : ''}
         ${p.status === 'approved' ? `<button class="btn primary small" data-action="publish-now" data-id="${p.id}">Publier maintenant</button>` : ''}
@@ -282,6 +286,105 @@ Ton : ${c.tone}
 ${items.map((v, i) => `--- Post ${i + 1} — ${v.author || 'auteur inconnu'} (👍 ${v.likes || '?'} · 💬 ${v.comments || '?'})${v.notes ? `\nMa note : ${v.notes}` : ''}\n${v.text}`).join('\n\n')}`;
 }
 
+// ---------- Clients ----------
+function clientStats(c) {
+  const posts = ui.data.posts.filter((p) => p.clientId === c.id);
+  const count = (s) => posts.filter((p) => p.status === s).length;
+  const next = posts.filter((p) => p.status === 'approved' && p.scheduledAt).sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt))[0];
+  return { total: posts.length, review: count('review'), approved: count('approved'), published: count('published'), next };
+}
+
+function renderClients() {
+  view.innerHTML = `
+    <div class="toolbar">
+      <div><h2>Clients</h2><p class="sub" style="margin:0">Tape un nom pour retrouver une fiche, ses posts et son calendrier.</p></div>
+      <button class="btn primary" data-action="new-client">+ Nouveau client</button>
+    </div>
+    <input id="clientSearch" placeholder="🔍 Rechercher un client…" value="${esc(ui.search)}" style="margin-bottom:16px">
+    <div class="client-grid">
+      ${ui.data.clients.map((c) => {
+        const st = clientStats(c);
+        return `<article class="client-card ${c.id === ui.clientId ? 'current' : ''}" data-search="${esc(`${c.name} ${c.company} ${c.sector}`.toLowerCase())}">
+          <div class="cc-head"><div class="li-avatar">${initials(c.name)}</div>
+            <div><div class="cc-name">${esc(c.name || 'Sans nom')}</div><div class="cc-sub">${esc(c.company || '')}${c.sector ? ` · ${esc(c.sector)}` : ''}</div></div></div>
+          <div class="cc-stats"><span><b>${st.review}</b> à valider</span><span><b>${st.approved}</b> programmés</span><span><b>${st.published}</b> publiés</span></div>
+          <div class="cc-sub">${c.linkedin.connected ? `<span class="badge s-published">LinkedIn connecté</span>` : `<span class="badge s-draft">LinkedIn non connecté</span>`}
+            ${st.next ? ` · prochain post ${new Date(st.next.scheduledAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}` : ''}</div>
+          <div class="cc-actions">
+            <button class="btn small primary" data-action="open-client" data-id="${c.id}" data-to="posts">Posts</button>
+            <button class="btn small" data-action="open-client" data-id="${c.id}" data-to="calendar">Calendrier</button>
+            <button class="btn small" data-action="open-client" data-id="${c.id}" data-to="client">Fiche</button>
+          </div>
+        </article>`;
+      }).join('')}
+    </div>
+    <p class="empty" id="noClient" hidden>Aucun client ne correspond.</p>`;
+  filterClients();
+}
+
+function filterClients() {
+  const q = ui.search.trim().toLowerCase();
+  let shown = 0;
+  document.querySelectorAll('.client-card').forEach((el) => {
+    const ok = !q || el.dataset.search.includes(q);
+    el.hidden = !ok;
+    shown += ok;
+  });
+  const empty = $('#noClient');
+  if (empty) empty.hidden = shown > 0;
+}
+
+// ---------- Réglages ----------
+function renderSettings() {
+  const st = ui.data.settings;
+  view.innerHTML = `
+    <h2>Réglages</h2>
+    <p class="sub">À faire une seule fois. Les clés secrètes restent sur le serveur : elles ne sont jamais réaffichées.</p>
+    <div class="settings-grid">
+      <form class="panel stack" id="linkedinForm">
+        <h3>1. App LinkedIn ${ui.data.linkedinConfigured ? '<span class="badge s-published">Branchée</span>' : '<span class="badge s-review">À faire</span>'}</h3>
+        <ol class="steps">
+          <li>Va sur <a href="https://www.linkedin.com/developers/apps/new" target="_blank" rel="noopener">linkedin.com/developers/apps/new</a>. Nom : « Link Motion Studio ». Page LinkedIn : ta page entreprise Link Motion (obligatoire). Ajoute un logo, coche les conditions, « Create app ».</li>
+          <li>Onglet <b>Products</b> : clique « Request access » sur <b>Share on LinkedIn</b> et sur <b>Sign In with LinkedIn using OpenID Connect</b>.</li>
+          <li>Onglet <b>Auth</b> → « Authorized redirect URLs » → ajoute :
+            <div class="code" style="margin-top:4px">${esc(ui.data.redirectUri)}</div>
+            <button type="button" class="btn small" data-action="copy-link" data-link="${esc(ui.data.redirectUri)}" style="margin-top:6px">Copier</button></li>
+          <li>Toujours dans <b>Auth</b>, copie le <b>Client ID</b> et le <b>Primary Client Secret</b> ci-dessous.</li>
+        </ol>
+        <label class="f">Client ID<input name="linkedinClientId" value="${esc(st.linkedinClientId)}" autocomplete="off"></label>
+        <label class="f">Client Secret<input name="linkedinClientSecret" type="password" placeholder="${st.hasLinkedinSecret ? 'Enregistré ✓ (laisser vide pour garder)' : 'Colle le secret ici'}" autocomplete="new-password"></label>
+        <button class="btn primary" type="submit" style="align-self:flex-end">Enregistrer</button>
+      </form>
+
+      <form class="panel stack" id="openaiForm">
+        <h3>2. Clé API OpenAI (ChatGPT) ${st.hasOpenaiKey ? '<span class="badge s-published">Enregistrée</span>' : '<span class="badge s-draft">Facultatif</span>'}</h3>
+        <p class="sub" style="margin:0">Pour que l'app écrive et réécrive les posts elle-même avec tes modules. Crée une clé sur <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com/api-keys</a> (facturation à l'usage, séparée de l'abonnement ChatGPT Plus).</p>
+        <label class="f">Clé API<input name="openaiKey" type="password" placeholder="${st.hasOpenaiKey ? `Enregistrée ${esc(st.openaiKeyHint)} (laisser vide pour garder)` : 'sk-…'}" autocomplete="new-password"></label>
+        <label class="f">Modèle<input name="openaiModel" value="${esc(st.openaiModel)}" placeholder="gpt-5 (par défaut)"></label>
+        <button class="btn primary" type="submit" style="align-self:flex-end">Enregistrer</button>
+      </form>
+    </div>
+
+    <form class="panel stack" id="modulesForm" style="margin-top:16px">
+      <div class="toolbar" style="margin:0"><h3 style="margin:0">3. Modules d'écriture</h3><button type="button" class="btn small" data-action="add-module">+ Ajouter un module</button></div>
+      <p class="sub" style="margin:0">Colle ici ce que tu récupères de tes GPTs : ChatGPT → Mes GPTs → ton module → Modifier → Configurer. Copie le champ « Instructions », et le contenu de tes fichiers de « Connaissances ».</p>
+      <div id="modules">${(st.modules.length ? st.modules : []).map(moduleFields).join('') || '<p class="empty" style="padding:16px 0">Aucun module pour l\'instant.</p>'}</div>
+      <button class="btn primary" type="submit" style="align-self:flex-end">Enregistrer les modules</button>
+    </form>`;
+}
+
+const moduleFields = (m = {}) => `
+  <fieldset class="module" data-id="${esc(m.id || '')}">
+    <div class="grid2" style="grid-template-columns:1fr auto;align-items:end">
+      <label class="f">Nom du module<input name="name" value="${esc(m.name || '')}" placeholder="Ex. Hooks LinkedIn"></label>
+      <button type="button" class="btn small ghost" data-action="remove-module">Supprimer</button>
+    </div>
+    <label class="f">Instructions<textarea name="instructions" rows="8">${esc(m.instructions || '')}</textarea></label>
+    <label class="f">Connaissances (contenu des fichiers)<textarea name="knowledge" rows="6">${esc(m.knowledge || '')}</textarea></label>
+  </fieldset>`;
+
+const moduleOptions = () => [{ value: '', label: 'Sans module (brief client seulement)' }, ...ui.data.settings.modules.map((m) => ({ value: m.id, label: m.name }))];
+
 // ---------- Profil client & LinkedIn ----------
 function renderClient() {
   const c = client();
@@ -302,16 +405,12 @@ function renderClient() {
           : `<div><span class="badge s-draft">Non connecté</span></div>`}
         <div>Lien d'invitation à envoyer au client :</div>
         <div class="code">${esc(link)}</div>
-        <button class="btn primary small" data-action="copy-link" data-link="${esc(link)}" style="align-self:flex-start">Copier le lien</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn primary small" data-action="copy-link" data-link="${esc(link)}">Copier le lien</button>
+          <a class="btn small" href="${esc(link)}" target="_blank" rel="noopener">C'est mon compte : me connecter maintenant</a>
+        </div>
         <p style="color:var(--text-dim);font-size:13px;margin:0">Le client ouvre le lien, clique « Autoriser avec LinkedIn » et c'est fini : aucun mot de passe partagé, et il peut révoquer l'accès quand il veut.</p>
-        ${ui.data.linkedinConfigured ? '' : `
-          <h3 style="margin-top:12px">Configurer l'app LinkedIn (une seule fois)</h3>
-          <ol class="steps">
-            <li>Va sur <a href="https://www.linkedin.com/developers/apps" target="_blank" rel="noopener">linkedin.com/developers/apps</a> → « Create app » (il faut une page entreprise LinkedIn, ex. Link Motion).</li>
-            <li>Onglet <b>Products</b> : ajoute « Sign In with LinkedIn using OpenID Connect » et « Share on LinkedIn ».</li>
-            <li>Onglet <b>Auth</b> : ajoute cette URL de redirection :<div class="code" style="margin-top:4px">${esc(ui.data.redirectUri)}</div></li>
-            <li>Dans Netlify : <b>Project configuration → Environment variables</b>, ajoute <code>LINKEDIN_CLIENT_ID</code> et <code>LINKEDIN_CLIENT_SECRET</code>, puis <b>Deploys → Trigger deploy</b>.</li>
-          </ol>`}
+        ${ui.data.linkedinConfigured ? '' : `<div class="alert ph">L'app LinkedIn n'est pas encore branchée : va dans l'onglet <b>Réglages</b> d'abord.</div>`}
       </div>
       <form class="panel stack" id="clientForm">
         <h3>Fiche voix du client</h3>
@@ -328,10 +427,15 @@ function renderClient() {
 }
 
 // ---------- dialogue ----------
-function ask({ title, fields, submit = 'OK' }) {
+function ask({ title, intro = '', fields, submit = 'OK' }) {
   const dlg = $('#dialog');
   const form = $('#dialogForm');
-  form.innerHTML = `<h3>${title}</h3><div class="stack">${fields.map((f) => `<label class="f">${f.label}${f.rows ? `<textarea name="${f.name}" rows="${f.rows}" placeholder="${esc(f.placeholder || '')}"></textarea>` : `<input name="${f.name}" placeholder="${esc(f.placeholder || '')}">`}</label>`).join('')}</div>
+  const control = (f) => {
+    if (f.options) return `<select name="${f.name}">${f.options.map((o) => `<option value="${esc(o.value)}" ${o.value === f.value ? 'selected' : ''}>${esc(o.label)}</option>`).join('')}</select>`;
+    if (f.rows) return `<textarea name="${f.name}" rows="${f.rows}" placeholder="${esc(f.placeholder || '')}">${esc(f.value || '')}</textarea>`;
+    return `<input name="${f.name}" type="${f.type || 'text'}" value="${esc(f.value || '')}" placeholder="${esc(f.placeholder || '')}">`;
+  };
+  form.innerHTML = `<h3>${title}</h3>${intro ? `<p class="sub" style="margin:0 0 12px">${intro}</p>` : ''}<div class="stack">${fields.map((f) => `<label class="f">${f.label}${control(f)}</label>`).join('')}</div>
     <div class="actions"><button class="btn ghost" value="cancel">Annuler</button><button class="btn primary" value="ok">${submit}</button></div>`;
   dlg.showModal();
   return new Promise((resolve) => {
@@ -350,6 +454,66 @@ const run = (fn) => async (...args) => {
 };
 
 const actions = {
+  'open-client'(id, btn) {
+    ui.clientId = id; store.set('clientId', id);
+    ui.view = btn.dataset.to; store.set('view', ui.view);
+    ui.calMonth = null; ui.filter = 'all';
+    render(); window.scrollTo(0, 0);
+  },
+  async 'new-client'() {
+    const r = await ask({ title: 'Nouveau client', submit: 'Créer', fields: [{ name: 'name', label: 'Nom (auteur des posts)' }, { name: 'company', label: 'Entreprise' }, { name: 'sector', label: 'Secteur' }] });
+    if (!r?.name) return;
+    const c = await api('POST', '/api/clients', r);
+    ui.clientId = c.id; store.set('clientId', c.id);
+    ui.view = 'client'; store.set('view', ui.view);
+    await refresh();
+  },
+  'add-module'() {
+    const box = $('#modules');
+    if (!box.querySelector('.module')) box.innerHTML = '';
+    box.insertAdjacentHTML('beforeend', moduleFields());
+    box.lastElementChild.querySelector('input').focus();
+  },
+  'remove-module'(_id, btn) { btn.closest('.module').remove(); },
+  async 'ai-write'() {
+    if (!ui.data.settings.hasOpenaiKey) throw new Error("Ajoute d'abord ta clé OpenAI dans l'onglet Réglages.");
+    const r = await ask({
+      title: "✨ Écrire un post avec l'IA", submit: 'Écrire le post',
+      intro: "L'IA utilise la fiche voix du client, le module choisi et les posts de la veille.",
+      fields: [
+        { name: 'moduleId', label: 'Module', options: moduleOptions(), value: store.get('moduleId', '') },
+        { name: 'subject', label: 'Sujet / idée du post', rows: 3, placeholder: 'Ex. pourquoi les PME du BTP perdent de la marge sur les avenants' },
+        { name: 'format', label: 'Format', value: 'Texte' },
+        { name: 'scheduledAt', label: 'Date de publication', type: 'datetime-local' },
+      ],
+    });
+    if (!r) return;
+    store.set('moduleId', r.moduleId);
+    toast("L'IA écrit… (jusqu'à une minute)");
+    const p = await api('POST', '/api/generate', { ...r, clientId: ui.clientId, scheduledAt: r.scheduledAt ? new Date(r.scheduledAt).toISOString() : '' });
+    ui.filter = 'all';
+    await refresh();
+    actions.goto(p.id);
+    toast('Post écrit : relis-le avant de valider');
+  },
+  async 'ai-rewrite'(id) {
+    if (!ui.data.settings.hasOpenaiKey) throw new Error("Ajoute d'abord ta clé OpenAI dans l'onglet Réglages.");
+    const post = ui.data.posts.find((p) => p.id === id);
+    const r = await ask({
+      title: "✨ Réécrire avec l'IA", submit: 'Réécrire',
+      fields: [
+        { name: 'moduleId', label: 'Module', options: moduleOptions(), value: store.get('moduleId', '') },
+        { name: 'feedback', label: 'Qu\'est-ce qu\'il faut changer ?', rows: 3, value: post.feedback || '', placeholder: 'Ex. hook plus fort, plus court, ton plus personnel' },
+      ],
+    });
+    if (!r) return;
+    store.set('moduleId', r.moduleId);
+    toast("L'IA réécrit… (jusqu'à une minute)");
+    await api('POST', `/api/posts/${id}/rewrite`, r);
+    await refresh();
+    actions.goto(id);
+    toast('Post réécrit');
+  },
   expand: (id) => { ui.expanded.add(id); render(); },
   edit: (id) => { ui.editing.add(id); render(); $(`[data-editor="${id}"] textarea`)?.focus(); },
   'cancel-edit': (id) => { ui.editing.delete(id); render(); },
@@ -436,10 +600,11 @@ document.addEventListener('click', run(async (e) => {
   const btn = e.target.closest('button[data-action]');
   if (!btn) return;
   if (btn.dataset.action === 'copy-link') { await navigator.clipboard.writeText(btn.dataset.link); toast('Lien copié'); return; }
-  await actions[btn.dataset.action]?.(btn.dataset.id);
+  await actions[btn.dataset.action]?.(btn.dataset.id, btn);
 }));
 
 document.addEventListener('input', (e) => {
+  if (e.target.id === 'clientSearch') { ui.search = e.target.value; filterClients(); return; }
   const ta = e.target.closest('[data-editor] textarea[name="text"]');
   if (!ta) return;
   const count = ta.parentElement.querySelector('.count');
@@ -489,6 +654,17 @@ document.addEventListener('submit', run(async (e) => {
   }
   if (form.id === 'veilleForm') { await api('POST', '/api/veille', { ...data, clientId: ui.clientId }); toast('Ajouté à la veille'); }
   if (form.id === 'analysisForm') { await api('POST', '/api/analyses', { ...data, clientId: ui.clientId }); toast('Analyse enregistrée'); }
+  if (form.id === 'linkedinForm' || form.id === 'openaiForm') { await api('PUT', '/api/settings', data); toast('Réglages enregistrés'); }
+  if (form.id === 'modulesForm') {
+    const modules = [...form.querySelectorAll('.module')].map((f) => ({
+      id: f.dataset.id || undefined,
+      name: f.querySelector('[name=name]').value,
+      instructions: f.querySelector('[name=instructions]').value,
+      knowledge: f.querySelector('[name=knowledge]').value,
+    }));
+    await api('PUT', '/api/settings', { modules });
+    toast('Modules enregistrés');
+  }
   if (form.id === 'clientForm') { await api('PUT', `/api/clients/${ui.clientId}`, data); toast('Fiche enregistrée'); }
   await refresh();
 }));

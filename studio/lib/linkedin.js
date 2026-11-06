@@ -4,14 +4,15 @@ const API = 'https://api.linkedin.com';
 const SCOPES = ['openid', 'profile', 'w_member_social'];
 
 const version = () => process.env.LINKEDIN_VERSION || '202510';
-export const isConfigured = () => Boolean(process.env.LINKEDIN_CLIENT_ID && process.env.LINKEDIN_CLIENT_SECRET);
+// cfg = { clientId, clientSecret } : saisis dans l'onglet Réglages (ou variables d'environnement).
+export const isConfigured = (cfg) => Boolean(cfg?.clientId && cfg?.clientSecret);
 export const publicUrl = () => (process.env.PUBLIC_URL || process.env.URL || 'http://localhost:8888').replace(/\/$/, '');
 export const redirectUri = () => `${publicUrl()}/auth/linkedin/callback`;
 
-export function authUrl(state) {
+export function authUrl(cfg, state) {
   const params = new URLSearchParams({
     response_type: 'code',
-    client_id: process.env.LINKEDIN_CLIENT_ID,
+    client_id: cfg.clientId,
     redirect_uri: redirectUri(),
     state,
     scope: SCOPES.join(' '),
@@ -25,7 +26,7 @@ async function check(res, what) {
   throw new Error(`${what} : HTTP ${res.status} ${body.slice(0, 300)}`);
 }
 
-export async function exchangeCode(code) {
+export async function exchangeCode(cfg, code) {
   const res = await fetch('https://www.linkedin.com/oauth/v2/accessToken', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -33,8 +34,8 @@ export async function exchangeCode(code) {
       grant_type: 'authorization_code',
       code,
       redirect_uri: redirectUri(),
-      client_id: process.env.LINKEDIN_CLIENT_ID,
-      client_secret: process.env.LINKEDIN_CLIENT_SECRET,
+      client_id: cfg.clientId,
+      client_secret: cfg.clientSecret,
     }),
   });
   await check(res, 'Échange du code OAuth');

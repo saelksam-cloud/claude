@@ -176,3 +176,21 @@ dialog .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top
 /* Écran de connexion */
 body.locked .topbar .client-select, body.locked .tabs, body.locked #banner { display: none; }
 .login { max-width: 380px; margin: 10vh auto 0; }
+
+/* Clients */
+.client-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+.client-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+.client-card.current { border-color: var(--accent); }
+.client-card[hidden] { display: none; }
+.cc-head { display: flex; gap: 12px; align-items: center; }
+.cc-name { font-weight: 600; font-size: 16px; }
+.cc-sub { color: var(--text-dim); font-size: 13px; }
+.cc-stats { display: flex; gap: 14px; font-size: 13px; color: var(--text-dim); flex-wrap: wrap; }
+.cc-stats b { color: var(--text); font-size: 16px; }
+.cc-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* Réglages */
+.settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+.module { border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin: 0 0 12px; display: flex; flex-direction: column; gap: 10px; }
+a.btn { text-decoration: none; color: var(--text); }
+@media (max-width: 900px) { .settings-grid { grid-template-columns: 1fr; } }

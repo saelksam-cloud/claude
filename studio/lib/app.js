@@ -2,9 +2,12 @@
 import crypto from 'node:crypto';
 import {
   loadDb, saveDb, uploads, newId, now, createClient, importPosts, publicClient,
-  pickClientFields, pickPostFields,
+  pickClientFields, pickPostFields, loadSettings, saveSettings, publicSettings,
 } from './store.js';
 import * as linkedin from './linkedin.js';
+import { writePost } from './ai.js';
+
+const liCfg = (settings) => ({ clientId: settings.linkedinClientId, clientSecret: settings.linkedinClientSecret });
 
 const PLACEHOLDER = /\[À COMPLÉTER/i;
 const MAX_CHARS = 3000;
@@ -58,12 +61,12 @@ a.btn{display:inline-block;margin-top:16px;background:#0A66C2;color:#fff;padding
 p{color:#9090B0}</style></head><body><div class="card">${body}</div></body></html>`, { status, headers: { 'content-type': 'text/html; charset=utf-8' } });
 
 // ---------- publication ----------
-export async function publishPost(db, post) {
+export async function publishPost(db, post, settings) {
   const client = db.clients.find((c) => c.id === post.clientId);
   const problem = validateForApproval(post);
   try {
     if (problem) throw new Error(problem);
-    if (!linkedin.isConfigured()) throw new Error("L'app LinkedIn n'est pas encore configurée.");
+    if (!linkedin.isConfigured(liCfg(settings))) throw new Error("L'app LinkedIn n'est pas encore configurée (onglet Réglages).");
     if (!client?.linkedin) throw new Error(`${client?.name || 'Le client'} n'a pas encore connecté son LinkedIn.`);
     if (Date.parse(client.linkedin.expiresAt) < Date.now()) throw new Error('Autorisation LinkedIn expirée : renvoie le lien de connexion au client.');
     const imageData = post.image ? await uploads().get(post.image, { type: 'arrayBuffer' }) : null;
@@ -80,13 +83,13 @@ export async function publishPost(db, post) {
 
 // Appelé par la fonction programmée : publie les posts validés dont l'heure est passée.
 export async function publishDuePosts() {
-  const db = await loadDb();
+  const [db, settings] = await Promise.all([loadDb(), loadSettings()]);
   const due = db.posts.filter((p) => p.status === 'approved' && p.scheduledAt && Date.parse(p.scheduledAt) <= Date.now());
   let changed = false;
   for (const post of due) {
     const lastFail = [...post.history].reverse().find((h) => h.action.startsWith('Échec'));
     if (post.error && lastFail && Date.now() - Date.parse(lastFail.at) < 3_600_000) continue; // 1 essai / heure
-    await publishPost(db, post);
+    await publishPost(db, post, settings);
     changed = true;
   }
   if (changed) await saveDb(db);
@@ -98,12 +101,13 @@ const routes = [];
 const route = (method, pattern, fn, { auth = true } = {}) =>
   routes.push({ method, re: new RegExp(`^${pattern.replace(/:(\w+)/g, '(?<$1>[^/]+)')}$`), fn, auth });
 
-route('GET', '/api/state', async ({ db }) => json({
+route('GET', '/api/state', async ({ db, settings }) => json({
+  settings: publicSettings(settings),
   clients: db.clients.map(publicClient),
   posts: db.posts,
   veille: db.veille,
   analyses: db.analyses,
-  linkedinConfigured: linkedin.isConfigured(),
+  linkedinConfigured: linkedin.isConfigured(liCfg(settings)),
   redirectUri: linkedin.redirectUri(),
   publicUrl: linkedin.publicUrl(),
 }));
@@ -200,9 +204,9 @@ route('DELETE', '/api/posts/:id/image', async ({ post }) => {
   return json(post);
 });
 
-route('POST', '/api/posts/:id/publish-now', async ({ db, post }) => {
+route('POST', '/api/posts/:id/publish-now', async ({ db, post, settings }) => {
   if (post.status !== 'approved') throw new HttpError(400, 'Valide le post avant de le publier.');
-  await publishPost(db, post);
+  await publishPost(db, post, settings);
   return json(post);
 });
 
@@ -234,6 +238,58 @@ route('DELETE', '/api/analyses/:id', async ({ db, params }) => {
   return json({ ok: true });
 });
 
+// ---------- Réglages ----------
+const MAX_MODULE_CHARS = 150_000;
+route('PUT', '/api/settings', async ({ settings, body }) => {
+  const next = { ...settings };
+  if (typeof body.linkedinClientId === 'string') next.linkedinClientId = body.linkedinClientId.trim();
+  if (body.linkedinClientSecret?.trim()) next.linkedinClientSecret = body.linkedinClientSecret.trim();
+  if (body.openaiKey?.trim()) next.openaiKey = body.openaiKey.trim();
+  if (body.clearOpenaiKey) next.openaiKey = '';
+  if (typeof body.openaiModel === 'string') next.openaiModel = body.openaiModel.trim();
+  if (Array.isArray(body.modules)) {
+    next.modules = body.modules
+      .filter((m) => m && String(m.name || '').trim())
+      .map((m) => ({
+        id: m.id || newId('mod'),
+        name: String(m.name).trim(),
+        instructions: String(m.instructions || '').slice(0, MAX_MODULE_CHARS),
+        knowledge: String(m.knowledge || '').slice(0, MAX_MODULE_CHARS),
+      }));
+  }
+  await saveSettings(next);
+  return json(publicSettings(next));
+});
+
+// ---------- Rédaction par IA ----------
+const findModule = (settings, id) => settings.modules.find((m) => m.id === id) || null;
+
+route('POST', '/api/generate', async ({ db, settings, body }) => {
+  const client = db.clients.find((c) => c.id === body.clientId);
+  if (!client) throw new HttpError(404, 'Client introuvable');
+  if (!String(body.subject || '').trim()) throw new HttpError(400, 'Donne un sujet au post.');
+  const module = findModule(settings, body.moduleId);
+  const text = await writePost(settings, {
+    client, module, subject: body.subject, format: body.format,
+    veille: db.veille.filter((v) => v.clientId === client.id),
+  });
+  const scheduledAt = body.scheduledAt && !Number.isNaN(Date.parse(body.scheduledAt)) ? body.scheduledAt : null;
+  const [post] = importPosts(db, client.id, [{ text, theme: body.subject.slice(0, 60), format: body.format || 'Texte', scheduledAt }]);
+  post.history = [{ at: now(), action: `Rédigé par l'IA${module ? ` (module « ${module.name} »)` : ''}` }];
+  return json(post);
+});
+
+route('POST', '/api/posts/:id/rewrite', async ({ db, settings, post, body }) => {
+  if (post.status === 'published') throw new HttpError(400, 'Post déjà publié');
+  const client = db.clients.find((c) => c.id === post.clientId);
+  const module = findModule(settings, body.moduleId);
+  post.text = await writePost(settings, { client, module, previous: post.text, feedback: body.feedback || post.feedback });
+  post.status = 'review';
+  post.feedback = '';
+  log(post, `Réécrit par l'IA${module ? ` (module « ${module.name} »)` : ''}`);
+  return json(post);
+});
+
 // Images : servies par une clé aléatoire impossible à deviner (les balises <img> n'envoient pas le mot de passe).
 route('GET', '/uploads/:key', async ({ params }) => {
   const entry = await uploads().getWithMetadata(params.key, { type: 'arrayBuffer' });
@@ -241,23 +297,23 @@ route('GET', '/uploads/:key', async ({ params }) => {
   return new Response(entry.data, { headers: { 'content-type': entry.metadata?.type || 'application/octet-stream', 'cache-control': 'private, max-age=86400' } });
 }, { auth: false });
 
-route('GET', '/connect/:id/:token', async ({ db, params }) => {
+route('GET', '/connect/:id/:token', async ({ db, params, settings }) => {
   const client = db.clients.find((c) => c.id === params.id);
   if (!client || client.connectToken !== params.token) return page('Lien invalide', '<h2>Lien invalide ou expiré</h2>', 404);
-  if (!linkedin.isConfigured()) return page('Indisponible', '<h2>Connexion LinkedIn pas encore configurée</h2><p>Préviens ton ghostwriter.</p>', 503);
+  if (!linkedin.isConfigured(liCfg(settings))) return page('Indisponible', "<h2>Connexion LinkedIn pas encore configurée</h2><p>Il faut d'abord renseigner l'app LinkedIn dans l'onglet Réglages du studio.</p>", 503);
   return page('Connexion LinkedIn', `<h2>Bonjour ${escapeHtml(client.name)} 👋</h2>
 <p>En cliquant ci-dessous, tu autorises <strong>Link Motion</strong> à publier sur ton profil LinkedIn les posts que tu as validés.
 Tu ne partages pas ton mot de passe et tu peux retirer l'accès à tout moment depuis les paramètres LinkedIn.</p>
-<a class="btn" href="${escapeHtml(linkedin.authUrl(makeState(client.id)))}">Autoriser avec LinkedIn</a>`);
+<a class="btn" href="${escapeHtml(linkedin.authUrl(liCfg(settings), makeState(client.id)))}">Autoriser avec LinkedIn</a>`);
 }, { auth: false });
 
-route('GET', '/auth/linkedin/callback', async ({ db, url }) => {
+route('GET', '/auth/linkedin/callback', async ({ db, url, settings }) => {
   const q = url.searchParams;
   if (q.get('error')) return page('Refusé', `<h2>Autorisation annulée</h2><p>${escapeHtml(q.get('error_description') || q.get('error'))}</p>`, 400);
   const client = db.clients.find((c) => c.id === readState(q.get('state')));
   if (!client) return page('Expiré', '<h2>Lien expiré</h2><p>Rouvre le lien de connexion.</p>', 400);
   try {
-    const token = await linkedin.exchangeCode(q.get('code'));
+    const token = await linkedin.exchangeCode(liCfg(settings), q.get('code'));
     const profile = await linkedin.getProfile(token.accessToken);
     client.linkedin = { ...token, ...profile, connectedAt: now() };
     return page('Connecté', `<h2>C'est connecté ✅</h2><p>Merci ${escapeHtml(profile.name)} ! Tu peux fermer cette page.</p>`);
@@ -275,9 +331,9 @@ export async function handle(req) {
     if (!r) throw new HttpError(404, 'Introuvable');
     if (r.auth) checkPassword(req);
     const params = match.groups || {};
-    const db = await loadDb();
+    const [db, settings] = await Promise.all([loadDb(), loadSettings()]);
     const body = ['POST', 'PUT'].includes(req.method) ? await req.json().catch(() => ({})) : {};
-    const ctx = { db, body, params, url };
+    const ctx = { db, settings, body, params, url };
     if (params.id && url.pathname.startsWith('/api/clients/')) {
       ctx.client = db.clients.find((c) => c.id === params.id);
       if (!ctx.client) throw new HttpError(404, 'Client introuvable');
