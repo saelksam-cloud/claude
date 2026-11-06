@@ -127,6 +127,7 @@ function renderPosts() {
         ${reviewable.length ? `<button class="btn ok" data-action="bulk-approve">✓ Valider les ${reviewable.length} posts « à valider »</button>` : ''}
         <button class="btn" data-action="import">Importer (JSON)</button>
         <button class="btn" data-action="ai-write">✨ Écrire avec l'IA</button>
+        <button class="btn" data-action="redo-all">🔁 Refaire les posts</button>
         <button class="btn primary" data-action="new-post">+ Nouveau post</button>
       </div>
     </div>
@@ -185,7 +186,8 @@ function renderPost(p) {
         ${p.status !== 'approved' ? `<button class="btn ok small" data-action="approve" data-id="${p.id}" ${hasPlaceholder ? 'disabled' : ''}>✓ Valider</button>` : `<button class="btn small" data-action="unapprove" data-id="${p.id}">↩ Retirer de la file</button>`}
         ${p.status !== 'rejected' ? `<button class="btn danger small" data-action="reject" data-id="${p.id}">✕ À retravailler</button>` : ''}
         ${editing ? '' : `<button class="btn small" data-action="edit" data-id="${p.id}">✎ Modifier</button>`}
-        <button class="btn small" data-action="ai-rewrite" data-id="${p.id}">✨ Réécrire avec l'IA</button>
+        <button class="btn small" data-action="gpt-redo" data-id="${p.id}">🤖 Refaire avec mon GPT</button>
+        <button class="btn small" data-action="ai-rewrite" data-id="${p.id}">✨ Réécrire (auto)</button>
         <label class="btn small">🖼 ${p.image ? 'Changer' : 'Ajouter'} l'image<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" data-action="upload" data-id="${p.id}" hidden></label>
         ${p.image ? `<button class="btn small ghost" data-action="remove-image" data-id="${p.id}">Retirer l'image</button>` : ''}
         ${p.status === 'approved' ? `<button class="btn primary small" data-action="publish-now" data-id="${p.id}">Publier maintenant</button>` : ''}
@@ -360,14 +362,14 @@ function renderSettings() {
         <h3>2. Clé API OpenAI (ChatGPT) ${st.hasOpenaiKey ? '<span class="badge s-published">Enregistrée</span>' : '<span class="badge s-draft">Facultatif</span>'}</h3>
         <p class="sub" style="margin:0">Pour que l'app écrive et réécrive les posts elle-même avec tes modules. Crée une clé sur <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com/api-keys</a> (facturation à l'usage, séparée de l'abonnement ChatGPT Plus).</p>
         <label class="f">Clé API<input name="openaiKey" type="password" placeholder="${st.hasOpenaiKey ? `Enregistrée ${esc(st.openaiKeyHint)} (laisser vide pour garder)` : 'sk-…'}" autocomplete="new-password"></label>
-        <label class="f">Modèle<input name="openaiModel" value="${esc(st.openaiModel)}" placeholder="gpt-5 (par défaut)"></label>
+        <label class="f">Modèle OpenAI (nom technique, pas le nom de ton GPT : laisse vide si tu ne sais pas)<input name="openaiModel" value="${esc(st.openaiModel)}" placeholder="gpt-5 (par défaut)"></label>
         <button class="btn primary" type="submit" style="align-self:flex-end">Enregistrer</button>
       </form>
     </div>
 
     <form class="panel stack" id="modulesForm" style="margin-top:16px">
       <div class="toolbar" style="margin:0"><h3 style="margin:0">3. Modules d'écriture</h3><button type="button" class="btn small" data-action="add-module">+ Ajouter un module</button></div>
-      <p class="sub" style="margin:0">Colle ici ce que tu récupères de tes GPTs : ChatGPT → Mes GPTs → ton module → Modifier → Configurer. Copie le champ « Instructions », et le contenu de tes fichiers de « Connaissances ».</p>
+      <p class="sub" style="margin:0">Un module = un de tes GPTs. Colle le <b>lien du GPT</b> (ouvre-le dans ChatGPT et copie l'adresse, elle commence par https://chatgpt.com/g/…) : les boutons « 🤖 mon GPT » l'ouvriront directement. Le premier module de la liste est utilisé par défaut. Les champs Instructions et Connaissances servent seulement à l'écriture automatique (clé OpenAI).</p>
       <div id="modules">${(st.modules.length ? st.modules : []).map(moduleFields).join('') || '<p class="empty" style="padding:16px 0">Aucun module pour l\'instant.</p>'}</div>
       <button class="btn primary" type="submit" style="align-self:flex-end">Enregistrer les modules</button>
     </form>`;
@@ -376,14 +378,95 @@ function renderSettings() {
 const moduleFields = (m = {}) => `
   <fieldset class="module" data-id="${esc(m.id || '')}">
     <div class="grid2" style="grid-template-columns:1fr auto;align-items:end">
-      <label class="f">Nom du module<input name="name" value="${esc(m.name || '')}" placeholder="Ex. Hooks LinkedIn"></label>
+      <label class="f">Nom du module<input name="name" value="${esc(m.name || '')}" placeholder="Ex. Basic - Linka - Mode content"></label>
       <button type="button" class="btn small ghost" data-action="remove-module">Supprimer</button>
     </div>
+    <label class="f">Lien du GPT<input name="url" value="${esc(m.url || '')}" placeholder="https://chatgpt.com/g/g-…"></label>
     <label class="f">Instructions<textarea name="instructions" rows="8">${esc(m.instructions || '')}</textarea></label>
     <label class="f">Connaissances (contenu des fichiers)<textarea name="knowledge" rows="6">${esc(m.knowledge || '')}</textarea></label>
   </fieldset>`;
 
-const moduleOptions = () => [{ value: '', label: 'Sans module (brief client seulement)' }, ...ui.data.settings.modules.map((m) => ({ value: m.id, label: m.name }))];
+const moduleOptions = () => [...ui.data.settings.modules.map((m) => ({ value: m.id, label: m.name })), { value: '', label: 'Sans module' }];
+const preferredModuleId = () => {
+  const mods = ui.data.settings.modules;
+  const saved = store.get('moduleId', null);
+  if (saved !== null && (saved === '' || mods.some((m) => m.id === saved))) return saved;
+  return (mods.find((m) => /content/i.test(m.name)) || mods[0])?.id || '';
+};
+const findModule = (id) => ui.data.settings.modules.find((m) => m.id === id);
+
+// ---------- Passer par mon GPT (copier-coller) ----------
+const SEP = (n) => `=== POST ${n} ===`;
+function buildBrief(posts, instruction) {
+  const c = client();
+  const fiche = [
+    `Auteur : ${c.name}${c.company ? ` (${c.company})` : ''}`,
+    c.sector && `Secteur : ${c.sector}`, c.offer && `Offre : ${c.offer}`, c.audience && `Cible : ${c.audience}`,
+    c.tone && `Ton : ${c.tone}`, c.dos && `À faire : ${c.dos}`, c.donts && `À éviter : ${c.donts}`,
+  ].filter(Boolean).join('\n');
+  const multi = posts.length > 1;
+  return `${multi ? `Réécris les ${posts.length} posts LinkedIn ci-dessous` : 'Réécris ce post LinkedIn'} avec ta méthode.
+
+Consigne : ${instruction || 'rends-le plus percutant (hook, structure, lisibilité) en gardant le fond.'}
+
+Fiche de l'auteur :
+${fiche}
+
+Règles :
+- Texte prêt à publier, sans markdown (pas de **gras**), sans commentaire avant ou après.
+- N'invente aucun chiffre ni anecdote : si une info manque, écris [À COMPLÉTER : …].
+${multi ? `- Garde EXACTEMENT les séparateurs « ${SEP(1)} », « ${SEP(2)} »… avant chaque post, dans le même ordre.\n` : ''}
+${posts.map((p, i) => `${multi ? `${SEP(i + 1)}\n` : '--- Post actuel ---\n'}${p.text}`).join('\n\n')}`;
+}
+
+function parseAnswer(answer, count) {
+  const clean = (t) => t.replace(/\*\*|__/g, '').trim();
+  if (count === 1) return [clean(answer.replace(/^\s*=+\s*POST\s*\d+\s*=+\s*$/gim, ''))];
+  const parts = answer.split(/^\s*=+\s*POST\s*(\d+)\s*=+\s*$/gim);
+  const out = new Array(count).fill(null);
+  for (let i = 1; i < parts.length; i += 2) {
+    const n = Number(parts[i]) - 1;
+    if (n >= 0 && n < count && parts[i + 1]?.trim()) out[n] = clean(parts[i + 1]);
+  }
+  return out;
+}
+
+// Affiche le brief à copier, ouvre le GPT, récupère la réponse collée.
+async function relay({ title, posts, instruction, module, step = '' }) {
+  const brief = buildBrief(posts, instruction);
+  const gptUrl = module?.url || 'https://chatgpt.com/gpts/mine';
+  const dlg = $('#dialog');
+  const form = $('#dialogForm');
+  form.innerHTML = `<h3>${title}</h3>
+    <p class="sub" style="margin:0 0 12px">${step}1. Copie le brief. 2. Ouvre ${module ? `<b>${esc(module.name)}</b>` : 'ton GPT'} et colle-le. 3. Colle sa réponse ci-dessous.</p>
+    <div class="stack">
+      <textarea readonly rows="7" id="briefText">${esc(brief)}</textarea>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button type="button" class="btn small primary" data-action="copy-brief">📋 Copier le brief</button>
+        <a class="btn small" href="${esc(gptUrl)}" target="_blank" rel="noopener">↗ Ouvrir ${module ? esc(module.name) : 'mes GPTs'}</a>
+      </div>
+      <label class="f">Réponse du GPT<textarea name="answer" rows="9" placeholder="Colle ici tout ce que le GPT a répondu"></textarea></label>
+    </div>
+    <div class="actions"><button class="btn ghost" value="cancel">Annuler</button><button class="btn primary" value="ok">Enregistrer</button></div>`;
+  dlg.showModal();
+  const answer = await new Promise((resolve) => {
+    dlg.addEventListener('close', () => resolve(dlg.returnValue === 'ok' ? new FormData(form).get('answer') : null), { once: true });
+  });
+  if (answer === null) return null;
+  if (!answer.trim()) throw new Error('Réponse vide : colle la réponse du GPT.');
+  return parseAnswer(answer, posts.length);
+}
+
+async function saveRewrites(posts, texts, how) {
+  let done = 0;
+  for (const [i, post] of posts.entries()) {
+    if (!texts[i]) continue;
+    await api('PUT', `/api/posts/${post.id}`, { text: texts[i] });
+    if (post.status !== 'review') await api('POST', `/api/posts/${post.id}/status`, { status: 'review' });
+    done++;
+  }
+  return done;
+}
 
 // ---------- Profil client & LinkedIn ----------
 function renderClient() {
@@ -401,13 +484,16 @@ function renderClient() {
           ? `<div><span class="badge s-published">Connecté</span></div>
              <div>Profil : <b>${esc(li.name)}</b></div>
              <div class="k" style="color:var(--text-dim)">Autorisation valable jusqu'au ${new Date(li.expiresAt).toLocaleDateString('fr-FR')} (LinkedIn impose de la renouveler tous les 60 jours : renvoie simplement le lien).</div>
-             <button class="btn danger small" data-action="disconnect" style="align-self:flex-start">Déconnecter</button>`
+             <div style="display:flex;gap:8px;flex-wrap:wrap">
+               <button class="btn small" data-action="move-linkedin">Ce n'est pas le bon client ? Déplacer vers…</button>
+               <button class="btn danger small" data-action="disconnect">Déconnecter</button>
+             </div>`
           : `<div><span class="badge s-draft">Non connecté</span></div>`}
         <div>Lien d'invitation à envoyer au client :</div>
         <div class="code">${esc(link)}</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn primary small" data-action="copy-link" data-link="${esc(link)}">Copier le lien</button>
-          <a class="btn small" href="${esc(link)}" target="_blank" rel="noopener">C'est mon compte : me connecter maintenant</a>
+          <a class="btn small" href="${esc(link)}" target="_blank" rel="noopener">Connecter le LinkedIn de « ${esc(c.name)} » depuis cet appareil</a>
         </div>
         <p style="color:var(--text-dim);font-size:13px;margin:0">Le client ouvre le lien, clique « Autoriser avec LinkedIn » et c'est fini : aucun mot de passe partagé, et il peut révoquer l'accès quand il veut.</p>
         ${ui.data.linkedinConfigured ? '' : `<div class="alert ph">L'app LinkedIn n'est pas encore branchée : va dans l'onglet <b>Réglages</b> d'abord.</div>`}
@@ -454,6 +540,79 @@ const run = (fn) => async (...args) => {
 };
 
 const actions = {
+  async 'copy-brief'() { await navigator.clipboard.writeText($('#briefText').value); toast('Brief copié : colle-le dans ton GPT'); },
+  async 'move-linkedin'() {
+    const others = ui.data.clients.filter((c) => c.id !== ui.clientId);
+    if (!others.length) throw new Error('Crée d\'abord l\'autre client.');
+    const r = await ask({ title: 'Déplacer la connexion LinkedIn', submit: 'Déplacer', intro: `Le compte LinkedIn « ${esc(client().linkedin.name)} » sera rattaché à :`,
+      fields: [{ name: 'to', label: 'Client', options: others.map((c) => ({ value: c.id, label: c.name })), value: others[0].id }] });
+    if (!r) return;
+    await api('POST', `/api/clients/${ui.clientId}/move-linkedin`, r);
+    ui.clientId = r.to; store.set('clientId', r.to);
+    toast('Connexion déplacée');
+    await refresh();
+  },
+  async 'gpt-redo'(id) {
+    const post = ui.data.posts.find((p) => p.id === id);
+    const r = await ask({ title: '🤖 Refaire avec mon GPT', submit: 'Continuer', fields: [
+      { name: 'moduleId', label: 'GPT', options: moduleOptions(), value: preferredModuleId() },
+      { name: 'instruction', label: 'Qu\'est-ce qu\'il faut changer ? (facultatif)', rows: 3, value: post.feedback || '' },
+    ] });
+    if (!r) return;
+    store.set('moduleId', r.moduleId);
+    const texts = await relay({ title: '🤖 Refaire avec mon GPT', posts: [post], instruction: r.instruction, module: findModule(r.moduleId) });
+    if (!texts) return;
+    await saveRewrites([post], texts);
+    await refresh(); actions.goto(id); toast('Post remplacé : relis-le');
+  },
+  async 'redo-all'() {
+    const all = clientPosts().filter((p) => p.status !== 'published');
+    const r = await ask({
+      title: '🔁 Refaire les posts', submit: 'Lancer',
+      intro: 'Les posts refaits repassent « à valider ». Les posts déjà publiés ne sont jamais touchés.',
+      fields: [
+        { name: 'scope', label: 'Quels posts ?', value: 'todo', options: [
+          { value: 'todo', label: `Ceux pas encore validés (${all.filter((p) => p.status !== 'approved').length})` },
+          { value: 'all', label: `Tous sauf publiés (${all.length})` },
+          { value: 'shown', label: 'Ceux affichés par le filtre actuel' },
+        ] },
+        { name: 'instruction', label: 'Consigne', rows: 3, placeholder: 'Ex. hooks plus forts, plus courts, ajoute une question en fin de post' },
+        { name: 'how', label: 'Comment ?', value: 'gpt', options: [
+          { value: 'gpt', label: '🤖 Avec mon GPT (copier-coller, par lots de 5)' },
+          { value: 'api', label: `✨ Automatique avec la clé OpenAI${ui.data.settings.hasOpenaiKey ? '' : ' (clé manquante)'}` },
+        ] },
+        { name: 'moduleId', label: 'Module / GPT', options: moduleOptions(), value: preferredModuleId() },
+      ],
+    });
+    if (!r) return;
+    store.set('moduleId', r.moduleId);
+    const posts = r.scope === 'all' ? all
+      : r.scope === 'shown' ? all.filter((p) => ui.filter === 'all' || p.status === ui.filter)
+      : all.filter((p) => p.status !== 'approved');
+    if (!posts.length) throw new Error('Aucun post à refaire.');
+    let done = 0;
+    if (r.how === 'api') {
+      if (!ui.data.settings.hasOpenaiKey) throw new Error("Ajoute d'abord ta clé OpenAI dans Réglages, ou choisis « Avec mon GPT ».");
+      for (const [i, post] of posts.entries()) {
+        toast(`Réécriture ${i + 1} / ${posts.length}…`);
+        await api('POST', `/api/posts/${post.id}/rewrite`, { moduleId: r.moduleId, feedback: r.instruction });
+        done++;
+      }
+    } else {
+      const module = findModule(r.moduleId);
+      for (let i = 0; i < posts.length; i += 5) {
+        const batch = posts.slice(i, i + 5);
+        const lot = `Lot ${i / 5 + 1} / ${Math.ceil(posts.length / 5)} — `;
+        const texts = await relay({ title: '🔁 Refaire les posts', posts: batch, instruction: r.instruction, module, step: lot });
+        if (!texts) break;
+        const n = await saveRewrites(batch, texts);
+        done += n;
+        if (n < batch.length) toast(`${batch.length - n} post(s) du lot non reconnus (séparateurs « === POST n === » manquants)`, true);
+      }
+    }
+    await refresh();
+    toast(`${done} post(s) refait(s) : relis-les avant de valider`);
+  },
   'open-client'(id, btn) {
     ui.clientId = id; store.set('clientId', id);
     ui.view = btn.dataset.to; store.set('view', ui.view);
@@ -481,7 +640,7 @@ const actions = {
       title: "✨ Écrire un post avec l'IA", submit: 'Écrire le post',
       intro: "L'IA utilise la fiche voix du client, le module choisi et les posts de la veille.",
       fields: [
-        { name: 'moduleId', label: 'Module', options: moduleOptions(), value: store.get('moduleId', '') },
+        { name: 'moduleId', label: 'Module', options: moduleOptions(), value: preferredModuleId() },
         { name: 'subject', label: 'Sujet / idée du post', rows: 3, placeholder: 'Ex. pourquoi les PME du BTP perdent de la marge sur les avenants' },
         { name: 'format', label: 'Format', value: 'Texte' },
         { name: 'scheduledAt', label: 'Date de publication', type: 'datetime-local' },
@@ -502,7 +661,7 @@ const actions = {
     const r = await ask({
       title: "✨ Réécrire avec l'IA", submit: 'Réécrire',
       fields: [
-        { name: 'moduleId', label: 'Module', options: moduleOptions(), value: store.get('moduleId', '') },
+        { name: 'moduleId', label: 'Module', options: moduleOptions(), value: preferredModuleId() },
         { name: 'feedback', label: 'Qu\'est-ce qu\'il faut changer ?', rows: 3, value: post.feedback || '', placeholder: 'Ex. hook plus fort, plus court, ton plus personnel' },
       ],
     });
@@ -661,6 +820,7 @@ document.addEventListener('submit', run(async (e) => {
       name: f.querySelector('[name=name]').value,
       instructions: f.querySelector('[name=instructions]').value,
       knowledge: f.querySelector('[name=knowledge]').value,
+      url: f.querySelector('[name=url]').value,
     }));
     await api('PUT', '/api/settings', { modules });
     toast('Modules enregistrés');

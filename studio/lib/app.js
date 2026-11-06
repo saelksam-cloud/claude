@@ -124,6 +124,15 @@ route('POST', '/api/clients/:id/disconnect', async ({ client }) => {
   return json(publicClient(client));
 });
 
+route('POST', '/api/clients/:id/move-linkedin', async ({ db, client, body }) => {
+  const target = db.clients.find((c) => c.id === body.to);
+  if (!target || target.id === client.id) throw new HttpError(400, 'Client de destination invalide');
+  if (!client.linkedin) throw new HttpError(400, "Ce client n'a pas de LinkedIn connecté.");
+  target.linkedin = client.linkedin;
+  client.linkedin = null;
+  return json(publicClient(target));
+});
+
 route('POST', '/api/clients/:id/import', async ({ db, client, body }) => {
   const posts = Array.isArray(body) ? body : body?.posts;
   if (!Array.isArray(posts)) throw new HttpError(400, 'JSON attendu : { "posts": [ { "text": "...", "scheduledAt": "..." } ] }');
@@ -246,13 +255,14 @@ route('PUT', '/api/settings', async ({ settings, body }) => {
   if (body.linkedinClientSecret?.trim()) next.linkedinClientSecret = body.linkedinClientSecret.trim();
   if (body.openaiKey?.trim()) next.openaiKey = body.openaiKey.trim();
   if (body.clearOpenaiKey) next.openaiKey = '';
-  if (typeof body.openaiModel === 'string') next.openaiModel = body.openaiModel.trim();
+  if (typeof body.openaiModel === 'string') next.openaiModel = /^[\w.:-]*$/.test(body.openaiModel.trim()) ? body.openaiModel.trim() : '';
   if (Array.isArray(body.modules)) {
     next.modules = body.modules
       .filter((m) => m && String(m.name || '').trim())
       .map((m) => ({
         id: m.id || newId('mod'),
         name: String(m.name).trim(),
+        url: /^https:\/\/chatgpt\.com\//.test(String(m.url || '').trim()) ? String(m.url).trim() : '',
         instructions: String(m.instructions || '').slice(0, MAX_MODULE_CHARS),
         knowledge: String(m.knowledge || '').slice(0, MAX_MODULE_CHARS),
       }));

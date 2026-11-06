@@ -39,7 +39,7 @@ export async function writePost(settings, { client, module, subject, format, vei
     method: 'POST',
     headers: { Authorization: `Bearer ${settings.openaiKey}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: settings.openaiModel || DEFAULT_MODEL,
+      model: /^[\w.:-]+$/.test(settings.openaiModel || '') ? settings.openaiModel : DEFAULT_MODEL,
       messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
     }),
     signal: AbortSignal.timeout(55_000),
