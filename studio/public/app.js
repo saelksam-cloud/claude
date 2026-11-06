@@ -28,6 +28,8 @@ const ui = {
   job: null,
   relay: null,
   lastCreated: [],
+  author: '',          // concurrent choisi dans Veille / Étude ('' = tous)
+  inspireFrom: store.get('inspireFrom', ''), // concurrent choisi dans Créer
 };
 
 // ---------- utilitaires ----------
@@ -113,6 +115,8 @@ function renderCreate() {
   const content = moduleByRole('content');
   const hooker = moduleByRole('hooker');
   const nicheCount = ui.data.veille.filter((v) => sameNiche(v.niche, c.niche)).length;
+  const competitors = authorsOf(c.niche);
+  if (ui.inspireFrom && !competitors.some(([a]) => sameNiche(a, ui.inspireFrom))) ui.inspireFrom = '';
   const created = ui.lastCreated.map((id) => ui.data.posts.find((p) => p.id === id)).filter(Boolean);
   const j = ui.job?.kind === 'create' ? ui.job : null;
 
@@ -127,6 +131,12 @@ function renderCreate() {
       <label class="f">Consigne (facultatif) : ton, sujet, angle…
         <textarea id="instruction" rows="3" placeholder="Ex. ton plus personnel, parle de mes résultats clients, un post sur la régularité…">${esc(ui.instruction)}</textarea>
       </label>
+      ${competitors.length ? `<div class="f">S'inspirer de
+        <div class="seg">
+          <button type="button" class="${!ui.inspireFrom ? 'on' : ''}" data-action="inspire" data-id="">Tous les concurrents</button>
+          ${competitors.slice(0, 6).map(([a]) => `<button type="button" class="${sameNiche(a, ui.inspireFrom) ? 'on' : ''}" data-action="inspire" data-id="${esc(a)}">${esc(a)}</button>`).join('')}
+        </div>
+      </div>` : ''}
       <div class="f">Qui écrit ?
         <div class="seg">
           <button type="button" class="${ui.engine === 'auto' ? 'on' : ''}" data-action="engine" data-id="auto">⚡ Automatique</button>
@@ -134,7 +144,7 @@ function renderCreate() {
         </div>
       </div>
       <p class="small" style="margin:0">${ui.engine === 'auto'
-        ? `1 clic. ${esc(content?.name || 'Mode content')} écrit, puis ${esc(hooker?.name || 'Mode hooker')} retravaille le hook. S'appuie sur ${nicheCount} post(s) de veille ${esc(c.niche || '')} et sur tes retours passés.${ui.data.settings.hasOpenaiKey ? '' : ' <b>Clé OpenAI requise (Réglages).</b>'}`
+        ? `1 clic. ${esc(content?.name || 'Mode content')} écrit, puis ${esc(hooker?.name || 'Mode hooker')} retravaille le hook. S'appuie sur ${ui.inspireFrom ? `les meilleurs posts de <b>${esc(ui.inspireFrom)}</b>` : `les meilleurs posts de chaque concurrent (${nicheCount} en veille ${esc(c.niche || '')})`}, l'étude de marché et tes retours passés.${ui.data.settings.hasOpenaiKey ? '' : ' <b>Clé OpenAI requise (Réglages).</b>'}`
         : `Tes vrais GPTs ChatGPT : l'app prépare le texte, tu le colles dans ${esc(content?.name || 'Mode content')}, puis dans ${esc(hooker?.name || 'Mode hooker')}.`}</p>
       ${j ? `<div class="row"><div class="progress"><span style="width:${Math.round((100 * j.done) / j.total)}%"></span></div><span class="small">${esc(j.step)}</span>
           ${j.finished ? '' : '<button class="btn sm" data-action="stop">Arrêter</button>'}</div>` : ''}
@@ -156,7 +166,11 @@ function ficheText(c) {
 }
 function contentBrief({ count, instruction }) {
   const c = client();
-  const top = ui.data.veille.filter((v) => sameNiche(v.niche, c.niche)).sort((a, b) => engagement(b) - engagement(a)).slice(0, 8);
+  const pool = byAuthor(ui.data.veille.filter((v) => sameNiche(v.niche, c.niche)), ui.inspireFrom);
+  // Les meilleurs de chaque concurrent à tour de rôle.
+  const lists = [...new Set(pool.map((v) => (v.author || '?').toLowerCase()))].map((a) => pool.filter((v) => (v.author || '?').toLowerCase() === a).sort((x, y) => engagement(y) - engagement(x)));
+  const top = [];
+  for (let i = 0; top.length < 12 && lists.some((l) => l[i]); i++) for (const l of lists) if (l[i] && top.length < 12) top.push(l[i]);
   const fb = (c.feedbackLog || []).slice(-10);
   return `Écris ${count} post${count > 1 ? 's' : ''} LinkedIn pour l'auteur ci-dessous.
 ${instruction ? `\nConsigne : ${instruction}\n` : ''}
@@ -214,7 +228,7 @@ async function createAuto() {
     for (let i = 0; i < total && !ui.job.stop; i++) {
       ui.job.step = `Post ${i + 1} / ${total} : écriture puis hook…`;
       render();
-      const p = await api('POST', '/api/generate', { clientId: ui.clientId, instruction: ui.instruction });
+      const p = await api('POST', '/api/generate', { clientId: ui.clientId, instruction: ui.instruction, author: ui.inspireFrom });
       ui.lastCreated.push(p.id);
       ui.job.done = i + 1;
       await refresh();
@@ -306,6 +320,20 @@ function postCard(p) {
 }
 
 // ================= VEILLE =================
+const authorsOf = (niche) => {
+  const counts = new Map();
+  for (const v of ui.data.veille.filter((x) => sameNiche(x.niche, niche) && x.author)) counts.set(v.author.trim(), (counts.get(v.author.trim()) || 0) + 1);
+  return [...counts.entries()].sort((a, b) => b[1] - a[1]);
+};
+const byAuthor = (items, author) => (author ? items.filter((v) => sameNiche(v.author, author)) : items);
+function authorChips(niche) {
+  const list = authorsOf(niche);
+  if (list.length < 2) return '';
+  const total = ui.data.veille.filter((v) => sameNiche(v.niche, niche)).length;
+  return `<div class="chips" style="margin-top:8px"><span class="small" style="align-self:center">Concurrent :</span>
+    <button class="chip ${!ui.author ? 'on' : ''}" data-action="author" data-id="">Tous<b>${total}</b></button>
+    ${list.map(([a, n]) => `<button class="chip ${sameNiche(a, ui.author) ? 'on' : ''}" data-action="author" data-id="${esc(a)}">${esc(a)}<b>${n}</b></button>`).join('')}</div>`;
+}
 function nicheChips() {
   const n = currentNiche();
   return `<div class="chips">${allNiches().map((x) => `<button class="chip ${sameNiche(x, n) ? 'on' : ''}" data-action="niche" data-id="${esc(x)}">${esc(x)}<b>${ui.data.veille.filter((v) => sameNiche(v.niche, x)).length}</b></button>`).join('')}</div>`;
@@ -313,7 +341,7 @@ function nicheChips() {
 
 function renderVeille() {
   const niche = currentNiche();
-  const items = ui.data.veille.filter((v) => sameNiche(v.niche, niche)).sort((a, b) => engagement(b) - engagement(a));
+  const items = byAuthor(ui.data.veille.filter((v) => sameNiche(v.niche, niche)), ui.author).sort((a, b) => engagement(b) - engagement(a));
   const j = ui.job?.kind === 'paste' ? ui.job : null;
   view.innerHTML = `
     <h2>Veille</h2>
@@ -338,6 +366,7 @@ function renderVeille() {
         <div class="row between" style="margin-bottom:12px"><h3 style="margin:0">${items.length} post(s) · ${esc(niche || 'aucune niche')}</h3>
           ${items.length >= 5 ? '<button class="btn soft sm" data-action="go" data-id="study">Voir l\'étude →</button>' : ''}</div>
         ${nicheChips()}
+        ${authorChips(niche)}
         <div style="margin-top:12px">
         ${items.length ? items.map((v) => `
           <div class="vitem">
@@ -383,6 +412,20 @@ function barChart(title, rows, overall) {
   </div>`;
 }
 
+// Comparatif des concurrents côte à côte.
+function compareTable(items) {
+  const best = (list, key) => groupBy(list, (v) => v[key]).filter((g) => g.label !== 'Non classé')[0]?.label || '—';
+  const rows = authorsOf(currentNiche()).map(([author]) => {
+    const list = byAuthor(items, author);
+    const avg = (f) => list.reduce((s, v) => s + (Number(v[f]) || 0), 0) / list.length;
+    return { author, n: list.length, likes: avg('likes'), comments: avg('comments'), eng: list.reduce((s, v) => s + engagement(v), 0) / list.length, topic: best(list, 'topic'), hook: best(list, 'hookType') };
+  }).sort((a, b) => b.eng - a.eng);
+  return `<div class="card" style="margin-bottom:16px"><h3>⚖️ Comparatif des concurrents</h3><div style="overflow-x:auto"><table>
+    <tr><th>Concurrent</th><th class="num">Posts</th><th class="num">👍 moy.</th><th class="num">💬 moy.</th><th class="num">Engagement</th><th>Sujet qui marche le mieux</th><th>Hook qui marche le mieux</th></tr>
+    ${rows.map((r) => `<tr><td><a href="#" data-action="author" data-id="${esc(r.author)}">${esc(r.author)}</a></td><td class="num">${r.n}</td><td class="num">${nf(r.likes)}</td><td class="num">${nf(r.comments)}</td><td class="num">${nf(r.eng)}</td><td>${esc(r.topic)}</td><td>${esc(r.hook)}</td></tr>`).join('')}
+  </table></div><p class="small" style="margin:8px 0 0">Clique sur un nom pour voir son étude détaillée.</p></div>`;
+}
+
 function hookTable(title, list) {
   return `<div class="card"><h3>${title}</h3><div style="overflow-x:auto"><table>
     <tr><th>Hook</th><th>Type</th><th>Auteur</th><th class="num">👍</th><th class="num">💬</th></tr>
@@ -392,11 +435,12 @@ function hookTable(title, list) {
 
 function renderStudy() {
   const niche = currentNiche();
-  const items = ui.data.veille.filter((v) => sameNiche(v.niche, niche));
-  const study = ui.data.analyses.find((a) => sameNiche(a.niche, niche) && a.kind === 'study');
-  const head = `<h2>Étude de marché${niche ? ` · ${esc(niche)}` : ''}</h2>
-    <p class="sub">Ce qui marche chez les concurrents de la niche, d'après ta veille.</p>
-    <div style="margin-bottom:16px">${nicheChips()}</div>`;
+  const nicheAll = ui.data.veille.filter((v) => sameNiche(v.niche, niche));
+  const items = byAuthor(nicheAll, ui.author);
+  const study = ui.data.analyses.find((a) => sameNiche(a.niche, niche) && a.kind === 'study' && (ui.author ? sameNiche(a.author, ui.author) : !a.author));
+  const head = `<h2>Étude de marché${niche ? ` · ${esc(niche)}` : ''}${ui.author ? ` · ${esc(ui.author)}` : ''}</h2>
+    <p class="sub">Ce qui marche chez ${ui.author ? esc(ui.author) : 'les concurrents de la niche'}, d'après ta veille.</p>
+    <div style="margin-bottom:16px">${nicheChips()}${authorChips(niche)}</div>`;
   if (items.length < 5) {
     view.innerHTML = `${head}<div class="card empty">Il faut au moins 5 posts dans la veille ${esc(niche)} (il y en a ${items.length}). <a href="#" data-action="go" data-id="veille">Ajouter de la veille</a></div>`;
     return;
@@ -407,13 +451,14 @@ function renderStudy() {
   view.innerHTML = `${head}
     <div class="kpis">
       <div class="kpi"><div class="n">${items.length}</div><div class="l">posts analysés</div></div>
-      <div class="kpi"><div class="n">${new Set(items.map((v) => v.author).filter(Boolean)).size}</div><div class="l">concurrents</div></div>
+      ${ui.author ? '' : `<div class="kpi"><div class="n">${new Set(items.map((v) => v.author).filter(Boolean)).size}</div><div class="l">concurrents</div></div>`}
       <div class="kpi"><div class="n">${nf(items.reduce((s, v) => s + (Number(v.likes) || 0), 0) / items.length)}</div><div class="l">réactions en moyenne</div></div>
       <div class="kpi"><div class="n">${nf(items.reduce((s, v) => s + (Number(v.comments) || 0), 0) / items.length)}</div><div class="l">commentaires en moyenne</div></div>
       ${hookFreq ? `<div class="kpi"><div class="n" style="font-size:18px;padding:5px 0">${esc(hookFreq.label)}</div><div class="l">hook le plus fréquent (${hookFreq.count} posts)</div></div>` : ''}
     </div>
+    ${!ui.author && authorsOf(niche).length > 1 ? compareTable(nicheAll) : ''}
     <div class="card stack" style="margin-bottom:16px">
-      <div class="row between"><h3 style="margin:0">🧠 Le feedback de l'étude</h3>
+      <div class="row between"><h3 style="margin:0">🧠 Le feedback de l'étude${ui.author ? ` · ${esc(ui.author)}` : ''}</h3>
         <button class="btn ${study ? '' : 'primary'} sm" data-action="study">${study ? 'Mettre à jour' : 'Générer le feedback'}</button></div>
       ${study ? `<div class="small">Basé sur ${study.count || '?'} posts · ${fmtDate(study.createdAt)}</div><div class="feedback">${esc(study.content)}</div>`
         : '<p class="small" style="margin:0">L\'IA lit les chiffres ci-dessous et te dit ce qui marche, ce qui marche moins, les hooks qui reviennent et quoi faire dans tes posts.</p>'}
@@ -643,7 +688,9 @@ const actions = {
     toast(p.status === 'published' ? 'Publié sur LinkedIn ✅' : p.error, p.status !== 'published');
   },
 
-  niche(n) { ui.niche = n; render(); },
+  niche(n) { ui.niche = n; ui.author = ''; render(); },
+  author(a) { ui.author = a || ''; render(); window.scrollTo(0, 0); },
+  inspire(a) { ui.inspireFrom = a || ''; store.set('inspireFrom', ui.inspireFrom); render(); },
   async paste() {
     const text = $('#pasteText').value;
     const niche = $('#pasteNiche').value.trim();
@@ -670,7 +717,7 @@ const actions = {
   async study(_id, btn) {
     btn.disabled = true;
     btn.textContent = 'Analyse en cours…';
-    try { await api('POST', '/api/study', { niche: currentNiche() }); } finally { await refresh(); }
+    try { await api('POST', '/api/study', { niche: currentNiche(), author: ui.author }); } finally { await refresh(); }
     toast('Feedback de l\'étude prêt');
   },
 

@@ -30,10 +30,26 @@ export function workingPosts(items) {
   return [...examples, ...scraped.slice(0, keep)];
 }
 
-export function pickExamples(veille, niche) {
-  const sorted = workingPosts(veille).sort((a, b) => score(b) - score(a));
-  const mine = sorted.filter((v) => sameNiche(v.niche, niche)).slice(0, 6);
-  const others = sorted.filter((v) => !sameNiche(v.niche, niche)).slice(0, 3);
+// Prend les meilleurs posts de CHAQUE concurrent à tour de rôle (le n°1 de Mattéo, le n°1 d'Amina, le n°2 de Mattéo…)
+// pour qu'aucun ne prenne toute la place.
+export function balancedTop(items, n) {
+  const byAuthor = new Map();
+  for (const v of [...items].sort((a, b) => score(b) - score(a))) {
+    const k = (v.author || '?').trim().toLowerCase();
+    if (!byAuthor.has(k)) byAuthor.set(k, []);
+    byAuthor.get(k).push(v);
+  }
+  const lists = [...byAuthor.values()];
+  const out = [];
+  for (let i = 0; out.length < n && lists.some((l) => l[i]); i++) for (const l of lists) if (l[i] && out.length < n) out.push(l[i]);
+  return out;
+}
+
+export function pickExamples(veille, niche, author = '') {
+  const pool = workingPosts(veille);
+  const inNiche = pool.filter((v) => sameNiche(v.niche, niche) && (!author || sameNiche(v.author, author)));
+  const mine = balancedTop(inNiche, 12);
+  const others = author ? [] : balancedTop(pool.filter((v) => !sameNiche(v.niche, niche)), 3);
   return { mine, others };
 }
 
@@ -88,15 +104,15 @@ export async function testKey(settings) {
   return model;
 }
 
-export async function writePost(settings, { client, module, subject, format, veille = [], analysis, previous, feedback, inspiration, avoidThemes = [], instruction = '' }) {
-  const { mine, others } = pickExamples(veille, client.niche);
+export async function writePost(settings, { client, module, subject, format, veille = [], analysis, previous, feedback, inspiration, avoidThemes = [], instruction = '', author = '' }) {
+  const { mine, others } = pickExamples(veille, client.niche, author);
   const system = [
     module?.instructions ? `# Méthode d'écriture (module « ${module.name} »)\n${module.instructions}` : '',
     module?.knowledge ? `# Connaissances du module\n${module.knowledge}` : '',
     `# Brief client\n${clientBrief(client)}`,
     analysis ? `# Ce qui marche dans la niche (étude de marché)\n${analysis.slice(0, 4000)}` : '',
     client.feedbackLog?.length ? `# Retours précédents de l'auteur (à respecter absolument)\n${client.feedbackLog.slice(-15).map((f) => `- ${f.text}`).join('\n')}` : '',
-    mine.length ? `# Posts qui performent dans la niche du client (s'inspirer des hooks, structures et formats, ne jamais copier)\n${fmtExamples(mine)}` : '',
+    mine.length ? `# Posts qui performent le mieux chez ${author ? `le concurrent ${author}` : 'les concurrents de la niche'} (étude de marché : s'inspirer de leurs hooks, structures, formats et sujets qui marchent, ne jamais copier)\n${fmtExamples(mine)}` : '',
     others.length ? `# Posts qui performent dans d'autres niches (reprendre uniquement les mécaniques : hook, rythme, format)\n${fmtExamples(others)}` : '',
     RULES,
   ].filter(Boolean).join('\n\n');
@@ -159,7 +175,7 @@ export async function extractPosts(settings, { text, niche, knownTopics = [] }) 
   const system = `Tu extrais des posts LinkedIn à partir d'un copier-coller brut (posts isolés ou page « Activité » d'un profil, avec du bruit : menus, boutons, « J'aime », « Commenter »…).
 Réponds en JSON : { "posts": [ { "author": "", "hook": "", "excerpt": "", "likes": 0, "comments": 0, "reposts": 0, "length": 0, "topic": "", "hookType": "", "format": "" } ] }
 - hook : la ou les 2 premières lignes du post, telles quelles.
-- excerpt : le début du post, 500 caractères maximum, texte exact.
+- excerpt : le texte du post, 1 200 caractères maximum, texte exact.
 - likes / comments / reposts : nombres lus dans le texte (« 1 234 », « 1,2k » = 1200), 0 si absent.
 - length : nombre approximatif de caractères du post complet.
 - topic : le sujet en 1 à 3 mots, en français. Réutilise si possible un de ces sujets : ${knownTopics.slice(0, 40).join(', ') || '(aucun pour l\'instant)'}.

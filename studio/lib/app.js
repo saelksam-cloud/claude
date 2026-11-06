@@ -5,7 +5,7 @@ import {
   pickClientFields, pickPostFields, loadSettings, saveSettings, publicSettings,
 } from './store.js';
 import * as linkedin from './linkedin.js';
-import { writePost, analyzeNiche, testKey, hookPass, extractPosts, studyFeedback } from './ai.js';
+import { writePost, analyzeNiche, testKey, hookPass, extractPosts, studyFeedback, balancedTop } from './ai.js';
 import { engagement, statsText } from './stats.js';
 import * as apify from './apify.js';
 
@@ -360,16 +360,17 @@ const findModule = (settings, id) => settings.modules.find((m) => m.id === id) |
 const moduleByRole = (settings, role) =>
   settings.modules.find((m) => m.role === role) || settings.modules.find((m) => new RegExp(role === 'hooker' ? 'hook' : 'content', 'i').test(m.name)) || null;
 const nicheItems = (db, niche) => db.veille.filter((v) => niche && (v.niche || '').trim().toLowerCase() === niche.trim().toLowerCase());
-const topHooks = (db, niche) => nicheItems(db, niche).filter((v) => v.hook).sort((a, b) => engagement(b) - engagement(a)).slice(0, 12).map((v) => v.hook);
+const byAuthor = (items, author) => (author ? items.filter((v) => (v.author || '').trim().toLowerCase() === author.trim().toLowerCase()) : items);
+const topHooks = (db, niche, author = '') => balancedTop(byAuthor(nicheItems(db, niche), author).filter((v) => v.hook), 20).map((v) => v.hook);
 
 async function writeFull(db, settings, client, opts) {
   const content = opts.moduleId ? findModule(settings, opts.moduleId) : moduleByRole(settings, 'content');
   const out = await writePost(settings, {
-    client, module: content, veille: db.veille, analysis: latestAnalysis(db, client.niche),
+    client, module: content, veille: db.veille, analysis: latestAnalysis(db, client.niche, opts.author),
     avoidThemes: db.posts.filter((p) => p.clientId === client.id).map((p) => p.theme).filter(Boolean), ...opts,
   });
   const hooker = moduleByRole(settings, 'hooker');
-  const hooks = topHooks(db, client.niche);
+  const hooks = topHooks(db, client.niche, opts.author);
   if (hooker || hooks.length) out.text = await hookPass(settings, { text: out.text, module: hooker, topHooks: hooks });
   return { ...out, used: [content?.name, hooker?.name].filter(Boolean) };
 }
@@ -400,14 +401,19 @@ function nextFreeSlot(db, clientId) {
   return null;
 }
 
-const latestAnalysis = (db, niche) => db.analyses.find((a) => niche && (a.niche || '').toLowerCase() === niche.toLowerCase())?.content;
+// Étude du concurrent choisi si elle existe, sinon l'étude de toute la niche.
+const latestAnalysis = (db, niche, author = '') => {
+  const ofNiche = db.analyses.filter((a) => niche && (a.niche || '').toLowerCase() === niche.toLowerCase());
+  const pick = (author && ofNiche.find((a) => (a.author || '').toLowerCase() === author.toLowerCase())) || ofNiche.find((a) => !a.author);
+  return pick?.content;
+};
 
 route('POST', '/api/generate', async ({ db, settings, body }) => {
   const client = db.clients.find((c) => c.id === body.clientId);
   if (!client) throw new HttpError(404, 'Client introuvable');
   const inspiration = body.inspirationId ? db.veille.find((v) => v.id === body.inspirationId) : null;
   const { text, theme, used } = await writeFull(db, settings, client, {
-    subject: body.subject, format: body.format, inspiration, instruction: body.instruction || '', moduleId: body.moduleId,
+    subject: body.subject, format: body.format, inspiration, instruction: body.instruction || '', moduleId: body.moduleId, author: body.author || '',
   });
   const scheduledAt = body.scheduledAt && !Number.isNaN(Date.parse(body.scheduledAt)) ? body.scheduledAt : nextFreeSlot(db, client.id);
   const [post] = importPosts(db, client.id, [{ text, theme, format: body.format || 'Texte', scheduledAt }]);
@@ -454,12 +460,13 @@ route('POST', '/api/veille/paste', async ({ db, settings, body }) => {
 // ---------- Étude de marché : retour écrit par l'IA ----------
 route('POST', '/api/study', async ({ db, settings, body }) => {
   const niche = String(body.niche || '').trim();
-  const items = nicheItems(db, niche);
-  if (items.length < 5) throw new HttpError(400, `Il faut au moins 5 posts dans la veille « ${niche || '—'} » (il y en a ${items.length}).`);
+  const author = String(body.author || '').trim();
+  const items = byAuthor(nicheItems(db, niche), author);
+  if (items.length < 5) throw new HttpError(400, `Il faut au moins 5 posts dans la veille « ${author || niche || '—'} » (il y en a ${items.length}).`);
   const sorted = [...items].sort((a, b) => engagement(b) - engagement(a));
   const pick = (v) => ({ ...v, hook: v.hook || v.text.split('\n')[0] });
-  const content = await studyFeedback(settings, { niche, stats: statsText(items), top: sorted.slice(0, 10).map(pick), flop: sorted.slice(-6).map(pick) });
-  const item = { id: newId('ana'), niche, content, kind: 'study', count: items.length, createdAt: now() };
+  const content = await studyFeedback(settings, { niche: author ? `${niche} — concurrent : ${author}` : niche, stats: statsText(items), top: sorted.slice(0, 10).map(pick), flop: sorted.slice(-6).map(pick) });
+  const item = { id: newId('ana'), niche, author, content, kind: 'study', count: items.length, createdAt: now() };
   db.analyses.unshift(item);
   return json(item);
 });
