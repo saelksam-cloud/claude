@@ -1,8 +1,9 @@
 // Rédaction par IA via l'API OpenAI (clé saisie dans Réglages).
 // La veille (exemples + posts des profils analysés) est partagée entre tous les clients :
 // on prend d'abord les exemples de la niche du client, puis les meilleurs des autres niches.
-const DEFAULT_MODEL = 'gpt-5';
-const FALLBACK_MODELS = ['gpt-4.1', 'gpt-4o-mini'];
+// gpt-4.1 : rapide et bon rédacteur (les fonctions Netlify sont limitées à 60 s par appel).
+const DEFAULT_MODEL = 'gpt-4.1';
+const FALLBACK_MODELS = ['gpt-5-mini', 'gpt-4o-mini'];
 
 function clientBrief(c) {
   return [
@@ -21,8 +22,16 @@ function clientBrief(c) {
 const score = (v) => (Number(String(v.likes).replace(/\D/g, '')) || 0) + 2 * (Number(String(v.comments).replace(/\D/g, '')) || 0);
 const sameNiche = (a, b) => a && b && a.trim().toLowerCase() === b.trim().toLowerCase();
 
+// « Posts qui marchent » : tes exemples (choisis à la main) + le top 40 % des posts concurrents.
+export function workingPosts(items) {
+  const examples = items.filter((v) => v.source !== 'profile');
+  const scraped = items.filter((v) => v.source === 'profile').sort((a, b) => score(b) - score(a));
+  const keep = Math.max(Math.min(3, scraped.length), Math.ceil(scraped.length * 0.4));
+  return [...examples, ...scraped.slice(0, keep)];
+}
+
 export function pickExamples(veille, niche) {
-  const sorted = [...veille].sort((a, b) => score(b) - score(a));
+  const sorted = workingPosts(veille).sort((a, b) => score(b) - score(a));
   const mine = sorted.filter((v) => sameNiche(v.niche, niche)).slice(0, 6);
   const others = sorted.filter((v) => !sameNiche(v.niche, niche)).slice(0, 3);
   return { mine, others };
@@ -111,9 +120,9 @@ export async function writePost(settings, { client, module, subject, format, vei
 }
 
 export async function analyzeNiche(settings, niche, items) {
-  const sorted = [...items].sort((a, b) => score(b) - score(a)).slice(0, 25);
+  const sorted = workingPosts(items).sort((a, b) => score(b) - score(a)).slice(0, 25);
   const system = "Tu es un expert en contenu LinkedIn. Tu analyses des posts qui performent pour en extraire des règles d'écriture réutilisables. Réponds en français, en texte simple (pas de markdown lourd), de façon concrète et actionnable.";
-  const user = `Niche : ${niche || 'toutes niches'}\n\nAnalyse ces ${sorted.length} posts (triés par engagement) et donne :
+  const user = `Niche : ${niche || 'toutes niches'}\n\nÉtude de marché : voici les ${sorted.length} posts qui marchent le mieux chez les concurrents et dans la niche (triés par engagement). Donne :
 1. Les 5 types de hooks qui marchent le mieux (avec un exemple réécrit pour chacun)
 2. Les structures de post récurrentes
 3. Longueur, rythme et mise en forme

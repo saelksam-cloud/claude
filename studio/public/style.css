@@ -200,3 +200,16 @@ a.btn { text-decoration: none; color: var(--text); }
 .voice-wrap .mic { align-self: flex-start; }
 .mic.rec { background: #3A1515; border-color: var(--danger); color: #FFB1B1; animation: pulse 1.2s ease-in-out infinite; }
 @keyframes pulse { 50% { box-shadow: 0 0 0 6px rgba(239, 90, 90, .15); } }
+
+.voice-wrap.inline { flex-direction: row; align-items: center; }
+.voice-wrap.inline input { flex: 1; min-width: 0; }
+.voice-wrap.inline .mic { align-self: center; padding: 6px 9px; }
+
+/* Tâche en cours */
+#job:empty { display: none; }
+.job { max-width: 1200px; margin: 16px auto 0; padding: 14px 16px; border-radius: 12px; background: #161F45; border: 1px solid var(--accent); display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+.job > div:first-child { flex: 1; min-width: 200px; }
+.progress { flex: 1; min-width: 160px; height: 8px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
+.progress span { display: block; height: 100%; background: var(--accent); transition: width .3s; }
+details.item summary { list-style: none; cursor: pointer; }
+details.item summary::-webkit-details-marker { display: none; }

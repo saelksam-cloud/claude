@@ -23,6 +23,7 @@ const ui = {
   clientId: store.get('clientId', null),
   view: store.get('view', 'clients'),
   search: '',
+  onlyWorking: true,
   filter: 'all',
   editing: new Set(),
   expanded: new Set(),
@@ -100,6 +101,8 @@ function render() {
   const views = { clients: renderClients, posts: renderPosts, calendar: renderCalendar, veille: renderVeille, client: renderClient, settings: renderSettings };
   if (!client() && !['clients', 'settings'].includes(ui.view)) ui.view = 'clients';
   (views[ui.view] || renderClients)();
+  enhanceVoice(view);
+  renderJob();
 }
 
 // ---------- Validation ----------
@@ -125,10 +128,12 @@ function renderPosts() {
       </div>
       <div class="group">
         ${reviewable.length ? `<button class="btn ok" data-action="bulk-approve">✓ Valider les ${reviewable.length} posts « à valider »</button>` : ''}
-        <button class="btn" data-action="import">Importer (JSON)</button>
-        <button class="btn" data-action="ai-write">✨ Écrire avec l'IA</button>
+        <button class="btn primary" data-action="month">⚡ Générer le mois en 1 clic</button>
+        <button class="btn" data-action="one-post">⚡ 1 post</button>
+        <button class="btn" data-action="ai-write">✨ Sur un sujet</button>
         <button class="btn" data-action="redo-all">🔁 Refaire les posts</button>
-        <button class="btn primary" data-action="new-post">+ Nouveau post</button>
+        <button class="btn" data-action="new-post">+ Post vide</button>
+        <button class="btn ghost" data-action="import">Importer (JSON)</button>
       </div>
     </div>
     ${shown.length ? shown.map(renderPost).join('') : '<p class="empty">Aucun post ici.</p>'}`;
@@ -232,60 +237,104 @@ function renderCalendar() {
 }
 
 // ---------- Veille ----------
+const scoreOf = (v) => (Number(String(v.likes).replace(/\D/g, '')) || 0) + 2 * (Number(String(v.comments).replace(/\D/g, '')) || 0);
+const sameNiche = (a, b) => (a || '').trim().toLowerCase() === (b || '').trim().toLowerCase();
+const allNiches = () => [...new Set([...ui.data.clients.map((c) => c.niche), ...ui.data.veille.map((v) => v.niche), ...ui.data.profiles.map((p) => p.niche)]
+  .map((n) => (n || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'));
+const nicheDatalist = () => `<datalist id="nicheList">${allNiches().map((n) => `<option value="${esc(n)}">`).join('')}</datalist>`;
+
+// Même règle que le serveur : tes exemples + le top 40 % des posts concurrents.
+function workingIds(items) {
+  const scraped = items.filter((v) => v.source === 'profile').sort((a, b) => scoreOf(b) - scoreOf(a));
+  const keep = Math.max(Math.min(3, scraped.length), Math.ceil(scraped.length * 0.4));
+  return new Set([...items.filter((v) => v.source !== 'profile'), ...scraped.slice(0, keep)].map((v) => v.id));
+}
+
 function renderVeille() {
-  const items = ui.data.veille.filter((v) => v.clientId === ui.clientId);
-  const analyses = ui.data.analyses.filter((a) => a.clientId === ui.clientId);
+  if (ui.niche === undefined) ui.niche = client()?.niche || '';
+  const inNiche = (x) => !ui.niche || sameNiche(x.niche, ui.niche);
+  const items = ui.data.veille.filter(inNiche);
+  const working = workingIds(items);
+  const shown = (ui.onlyWorking ? items.filter((v) => working.has(v.id)) : items).sort((a, b) => scoreOf(b) - scoreOf(a));
+  const profiles = ui.data.profiles.filter(inNiche);
+  const analyses = ui.data.analyses.filter(inNiche);
+  const st = ui.data.settings;
+  const c = client();
+  const statusBadge = { running: '<span class="badge s-review">Analyse en cours…</span>', done: '<span class="badge s-published">Analysé</span>', error: '<span class="badge s-rejected">Erreur</span>', new: '<span class="badge s-draft">En attente</span>' };
+
   view.innerHTML = `
-    <h2>Veille</h2>
-    <p class="sub">Colle ici les posts LinkedIn qui performent dans la niche. Ensuite « Copier pour Claude » : colle le résultat dans ta conversation avec Claude, il en tirera les patterns et les posts du mois suivant.</p>
+    ${nicheDatalist()}
+    <h2>Veille & étude de marché</h2>
+    <p class="sub">La veille est partagée entre tous tes clients et classée par niche (BTP, consulting, ghostwriting…). Les posts d'une niche servent à tous les clients de cette niche ; les mécaniques des autres niches servent d'inspiration à tout le monde.</p>
+    <div class="toolbar"><div class="group">
+      <button class="chip ${!ui.niche ? 'active' : ''}" data-action="set-niche" data-id="">Toutes<b>${ui.data.veille.length}</b></button>
+      ${allNiches().map((n) => `<button class="chip ${sameNiche(n, ui.niche) ? 'active' : ''}" data-action="set-niche" data-id="${esc(n)}">${esc(n)}<b>${ui.data.veille.filter((v) => sameNiche(v.niche, n)).length}</b></button>`).join('')}
+    </div></div>
     <div class="two-col">
       <div>
+        <form class="panel stack" id="profileForm">
+          <h3>🔎 Analyser un concurrent</h3>
+          <p class="sub" style="margin:0">Colle le lien d'un profil LinkedIn : l'app récupère ses posts et repère ceux qui marchent.${st.hasApifyToken ? '' : ' <b>Nécessite une clé Apify (Réglages).</b>'}</p>
+          <input name="url" placeholder="https://www.linkedin.com/in/…" required>
+          <input name="niche" list="nicheList" placeholder="Niche (ex. BTP)" value="${esc(ui.niche)}" data-novoice>
+          <button class="btn primary" type="submit">Analyser ce profil</button>
+        </form>
         <form class="panel stack" id="veilleForm">
-          <h3>Ajouter un post repéré</h3>
-          <input name="author" placeholder="Auteur (ex. Marie Dupont, DG d'une PME BTP)">
+          <h3>⭐ Ajouter un exemple qui marche</h3>
+          <p class="sub" style="margin:0">Un post dont tu veux que l'IA s'inspire en priorité.</p>
+          <input name="niche" list="nicheList" placeholder="Niche (ex. BTP)" value="${esc(ui.niche)}" data-novoice>
+          <input name="author" placeholder="Auteur">
           <input name="url" placeholder="Lien du post (facultatif)">
           <div class="grid2"><input name="likes" placeholder="Réactions" inputmode="numeric"><input name="comments" placeholder="Commentaires" inputmode="numeric"></div>
-          <textarea name="text" rows="8" placeholder="Texte complet du post" required></textarea>
+          <textarea name="text" rows="7" placeholder="Texte complet du post" required></textarea>
           <input name="notes" placeholder="Pourquoi il marche selon toi ? (facultatif)">
           <button class="btn primary" type="submit">Ajouter à la veille</button>
-        </form>
-        <form class="panel stack" id="analysisForm">
-          <h3>Enregistrer une analyse de Claude</h3>
-          <textarea name="content" rows="6" placeholder="Colle ici l'analyse (hooks, structures, formats gagnants…)"></textarea>
-          <button class="btn" type="submit">Enregistrer l'analyse</button>
         </form>
       </div>
       <div>
         <div class="panel">
-          <div class="toolbar" style="margin-bottom:8px"><h3 style="margin:0">${items.length} post(s) en veille</h3>
-            ${items.length ? '<button class="btn primary small" data-action="copy-veille">Copier pour Claude</button>' : ''}</div>
-          ${items.length ? items.map((v) => `
+          <div class="toolbar" style="margin-bottom:8px"><h3 style="margin:0">🧠 Étude de marché${ui.niche ? ` — ${esc(ui.niche)}` : ''}</h3>
+            <div class="group">
+              <button class="btn small primary" data-action="analyze">Lancer l'étude (IA)</button>
+              <button class="btn small" data-action="copy-veille">📋 Copier pour mon GPT</button>
+            </div></div>
+          ${analyses.length ? analyses.map((a, k) => `
+            <details class="item" ${k === 0 ? 'open' : ''}><summary class="top"><span>${fmtDate(a.createdAt)}${a.niche ? ` · ${esc(a.niche)}` : ''}</span><button class="btn small ghost" data-action="del-analysis" data-id="${a.id}">Supprimer</button></summary>
+            <div class="txt" style="max-height:none">${esc(a.content)}</div></details>`).join('') : '<p class="sub" style="margin:0">Pas encore d\'étude pour cette niche. Il faut au moins 3 posts en veille.</p>'}
+        </div>
+        ${profiles.length ? `<div class="panel"><h3>Concurrents suivis (${profiles.length})</h3>${profiles.map((p) => `
+          <div class="item"><div class="top"><span><b style="color:var(--text)">${esc(p.name || p.url.replace(/^https:\/\/(www\.)?linkedin\.com\//, ''))}</b> · ${esc(p.niche || 'sans niche')} · ${p.postCount || 0} posts</span>
+            <span style="display:flex;gap:6px;align-items:center">${statusBadge[p.status] || ''}
+            <button class="btn small ghost" data-action="rerun-profile" data-id="${p.id}">Relancer</button>
+            <button class="btn small ghost" data-action="del-profile" data-id="${p.id}">Retirer</button></span></div>
+            ${p.error ? `<div class="alert err">${esc(p.error)}</div>` : ''}</div>`).join('')}</div>` : ''}
+        <div class="panel">
+          <div class="toolbar" style="margin-bottom:8px"><h3 style="margin:0">${shown.length} post(s)${ui.onlyWorking ? ' qui marchent' : ''}</h3>
+            <label class="chip" style="cursor:pointer"><input type="checkbox" data-action="toggle-working" ${ui.onlyWorking ? 'checked' : ''} style="width:auto;margin-right:6px">Seulement ceux qui marchent</label></div>
+          ${shown.length ? shown.map((v) => `
             <div class="item">
-              <div class="top"><span><b style="color:var(--text)">${esc(v.author || 'Auteur inconnu')}</b> · 👍 ${esc(v.likes || '?')} · 💬 ${esc(v.comments || '?')} ${v.url ? `· <a href="${esc(v.url)}" target="_blank" rel="noopener">voir</a>` : ''}</span>
-              <button class="btn small ghost" data-action="del-veille" data-id="${v.id}">Supprimer</button></div>
+              <div class="top"><span>${v.source === 'profile' ? '🔎' : '⭐'} <b style="color:var(--text)">${esc(v.author || 'Auteur inconnu')}</b> · 👍 ${esc(v.likes || '?')} · 💬 ${esc(v.comments || '?')}${v.niche ? ` · ${esc(v.niche)}` : ''}${working.has(v.id) && v.source === 'profile' ? ' · <span style="color:var(--ok)">top</span>' : ''} ${v.url ? `· <a href="${esc(v.url)}" target="_blank" rel="noopener">voir</a>` : ''}</span>
+              <span style="display:flex;gap:6px">${c ? `<button class="btn small" data-action="decline" data-id="${v.id}">⚡ Décliner pour ${esc(c.name)}</button>` : ''}
+              <button class="btn small ghost" data-action="del-veille" data-id="${v.id}">Supprimer</button></span></div>
               <div class="txt">${esc(v.text)}</div>
               ${v.notes ? `<div class="top" style="margin-top:6px">📝 ${esc(v.notes)}</div>` : ''}
-            </div>`).join('') : '<p class="empty">Aucun post pour l\'instant. Vise 10 à 20 posts récents avec beaucoup d\'engagement.</p>'}
+            </div>`).join('') : '<p class="empty">Aucun post. Ajoute des exemples ou analyse des concurrents.</p>'}
         </div>
-        ${analyses.length ? `<div class="panel"><h3>Analyses</h3>${analyses.map((a) => `
-          <div class="item"><div class="top"><span>${fmtDate(a.createdAt)}</span><button class="btn small ghost" data-action="del-analysis" data-id="${a.id}">Supprimer</button></div>
-          <div class="txt">${esc(a.content)}</div></div>`).join('')}</div>` : ''}
       </div>
     </div>`;
 }
 
 function veillePrompt() {
+  const items = ui.data.veille.filter((v) => !ui.niche || sameNiche(v.niche, ui.niche));
+  const top = items.filter((v) => workingIds(items).has(v.id)).sort((a, b) => scoreOf(b) - scoreOf(a)).slice(0, 25);
   const c = client();
-  const items = ui.data.veille.filter((v) => v.clientId === ui.clientId);
-  return `Voici ma veille LinkedIn pour mon client ${c.name}${c.company ? ` (${c.company})` : ''}, secteur : ${c.sector}.
-Cible : ${c.audience}
-Ton : ${c.tone}
+  return `Étude de marché LinkedIn — niche : ${ui.niche || 'toutes'}.
+Voici les ${top.length} posts qui marchent le mieux chez les concurrents.
 
-1. Analyse ces ${items.length} posts : hooks, structures, longueurs, formats et CTA qui fonctionnent.
-2. Rédige ensuite les posts du mois prochain dans la voix du client, au format JSON importable dans Link Motion Studio :
-{ "posts": [ { "scheduledAt": "AAAA-MM-JJTHH:MM:00+01:00", "theme": "", "format": "", "visualIdea": "", "text": "" } ] }
+1. Analyse les hooks, structures, longueurs, formats et fins de post qui fonctionnent.
+2. Écris ensuite des posts dans ce style pour ${c?.name || 'mon client'}${c?.company ? ` (${c.company})` : ''}${c?.audience ? `, cible : ${c.audience}` : ''}. Sépare chaque post par une ligne « === POST n === ».
 
-${items.map((v, i) => `--- Post ${i + 1} — ${v.author || 'auteur inconnu'} (👍 ${v.likes || '?'} · 💬 ${v.comments || '?'})${v.notes ? `\nMa note : ${v.notes}` : ''}\n${v.text}`).join('\n\n')}`;
+${top.map((v, i) => `--- Post ${i + 1} — ${v.author || 'auteur inconnu'} (👍 ${v.likes || '?'} · 💬 ${v.comments || '?'})\n${v.text}`).join('\n\n')}`;
 }
 
 // ---------- Clients ----------
@@ -306,9 +355,9 @@ function renderClients() {
     <div class="client-grid">
       ${ui.data.clients.map((c) => {
         const st = clientStats(c);
-        return `<article class="client-card ${c.id === ui.clientId ? 'current' : ''}" data-search="${esc(`${c.name} ${c.company} ${c.sector}`.toLowerCase())}">
+        return `<article class="client-card ${c.id === ui.clientId ? 'current' : ''}" data-search="${esc(`${c.name} ${c.company} ${c.sector} ${c.niche}`.toLowerCase())}">
           <div class="cc-head"><div class="li-avatar">${initials(c.name)}</div>
-            <div><div class="cc-name">${esc(c.name || 'Sans nom')}</div><div class="cc-sub">${esc(c.company || '')}${c.sector ? ` · ${esc(c.sector)}` : ''}</div></div></div>
+            <div><div class="cc-name">${esc(c.name || 'Sans nom')}</div><div class="cc-sub">${esc(c.company || '')}${c.niche ? ` · ${esc(c.niche)}` : ''}</div></div></div>
           <div class="cc-stats"><span><b>${st.review}</b> à valider</span><span><b>${st.approved}</b> programmés</span><span><b>${st.published}</b> publiés</span></div>
           <div class="cc-sub">${c.linkedin.connected ? `<span class="badge s-published">LinkedIn connecté</span>` : `<span class="badge s-draft">LinkedIn non connecté</span>`}
             ${st.next ? ` · prochain post ${new Date(st.next.scheduledAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}` : ''}</div>
@@ -362,7 +411,18 @@ function renderSettings() {
         <h3>2. Clé API OpenAI (ChatGPT) ${st.hasOpenaiKey ? '<span class="badge s-published">Enregistrée</span>' : '<span class="badge s-draft">Facultatif</span>'}</h3>
         <p class="sub" style="margin:0">Pour que l'app écrive et réécrive les posts elle-même avec tes modules. Crée une clé sur <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com/api-keys</a> (facturation à l'usage, séparée de l'abonnement ChatGPT Plus).</p>
         <label class="f">Clé API<input name="openaiKey" type="password" placeholder="${st.hasOpenaiKey ? `Enregistrée ${esc(st.openaiKeyHint)} (laisser vide pour garder)` : 'sk-…'}" autocomplete="new-password"></label>
-        <label class="f">Modèle OpenAI (nom technique, pas le nom de ton GPT : laisse vide si tu ne sais pas)<input name="openaiModel" value="${esc(st.openaiModel)}" placeholder="gpt-5 (par défaut)"></label>
+        <label class="f">Modèle OpenAI (nom technique, pas le nom de ton GPT : laisse vide si tu ne sais pas)<input name="openaiModel" value="${esc(st.openaiModel)}" placeholder="gpt-4.1 (par défaut)"></label>
+        <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">
+          ${st.hasOpenaiKey ? '<button type="button" class="btn" data-action="test-openai">Tester la clé</button>' : ''}
+          <button class="btn primary" type="submit">Enregistrer</button>
+        </div>
+      </form>
+
+      <form class="panel stack" id="apifyForm">
+        <h3>4. Clé Apify (analyse des concurrents) ${st.hasApifyToken ? '<span class="badge s-published">Enregistrée</span>' : '<span class="badge s-draft">Facultatif</span>'}</h3>
+        <p class="sub" style="margin:0">Apify récupère les posts publics des profils concurrents (ton compte LinkedIn n'est jamais utilisé). Crée un compte sur <a href="https://console.apify.com/sign-up" target="_blank" rel="noopener">apify.com</a>, puis <b>Settings → API &amp; Integrations</b> → copie le « Personal API token ». Environ 2 $ pour 1 000 posts récupérés.</p>
+        <label class="f">Token Apify<input name="apifyToken" type="password" placeholder="${st.hasApifyToken ? 'Enregistré ✓ (laisser vide pour garder)' : 'apify_api_…'}" autocomplete="new-password"></label>
+        <label class="f">Robot Apify (laisse vide sauf si je te dis de changer)<input name="apifyActor" value="${esc(st.apifyActor)}" placeholder="harvestapi/linkedin-profile-posts"></label>
         <button class="btn primary" type="submit" style="align-self:flex-end">Enregistrer</button>
       </form>
     </div>
@@ -445,7 +505,7 @@ async function relay({ title, posts, instruction, module, step = '' }) {
         <button type="button" class="btn small primary" data-action="copy-brief">📋 Copier le brief</button>
         <a class="btn small" href="${esc(gptUrl)}" target="_blank" rel="noopener">↗ Ouvrir ${module ? esc(module.name) : 'mes GPTs'}</a>
       </div>
-      <label class="f">Réponse du GPT<textarea name="answer" rows="9" placeholder="Colle ici tout ce que le GPT a répondu"></textarea></label>
+      <label class="f">Réponse du GPT<textarea name="answer" rows="9" placeholder="Colle ici tout ce que le GPT a répondu" data-novoice></textarea></label>
     </div>
     <div class="actions"><button class="btn ghost" value="cancel">Annuler</button><button class="btn primary" value="ok">Enregistrer</button></div>`;
   dlg.showModal();
@@ -501,6 +561,7 @@ function renderClient() {
       <form class="panel stack" id="clientForm">
         <h3>Fiche voix du client</h3>
         <div class="grid2">${field('name', 'Nom (auteur des posts)')}${field('company', 'Entreprise')}</div>
+        <label class="f">Niche (sert à choisir la veille : BTP, Consulting, Ghostwriting…)<input name="niche" list="nicheList" value="${esc(c.niche || '')}" data-novoice></label>${nicheDatalist()}
         ${field('sector', 'Secteur')}
         ${field('offer', 'Offre / ce que vend le client', 2)}
         ${field('audience', 'Cible des posts', 2)}
@@ -519,15 +580,13 @@ function ask({ title, intro = '', fields, submit = 'OK' }) {
   const control = (f) => {
     if (f.options) return `<select name="${f.name}">${f.options.map((o) => `<option value="${esc(o.value)}" ${o.value === f.value ? 'selected' : ''}>${esc(o.label)}</option>`).join('')}</select>`;
     if (f.rows) {
-      const ta = `<textarea name="${f.name}" rows="${f.rows}" placeholder="${esc(f.placeholder || '')}">${esc(f.value || '')}</textarea>`;
-      return SpeechRec && f.name !== 'json'
-        ? `<div class="voice-wrap">${ta}<button type="button" class="btn small mic" data-action="dictate">🎤 Dicter</button></div>`
-        : ta;
+      return `<textarea name="${f.name}" rows="${f.rows}" placeholder="${esc(f.placeholder || '')}">${esc(f.value || '')}</textarea>`;
     }
     return `<input name="${f.name}" type="${f.type || 'text'}" value="${esc(f.value || '')}" placeholder="${esc(f.placeholder || '')}">`;
   };
   form.innerHTML = `<h3>${title}</h3>${intro ? `<p class="sub" style="margin:0 0 12px">${intro}</p>` : ''}<div class="stack">${fields.map((f) => `<label class="f">${f.label}${control(f)}</label>`).join('')}</div>
     <div class="actions"><button class="btn ghost" value="cancel">Annuler</button><button class="btn primary" value="ok">${submit}</button></div>`;
+  enhanceVoice(form);
   dlg.showModal();
   return new Promise((resolve) => {
     dlg.addEventListener('close', () => {
@@ -542,8 +601,23 @@ const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
 let recognition = null;
 const stopDictation = () => recognition?.stop();
 
+// Ajoute un micro à tous les champs où l'on écrit (sauf clés, liens, chiffres…).
+const NO_VOICE = new Set(['url', 'linkedinClientId', 'linkedinClientSecret', 'openaiKey', 'openaiModel', 'apifyToken', 'apifyActor', 'json', 'likes', 'comments', 'password']);
+function enhanceVoice(root = document) {
+  if (!SpeechRec) return;
+  root.querySelectorAll('textarea:not([readonly]), input:not([type]), input[type="text"]').forEach((el) => {
+    if (el.closest('.voice-wrap') || el.hasAttribute('data-novoice') || NO_VOICE.has(el.name) || el.id === 'clientSearch' || el.inputMode === 'numeric') return;
+    const wrap = document.createElement('div');
+    const inline = el.tagName === 'INPUT';
+    wrap.className = `voice-wrap${inline ? ' inline' : ''}`;
+    el.replaceWith(wrap);
+    wrap.append(el);
+    wrap.insertAdjacentHTML('beforeend', `<button type="button" class="btn small mic" data-action="dictate" data-label="${inline ? '🎤' : '🎤 Dicter'}" title="Dicter au micro">${inline ? '🎤' : '🎤 Dicter'}</button>`);
+  });
+}
+
 function startDictation(btn) {
-  const ta = btn.closest('.voice-wrap').querySelector('textarea');
+  const ta = btn.closest('.voice-wrap').querySelector('textarea, input');
   const base = ta.value.trim() ? `${ta.value.trim()} ` : '';
   const rec = new SpeechRec();
   rec.lang = 'fr-FR';
@@ -553,6 +627,7 @@ function startDictation(btn) {
     // On reconstruit tout le texte à chaque résultat : évite les doublons sur mobile.
     ta.value = base + [...e.results].map((res) => res[0].transcript).join(' ').replace(/\s+/g, ' ').trimStart();
     ta.scrollTop = ta.scrollHeight;
+    ta.dispatchEvent(new Event('input', { bubbles: true }));
   };
   rec.onerror = (e) => {
     if (e.error === 'no-speech' || e.error === 'aborted') return;
@@ -561,12 +636,84 @@ function startDictation(btn) {
   rec.onend = () => {
     recognition = null;
     btn.classList.remove('rec');
-    btn.textContent = '🎤 Dicter';
+    btn.textContent = btn.dataset.label || '🎤 Dicter';
   };
   recognition = rec;
   rec.start();
   btn.classList.add('rec');
-  btn.textContent = '⏹ Arrêter la dictée';
+  btn.textContent = btn.closest('.inline') ? '⏹' : '⏹ Arrêter la dictée';
+}
+
+// ---------- Tâches longues : « mois en 1 clic », analyse des concurrents ----------
+const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
+ui.job = null;
+
+function renderJob() {
+  const el = $('#job');
+  if (!el) return;
+  const j = ui.job;
+  el.innerHTML = j ? `<div class="job">
+      <div><b>${esc(j.title)}</b><div class="sub" style="margin:2px 0 0">${esc(j.step)}</div></div>
+      ${j.total ? `<div class="progress"><span style="width:${Math.round((100 * j.done) / j.total)}%"></span></div>` : ''}
+      ${j.finished ? '<button class="btn small" data-action="job-close">Fermer</button>' : '<button class="btn small danger" data-action="job-stop">Arrêter</button>'}
+    </div>` : '';
+}
+const setJob = (patch) => { ui.job = { ...ui.job, ...patch }; renderJob(); };
+
+let polling = false;
+async function pollProfiles(maxMs = 5 * 60_000) {
+  if (polling) return;
+  polling = true;
+  const start = Date.now();
+  try {
+    await refresh();
+    while (ui.data.profiles.some((p) => p.status === 'running') && Date.now() - start < maxMs && !ui.job?.stop) {
+      await sleep(10_000);
+      await api('POST', '/api/profiles/refresh');
+      await refresh();
+    }
+  } finally { polling = false; }
+}
+
+async function generateMonth() {
+  const c = client();
+  const st = ui.data.settings;
+  if (!st.hasOpenaiKey) throw new Error("Le « mois en 1 clic » écrit avec l'API OpenAI : ajoute ta clé (sk-…) dans Réglages.");
+  const total = 20;
+  ui.job = { title: `⚡ Mois de ${c.name}`, step: 'Préparation…', done: 0, total, stop: false };
+  renderJob();
+  try {
+    // 1. Concurrents de la niche : on relance ceux qui datent de plus de 7 jours.
+    const competitors = ui.data.profiles.filter((p) => c.niche && sameNiche(p.niche, c.niche));
+    if (competitors.length && st.hasApifyToken) {
+      const stale = competitors.filter((p) => p.status !== 'running' && (!p.updatedAt || Date.now() - Date.parse(p.updatedAt) > 7 * 86_400_000));
+      setJob({ step: `Étude de la concurrence : ${competitors.length} profil(s) de la niche ${c.niche}…` });
+      for (const p of stale) await api('POST', `/api/profiles/${p.id}/rerun`).catch((e) => toast(e.message, true));
+      await refresh();
+      await pollProfiles(4 * 60_000);
+    }
+    if (ui.job.stop) return;
+    // 2. Étude de marché sur les posts qui marchent.
+    const nicheItems = ui.data.veille.filter((v) => sameNiche(v.niche, c.niche));
+    if (nicheItems.length >= 3) {
+      setJob({ step: `Étude de marché sur ${workingIds(nicheItems).size} posts qui marchent…` });
+      await api('POST', '/api/analyze', { niche: c.niche });
+    } else {
+      toast(`Peu de veille pour la niche « ${c.niche || '—'} » : les posts s'appuieront surtout sur la fiche client.`, true);
+    }
+    // 3. Rédaction et programmation.
+    const moduleId = preferredModuleId();
+    for (let i = 0; i < total && !ui.job.stop; i++) {
+      setJob({ step: `Rédaction du post ${i + 1} / ${total}…`, done: i });
+      await api('POST', '/api/generate', { clientId: c.id, moduleId });
+    }
+    setJob({ done: ui.job.stop ? ui.job.done : total, step: ui.job.stop ? 'Arrêté.' : 'Terminé : les posts sont « à valider ». Relis-les puis valide.', finished: true });
+  } catch (e) {
+    setJob({ step: `Arrêté : ${e.message}`, finished: true });
+    throw e;
+  } finally {
+    await refresh();
+  }
 }
 
 // ---------- actions ----------
@@ -578,6 +725,38 @@ const run = (fn) => async (...args) => {
 };
 
 const actions = {
+  'set-niche'(niche) { ui.niche = niche || ''; render(); },
+  async analyze() {
+    toast("Étude de marché en cours… (jusqu'à une minute)");
+    await api('POST', '/api/analyze', { niche: ui.niche });
+    await refresh();
+    toast('Étude terminée');
+  },
+  async 'del-profile'(id) { await api('DELETE', `/api/profiles/${id}`); await refresh(); },
+  async 'rerun-profile'(id) { await api('POST', `/api/profiles/${id}/rerun`); await refresh(); toast('Analyse relancée'); pollProfiles(); },
+  async decline(id) {
+    toast(`Déclinaison pour ${client().name}…`);
+    const p = await api('POST', '/api/generate', { clientId: ui.clientId, inspirationId: id, moduleId: preferredModuleId() });
+    await refresh();
+    toast('Post créé dans Validation (« à valider »)');
+    return p;
+  },
+  async 'one-post'() {
+    toast("L'IA écrit un post…");
+    const p = await api('POST', '/api/generate', { clientId: ui.clientId, moduleId: preferredModuleId() });
+    ui.filter = 'all';
+    await refresh();
+    actions.goto(p.id);
+    toast('Post écrit et programmé : relis-le');
+  },
+  async month() { await generateMonth(); },
+  'job-stop'() { if (ui.job) setJob({ stop: true, step: 'Arrêt après l\'étape en cours…' }); },
+  'job-close'() { ui.job = null; renderJob(); },
+  async 'test-openai'() {
+    toast('Test de la clé…');
+    const r = await api('POST', '/api/settings/test-openai');
+    toast(`Clé OK ✅ (modèle ${r.model})`);
+  },
   dictate(_id, btn) {
     if (recognition) { stopDictation(); return; }
     startDictation(btn);
@@ -752,7 +931,6 @@ const actions = {
     await refresh();
   },
   async delete(id) {
-    if (!confirm('Supprimer ce post ?')) return;
     await api('DELETE', `/api/posts/${id}`);
     await refresh();
   },
@@ -814,6 +992,7 @@ document.addEventListener('input', (e) => {
 });
 
 document.addEventListener('change', run(async (e) => {
+  if (e.target.matches('[data-action="toggle-working"]')) { ui.onlyWorking = e.target.checked; render(); return; }
   if (e.target.id === 'clientSelect') {
     if (e.target.value === '__new') {
       const r = await ask({ title: 'Nouveau client', submit: 'Créer', fields: [{ name: 'name', label: 'Nom' }, { name: 'company', label: 'Entreprise' }, { name: 'sector', label: 'Secteur' }] });
@@ -853,9 +1032,9 @@ document.addEventListener('submit', run(async (e) => {
     document.body.classList.remove('locked');
     return;
   }
-  if (form.id === 'veilleForm') { await api('POST', '/api/veille', { ...data, clientId: ui.clientId }); toast('Ajouté à la veille'); }
-  if (form.id === 'analysisForm') { await api('POST', '/api/analyses', { ...data, clientId: ui.clientId }); toast('Analyse enregistrée'); }
-  if (form.id === 'linkedinForm' || form.id === 'openaiForm') { await api('PUT', '/api/settings', data); toast('Réglages enregistrés'); }
+  if (form.id === 'veilleForm') { await api('POST', '/api/veille', data); ui.niche = data.niche; toast('Ajouté à la veille'); }
+  if (form.id === 'profileForm') { await api('POST', '/api/profiles', data); ui.niche = data.niche; toast('Analyse lancée : les posts arrivent dans 1 à 3 minutes'); pollProfiles(); }
+  if (form.id === 'linkedinForm' || form.id === 'openaiForm' || form.id === 'apifyForm') { await api('PUT', '/api/settings', data); toast('Réglages enregistrés'); }
   if (form.id === 'modulesForm') {
     const modules = [...form.querySelectorAll('.module')].map((f) => ({
       id: f.dataset.id || undefined,
