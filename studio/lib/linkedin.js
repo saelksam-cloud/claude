@@ -1,13 +1,11 @@
 // Intégration avec l'API officielle LinkedIn (OAuth 2.0 + Posts API).
 // Le client autorise l'app une fois : on ne manipule jamais son mot de passe.
-import fs from 'node:fs';
-
 const API = 'https://api.linkedin.com';
 const SCOPES = ['openid', 'profile', 'w_member_social'];
 
 const version = () => process.env.LINKEDIN_VERSION || '202510';
 export const isConfigured = () => Boolean(process.env.LINKEDIN_CLIENT_ID && process.env.LINKEDIN_CLIENT_SECRET);
-export const publicUrl = () => (process.env.PUBLIC_URL || `http://localhost:${process.env.PORT || 3000}`).replace(/\/$/, '');
+export const publicUrl = () => (process.env.PUBLIC_URL || process.env.URL || 'http://localhost:8888').replace(/\/$/, '');
 export const redirectUri = () => `${publicUrl()}/auth/linkedin/callback`;
 
 export function authUrl(state) {
@@ -67,7 +65,7 @@ export function toLittleText(text) {
   );
 }
 
-async function uploadImage(token, owner, filePath) {
+async function uploadImage(token, owner, imageData) {
   const init = await fetch(`${API}/rest/images?action=initializeUpload`, {
     method: 'POST',
     headers: restHeaders(token),
@@ -78,13 +76,13 @@ async function uploadImage(token, owner, filePath) {
   const put = await fetch(value.uploadUrl, {
     method: 'PUT',
     headers: { Authorization: `Bearer ${token}` },
-    body: fs.readFileSync(filePath),
+    body: imageData,
   });
   await check(put, "Envoi de l'image");
   return value.image;
 }
 
-export async function publish({ accessToken, personUrn }, { text, imagePath, altText }) {
+export async function publish({ accessToken, personUrn }, { text, imageData, altText }) {
   const body = {
     author: personUrn,
     commentary: toLittleText(text),
@@ -93,8 +91,8 @@ export async function publish({ accessToken, personUrn }, { text, imagePath, alt
     lifecycleState: 'PUBLISHED',
     isReshareDisabledByAuthor: false,
   };
-  if (imagePath) {
-    const imageUrn = await uploadImage(accessToken, personUrn, imagePath);
+  if (imageData) {
+    const imageUrn = await uploadImage(accessToken, personUrn, imageData);
     body.content = { media: { id: imageUrn, altText: altText || '' } };
   }
   const res = await fetch(`${API}/rest/posts`, { method: 'POST', headers: restHeaders(accessToken), body: JSON.stringify(body) });

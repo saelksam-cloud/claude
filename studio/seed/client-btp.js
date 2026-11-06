@@ -1,4 +1,5 @@
-{
+// Client de départ et ses 20 posts (chargés au premier lancement).
+export default {
   "client": {
     "name": "Client BTP (à renommer)",
     "company": "[Nom de l'entreprise]",
@@ -153,3 +154,4 @@
     }
   ]
 }
+;

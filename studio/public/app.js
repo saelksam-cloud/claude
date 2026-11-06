@@ -48,15 +48,28 @@ function toast(msg, isError = false) {
   toast.timer = setTimeout(() => { t.hidden = true; }, 3500);
 }
 
+class AuthError extends Error {}
+
 async function api(method, url, body) {
-  const res = await fetch(url, {
-    method,
-    headers: body ? { 'Content-Type': 'application/json' } : {},
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  const headers = { 'x-studio-password': store.get('password', '') };
+  if (body) headers['Content-Type'] = 'application/json';
+  const res = await fetch(url, { method, headers, body: body ? JSON.stringify(body) : undefined });
   const json = await res.json().catch(() => ({}));
+  if (res.status === 401) throw new AuthError(json.error || 'Mot de passe requis');
   if (!res.ok) throw new Error(json.error || `Erreur ${res.status}`);
   return json;
+}
+
+function showLogin(message = '') {
+  document.body.classList.add('locked');
+  view.innerHTML = `
+    <form class="panel stack login" id="loginForm">
+      <h2>Link Motion Studio</h2>
+      <p class="sub" style="margin:0">Entre ton mot de passe pour accéder au tableau de bord.</p>
+      <input type="password" name="password" placeholder="Mot de passe" autocomplete="current-password" required autofocus>
+      ${message ? `<div class="alert err">${esc(message)}</div>` : ''}
+      <button class="btn primary" type="submit">Se connecter</button>
+    </form>`;
 }
 
 async function refresh() {
@@ -79,7 +92,7 @@ function render() {
   document.querySelectorAll('#tabs button').forEach((b) => b.classList.toggle('active', b.dataset.view === ui.view));
 
   const banners = [];
-  if (!ui.data.linkedinConfigured) banners.push("L'app LinkedIn n'est pas encore configurée : tu peux tout préparer et valider, mais rien ne sera publié tant que LINKEDIN_CLIENT_ID et LINKEDIN_CLIENT_SECRET ne sont pas renseignés (voir l'onglet Profil &amp; LinkedIn).");
+  if (!ui.data.linkedinConfigured) banners.push("L'app LinkedIn n'est pas encore configurée : tu peux tout préparer et valider, mais rien ne sera publié tant que LINKEDIN_CLIENT_ID et LINKEDIN_CLIENT_SECRET ne sont pas renseignés dans Netlify (voir l'onglet Profil &amp; LinkedIn).");
   else if (client() && !client().linkedin.connected) banners.push(`${esc(client().name)} n'a pas encore connecté son LinkedIn : envoie-lui son lien d'invitation (onglet Profil &amp; LinkedIn).`);
   $('#banner').innerHTML = banners.map((b) => `<div class="banner">${b}</div>`).join('');
 
@@ -297,7 +310,7 @@ function renderClient() {
             <li>Va sur <a href="https://www.linkedin.com/developers/apps" target="_blank" rel="noopener">linkedin.com/developers/apps</a> → « Create app » (il faut une page entreprise LinkedIn, ex. Link Motion).</li>
             <li>Onglet <b>Products</b> : ajoute « Sign In with LinkedIn using OpenID Connect » et « Share on LinkedIn ».</li>
             <li>Onglet <b>Auth</b> : ajoute cette URL de redirection :<div class="code" style="margin-top:4px">${esc(ui.data.redirectUri)}</div></li>
-            <li>Copie le Client ID et le Client Secret dans le fichier <code>.env</code> du studio, puis redémarre-le.</li>
+            <li>Dans Netlify : <b>Project configuration → Environment variables</b>, ajoute <code>LINKEDIN_CLIENT_ID</code> et <code>LINKEDIN_CLIENT_SECRET</code>, puis <b>Deploys → Trigger deploy</b>.</li>
           </ol>`}
       </div>
       <form class="panel stack" id="clientForm">
@@ -329,7 +342,12 @@ function ask({ title, fields, submit = 'OK' }) {
 }
 
 // ---------- actions ----------
-const run = (fn) => async (...args) => { try { await fn(...args); } catch (e) { toast(e.message, true); } };
+const run = (fn) => async (...args) => {
+  try { await fn(...args); } catch (e) {
+    if (e instanceof AuthError) showLogin(store.get('password', '') ? e.message : '');
+    else toast(e.message, true);
+  }
+};
 
 const actions = {
   expand: (id) => { ui.expanded.add(id); render(); },
@@ -445,7 +463,7 @@ document.addEventListener('change', run(async (e) => {
   const input = e.target.closest('input[data-action="upload"]');
   if (input?.files[0]) {
     const file = input.files[0];
-    if (file.size > 10 * 1024 * 1024) throw new Error('Image trop lourde (10 Mo max)');
+    if (file.size > 4 * 1024 * 1024) throw new Error('Image trop lourde (4 Mo max)');
     const dataUrl = await new Promise((resolve, reject) => {
       const r = new FileReader();
       r.onload = () => resolve(r.result);
@@ -463,10 +481,16 @@ document.addEventListener('submit', run(async (e) => {
   if (form.id === 'dialogForm') return;
   e.preventDefault();
   const data = Object.fromEntries(new FormData(form));
+  if (form.id === 'loginForm') {
+    store.set('password', data.password);
+    await refresh();
+    document.body.classList.remove('locked');
+    return;
+  }
   if (form.id === 'veilleForm') { await api('POST', '/api/veille', { ...data, clientId: ui.clientId }); toast('Ajouté à la veille'); }
   if (form.id === 'analysisForm') { await api('POST', '/api/analyses', { ...data, clientId: ui.clientId }); toast('Analyse enregistrée'); }
   if (form.id === 'clientForm') { await api('PUT', `/api/clients/${ui.clientId}`, data); toast('Fiche enregistrée'); }
   await refresh();
 }));
 
-refresh().catch((e) => toast(e.message, true));
+run(async () => { await refresh(); document.body.classList.remove('locked'); })();

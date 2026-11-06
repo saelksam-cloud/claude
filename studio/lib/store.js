@@ -1,66 +1,26 @@
-// Stockage JSON sur disque : simple, lisible, facile à sauvegarder.
-import fs from 'node:fs';
-import path from 'node:path';
+// Stockage sur Netlify Blobs : toute la base tient dans un seul document JSON,
+// les images sont stockées à part dans le store « uploads ».
 import crypto from 'node:crypto';
-import { fileURLToPath } from 'node:url';
+import { getStore } from '@netlify/blobs';
+import seed from '../seed/client-btp.js';
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-export const DATA_DIR = process.env.DATA_DIR || path.join(ROOT, 'data');
-export const UPLOAD_DIR = path.join(DATA_DIR, 'uploads');
-const DB_FILE = path.join(DATA_DIR, 'db.json');
-const SEED_DIR = path.join(ROOT, 'seed');
-
-let db;
+const dbStore = () => getStore({ name: 'studio', consistency: 'strong' });
+export const uploads = () => getStore({ name: 'uploads', consistency: 'strong' });
 
 export const newId = (prefix) => `${prefix}_${crypto.randomBytes(6).toString('hex')}`;
 export const now = () => new Date().toISOString();
 
-export function getDb() {
-  if (!db) load();
-  return db;
+export async function loadDb() {
+  const db = await dbStore().get('db', { type: 'json' });
+  if (db) return db;
+  const fresh = { clients: [], posts: [], veille: [], analyses: [] };
+  const client = createClient(fresh, seed.client);
+  importPosts(fresh, client.id, seed.posts);
+  await saveDb(fresh);
+  return fresh;
 }
 
-function load() {
-  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-  if (fs.existsSync(DB_FILE)) {
-    db = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
-    return;
-  }
-  db = { clients: [], posts: [], veille: [], analyses: [] };
-  for (const file of fs.readdirSync(SEED_DIR).filter((f) => f.endsWith('.json'))) {
-    const seed = JSON.parse(fs.readFileSync(path.join(SEED_DIR, file), 'utf8'));
-    const client = createClient(seed.client);
-    importPosts(client.id, seed.posts);
-  }
-  save();
-}
-
-export function save() {
-  const tmp = `${DB_FILE}.tmp`;
-  fs.writeFileSync(tmp, JSON.stringify(db, null, 2));
-  fs.renameSync(tmp, DB_FILE);
-}
-
-export function createClient(data) {
-  const client = {
-    id: newId('cli'),
-    name: '',
-    company: '',
-    sector: '',
-    offer: '',
-    audience: '',
-    tone: '',
-    themes: '',
-    dos: '',
-    donts: '',
-    ...pickClientFields(data),
-    connectToken: crypto.randomBytes(16).toString('hex'),
-    linkedin: null,
-    createdAt: now(),
-  };
-  getDb().clients.push(client);
-  return client;
-}
+export const saveDb = (db) => dbStore().setJSON('db', db);
 
 export const CLIENT_FIELDS = ['name', 'company', 'sector', 'offer', 'audience', 'tone', 'themes', 'dos', 'donts'];
 export function pickClientFields(data = {}) {
@@ -77,7 +37,20 @@ export function pickPostFields(data = {}) {
   return out;
 }
 
-export function importPosts(clientId, posts = []) {
+export function createClient(db, data) {
+  const client = {
+    id: newId('cli'),
+    ...Object.fromEntries(CLIENT_FIELDS.map((k) => [k, ''])),
+    ...pickClientFields(data),
+    connectToken: crypto.randomBytes(16).toString('hex'),
+    linkedin: null,
+    createdAt: now(),
+  };
+  db.clients.push(client);
+  return client;
+}
+
+export function importPosts(db, clientId, posts = []) {
   const created = posts
     .filter((p) => p && typeof p.text === 'string' && p.text.trim())
     .map((p) => ({
@@ -99,7 +72,7 @@ export function importPosts(clientId, posts = []) {
       history: [{ at: now(), action: 'Rédigé par Claude' }],
       createdAt: now(),
     }));
-  getDb().posts.push(...created);
+  db.posts.push(...created);
   return created;
 }
 

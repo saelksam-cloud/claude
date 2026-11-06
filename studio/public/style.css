@@ -172,3 +172,7 @@ dialog .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top
   .client-select select { min-width: 0; width: 100%; }
   .grid2 { grid-template-columns: 1fr; }
 }
+
+/* Écran de connexion */
+body.locked .topbar .client-select, body.locked .tabs, body.locked #banner { display: none; }
+.login { max-width: 380px; margin: 10vh auto 0; }
