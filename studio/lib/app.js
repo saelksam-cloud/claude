@@ -5,7 +5,7 @@ import {
   pickClientFields, pickPostFields, loadSettings, saveSettings, publicSettings,
 } from './store.js';
 import * as linkedin from './linkedin.js';
-import { writePost, analyzeNiche, testKey, hookPass, extractPosts, studyFeedback, balancedTop } from './ai.js';
+import { writePost, analyzeNiche, testKey, hookPass, extractPosts, studyFeedback, balancedTop, describeImage, chooseImage, imagePrompt, generateImage } from './ai.js';
 import { engagement, statsText } from './stats.js';
 import * as apify from './apify.js';
 
@@ -115,6 +115,7 @@ route('GET', '/api/state', async ({ db, settings }) => json({
   veille: db.veille,
   profiles: db.profiles,
   analyses: db.analyses,
+  images: db.images,
   linkedinConfigured: linkedin.isConfigured(liCfg(settings)),
   redirectUri: linkedin.redirectUri(),
   publicUrl: linkedin.publicUrl(),
@@ -183,8 +184,15 @@ route('PUT', '/api/posts/:id', async ({ post, body }) => {
   return json(post);
 });
 
+// Une photo de la photothèque peut servir à plusieurs posts : on ne supprime que les images propres au post.
+const dropPostImage = async (post) => {
+  if (post.image && !post.imageId) await uploads().delete(post.image);
+  post.image = null;
+  post.imageId = null;
+};
+
 route('DELETE', '/api/posts/:id', async ({ db, post }) => {
-  if (post.image) await uploads().delete(post.image);
+  await dropPostImage(post);
   db.posts = db.posts.filter((p) => p.id !== post.id);
   return json({ ok: true });
 });
@@ -208,7 +216,7 @@ route('POST', '/api/posts/:id/image', async ({ post, body }) => {
   const match = /^data:([\w/+-]+);base64,(.+)$/s.exec(body.dataUrl || '');
   const ext = match && IMAGE_TYPES[match[1]];
   if (!ext) throw new HttpError(400, 'Image PNG, JPG, GIF ou WEBP attendue');
-  if (post.image) await uploads().delete(post.image);
+  await dropPostImage(post);
   post.image = `${post.id}-${crypto.randomBytes(8).toString('hex')}.${ext}`;
   const bytes = Buffer.from(match[2], 'base64');
   await uploads().set(post.image, bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.length), { metadata: { type: match[1] } });
@@ -217,8 +225,7 @@ route('POST', '/api/posts/:id/image', async ({ post, body }) => {
 });
 
 route('DELETE', '/api/posts/:id/image', async ({ post }) => {
-  if (post.image) await uploads().delete(post.image);
-  post.image = null;
+  await dropPostImage(post);
   log(post, 'Image retirée');
   return json(post);
 });
@@ -480,6 +487,97 @@ route('POST', '/api/posts/:id/rewrite', async ({ db, settings, post, body }) => 
   post.status = 'review';
   post.feedback = '';
   log(post, `Réécrit par l'IA${module ? ` (module « ${module.name} »)` : ''}`);
+  return json(post);
+});
+
+// ---------- Photothèque & images générées ----------
+const decodeDataUrl = (dataUrl) => {
+  const m = /^data:([\w/+-]+);base64,(.+)$/s.exec(dataUrl || '');
+  if (!m || !IMAGE_TYPES[m[1]]) throw new HttpError(400, 'Image PNG, JPG, GIF ou WEBP attendue');
+  const bytes = Buffer.from(m[2], 'base64');
+  return { type: m[1], ext: IMAGE_TYPES[m[1]], buffer: bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.length) };
+};
+
+// kind = 'mine' (photos du client : lui, son setup…) ou 'inspiration' (visuels concurrents, partagés par niche)
+route('POST', '/api/images', async ({ db, settings, body }) => {
+  const kind = body.kind === 'inspiration' ? 'inspiration' : 'mine';
+  const client = db.clients.find((c) => c.id === body.clientId);
+  if (kind === 'mine' && !client) throw new HttpError(404, 'Client introuvable');
+  const img = decodeDataUrl(body.dataUrl);
+  const key = `lib-${crypto.randomBytes(10).toString('hex')}.${img.ext}`;
+  await uploads().set(key, img.buffer, { metadata: { type: img.type } });
+  let description = '';
+  if (settings.openaiKey) description = await describeImage(settings, body.dataUrl, kind).catch(() => '');
+  const item = {
+    id: newId('img'), kind, key, description, uses: 0, createdAt: now(),
+    clientId: kind === 'mine' ? client.id : null,
+    niche: kind === 'inspiration' ? String(body.niche || '').trim() : client.niche || '',
+  };
+  db.images.unshift(item);
+  return json(item);
+});
+
+route('PUT', '/api/images/:id', async ({ db, params, body }) => {
+  const im = db.images.find((x) => x.id === params.id);
+  if (!im) throw new HttpError(404, 'Image introuvable');
+  if (typeof body.description === 'string') im.description = body.description.slice(0, 600);
+  return json(im);
+});
+
+route('DELETE', '/api/images/:id', async ({ db, params }) => {
+  const im = db.images.find((x) => x.id === params.id);
+  if (!im) return json({ ok: true });
+  await uploads().delete(im.key);
+  for (const p of db.posts.filter((x) => x.imageId === im.id)) { p.image = null; p.imageId = null; }
+  db.images = db.images.filter((x) => x.id !== im.id);
+  return json({ ok: true });
+});
+
+const useLibraryImage = (post, im) => {
+  if (post.image && !post.imageId) uploads().delete(post.image).catch(() => {});
+  post.image = im.key;
+  post.imageId = im.id;
+  post.altText = im.description?.split('.')[0] || '';
+  im.uses = (im.uses || 0) + 1;
+  log(post, 'Photo de la photothèque ajoutée');
+};
+
+route('POST', '/api/posts/:id/image/library', async ({ db, post, body }) => {
+  const im = db.images.find((x) => x.id === body.imageId && x.kind === 'mine');
+  if (!im) throw new HttpError(404, 'Photo introuvable');
+  useLibraryImage(post, im);
+  return json(post);
+});
+
+// Choisit automatiquement la meilleure photo du client pour ce post.
+route('POST', '/api/posts/:id/image/auto', async ({ db, settings, post }) => {
+  const photos = db.images.filter((x) => x.kind === 'mine' && x.clientId === post.clientId);
+  if (!photos.length) throw new HttpError(400, 'Ajoute d\'abord des photos dans l\'onglet Images.');
+  const im = photos.length === 1 ? photos[0] : await chooseImage(settings, { text: post.text, images: photos.slice(0, 40) });
+  useLibraryImage(post, im);
+  return json(post);
+});
+
+// Étape 1 : la consigne de l'image (inspirée des visuels concurrents de la niche).
+route('POST', '/api/posts/:id/image/prompt', async ({ db, settings, post }) => {
+  const client = db.clients.find((c) => c.id === post.clientId);
+  const styles = db.images.filter((x) => x.kind === 'inspiration' && x.description && (!client.niche || (x.niche || '').toLowerCase() === client.niche.toLowerCase()))
+    .slice(0, 8).map((x) => x.description);
+  post.imagePrompt = await imagePrompt(settings, { text: post.text, client, styles });
+  return json(post);
+});
+
+// Étape 2 : génération (appel séparé, pour tenir dans la limite de 60 s par appel).
+route('POST', '/api/posts/:id/image/generate', async ({ settings, post, body }) => {
+  const prompt = String(body.prompt || post.imagePrompt || '').trim();
+  if (!prompt) throw new HttpError(400, "Pas de consigne d'image.");
+  const buffer = await generateImage(settings, prompt);
+  await dropPostImage(post);
+  post.image = `gen-${post.id}-${crypto.randomBytes(6).toString('hex')}.jpg`;
+  await uploads().set(post.image, buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.length), { metadata: { type: 'image/jpeg' } });
+  post.imagePrompt = prompt;
+  post.altText = '';
+  log(post, "Image générée par l'IA");
   return json(post);
 });
 

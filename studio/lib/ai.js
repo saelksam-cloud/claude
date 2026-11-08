@@ -69,6 +69,8 @@ function explain(status, err = {}) {
   if (code === 'insufficient_quota' || /quota|billing/i.test(msg)) return "Ta clé OpenAI n'a pas de crédit. Ajoute du crédit sur platform.openai.com → Settings → Billing (l'abonnement ChatGPT Plus ne compte pas pour l'API).";
   if (status === 429) return 'OpenAI limite le nombre de demandes : réessaie dans une minute.';
   if (status === 403 && /country|region|territory/i.test(msg)) return "OpenAI refuse l'accès depuis cette région.";
+  if (/verif/i.test(msg)) return "OpenAI demande de vérifier ton organisation pour générer des images : platform.openai.com → Settings → Organization → General → « Verify Organization » (5 minutes, une seule fois).";
+  if (/safety|moderation|content policy/i.test(msg)) return "OpenAI a refusé cette image (règles de contenu) : modifie la description de l'image et réessaie.";
   return `OpenAI : ${msg || `erreur ${status}`}`;
 }
 const isModelProblem = (status, err = {}) =>
@@ -210,4 +212,52 @@ LES HOOKS QUI REVIENNENT — les mécaniques les plus fréquentes et les plus ef
 10 SUJETS À TRAITER EN PRIORITÉ`;
   const { text } = await chat(settings, system, user, { timeout: 55_000 });
   return text;
+}
+
+// ---------- Images ----------
+// Décrit une photo (pour savoir à quel post elle va) ou le style d'un visuel concurrent.
+export async function describeImage(settings, dataUrl, kind) {
+  const ask = kind === 'inspiration'
+    ? "Visuel d'un post LinkedIn concurrent. Décris en 2 phrases son style réutilisable : type d'image (photo, carrousel, schéma, citation, capture…), cadrage, couleurs, texte incrusté, ambiance. Pas de nom de personne."
+    : "Photo destinée à illustrer des posts LinkedIn. Décris en 1 à 2 phrases ce qu'on voit et l'ambiance (lieu, personne, objet, expression), puis 3 à 6 mots-clés de sujets de posts qu'elle pourrait illustrer.";
+  const { text } = await chat(settings, 'Tu décris des images en français, de façon factuelle et brève.', [
+    { type: 'text', text: ask },
+    { type: 'image_url', image_url: { url: dataUrl, detail: 'low' } },
+  ]);
+  return text.slice(0, 600);
+}
+
+// Choisit la photo de la photothèque qui colle le mieux au post (en évitant de répéter les mêmes).
+export async function chooseImage(settings, { text, images }) {
+  const list = images.map((im, i) => `${i + 1}. ${im.description || 'photo sans description'} (déjà utilisée ${im.uses || 0} fois)`).join('\n');
+  const { text: out } = await chat(settings, 'Tu choisis la meilleure photo pour illustrer un post LinkedIn. Réponds en JSON : { "n": numéro }.', `Post :\n${text.slice(0, 1500)}\n\nPhotos disponibles :\n${list}\n\nChoisis celle qui colle le mieux au sujet ; à pertinence égale, préfère la moins utilisée.`, { json: true });
+  const n = Number(JSON.parse(out).n);
+  return images[n - 1] || images[0];
+}
+
+// Écrit la consigne de l'image générée, inspirée des visuels concurrents qui marchent.
+export async function imagePrompt(settings, { text, client, styles = [] }) {
+  const system = `Tu es directeur artistique pour LinkedIn. Tu écris en anglais une consigne pour un générateur d'images afin d'illustrer un post.
+Règles : image carrée, professionnelle et authentique (pas de rendu « stock photo » cliché), une seule idée visuelle forte, lisible en petit dans le fil LinkedIn.
+Pas de logo ni de marque réelle ; pas de personne réelle identifiable ; si du texte apparaît dans l'image, 5 mots maximum, en français.
+Réponds uniquement avec la consigne (80 mots maximum).`;
+  const user = `Post :\n${text.slice(0, 1800)}\n\nAuteur : ${client.name}${client.company ? ` (${client.company})` : ''}${client.niche ? `, niche ${client.niche}` : ''}
+${styles.length ? `\nStyles des visuels qui marchent chez les concurrents (s'en inspirer) :\n${styles.map((s) => `- ${s}`).join('\n')}` : ''}`;
+  const { text: out } = await chat(settings, system, user);
+  return out.replace(/^["']|["']$/g, '').trim();
+}
+
+export async function generateImage(settings, prompt) {
+  if (!settings.openaiKey) throw new Error("Ajoute ta clé API OpenAI dans l'onglet Réglages.");
+  const res = await fetch('https://api.openai.com/v1/images/generations', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${settings.openaiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: settings.imageModel || 'gpt-image-1', prompt, size: '1024x1024', quality: 'medium', n: 1, output_format: 'jpeg', output_compression: 85 }),
+    signal: AbortSignal.timeout(55_000),
+  }).catch((e) => { throw new Error(e.name === 'TimeoutError' ? "La génération d'image a pris trop de temps : réessaie." : `OpenAI injoignable : ${e.message}`); });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(explain(res.status, json.error));
+  const b64 = json.data?.[0]?.b64_json;
+  if (!b64) throw new Error("OpenAI n'a renvoyé aucune image.");
+  return Buffer.from(b64, 'base64');
 }

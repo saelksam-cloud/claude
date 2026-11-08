@@ -30,6 +30,8 @@ const ui = {
   lastCreated: [],
   author: '',          // concurrent choisi dans Veille / Étude ('' = tous)
   inspireFrom: store.get('inspireFrom', ''), // concurrent choisi dans Créer
+  imageMode: store.get('imageMode', 'none'),   // none | library | ai
+  imageOpen: new Set(),
 };
 
 // ---------- utilitaires ----------
@@ -105,7 +107,7 @@ function render() {
   const c = client();
   $('#banner').innerHTML = c && !c.linkedin.connected && ['create', 'posts'].includes(ui.view)
     ? `<div class="banner">Le LinkedIn de ${esc(c.name)} n'est pas connecté : les posts seront prêts mais pas publiés. <a href="#" data-action="go" data-id="settings">Le connecter</a></div>` : '';
-  ({ create: renderCreate, posts: renderPosts, veille: renderVeille, study: renderStudy, settings: renderSettings }[ui.view] || renderCreate)();
+  ({ create: renderCreate, posts: renderPosts, images: renderImages, veille: renderVeille, study: renderStudy, settings: renderSettings }[ui.view] || renderCreate)();
   enhanceVoice(view);
 }
 
@@ -131,6 +133,13 @@ function renderCreate() {
       <label class="f">Consigne (facultatif) : ton, sujet, angle…
         <textarea id="instruction" rows="3" placeholder="Ex. ton plus personnel, parle de mes résultats clients, un post sur la régularité…">${esc(ui.instruction)}</textarea>
       </label>
+      <div class="f">Image
+        <div class="seg">
+          <button type="button" class="${ui.imageMode === 'none' ? 'on' : ''}" data-action="image-mode" data-id="none">Sans image</button>
+          <button type="button" class="${ui.imageMode === 'library' ? 'on' : ''}" data-action="image-mode" data-id="library">📸 Mes photos (${myPhotos().length})</button>
+          <button type="button" class="${ui.imageMode === 'ai' ? 'on' : ''}" data-action="image-mode" data-id="ai">✨ Générée par l'IA</button>
+        </div>
+      </div>
       ${competitors.length ? `<div class="f">S'inspirer de
         <div class="seg">
           <button type="button" class="${!ui.inspireFrom ? 'on' : ''}" data-action="inspire" data-id="">Tous les concurrents</button>
@@ -230,6 +239,12 @@ async function createAuto() {
       render();
       const p = await api('POST', '/api/generate', { clientId: ui.clientId, instruction: ui.instruction, author: ui.inspireFrom });
       ui.lastCreated.push(p.id);
+      await refresh();
+      if (ui.imageMode !== 'none') {
+        ui.job.step = `Post ${i + 1} / ${total} : image…`;
+        render();
+        await addImage(p.id, ui.imageMode).catch((e) => toast(`Image du post ${i + 1} : ${e.message}`, true));
+      }
       ui.job.done = i + 1;
       await refresh();
     }
@@ -245,7 +260,77 @@ async function saveRelayPosts(texts) {
   ui.lastCreated = r.ids;
   ui.relay = null;
   await refresh();
+  if (ui.imageMode !== 'none') {
+    for (const [i, id] of r.ids.entries()) {
+      toast(`Image ${i + 1} / ${r.ids.length}…`);
+      await addImage(id, ui.imageMode).catch((e) => toast(e.message, true));
+    }
+    await refresh();
+  }
   toast(`${r.imported} post(s) ajoutés, à valider`);
+}
+
+// ---------- Images ----------
+const myPhotos = () => ui.data.images.filter((im) => im.kind === 'mine' && im.clientId === ui.clientId);
+const inspirationImages = (niche) => ui.data.images.filter((im) => im.kind === 'inspiration' && sameNiche(im.niche, niche));
+
+// mode 'library' : la meilleure photo de la photothèque ; mode 'ai' : image générée (2 appels pour tenir dans les délais).
+async function addImage(postId, mode) {
+  if (mode === 'library') return api('POST', `/api/posts/${postId}/image/auto`);
+  await api('POST', `/api/posts/${postId}/image/prompt`);
+  return api('POST', `/api/posts/${postId}/image/generate`);
+}
+
+// Réduit les photos avant envoi (1600 px max) : plus rapide, et LinkedIn n'a pas besoin de plus.
+function resizeImage(file, max = 1600) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const k = Math.min(1, max / Math.max(img.width, img.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(img.width * k);
+      canvas.height = Math.round(img.height * k);
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(img.src);
+      resolve(canvas.toDataURL('image/jpeg', 0.86));
+    };
+    img.onerror = () => reject(new Error(`Format non lu : ${file.name} (utilise JPG ou PNG)`));
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+function renderImages() {
+  const c = client();
+  const niche = currentNiche();
+  const mine = myPhotos();
+  const insp = inspirationImages(niche);
+  const j = ui.job?.kind === 'upload' ? ui.job : null;
+  const grid = (list, kind) => list.length ? `<div class="img-grid">${list.map((im) => `
+      <figure class="img-card">
+        <img src="/uploads/${esc(im.key)}" alt="${esc(im.description)}" loading="lazy">
+        <figcaption>
+          <textarea rows="3" data-imgdesc="${im.id}" placeholder="Description (aide l'IA à choisir la bonne photo)" data-novoice>${esc(im.description)}</textarea>
+          <div class="row between"><span class="small">${kind === 'mine' ? `Utilisée ${im.uses || 0} fois` : esc(im.niche || '')}</span>
+          <button class="btn ghost sm danger" data-action="del-image" data-id="${im.id}" title="Supprimer">🗑</button></div>
+        </figcaption>
+      </figure>`).join('')}</div>` : '';
+  view.innerHTML = `
+    <h2>Images</h2>
+    <p class="sub">Tes photos servent à illustrer tes posts. Les visuels des concurrents servent de modèle de style aux images générées par l'IA.</p>
+    ${j ? `<div class="row" style="margin-bottom:12px"><div class="progress"><span style="width:${Math.round((100 * j.done) / j.total)}%"></span></div><span class="small">${esc(j.step)}</span></div>` : ''}
+    <div class="card stack">
+      <div class="row between"><h3 style="margin:0">📸 Photos de ${esc(c.name)} (${mine.length})</h3>
+        <label class="btn primary">+ Ajouter des photos<input type="file" accept="image/*" multiple data-library="mine" hidden></label></div>
+      <p class="small" style="margin:0">Toi, ton setup, ton bureau, tes événements… L'IA décrit chaque photo et choisit la plus adaptée à chaque post. Une même photo peut resservir.</p>
+      ${grid(mine, 'mine') || '<p class="empty">Aucune photo pour l\'instant.</p>'}
+    </div>
+    <div class="card stack">
+      <div class="row between"><h3 style="margin:0">🎨 Visuels concurrents · ${esc(niche || 'sans niche')} (${insp.length})</h3>
+        <label class="btn">+ Ajouter des visuels<input type="file" accept="image/*" multiple data-library="inspiration" hidden></label></div>
+      <p class="small" style="margin:0">Fais des captures des images des posts concurrents qui marchent. L'IA en retient le style (type de visuel, cadrage, couleurs) pour tes images générées. Partagé avec tous les clients de la niche.</p>
+      ${nicheChips()}
+      ${grid(insp, 'inspiration') || '<p class="empty">Aucun visuel pour l\'instant.</p>'}
+    </div>`;
 }
 
 // ================= POSTS =================
@@ -285,8 +370,7 @@ function postCard(p) {
       <div class="row">
         <button class="btn primary sm" data-action="save" data-id="${p.id}">Enregistrer</button>
         <button class="btn ghost sm" data-action="cancel-edit" data-id="${p.id}">Annuler</button>
-        <label class="btn sm">🖼 ${p.image ? 'Changer l\'image' : 'Ajouter une image'}<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" data-upload="${p.id}" hidden></label>
-        ${p.image ? `<button class="btn ghost sm" data-action="remove-image" data-id="${p.id}">Retirer l'image</button>` : ''}
+
       </div>
     </div>`;
 
@@ -294,6 +378,7 @@ function postCard(p) {
   <article class="post" id="${p.id}">
     <div>
       ${editing ? editor : preview}
+      ${ui.imageOpen.has(p.id) ? imagePanel(p) : ''}
       ${fbOpen ? `<div class="inline-box" data-feedback="${p.id}">
         <textarea rows="3" placeholder="Qu'est-ce qui ne va pas ? Ex. hook trop long, trop formel, parle plus de mes résultats…"></textarea>
         <div class="row"><button class="btn primary sm" data-action="send-feedback" data-id="${p.id}">Refaire avec ce retour</button>
@@ -311,12 +396,31 @@ function postCard(p) {
           ? `<button class="btn sm" data-action="unapprove" data-id="${p.id}">↩ Retirer</button>`
           : `<button class="btn primary sm" data-action="approve" data-id="${p.id}" ${hasPh ? 'disabled' : ''}>✓ Valider</button>`}
         <button class="btn soft sm" data-action="open-feedback" data-id="${p.id}">💬 Retour</button>
+        <button class="btn sm" data-action="toggle-image" data-id="${p.id}">🖼 Image</button>
         ${editing ? '' : `<button class="btn sm" data-action="edit" data-id="${p.id}">✎ Modifier</button>`}
         <button class="btn ghost sm danger" data-action="delete" data-id="${p.id}" title="Supprimer">🗑</button>
       </div>
       ${p.status === 'approved' ? `<button class="btn ghost sm" data-action="publish-now" data-id="${p.id}" style="align-self:flex-start">Publier maintenant</button>` : ''}`}
     </aside>
   </article>`;
+}
+
+function imagePanel(p) {
+  const photos = myPhotos();
+  return `<div class="inline-box">
+    <div class="row between"><b>Image du post</b><button class="btn ghost sm" data-action="toggle-image" data-id="${p.id}">Fermer</button></div>
+    <div class="row">
+      ${photos.length ? `<button class="btn soft sm" data-action="img-auto" data-id="${p.id}">📸 Choisir la meilleure photo</button>` : ''}
+      <button class="btn soft sm" data-action="img-ai" data-id="${p.id}">✨ Générer avec l'IA</button>
+      <label class="btn sm">⬆ Importer<input type="file" accept="image/*" data-upload="${p.id}" hidden></label>
+      ${p.image ? `<button class="btn ghost sm" data-action="remove-image" data-id="${p.id}">Retirer</button>` : ''}
+    </div>
+    ${photos.length ? `<div class="thumbs">${photos.map((im) => `<button class="thumb ${p.imageId === im.id ? 'on' : ''}" data-action="img-pick" data-id="${p.id}" data-img="${im.id}" title="${esc(im.description)}"><img src="/uploads/${esc(im.key)}" alt=""></button>`).join('')}</div>`
+      : '<p class="small" style="margin:0">Ajoute tes photos dans l\'onglet <a href="#" data-action="go" data-id="images">Images</a> pour pouvoir les choisir ici.</p>'}
+    ${p.imagePrompt ? `<details><summary class="small" style="cursor:pointer">Consigne de l'image générée</summary>
+      <textarea rows="3" data-imgprompt="${p.id}" data-novoice style="margin-top:6px">${esc(p.imagePrompt)}</textarea>
+      <button class="btn sm" data-action="img-regen" data-id="${p.id}" style="margin-top:6px">↻ Regénérer avec cette consigne</button></details>` : ''}
+  </div>`;
 }
 
 // ================= VEILLE =================
@@ -689,6 +793,23 @@ const actions = {
   },
 
   niche(n) { ui.niche = n; ui.author = ''; render(); },
+  'image-mode'(m) {
+    if (m === 'library' && !myPhotos().length) { toast('Ajoute d\'abord tes photos dans l\'onglet Images.', true); actions.go('images'); return; }
+    ui.imageMode = m; store.set('imageMode', m); render();
+  },
+  'toggle-image'(id) { if (ui.imageOpen.has(id)) ui.imageOpen.delete(id); else ui.imageOpen.add(id); render(); },
+  async 'img-pick'(id, btn) { await api('POST', `/api/posts/${id}/image/library`, { imageId: btn.dataset.img }); await refresh(); },
+  async 'img-auto'(id, btn) { btn.disabled = true; btn.textContent = 'Je choisis…'; try { await api('POST', `/api/posts/${id}/image/auto`); } finally { await refresh(); } },
+  async 'img-ai'(id, btn) {
+    btn.disabled = true; btn.textContent = 'Génération… (jusqu\'à 1 min)';
+    try { await addImage(id, 'ai'); toast('Image générée'); } finally { await refresh(); }
+  },
+  async 'img-regen'(id, btn) {
+    const prompt = $(`[data-imgprompt="${id}"]`).value;
+    btn.disabled = true; btn.textContent = 'Génération…';
+    try { await api('POST', `/api/posts/${id}/image/generate`, { prompt }); toast('Image regénérée'); } finally { await refresh(); }
+  },
+  async 'del-image'(id) { await api('DELETE', `/api/images/${id}`); await refresh(); },
   author(a) { ui.author = a || ''; render(); window.scrollTo(0, 0); },
   inspire(a) { ui.inspireFrom = a || ''; store.set('inspireFrom', ui.inspireFrom); render(); },
   async paste() {
@@ -775,11 +896,29 @@ document.addEventListener('change', run(async (e) => {
     return;
   }
   if (t.dataset.upload && t.files[0]) {
-    const file = t.files[0];
-    if (file.size > 4 * 1024 * 1024) throw new Error('Image trop lourde (4 Mo max)');
-    const dataUrl = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(file); });
+    const dataUrl = await resizeImage(t.files[0]);
     await api('POST', `/api/posts/${t.dataset.upload}/image`, { dataUrl });
     await refresh();
+    return;
+  }
+  if (t.dataset.library && t.files.length) {
+    const files = [...t.files];
+    const kind = t.dataset.library;
+    ui.job = { kind: 'upload', total: files.length, done: 0, step: 'Envoi…' };
+    try {
+      for (const [i, f] of files.entries()) {
+        ui.job.step = `Photo ${i + 1} / ${files.length} : envoi et description par l'IA…`;
+        render();
+        await api('POST', '/api/images', { kind, clientId: ui.clientId, niche: currentNiche(), dataUrl: await resizeImage(f) });
+        ui.job.done = i + 1;
+      }
+    } finally { ui.job = null; await refresh(); }
+    toast(`${files.length} image(s) ajoutée(s)`);
+    return;
+  }
+  if (t.dataset.imgdesc) {
+    await api('PUT', `/api/images/${t.dataset.imgdesc}`, { description: t.value });
+    toast('Description enregistrée');
   }
 }));
 
