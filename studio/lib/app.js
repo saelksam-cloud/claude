@@ -142,6 +142,17 @@ route('POST', '/api/clients/:id/move-linkedin', async ({ db, client, body }) => 
   return json(publicClient(target));
 });
 
+// Vérifie que la connexion LinkedIn est toujours valide (sans rien publier).
+route('POST', '/api/clients/:id/check-linkedin', async ({ client }) => {
+  if (!client.linkedin) throw new HttpError(400, "LinkedIn n'est pas connecté pour ce client.");
+  try {
+    const profile = await linkedin.getProfile(client.linkedin.accessToken);
+    return json({ ok: true, name: profile.name, expiresAt: client.linkedin.expiresAt });
+  } catch (e) {
+    throw new HttpError(400, `Connexion LinkedIn invalide : reconnecte-toi (${e.message.slice(0, 120)})`);
+  }
+});
+
 route('POST', '/api/clients/:id/import', async ({ db, client, body }) => {
   const posts = Array.isArray(body) ? body : body?.posts;
   if (!Array.isArray(posts)) throw new HttpError(400, 'JSON attendu : { "posts": [ { "text": "...", "scheduledAt": "..." } ] }');

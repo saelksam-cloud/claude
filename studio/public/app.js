@@ -344,6 +344,7 @@ function renderPosts() {
       <div><h2>Posts</h2><p class="sub" style="margin:0">Valide, ou donne ton retour : le post est refait et l'IA s'en souvient pour les suivants.</p></div>
       ${by('review').length ? `<button class="btn primary" data-action="approve-all">✓ Tout valider (${by('review').length})</button>` : ''}
     </div>
+    ${ui.filter === 'approved' ? `<div class="alert ok" style="margin-bottom:12px">Les posts programmés restent dans l'app et sont publiés sur LinkedIn à l'heure prévue (vérification toutes les 15 minutes). C'est normal qu'ils n'apparaissent pas dans les « posts programmés » de LinkedIn : ils y arrivent directement, publiés, au bon moment.</div>` : ''}
     <div class="chips" style="margin-bottom:16px">${tabs.map(([k, l]) => `<button class="chip ${ui.filter === k ? 'on' : ''}" data-action="filter" data-id="${k}">${l}<b>${k === 'all' ? posts.length : by(k).length}</b></button>`).join('')}</div>
     ${shown.length ? shown.map(postCard).join('') : '<div class="card empty">Aucun post ici. <a href="#" data-action="go" data-id="create">Créer des posts</a></div>'}`;
 }
@@ -608,7 +609,7 @@ function renderSettings() {
       <div class="row">
         <a class="btn ${c.linkedin.connected ? '' : 'primary'}" href="${esc(link)}" target="_blank" rel="noopener">${c.linkedin.connected ? 'Reconnecter' : 'Connecter'} depuis cet appareil</a>
         <button class="btn" data-action="copy" data-id="${esc(link)}">Copier le lien pour le client</button>
-        ${c.linkedin.connected ? '<button class="btn ghost" data-action="move-linkedin">Déplacer vers un autre client</button><button class="btn ghost danger" data-action="disconnect">Déconnecter</button>' : ''}
+        ${c.linkedin.connected ? '<button class="btn" data-action="check-linkedin">Vérifier la connexion</button><button class="btn ghost" data-action="move-linkedin">Déplacer vers un autre client</button><button class="btn ghost danger" data-action="disconnect">Déconnecter</button>' : ''}
       </div>
       ${ui.data.linkedinConfigured ? '' : '<div class="alert warn">Renseigne d\'abord l\'app LinkedIn plus bas.</div>'}
     </div>
@@ -862,6 +863,7 @@ const actions = {
 
   async copy(text) { await navigator.clipboard.writeText(text); toast('Copié'); },
   async 'test-openai'() { const r = await api('POST', '/api/settings/test-openai'); toast(`Clé OK ✅ (${r.model})`); },
+  async 'check-linkedin'() { const r = await api('POST', `/api/clients/${ui.clientId}/check-linkedin`); toast(`Connexion OK ✅ (${r.name}), valable jusqu'au ${new Date(r.expiresAt).toLocaleDateString('fr-FR')}`); },
   async disconnect() { await api('POST', `/api/clients/${ui.clientId}/disconnect`); await refresh(); },
   async 'move-linkedin'() {
     const others = ui.data.clients.filter((c) => c.id !== ui.clientId);
