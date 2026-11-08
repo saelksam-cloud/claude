@@ -13,7 +13,7 @@ export const now = () => new Date().toISOString();
 export async function loadDb() {
   const db = await dbStore().get('db', { type: 'json' });
   if (db) return migrate(db);
-  const fresh = { clients: [], posts: [], veille: [], analyses: [], profiles: [], images: [] };
+  const fresh = { clients: [], posts: [], veille: [], analyses: [], profiles: [], images: [], hookPrefs: {} };
   const client = createClient(fresh, { niche: 'BTP', ...seed.client });
   importPosts(fresh, client.id, seed.posts);
   await saveDb(fresh);
@@ -32,6 +32,7 @@ export function guessNiche(c) {
 function migrate(db) {
   db.profiles ||= [];
   db.images ||= [];
+  db.hookPrefs ||= {};
   for (const c of db.clients) if (c.niche === undefined) c.niche = guessNiche(c);
   const nicheOf = (clientId) => db.clients.find((c) => c.id === clientId)?.niche || '';
   for (const v of db.veille) {

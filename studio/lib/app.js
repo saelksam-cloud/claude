@@ -8,6 +8,8 @@ import * as linkedin from './linkedin.js';
 import { writePost, analyzeNiche, testKey, hookPass, extractPosts, studyFeedback, balancedTop, extractStructures, describeImage, chooseImage, imagePrompt, generateImage, listImageModels, listTextModels } from './ai.js';
 import { engagement, statsText } from './stats.js';
 import * as apify from './apify.js';
+import { chat } from './ai.js';
+import * as ed from './editorial.js';
 
 const liCfg = (settings) => ({ clientId: settings.linkedinClientId, clientSecret: settings.linkedinClientSecret });
 
@@ -116,6 +118,8 @@ route('GET', '/api/state', async ({ db, settings }) => json({
   profiles: db.profiles,
   analyses: db.analyses,
   images: db.images,
+  hookPrefs: db.hookPrefs,
+  editorial: { objectives: ed.OBJECTIVES, postTypes: ed.POST_TYPES, awareness: ed.AWARENESS, families: ed.HOOK_FAMILIES, onboarding: ed.ONBOARDING_QUESTIONS, interview: ed.INTERVIEW_QUESTIONS, actions: Object.keys(ed.REWRITE_ACTIONS), knowledge: ed.knowledgeCounts },
   linkedinConfigured: linkedin.isConfigured(liCfg(settings)),
   redirectUri: linkedin.redirectUri(),
   publicUrl: linkedin.publicUrl(),
@@ -184,8 +188,24 @@ route('POST', '/api/posts/bulk-approve', async ({ db, body }) => {
   return json({ approved, skipped });
 });
 
-route('PUT', '/api/posts/:id', async ({ post, body }) => {
+route('PUT', '/api/posts/:id', async ({ db, post, body }) => {
+  // Performances réelles saisies après publication (les données absentes restent vides, jamais 0 par défaut).
+  if (body.metrics && typeof body.metrics === 'object') {
+    const m = {};
+    for (const k of ['impressions', 'reactions', 'comments', 'reposts', 'clicks', 'profileViews', 'leads']) {
+      const v = body.metrics[k];
+      m[k] = v === '' || v === null || v === undefined ? null : Math.max(0, Number(String(v).replace(/[^\d]/g, '')) || 0);
+    }
+    post.metrics = { ...m, updatedAt: now() };
+    return json(post);
+  }
   if (post.status === 'published') throw new HttpError(400, 'Un post publié ne peut plus être modifié ici.');
+  // Mémoire éditoriale : on garde la version d'origine et la correction humaine.
+  if (typeof body.text === 'string' && body.text !== post.text && post.text) {
+    const client = db.clients.find((c) => c.id === post.clientId);
+    client.adn ||= {};
+    client.adn.memory = [...(client.adn.memory || []), { at: now(), postId: post.id, type: 'correction', before: post.text.slice(0, 3000), after: body.text.slice(0, 3000), by: 'ghostwriter' }].slice(-60);
+  }
   Object.assign(post, pickPostFields(body));
   if (post.status === 'approved') {
     const problem = validateForApproval(post);
@@ -636,6 +656,186 @@ route('POST', '/api/admin/modules', async ({ settings, body }) => {
   if (typeof body.linkedinClientId === 'string') next.linkedinClientId = body.linkedinClientId;
   await saveSettings(next);
   return json({ ok: true });
+});
+
+
+// =================== MOTEUR ÉDITORIAL ===================
+const ask = async (settings, { system, user }, opts) => (await chat(settings, system, user, opts)).text;
+const askJson = async (settings, prompt, opts = {}) => {
+  const out = await ask(settings, prompt, { json: true, ...opts });
+  try { return JSON.parse(out); } catch { throw new HttpError(502, "L'IA a renvoyé une réponse illisible : réessaie."); }
+};
+const clientOf = (db, id) => { const c = db.clients.find((x) => x.id === id); if (!c) throw new HttpError(404, 'Client introuvable'); return c; };
+const moduleText = (m, label) => (m && (m.instructions || m.examples) ? `# ${label} « ${m.name} »\n${(m.instructions || '').slice(0, 6000)}\n${m.examples ? `Exemples :\n${m.examples.slice(0, 6000)}` : ''}` : '');
+
+// ---- Fiche ADN éditoriale ----
+const ADN_KEYS = ['profile', 'voice', 'objectives', 'personas', 'proofs', 'forbiddenTopics', 'rules', 'onboarding', 'interview', 'ideas', 'analysis', 'memory'];
+route('PUT', '/api/clients/:id/adn', async ({ client, body }) => {
+  client.adn ||= {};
+  for (const k of ADN_KEYS) if (body[k] !== undefined) client.adn[k] = body[k];
+  for (const p of client.adn.personas || []) p.id ||= newId('per');
+  for (const p of client.adn.proofs || []) p.id ||= newId('prf');
+  for (const i of client.adn.ideas || []) i.id ||= newId('ide');
+  if (JSON.stringify(client.adn).length > 400_000) throw new HttpError(400, 'Fiche trop volumineuse.');
+  return json(publicClient(client));
+});
+
+route('POST', '/api/clients/:id/onboarding/analyze', async ({ client, settings }) => {
+  const answers = client.adn?.onboarding?.answers || {};
+  if (Object.values(answers).filter((a) => a && a.trim()).length < 3) throw new HttpError(400, 'Réponds au moins à 3 questions avant de lancer l\'analyse.');
+  const analysis = await askJson(settings, ed.onboardingPrompt({ client, answers }), { timeout: 55_000 });
+  client.adn.analysis = { ...analysis, status: 'hypothesis', at: now() };
+  return json(publicClient(client));
+});
+
+// Applique un bloc de l'analyse à la fiche (tout reste marqué « hypothèse IA » jusqu'à validation).
+route('POST', '/api/clients/:id/onboarding/apply', async ({ client, body }) => {
+  const a = client.adn?.analysis;
+  if (!a) throw new HttpError(400, 'Lance d\'abord l\'analyse.');
+  client.adn.profile ||= {};
+  client.adn.voice ||= {};
+  if (body.block === 'personas') client.adn.personas = [...(client.adn.personas || []), ...(a.personas || []).map((p) => ({ ...p, id: newId('per'), status: 'hypothesis' }))];
+  if (body.block === 'positioning') { client.adn.profile.positioning ||= a.positioning; client.adn.profile.summary ||= a.summary; }
+  if (body.block === 'pillars') client.themes = [client.themes, ...(a.pillars || []).map((x) => `- ${x}`)].filter(Boolean).join('\n');
+  if (body.block === 'voice') for (const [k, v] of Object.entries(a.voice || {})) if (v && !client.adn.voice[k]) client.adn.voice[k] = v;
+  if (body.block === 'proofs') client.adn.proofs = [...(client.adn.proofs || []), ...(a.proofs || []).map((p) => ({ ...p, id: newId('prf'), status: 'to_verify', permission: false }))];
+  if (body.block === 'angles') client.adn.ideas = [...(client.adn.ideas || []), ...(a.angles || []).map((t) => ({ id: newId('ide'), title: t, source: 'onboarding', status: 'proposée' }))];
+  return json(publicClient(client));
+});
+
+route('POST', '/api/clients/:id/interview/analyze', async ({ client, settings }) => {
+  const answers = client.adn?.interview?.answers || {};
+  if (!Object.values(answers).some((a) => a && a.trim())) throw new HttpError(400, 'Remplis au moins une réponse.');
+  const r = await askJson(settings, ed.interviewPrompt({ client, answers }), { timeout: 55_000 });
+  client.adn.ideas = [...(client.adn.ideas || []), ...(r.ideas || []).map((i) => ({ ...i, id: newId('ide'), source: i.source || 'interview', status: 'proposée' }))];
+  client.adn.interview = { ...(client.adn.interview || {}), extracted: { convictions: r.convictions || [], objections: r.objections || [], stories: r.stories || [] }, at: now() };
+  return json(publicClient(client));
+});
+
+// ---- Création d'un post en 3 étapes (3 appels séparés pour rester sous 60 s chacun) ----
+// 1. Plan éditorial : angle, type, structure, familles de hooks, CTA, preuves, infos manquantes.
+route('POST', '/api/plan', async ({ db, settings, body }) => {
+  const client = clientOf(db, body.clientId);
+  const recent = db.posts.filter((p) => p.clientId === client.id).slice(-30);
+  const idea = body.ideaId ? (client.adn?.ideas || []).find((i) => i.id === body.ideaId) : null;
+  const inspiration = body.inspirationId ? db.veille.find((v) => v.id === body.inspirationId) : null;
+  const plan = await askJson(settings, ed.planPrompt({
+    client, personaId: body.personaId, objective: body.objective, awareness: Number(body.awareness) || 0,
+    topic: body.topic, idea: idea ? `${idea.title}${idea.angle ? ` — ${idea.angle}` : ''}` : '', inspiration: inspiration?.text,
+    avoid: {
+      angles: [...(body.avoid?.angles || []), ...recent.map((p) => p.plan?.angle?.type).filter(Boolean)].slice(-12),
+      structures: [...(body.avoid?.structures || []), ...recent.map((p) => p.plan?.structureId).filter(Boolean)].slice(-12),
+      themes: recent.map((p) => p.theme).filter(Boolean),
+    },
+  }), { timeout: 45_000 });
+  if (!ed.findStructure(plan.structureId)) plan.structureId = ed.knowledge.structures[Math.floor(Math.random() * ed.knowledge.structures.length)].id;
+  plan.structureName = ed.findStructure(plan.structureId).name;
+  plan.personaId = body.personaId || '';
+  plan.ideaId = body.ideaId || '';
+  return json(plan);
+});
+
+// 2. Rédaction selon le plan (structure Linka + exemples + ADN + veille).
+route('POST', '/api/write', async ({ db, settings, body }) => {
+  const client = clientOf(db, body.clientId);
+  const plan = body.plan;
+  if (!plan?.structureId) throw new HttpError(400, 'Plan manquant');
+  const { forms, others, mine } = (await import('./ai.js')).pickExamples(db.veille, client.niche, body.author || '');
+  const fmt = (l) => l.map((v) => `- [${v.likes || 0} 👍] ${(v.structure || v.hook || '').slice(0, 220)}`).join('\n');
+  const text = (await ask(settings, ed.writePrompt({
+    client, personaId: plan.personaId, plan,
+    extra: { forms: forms.length ? fmt(forms) : '', niche: mine.length ? mine.slice(0, 6).map((v) => `- ${v.hook || v.text.slice(0, 160)}`).join('\n') : '', module: moduleText(moduleByRole(settings, 'content'), 'Méthode') },
+  }), { timeout: 50_000 })).replace(/\*\*|__/g, '').trim();
+  const [post] = importPosts(db, client.id, [{ text, theme: (plan.topic || plan.angle?.idea || '').slice(0, 60), format: plan.postType || 'Texte', scheduledAt: body.scheduledAt || nextFreeSlot(db, client.id) }]);
+  post.plan = plan;
+  post.personaId = plan.personaId || '';
+  post.history = [{ at: now(), action: `Écrit par LinkedMotion (structure ${plan.structureId} · ${plan.structureName})` }];
+  if (plan.ideaId) { const i = (client.adn?.ideas || []).find((x) => x.id === plan.ideaId); if (i) i.status = 'utilisée'; }
+  return json(post);
+});
+
+// 3. Hooks : 10 propositions notées sur 100, la meilleure est appliquée (les autres restent comparables).
+route('POST', '/api/posts/:id/hooks', async ({ db, settings, post, body }) => {
+  const client = clientOf(db, post.clientId);
+  const veilleHooks = topHooks(db, client.niche).slice(0, 12);
+  const r = await askJson(settings, ed.hooksPrompt({ client, personaId: post.personaId, text: post.text, plan: post.plan, prefs: db.hookPrefs, veilleHooks, module: moduleText(moduleByRole(settings, 'hooker'), 'Méthode hooks') }), { timeout: 52_000 });
+  post.hooks = ed.normalizeHooks(r.hooks).slice(0, 10);
+  if (post.hooks.length && body.apply !== false) { post.text = ed.applyHook(post.text, post.hooks[0].text); post.hookIndex = 0; }
+  log(post, `${post.hooks.length} hooks notés${post.hooks[0] ? ` (meilleur : ${post.hooks[0].total}/100)` : ''}`);
+  return json(post);
+});
+
+route('POST', '/api/posts/:id/apply-hook', async ({ post, body }) => {
+  const h = post.hooks?.[Number(body.index)];
+  const text = h ? h.text : String(body.text || '').trim();
+  if (!text) throw new HttpError(400, 'Hook manquant');
+  post.text = ed.applyHook(post.text, text);
+  post.hookIndex = h ? Number(body.index) : null;
+  (post.hookFeedback ||= []).push({ at: now(), accepted: text });
+  log(post, 'Hook changé');
+  return json(post);
+});
+
+route('POST', '/api/posts/:id/quality', async ({ db, settings, post }) => {
+  const client = clientOf(db, post.clientId);
+  post.quality = { ...(await askJson(settings, ed.qualityPrompt({ client, personaId: post.personaId, text: post.text, plan: post.plan }), { timeout: 52_000 })), at: now() };
+  return json(post);
+});
+
+// Réécriture ciblée (sans transformer la consigne en règle permanente).
+route('POST', '/api/posts/:id/action', async ({ db, settings, post, body }) => {
+  const instruction = ed.REWRITE_ACTIONS[body.action] || String(body.instruction || '').trim();
+  if (!instruction) throw new HttpError(400, 'Action inconnue');
+  if (post.status === 'published') throw new HttpError(400, 'Post déjà publié');
+  const client = clientOf(db, post.clientId);
+  const before = post.text;
+  post.text = (await ask(settings, ed.rewritePrompt({ client, personaId: post.personaId, text: post.text, instruction, plan: post.plan }), { timeout: 50_000 })).replace(/\*\*|__/g, '').trim();
+  (post.versions ||= []).push({ at: now(), text: before, action: body.action || 'consigne' });
+  post.versions = post.versions.slice(-10);
+  post.quality = null;
+  if (post.status !== 'review') post.status = 'review';
+  log(post, `Réécrit : ${body.action || instruction.slice(0, 60)}`);
+  return json(post);
+});
+
+route('POST', '/api/posts/:id/undo', async ({ post }) => {
+  const v = post.versions?.pop();
+  if (!v) throw new HttpError(400, 'Aucune version précédente');
+  post.text = v.text;
+  log(post, 'Version précédente restaurée');
+  return json(post);
+});
+
+// ---- Bibliothèque de hooks ----
+route('GET', '/api/knowledge', async () => json({
+  hooks: ed.knowledge.hooks, families: ed.HOOK_FAMILIES,
+  structures: ed.knowledge.structures.map(({ id, name, note, schema }) => ({ id, name, note, schema })),
+  templates: ed.knowledge.templates.map(({ id, name }) => ({ id, name })), counts: ed.knowledgeCounts,
+}));
+
+route('PUT', '/api/hooks/prefs', async ({ db, body }) => {
+  const id = String(body.id || '');
+  if (!id) throw new HttpError(400, 'id manquant');
+  db.hookPrefs[id] = { ...(db.hookPrefs[id] || {}), ...(body.off !== undefined ? { off: !!body.off } : {}), ...(body.fav !== undefined ? { fav: !!body.fav } : {}) };
+  return json(db.hookPrefs[id]);
+});
+
+route('POST', '/api/hooks/generate', async ({ db, settings, body }) => {
+  const client = clientOf(db, body.clientId);
+  const count = Math.max(1, Math.min(100, Number(body.count) || 10));
+  if (!String(body.topic || '').trim()) throw new HttpError(400, 'Donne un sujet.');
+  if (count <= 10) {
+    const r = await askJson(settings, ed.hooksPrompt({ client, personaId: body.personaId, plan: { topic: body.topic, hookFamilies: body.families || [] }, prefs: db.hookPrefs, veilleHooks: topHooks(db, client.niche).slice(0, 10), module: moduleText(moduleByRole(settings, 'hooker'), 'Méthode hooks'), count }), { timeout: 52_000 });
+    return json({ hooks: ed.normalizeHooks(r.hooks), scored: true });
+  }
+  const r = await askJson(settings, ed.hookToolPrompt({ client, personaId: body.personaId, topic: body.topic, count, prefs: db.hookPrefs }), { timeout: 55_000 });
+  return json({ hooks: (r.hooks || []).filter((h) => h.text), scored: false });
+});
+
+route('POST', '/api/hooks/optimize', async ({ db, settings, body }) => {
+  const client = clientOf(db, body.clientId);
+  const r = await askJson(settings, ed.optimizeHookPrompt({ client, personaId: body.personaId, hook: body.hook, mode: body.mode }), { timeout: 45_000 });
+  return json({ hooks: ed.normalizeHooks(r.hooks) });
 });
 
 // Images : servies par une clé aléatoire impossible à deviner (les balises <img> n'envoient pas le mot de passe).

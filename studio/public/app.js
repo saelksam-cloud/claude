@@ -32,6 +32,21 @@ const ui = {
   inspireFrom: store.get('inspireFrom', ''), // concurrent choisi dans Créer
   imageMode: store.get('imageMode', 'none'),   // none | library | ai
   imageOpen: new Set(),
+  hooksOpen: new Set(),
+  qualityOpen: new Set(),
+  retouchOpen: new Set(),
+  personaId: '',
+  objective: '',
+  awareness: '',
+  ideaId: '',
+  adnTab: store.get('adnTab', 'profile'),
+  kb: null,
+  hookGen: null,
+  hookSearch: '',
+  hookFamily: '',
+  hookLang: '',
+  hookFavOnly: false,
+  hookLimit: 60,
 };
 
 // ---------- utilitaires ----------
@@ -107,7 +122,7 @@ function render() {
   const c = client();
   $('#banner').innerHTML = c && !c.linkedin.connected && ['create', 'posts'].includes(ui.view)
     ? `<div class="banner">Le LinkedIn de ${esc(c.name)} n'est pas connecté : les posts seront prêts mais pas publiés. <a href="#" data-action="go" data-id="settings">Le connecter</a></div>` : '';
-  ({ create: renderCreate, posts: renderPosts, images: renderImages, veille: renderVeille, study: renderStudy, settings: renderSettings }[ui.view] || renderCreate)();
+  ({ create: renderCreate, posts: renderPosts, adn: renderAdn, hooks: renderHooks, images: renderImages, veille: renderVeille, study: renderStudy, settings: renderSettings }[ui.view] || renderCreate)();
   enhanceVoice(view);
 }
 
@@ -130,8 +145,18 @@ function renderCreate() {
       <div class="f">Combien de posts ?
         <div class="seg">${COUNTS.map((n) => `<button type="button" class="${ui.count === n ? 'on' : ''}" data-action="count" data-id="${n}">${n}</button>`).join('')}</div>
       </div>
-      <label class="f">Consigne (facultatif) : ton, sujet, angle…
-        <textarea id="instruction" rows="3" placeholder="Ex. ton plus personnel, parle de mes résultats clients, un post sur la régularité…">${esc(ui.instruction)}</textarea>
+      <div class="grid2">
+        <label class="f">Pour quelle cible ?
+          <select id="personaSel"><option value="">${personas().length ? 'Choix automatique' : 'Aucun persona (onglet ADN)'}</option>${personas().map((p) => `<option value="${p.id}" ${p.id === ui.personaId ? 'selected' : ''}>${esc(p.name || p.role || 'Persona')}${p.status === 'hypothesis' ? ' (à valider)' : ''}</option>`).join('')}</select></label>
+        <label class="f">Objectif du post
+          <select id="objectiveSel"><option value="">Selon les objectifs du client</option>${ui.data.editorial.objectives.map((o) => `<option ${o === ui.objective ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select></label>
+        <label class="f">Niveau de conscience de la cible
+          <select id="awarenessSel"><option value="">Automatique</option>${ui.data.editorial.awareness.slice(1).map((a, i) => `<option value="${i + 1}" ${String(i + 1) === String(ui.awareness) ? 'selected' : ''}>${i + 1}. ${esc(a)}</option>`).join('')}</select></label>
+        <label class="f">Partir d'une idée validée
+          <select id="ideaSel"><option value="">Aucune</option>${ideas().filter((i) => i.status !== 'utilisée').map((i) => `<option value="${i.id}" ${i.id === ui.ideaId ? 'selected' : ''}>${esc(i.title.slice(0, 70))}</option>`).join('')}</select></label>
+      </div>
+      <label class="f">Sujet, notes ou consigne (facultatif)
+        <textarea id="instruction" rows="3" placeholder="Ex. le coût caché de la double saisie, ou quelques bullet points, ou « ton plus personnel »…">${esc(ui.instruction)}</textarea>
       </label>
       <div class="f">Image
         <div class="seg">
@@ -227,32 +252,38 @@ function renderRelay() {
     </div>`;
 }
 
+// Pour chaque post : plan éditorial → rédaction (structure Linka) → 10 hooks notés /100 → image éventuelle.
 async function createAuto() {
   if (!ui.data.settings.hasOpenaiKey) throw new Error("Ajoute ta clé OpenAI dans Réglages, ou choisis « Mes GPTs ».");
   const total = ui.count;
   ui.lastCreated = [];
-  ui.job = { kind: 'create', done: 0, total, step: 'Écriture…', stop: false };
+  ui.job = { kind: 'create', done: 0, total, step: 'Préparation…', stop: false };
+  const avoid = { angles: [], structures: [] };
   render();
   try {
     for (let i = 0; i < total && !ui.job.stop; i++) {
-      ui.job.step = `Post ${i + 1} / ${total} : écriture puis hook…`;
-      render();
-      const p = await api('POST', '/api/generate', { clientId: ui.clientId, instruction: ui.instruction, author: ui.inspireFrom });
+      const step = (t) => { ui.job.step = `Post ${i + 1} / ${total} : ${t}`; render(); };
+      step('plan éditorial (angle, structure)…');
+      const plan = await api('POST', '/api/plan', { clientId: ui.clientId, personaId: ui.personaId, objective: ui.objective, awareness: ui.awareness, topic: ui.instruction, ideaId: i === 0 ? ui.ideaId : '', avoid });
+      avoid.angles.push(plan.angle?.type); avoid.structures.push(plan.structureId);
+      step(`rédaction (${plan.structureName})…`);
+      const p = await api('POST', '/api/write', { clientId: ui.clientId, plan, author: ui.inspireFrom });
       ui.lastCreated.push(p.id);
-      await refresh();
+      step('10 hooks notés sur 100…');
+      await api('POST', `/api/posts/${p.id}/hooks`, {}).catch((e) => toast(`Hooks du post ${i + 1} : ${e.message}`, true));
       if (ui.imageMode !== 'none') {
-        ui.job.step = `Post ${i + 1} / ${total} : image…`;
-        render();
+        step('image…');
         await addImage(p.id, ui.imageMode).catch((e) => toast(`Image du post ${i + 1} : ${e.message}`, true));
       }
       ui.job.done = i + 1;
       await refresh();
     }
+    ui.ideaId = '';
     ui.job = { ...ui.job, finished: true, step: ui.job.stop ? 'Arrêté.' : `${ui.job.done} post(s) prêt(s), à valider ci-dessous.` };
   } catch (e) {
     ui.job = { ...ui.job, finished: true, step: `Arrêté : ${e.message}` };
     throw e;
-  } finally { render(); }
+  } finally { await refresh().catch(() => render()); }
 }
 
 async function saveRelayPosts(texts) {
@@ -379,6 +410,10 @@ function postCard(p) {
   <article class="post" id="${p.id}">
     <div>
       ${editing ? editor : preview}
+      ${p.plan ? strategyPanel(p) : ''}
+      ${ui.hooksOpen.has(p.id) ? hooksPanel(p) : ''}
+      ${ui.qualityOpen.has(p.id) ? qualityPanel(p) : ''}
+      ${ui.retouchOpen.has(p.id) ? retouchPanel(p) : ''}
       ${ui.imageOpen.has(p.id) ? imagePanel(p) : ''}
       ${fbOpen ? `<div class="inline-box" data-feedback="${p.id}">
         <textarea rows="3" placeholder="Qu'est-ce qui ne va pas ? Ex. hook trop long, trop formel, parle plus de mes résultats…"></textarea>
@@ -388,7 +423,7 @@ function postCard(p) {
     </div>
     <aside class="side">
       <div class="row between"><span class="badge s-${p.status}">${STATUS[p.status]}</span>${p.theme ? `<span class="tag">${esc(p.theme)}</span>` : ''}</div>
-      ${locked ? `<div class="small">Publié ${fmtDate(p.publishedAt)}</div>`
+      ${locked ? `<div class="small">Publié ${fmtDate(p.publishedAt)}</div>${metricsForm(p)}`
         : `<label class="f">Publication<input type="datetime-local" data-date="${p.id}" value="${toLocalInput(p.scheduledAt)}"></label>`}
       ${hasPh ? '<div class="alert warn">Remplace les [À COMPLÉTER] avant de valider (✎ Modifier).</div>' : ''}
       ${p.error ? `<div class="alert err">${esc(p.error)}</div>` : ''}
@@ -398,6 +433,12 @@ function postCard(p) {
           : `<button class="btn primary sm" data-action="approve" data-id="${p.id}" ${hasPh ? 'disabled' : ''}>✓ Valider</button>`}
         <button class="btn soft sm" data-action="open-feedback" data-id="${p.id}">💬 Retour</button>
         <button class="btn sm" data-action="toggle-image" data-id="${p.id}">🖼 Image</button>
+      </div>
+      <div class="actions">
+        <button class="btn sm" data-action="toggle-hooks" data-id="${p.id}">🪝 Hooks${p.hooks?.length ? ` · ${p.hooks[p.hookIndex ?? 0]?.total ?? ''}/100` : ''}</button>
+        <button class="btn sm" data-action="toggle-quality" data-id="${p.id}">✅ Qualité</button>
+        <button class="btn sm" data-action="toggle-retouch" data-id="${p.id}">✨ Retoucher</button>
+        ${p.versions?.length ? `<button class="btn ghost sm" data-action="undo" data-id="${p.id}" title="Revenir à la version précédente">↶ Annuler</button>` : ''}
         ${editing ? '' : `<button class="btn sm" data-action="edit" data-id="${p.id}">✎ Modifier</button>`}
         <button class="btn ghost sm danger" data-action="delete" data-id="${p.id}" title="Supprimer">🗑</button>
       </div>
@@ -422,6 +463,221 @@ function imagePanel(p) {
       <textarea rows="3" data-imgprompt="${p.id}" data-novoice style="margin-top:6px">${esc(p.imagePrompt)}</textarea>
       <button class="btn sm" data-action="img-regen" data-id="${p.id}" style="margin-top:6px">↻ Regénérer avec cette consigne</button></details>` : ''}
   </div>`;
+}
+
+// ---------- Panneaux d'un post : stratégie, hooks notés, qualité, retouches ----------
+const personas = () => client()?.adn?.personas || [];
+const ideas = () => client()?.adn?.ideas || [];
+const personaName = (id) => personas().find((x) => x.id === id)?.name || '';
+const scoreClass = (t) => (t >= 90 ? 's-published' : t >= 80 ? 's-approved' : t >= 70 ? 's-review' : 's-draft');
+
+function strategyPanel(p) {
+  const pl = p.plan;
+  return `<details class="inline-box"><summary class="small" style="cursor:pointer"><b>🧭 Stratégie</b> · ${esc(pl.angle?.type || '')} · ${esc(pl.structureName || '')}</summary>
+    <div class="small" style="display:grid;gap:4px;margin-top:6px">
+      ${pl.angle?.idea ? `<div><b>Idée :</b> ${esc(pl.angle.idea)}</div>` : ''}
+      ${p.personaId ? `<div><b>Cible :</b> ${esc(personaName(p.personaId))}</div>` : pl.angle?.target ? `<div><b>Cible :</b> ${esc(pl.angle.target)}</div>` : ''}
+      ${pl.angle?.benefit ? `<div><b>Bénéfice lecteur :</b> ${esc(pl.angle.benefit)}</div>` : ''}
+      <div><b>Type :</b> ${esc(pl.postType || '')} · <b>Niveau de conscience :</b> ${esc(ui.data.editorial.awareness[pl.awareness] || '—')}</div>
+      <div><b>Structure Linka :</b> ${esc(pl.structureId)} · ${esc(pl.structureName || '')}</div>
+      ${pl.cta ? `<div><b>CTA :</b> ${esc(pl.cta)}</div>` : ''}
+      ${pl.why ? `<div><b>Pourquoi :</b> ${esc(pl.why)}</div>` : ''}
+      ${pl.missing?.length ? `<div class="alert warn"><b>Infos manquantes :</b> ${pl.missing.map(esc).join(' · ')}</div>` : ''}
+    </div></details>`;
+}
+
+function hooksPanel(p) {
+  if (!p.hooks?.length) return `<div class="inline-box"><div class="row between"><b>🪝 Hooks</b><button class="btn primary sm" data-action="gen-hooks" data-id="${p.id}">Générer 10 hooks notés</button></div></div>`;
+  return `<div class="inline-box">
+    <div class="row between"><b>🪝 10 hooks notés sur 100</b><div class="row"><button class="btn ghost sm" data-action="gen-hooks" data-id="${p.id}">↻ Nouveaux hooks</button><button class="btn ghost sm" data-action="toggle-hooks" data-id="${p.id}">Fermer</button></div></div>
+    <p class="small" style="margin:0">Note interne LinkedMotion (cible 30 · curiosité 25 · clarté 20 · crédibilité 15 · originalité 10), pas une prédiction de viralité.</p>
+    ${p.hooks.map((h, i) => `<div class="hook-row ${i === p.hookIndex ? 'on' : ''}">
+      <div class="row between" style="align-items:flex-start;gap:10px">
+        <div style="flex:1;min-width:0"><div class="vhook">${esc(h.text)}</div>
+          <div class="small">${esc(h.family)}${h.persona ? ` · ${esc(h.persona)}` : ''} · cible ${h.scores.cible}/30 · curiosité ${h.scores.curiosite}/25 · clarté ${h.scores.clarte}/20 · crédibilité ${h.scores.credibilite}/15 · originalité ${h.scores.originalite}/10</div></div>
+        <span class="badge ${scoreClass(h.total)}">${h.total}/100</span>
+      </div>
+      <details><summary class="small" style="cursor:pointer">Forces, faiblesses, amélioration</summary><div class="small">✅ ${esc(h.forces)}<br>⚠️ ${esc(h.faiblesses)}<br>💡 ${esc(h.amelioration)}</div></details>
+      ${i === p.hookIndex ? '<span class="small"><b>✓ Utilisé dans le post</b></span>' : `<button class="btn soft sm" data-action="apply-hook" data-id="${p.id}" data-index="${i}">Utiliser ce hook</button>`}
+    </div>`).join('')}
+  </div>`;
+}
+
+function qualityPanel(p) {
+  const q = p.quality;
+  if (!q) return `<div class="inline-box"><div class="row between"><b>✅ Contrôle qualité</b><button class="btn primary sm" data-action="quality" data-id="${p.id}">Analyser le post</button></div></div>`;
+  const lv = { Fort: 's-approved', Moyen: 's-review', Faible: 's-rejected' };
+  return `<div class="inline-box">
+    <div class="row between"><b>✅ Contrôle qualité</b><div class="row"><button class="btn ghost sm" data-action="quality" data-id="${p.id}">↻ Réanalyser</button><button class="btn ghost sm" data-action="toggle-quality" data-id="${p.id}">Fermer</button></div></div>
+    ${q.summary ? `<div class="small">${esc(q.summary)}</div>` : ''}
+    ${q.inventedRisk && String(q.inventedRisk).trim() ? `<div class="alert err">Faits à vérifier : ${esc(Array.isArray(q.inventedRisk) ? q.inventedRisk.join(' · ') : q.inventedRisk)}</div>` : ''}
+    <table><tr><th>Critère</th><th>Niveau</th><th>Amélioration</th></tr>
+    ${(q.criteria || []).map((c) => `<tr><td>${esc(c.name)}</td><td><span class="badge ${lv[c.level] || 's-draft'}">${esc(c.level)}</span></td><td class="small">${c.issue ? `${esc(c.issue)}<br>` : ''}${c.fix ? `💡 ${esc(c.fix)}` : ''}</td></tr>`).join('')}</table>
+  </div>`;
+}
+
+const RETOUCH = { hook: 'Améliorer le hook', shorter: 'Raccourcir', value: 'Ajouter de la valeur', natural: 'Plus naturel', angle: "Changer l'angle", structure: 'Changer la structure', story: 'Renforcer le storytelling', voice: 'Voix du client', other: 'Autre version' };
+function retouchPanel(p) {
+  return `<div class="inline-box">
+    <div class="row between"><b>✨ Retoucher</b><button class="btn ghost sm" data-action="toggle-retouch" data-id="${p.id}">Fermer</button></div>
+    <div class="row">${Object.entries(RETOUCH).map(([k, l]) => `<button class="btn soft sm" data-action="retouch" data-id="${p.id}" data-kind="${k}">${l}</button>`).join('')}</div>
+    <p class="small" style="margin:0">Une retouche ne devient pas une règle permanente. Tu peux toujours revenir en arrière avec « ↶ Annuler ».</p>
+  </div>`;
+}
+
+function metricsForm(p) {
+  const m = p.metrics || {};
+  const rate = m.impressions ? (((m.reactions || 0) + (m.comments || 0) + (m.reposts || 0)) / m.impressions * 100).toFixed(1) : null;
+  const f = (k, l) => `<label class="f">${l}<input inputmode="numeric" data-metric="${k}" data-id="${p.id}" value="${m[k] ?? ''}" placeholder="—"></label>`;
+  return `<details class="small"><summary style="cursor:pointer">📊 Performances réelles${rate ? ` · ${rate} % d'interaction` : ''}</summary>
+    <div class="grid2" style="margin-top:6px">${f('impressions', 'Impressions')}${f('reactions', 'Réactions')}${f('comments', 'Commentaires')}${f('reposts', 'Reposts')}</div>
+    <div class="small">Laisse vide ce que tu ne connais pas : une donnée absente n'est jamais comptée comme zéro.</div></details>`;
+}
+
+// ================= ADN CLIENT =================
+const ADN_TABS = [['profile', 'Profil'], ['personas', 'Personas'], ['voice', 'Voix'], ['proofs', 'Preuves'], ['onboarding', 'Onboarding'], ['interview', 'Interview & idées'], ['memory', 'Mémoire']];
+const PERSONA_FIELDS = [['name', 'Nom du persona'], ['role', 'Fonction'], ['sector', 'Secteur'], ['companyType', "Type d'entreprise"], ['companySize', 'Taille'], ['responsibility', 'Responsabilité / situation'],
+  ['problems', 'Problèmes prioritaires', 2], ['frustrations', 'Frustrations quotidiennes', 2], ['hiddenProblems', 'Problèmes sous-jacents', 2], ['consequences', 'Conséquences financières / pro', 2],
+  ['fears', 'Peurs et risques perçus', 2], ['desires', 'Désirs immédiats', 2], ['ambitions', 'Ambitions long terme', 2], ['objectionsRational', 'Objections rationnelles', 2], ['objectionsEmotional', 'Objections émotionnelles', 2],
+  ['beliefs', 'Croyances (limitantes, du secteur)', 2], ['habits', 'Mauvaises habitudes', 2], ['alternatives', 'Déjà essayé / alternatives', 2], ['triggers', "Déclencheurs d'achat", 2], ['vocabulary', 'Vocabulaire réellement utilisé', 2]];
+const PROFILE_FIELDS = [['job', 'Métier et spécialité'], ['background', 'Expérience et parcours', 2], ['positioning', 'Positionnement', 2], ['expertise', 'Expertises', 2], ['differentiation', 'Différenciation vs concurrents', 2],
+  ['values', 'Valeurs', 2], ['convictions', 'Convictions professionnelles', 2], ['vision', 'Vision du marché', 2], ['offers', 'Offres, prestations, produits', 2], ['prices', 'Prix ou fourchettes'], ['promises', 'Promesses commerciales justifiables', 2]];
+const VOICE_FIELDS = [['tone', 'Ton (direct, pédagogique, humoristique…)'], ['address', 'Tutoiement ou vouvoiement'], ['level', 'Niveau de langage'], ['vocabulary', 'Vocabulaire habituel', 2], ['expressions', 'Expressions récurrentes', 2],
+  ['sentenceLength', 'Longueur des phrases'], ['postLength', 'Longueur des posts'], ['lists', 'Utilisation des listes'], ['storytelling', 'Types de storytelling appréciés', 2], ['opinions', 'Opinions et convictions fortes', 2], ['forbidden', 'Expressions et formulations interdites', 2]];
+const STATUS_LBL = { confirmed: 'Confirmé', hypothesis: 'Hypothèse IA', imported: 'Importé' };
+const fieldHtml = (prefix, [k, label, rows], obj) => `<label class="f">${label}${rows ? `<textarea name="${prefix}${k}" rows="${rows}">${esc(obj?.[k] || '')}</textarea>` : `<input name="${prefix}${k}" value="${esc(obj?.[k] || '')}">`}</label>`;
+
+function renderAdn() {
+  const c = client();
+  const a = c.adn || {};
+  const tab = ui.adnTab;
+  let body = '';
+  if (tab === 'profile') {
+    body = `<form class="card stack" id="adnProfile">
+      <div class="grid2">${fieldHtml('c.', ['name', 'Nom'], c)}${fieldHtml('c.', ['company', 'Entreprise'], c)}</div>
+      <div class="grid2">${fieldHtml('c.', ['niche', 'Niche (choisit la veille)'], c)}${fieldHtml('c.', ['sector', "Secteur d'activité"], c)}</div>
+      ${PROFILE_FIELDS.map((f) => fieldHtml('p.', f, a.profile)).join('')}
+      ${fieldHtml('c.', ['themes', 'Sujets de prédilection / piliers', 3], c)}
+      <div class="f">Objectifs LinkedIn (coche dans l'ordre de priorité)
+        <div class="chips" id="objChips" data-list="${esc(JSON.stringify(a.objectives || []))}">${objectiveChips(a.objectives || [])}</div></div>
+      ${fieldHtml('a.', ['forbiddenTopics', 'Sujets à ne jamais aborder', 2], a)}
+      <button class="btn primary" type="submit" style="align-self:flex-end">Enregistrer le profil</button></form>`;
+  }
+  if (tab === 'personas') {
+    const list = a.personas || [];
+    body = `<div class="row between" style="margin-bottom:12px"><p class="small" style="margin:0">Chaque cible reçoit ses propres hooks et arguments, même sur un sujet identique.</p><button class="btn primary" data-action="add-persona">+ Ajouter un persona</button></div>
+      ${list.length ? list.map((pe) => `<form class="card stack persona-form" data-persona="${pe.id}">
+        <div class="row between"><h3 style="margin:0">${esc(pe.name || 'Nouveau persona')}</h3><div class="row">
+          <span class="badge ${pe.status === 'hypothesis' ? 's-review' : 's-approved'}">${pe.status === 'hypothesis' ? 'Hypothèse IA à valider' : 'Confirmé'}</span>
+          ${pe.status === 'hypothesis' ? `<button type="button" class="btn soft sm" data-action="confirm-persona" data-id="${pe.id}">Valider</button>` : ''}
+          <button type="button" class="btn ghost sm danger" data-action="del-persona" data-id="${pe.id}">🗑</button></div></div>
+        <div class="grid2">${PERSONA_FIELDS.slice(0, 6).map((f) => fieldHtml('', f, pe)).join('')}</div>
+        <label class="f">Niveau de conscience<select name="awareness"><option value="">—</option>${ui.data.editorial.awareness.slice(1).map((x, i) => `<option value="${i + 1}" ${Number(pe.awareness) === i + 1 ? 'selected' : ''}>${i + 1}. ${esc(x)}</option>`).join('')}</select></label>
+        <details><summary class="small" style="cursor:pointer"><b>Psychologie de l'audience</b> (frustrations, peurs, désirs, objections…)</summary>
+          <div class="grid2" style="margin-top:8px">${PERSONA_FIELDS.slice(6).map((f) => fieldHtml('', f, pe)).join('')}</div></details>
+        <button class="btn primary sm" type="submit" style="align-self:flex-end">Enregistrer</button></form>`).join('') : '<div class="card empty">Aucun persona. Ajoute-en un, ou lance l\'onboarding pour que l\'IA en propose.</div>'}`;
+  }
+  if (tab === 'voice') {
+    const fb = c.feedbackLog || [];
+    body = `<form class="card stack" id="adnVoice">
+      <div class="grid2">${VOICE_FIELDS.map((f) => fieldHtml('v.', f, a.voice)).join('')}</div>
+      ${fieldHtml('v.', ['samples', 'Textes réellement écrits par le client ou posts validés (l\'IA imitera cette voix)', 8], a.voice)}
+      <button class="btn primary" type="submit" style="align-self:flex-end">Enregistrer la voix</button></form>
+    <div class="card stack"><h3 style="margin:0">Règles permanentes</h3>
+      <p class="small" style="margin:0">Appliquées à tous les posts. Un retour ponctuel ne devient une règle que si tu le décides.</p>
+      ${(a.rules || []).map((rule, i) => `<div class="row between vitem"><span>${esc(rule)}</span><button class="btn ghost sm danger" data-action="del-rule" data-id="${i}">🗑</button></div>`).join('') || '<p class="small" style="margin:0">Aucune règle.</p>'}
+      <div class="row"><input id="newRule" placeholder="Ex. Toujours vouvoyer, jamais de « game changer »"><button class="btn sm" data-action="add-rule">Ajouter</button></div>
+      ${fb.length ? `<h3 style="margin:8px 0 0">Retours récents</h3>${fb.slice().reverse().slice(0, 15).map((f, i) => `<div class="row between vitem"><span class="small">${esc(f.text)}</span><button class="btn soft sm" data-action="promote-rule" data-id="${fb.length - 1 - i}">📌 En faire une règle</button></div>`).join('')}` : ''}
+    </div>`;
+  }
+  if (tab === 'proofs') {
+    const list = a.proofs || [];
+    body = `<div class="row between" style="margin-bottom:12px"><p class="small" style="margin:0">L'IA n'utilise QUE les preuves « vérifiées » et autorisées. Sans preuve, elle écrit [À COMPLÉTER].</p><button class="btn primary" data-action="add-proof">+ Ajouter une preuve</button></div>
+      ${list.length ? `<form class="card stack" id="adnProofs">${list.map((pr) => `<div class="proof" data-proof="${pr.id}">
+        <div class="grid2"><label class="f">Type<select name="type">${['Résultat client', 'Étude de cas', 'Témoignage', "Chiffre d'activité", 'Expérience vécue', 'Anecdote', 'Réalisation', 'Méthode propriétaire', 'Projet'].map((t) => `<option ${t === pr.type ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
+        <label class="f">Statut<select name="status"><option value="to_verify" ${pr.status !== 'verified' ? 'selected' : ''}>À vérifier</option><option value="verified" ${pr.status === 'verified' ? 'selected' : ''}>Vérifiée</option></select></label></div>
+        <label class="f">La preuve<textarea name="text" rows="2">${esc(pr.text || '')}</textarea></label>
+        <div class="grid2"><label class="f">Source<input name="source" value="${esc(pr.source || '')}"></label><label class="f">Date<input name="date" value="${esc(pr.date || '')}" data-novoice></label></div>
+        <div class="row between"><label class="small"><input type="checkbox" name="permission" ${pr.permission !== false ? 'checked' : ''} style="width:auto"> Autorisation d'utilisation</label>
+        <button type="button" class="btn ghost sm danger" data-action="del-proof" data-id="${pr.id}">🗑</button></div></div>`).join('')}
+        <button class="btn primary" type="submit" style="align-self:flex-end">Enregistrer les preuves</button></form>` : '<div class="card empty">Aucune preuve pour l\'instant.</div>'}`;
+  }
+  if (tab === 'onboarding') {
+    const ans = a.onboarding?.answers || {};
+    const an = a.analysis;
+    body = `<form class="card stack" id="adnOnboarding"><p class="small" style="margin:0">Réponds à ce que tu sais, le reste plus tard. Tu peux dicter 🎤.</p>
+      ${ui.data.editorial.onboarding.map((q, i) => `<label class="f">${i + 1}. ${esc(q)}<textarea name="q${i}" rows="2">${esc(ans[q] || '')}</textarea></label>`).join('')}
+      <div class="row" style="justify-content:flex-end"><button class="btn" type="submit">Enregistrer</button><button type="button" class="btn primary" data-action="analyze-onboarding">🧠 Enregistrer et analyser</button></div></form>
+      ${an ? `<div class="card stack"><div class="row between"><h3 style="margin:0">Analyse proposée</h3><span class="badge s-review">Hypothèses IA à valider</span></div>
+        ${an.summary ? `<div><b>Résumé :</b> ${esc(an.summary)}</div>` : ''}
+        ${an.positioning ? `<div class="row between"><div><b>Positionnement :</b> ${esc(an.positioning)}</div><button class="btn soft sm" data-action="apply-analysis" data-id="positioning">Appliquer</button></div>` : ''}
+        ${an.personas?.length ? `<div class="row between"><div><b>Personas :</b> ${an.personas.map((x) => esc(x.name || x.role)).join(' · ')}</div><button class="btn soft sm" data-action="apply-analysis" data-id="personas">Ajouter</button></div>` : ''}
+        ${an.pillars?.length ? `<div class="row between"><div><b>Piliers :</b> ${an.pillars.map(esc).join(' · ')}</div><button class="btn soft sm" data-action="apply-analysis" data-id="pillars">Appliquer</button></div>` : ''}
+        ${an.angles?.length ? `<div class="row between"><div><b>Angles :</b> ${an.angles.map(esc).join(' · ')}</div><button class="btn soft sm" data-action="apply-analysis" data-id="angles">Ajouter aux idées</button></div>` : ''}
+        ${an.voice ? `<div class="row between"><div><b>Guide de ton :</b> ${esc(Object.values(an.voice).filter(Boolean).join(' · '))}</div><button class="btn soft sm" data-action="apply-analysis" data-id="voice">Appliquer</button></div>` : ''}
+        ${an.proofs?.length ? `<div class="row between"><div><b>Preuves mobilisables :</b> ${an.proofs.map((x) => esc(x.text)).join(' · ')}</div><button class="btn soft sm" data-action="apply-analysis" data-id="proofs">Ajouter (à vérifier)</button></div>` : ''}
+        ${an.missing?.length ? `<div class="alert warn"><b>À demander au client :</b> ${an.missing.map(esc).join(' · ')}</div>` : ''}</div>` : ''}`;
+  }
+  if (tab === 'interview') {
+    const ans = a.interview?.answers || {};
+    const ex = a.interview?.extracted;
+    body = `<form class="card stack" id="adnInterview"><p class="small" style="margin:0">Questions à poser au client pendant l'interview. Note (ou dicte) ses réponses, puis extrais les idées.</p>
+      ${ui.data.editorial.interview.map((q, i) => `<label class="f">${esc(q)}<textarea name="q${i}" rows="2">${esc(ans[q] || '')}</textarea></label>`).join('')}
+      <div class="row" style="justify-content:flex-end"><button class="btn" type="submit">Enregistrer</button><button type="button" class="btn primary" data-action="analyze-interview">💡 Extraire les idées</button></div></form>
+      ${ex ? `<div class="card small">${ex.convictions?.length ? `<div><b>Convictions :</b> ${ex.convictions.map(esc).join(' · ')}</div>` : ''}${ex.objections?.length ? `<div><b>Objections clients :</b> ${ex.objections.map(esc).join(' · ')}</div>` : ''}${ex.stories?.length ? `<div><b>Anecdotes à valider :</b> ${ex.stories.map(esc).join(' · ')}</div>` : ''}</div>` : ''}
+      <div class="card stack"><h3 style="margin:0">💡 Banque d'idées (${ideas().length})</h3>
+        ${ideas().map((i) => `<div class="row between vitem"><div><b>${esc(i.title)}</b><div class="small">${esc([i.angle, i.postType, i.source].filter(Boolean).join(' · '))}</div></div><div class="row"><span class="tag">${esc(i.status || '')}</span><button class="btn ghost sm danger" data-action="del-idea" data-id="${i.id}">🗑</button></div></div>`).join('') || '<p class="small" style="margin:0">Aucune idée.</p>'}
+        <div class="row"><input id="newIdea" placeholder="Ajouter une idée de post"><button class="btn sm" data-action="add-idea">Ajouter</button></div></div>`;
+  }
+  if (tab === 'memory') {
+    const mem = (a.memory || []).slice().reverse();
+    body = `<div class="card stack"><h3 style="margin:0">Mémoire éditoriale (${mem.length} corrections)</h3>
+      <p class="small" style="margin:0">Chaque fois que tu modifies un post, l'original et ta correction sont gardés ici. Rien n'est transformé en règle sans ton accord.</p>
+      ${mem.map((m) => `<details class="vitem"><summary class="small" style="cursor:pointer">${fmtDate(m.at)} · ${esc(m.type)}</summary><div class="grid2 small"><div><b>Avant</b><div class="vtext">${esc(m.before)}</div></div><div><b>Après</b><div class="vtext">${esc(m.after)}</div></div></div></details>`).join('') || '<p class="small" style="margin:0">Aucune correction pour l\'instant.</p>'}</div>`;
+  }
+  const filled = ['profile', 'personas', 'voice', 'proofs'].filter((k) => (k === 'personas' || k === 'proofs' ? (a[k] || []).length : Object.values(a[k] || {}).some(Boolean))).length;
+  view.innerHTML = `
+    <h2>ADN éditorial · ${esc(c.name)}</h2>
+    <p class="sub">Tout ce que l'IA sait du client, de sa cible et de sa voix. Utilisé automatiquement à chaque post. (${filled}/4 sections remplies)</p>
+    <div class="chips" style="margin-bottom:16px">${ADN_TABS.map(([k, l]) => `<button class="chip ${tab === k ? 'on' : ''}" data-action="adn-tab" data-id="${k}">${l}</button>`).join('')}</div>
+    ${body}`;
+}
+
+const objectiveChips = (list) => ui.data.editorial.objectives.map((o) => { const i = list.indexOf(o); return `<button type="button" class="chip ${i >= 0 ? 'on' : ''}" data-action="toggle-objective" data-id="${esc(o)}">${i >= 0 ? `${i + 1}. ` : ''}${esc(o)}</button>`; }).join('');
+
+async function saveAdn(patch) { await api('PUT', `/api/clients/${ui.clientId}/adn`, patch); await refresh(); }
+
+// ================= BIBLIOTHÈQUE DE HOOKS =================
+function renderHooks() {
+  if (!ui.kb) { view.innerHTML = '<p class="empty">Chargement de la bibliothèque…</p>'; api('GET', '/api/knowledge').then((k) => { ui.kb = k; render(); }).catch((e) => toast(e.message, true)); return; }
+  const prefs = ui.data.hookPrefs || {};
+  const q = ui.hookSearch.toLowerCase();
+  const list = ui.kb.hooks.filter((h) => (!ui.hookFamily || h.family === ui.hookFamily) && (!ui.hookLang || h.lang === ui.hookLang) && (!ui.hookFavOnly || prefs[h.id]?.fav) && (!q || h.template.toLowerCase().includes(q)));
+  const g = ui.hookGen;
+  view.innerHTML = `
+    <h2>Hooks</h2>
+    <p class="sub">Bibliothèque Linka : ${ui.kb.counts.hooks} modèles (${ui.kb.counts.hooksRaw} importés, doublons retirés), ${ui.kb.counts.structures} structures, ${ui.kb.counts.templates} templates, ${ui.kb.counts.posts} posts de référence. Les modèles servent de structures à adapter, jamais à recopier.</p>
+    <div class="card stack">
+      <h3 style="margin:0">⚡ Générer des hooks</h3>
+      <div class="grid2"><label class="f">Sujet<input id="hgTopic" value="${esc(g?.topic || '')}" placeholder="Ex. pourquoi les dirigeants n'osent pas publier"></label>
+        <label class="f">Cible<select id="hgPersona"><option value="">Générale</option>${personas().map((x) => `<option value="${x.id}" ${g?.personaId === x.id ? 'selected' : ''}>${esc(x.name || x.role)}</option>`).join('')}</select></label></div>
+      <div class="row"><span class="small">Combien :</span>${[10, 30, 50, 100].map((n) => `<button class="btn ${n === 10 ? 'primary' : ''} sm" data-action="gen-hook-tool" data-id="${n}">${n}${n === 10 ? ' (notés /100)' : ''}</button>`).join('')}</div>
+      ${g?.loading ? '<p class="small">Génération…</p>' : ''}
+      ${g?.hooks?.length ? `<div>${g.hooks.map((h, i) => `<div class="hook-row"><div class="row between" style="gap:10px;align-items:flex-start"><div style="flex:1;min-width:0"><div class="vhook">${esc(h.text)}</div><div class="small">${esc(h.family || '')}${g.scored ? ` · cible ${h.scores.cible}/30 · curiosité ${h.scores.curiosite}/25 · clarté ${h.scores.clarte}/20 · crédibilité ${h.scores.credibilite}/15 · originalité ${h.scores.originalite}/10` : ''}</div>
+        ${g.scored && h.amelioration ? `<div class="small">💡 ${esc(h.amelioration)}</div>` : ''}</div>${g.scored ? `<span class="badge ${scoreClass(h.total)}">${h.total}/100</span>` : ''}</div>
+        <div class="row"><button class="btn ghost sm" data-action="copy" data-id="${esc(h.text)}">Copier</button><select class="sm-select" data-optimize="${i}"><option value="">Optimiser…</option><option value="short">Plus court</option><option value="precise">Plus précis</option><option value="intriguing">Plus intrigant</option><option value="direct">Plus direct</option><option value="emotional">Plus émotionnel</option><option value="expert">Plus expert</option><option value="persona">Plus ciblé persona</option></select></div>
+        ${h.variants ? h.variants.map((v) => `<div class="small" style="margin-left:12px">↳ <b>${v.total}/100</b> ${esc(v.text)}</div>`).join('') : ''}</div>`).join('')}</div>` : ''}
+    </div>
+    <div class="card stack">
+      <div class="row between"><h3 style="margin:0">📚 Bibliothèque (${list.length})</h3>
+        <div class="row"><select id="hookLang" class="sm-select"><option value="">FR + EN</option><option value="fr" ${ui.hookLang === 'fr' ? 'selected' : ''}>Français</option><option value="en" ${ui.hookLang === 'en' ? 'selected' : ''}>Anglais</option></select>
+        <button class="chip ${ui.hookFavOnly ? 'on' : ''}" data-action="hook-fav-only">★ Favoris</button></div></div>
+      <input id="hookSearch" placeholder="🔍 Rechercher un modèle…" value="${esc(ui.hookSearch)}" data-novoice>
+      <div class="chips"><button class="chip ${!ui.hookFamily ? 'on' : ''}" data-action="hook-family" data-id="">Toutes</button>${ui.kb.families.map((f) => `<button class="chip ${ui.hookFamily === f ? 'on' : ''}" data-action="hook-family" data-id="${esc(f)}">${esc(f)}</button>`).join('')}</div>
+      <div>${list.slice(0, ui.hookLimit).map((h) => `<div class="row between vitem ${prefs[h.id]?.off ? 'off' : ''}"><div style="flex:1;min-width:0"><div>${esc(h.template)}</div><div class="small">${esc(h.family)} · ${h.lang.toUpperCase()} · ${esc(h.id)}</div></div>
+        <div class="row"><button class="btn ghost sm" data-action="hook-fav" data-id="${h.id}" title="Favori">${prefs[h.id]?.fav ? '★' : '☆'}</button><button class="btn ghost sm" data-action="hook-off" data-id="${h.id}" title="Activer / désactiver">${prefs[h.id]?.off ? 'Réactiver' : 'Désactiver'}</button></div></div>`).join('')}</div>
+      ${list.length > ui.hookLimit ? '<button class="btn" data-action="hook-more">Afficher plus</button>' : ''}
+    </div>`;
 }
 
 // ================= VEILLE =================
@@ -490,6 +746,7 @@ function renderVeille() {
 }
 
 // ================= ÉTUDE DE MARCHÉ =================
+const median = (arr) => { const a = [...arr].sort((x, y) => x - y); if (!a.length) return 0; const m = Math.floor(a.length / 2); return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2; };
 function groupBy(items, keyFn) {
   const map = new Map();
   for (const v of items) {
@@ -570,11 +827,12 @@ function renderStudy() {
     <div class="kpis">
       <div class="kpi"><div class="n">${items.length}</div><div class="l">posts analysés</div></div>
       ${ui.author ? '' : `<div class="kpi"><div class="n">${new Set(items.map((v) => v.author).filter(Boolean)).size}</div><div class="l">concurrents</div></div>`}
-      <div class="kpi"><div class="n">${nf(items.reduce((s, v) => s + (Number(v.likes) || 0), 0) / items.length)}</div><div class="l">réactions en moyenne</div></div>
-      <div class="kpi"><div class="n">${nf(items.reduce((s, v) => s + (Number(v.comments) || 0), 0) / items.length)}</div><div class="l">commentaires en moyenne</div></div>
+      <div class="kpi"><div class="n">${nf(median(items.map((v) => Number(v.likes) || 0)))}</div><div class="l">réactions médianes (moy. ${nf(items.reduce((s, v) => s + (Number(v.likes) || 0), 0) / items.length)})</div></div>
+      <div class="kpi"><div class="n">${nf(median(items.map((v) => Number(v.comments) || 0)))}</div><div class="l">commentaires médians (moy. ${nf(items.reduce((s, v) => s + (Number(v.comments) || 0), 0) / items.length)})</div></div>
       ${hookFreq ? `<div class="kpi"><div class="n" style="font-size:18px;padding:5px 0">${esc(hookFreq.label)}</div><div class="l">hook le plus fréquent (${hookFreq.count} posts)</div></div>` : ''}
     </div>
     ${!ui.author && authorsOf(niche).length > 1 ? compareTable(nicheAll) : ''}
+    <p class="small" style="margin:0 0 12px">Fiabilité : échantillon de ${items.length} posts collés à la main · impressions des concurrents non disponibles publiquement (elles ne sont jamais estimées) · la médiane limite l'effet des posts exceptionnels · une corrélation n'est pas une preuve de cause.</p>
     <div class="card stack" style="margin-bottom:16px">
       <div class="row between"><h3 style="margin:0">🧠 Le feedback de l'étude${ui.author ? ` · ${esc(ui.author)}` : ''}</h3>
         <button class="btn ${study ? '' : 'primary'} sm" data-action="study">${study ? 'Mettre à jour' : 'Générer le feedback'}</button></div>
@@ -628,19 +886,7 @@ function renderSettings() {
       </div>
       ${ui.data.linkedinConfigured ? '' : '<div class="alert warn">Renseigne d\'abord l\'app LinkedIn plus bas.</div>'}
     </div>
-    <form class="card stack" id="clientForm">
-      <h3 style="margin:0">Fiche de ${esc(c.name)}</h3>
-      <p class="small" style="margin:0">C'est le brief de chaque post. Plus c'est précis, plus ça sonne comme ${esc(c.name)}.</p>
-      <div class="grid2">${field('name', 'Nom')}${field('company', 'Entreprise')}</div>
-      ${field('niche', 'Niche (choisit la veille utilisée)', 0, 'list="nicheList2" data-novoice')}<datalist id="nicheList2">${allNiches().map((n) => `<option value="${esc(n)}">`).join('')}</datalist>
-      ${field('offer', 'Offre', 2)}
-      ${field('audience', 'Cible', 2)}
-      ${field('tone', 'Ton et style', 3)}
-      ${field('themes', 'Sujets de prédilection', 3)}
-      <div class="grid2">${field('dos', 'À faire', 3)}${field('donts', 'À éviter', 3)}</div>
-      ${(c.feedbackLog || []).length ? `<details><summary class="small" style="cursor:pointer">${c.feedbackLog.length} retour(s) mémorisé(s)</summary><ul class="small">${c.feedbackLog.slice().reverse().map((f) => `<li>${esc(f.text)}</li>`).join('')}</ul></details>` : ''}
-      <button class="btn primary" type="submit" style="align-self:flex-end">Enregistrer</button>
-    </form>` : '<div class="card empty">Crée un client avec le menu « Client » en haut.</div>'}
+    <div class="card row between"><span>La fiche complète du client (profil, personas, voix, preuves, onboarding) est dans l'onglet <b>ADN client</b>.</span><button class="btn soft" data-action="go" data-id="adn">Ouvrir l'ADN</button></div>` : '<div class="card empty">Crée un client avec le menu « Client » en haut.</div>'}
     <form class="card stack" id="gptForm">
       <h3 style="margin:0">Tes GPTs</h3>
       <div class="grid2">
@@ -738,6 +984,13 @@ function startDictation(btn) {
   btn.textContent = btn.closest('.inline') ? '⏹' : '⏹ Arrêter';
 }
 
+async function saveOnboarding(formId, key, questions) {
+  const form = document.getElementById(formId);
+  const answers = {};
+  questions.forEach((q, i) => { answers[q] = form.querySelector(`[name="q${i}"]`).value; });
+  await api('PUT', `/api/clients/${ui.clientId}/adn`, { [key]: { ...(client().adn?.[key] || {}), answers } });
+}
+
 // ---------- actions ----------
 const run = (fn) => async (...args) => {
   try { await fn(...args); } catch (e) {
@@ -764,6 +1017,56 @@ function chunkText(text, size = 12_000) {
 }
 
 const actions = {
+  'adn-tab'(t) { ui.adnTab = t; store.set('adnTab', t); render(); },
+  'toggle-objective'(o) {
+    const box = $('#objChips');
+    const list = JSON.parse(box.dataset.list || '[]');
+    const i = list.indexOf(o);
+    if (i >= 0) list.splice(i, 1); else list.push(o);
+    box.dataset.list = JSON.stringify(list);
+    box.innerHTML = objectiveChips(list); // pas de rechargement : ce qui est tapé dans le formulaire est conservé
+  },
+  async 'add-persona'() { await saveAdn({ personas: [...personas(), { name: 'Nouveau persona', status: 'confirmed' }] }); },
+  async 'del-persona'(id) { await saveAdn({ personas: personas().filter((x) => x.id !== id) }); },
+  async 'confirm-persona'(id) { await saveAdn({ personas: personas().map((x) => (x.id === id ? { ...x, status: 'confirmed' } : x)) }); toast('Persona validé'); },
+  async 'add-proof'() { await saveAdn({ proofs: [...(client().adn?.proofs || []), { type: 'Résultat client', text: '', status: 'to_verify', permission: true }] }); },
+  async 'del-proof'(id) { await saveAdn({ proofs: (client().adn?.proofs || []).filter((x) => x.id !== id) }); },
+  async 'add-rule'() { const v = $('#newRule').value.trim(); if (!v) return; await saveAdn({ rules: [...(client().adn?.rules || []), v] }); },
+  async 'del-rule'(i) { const l = [...(client().adn?.rules || [])]; l.splice(Number(i), 1); await saveAdn({ rules: l }); },
+  async 'promote-rule'(i) { const f = client().feedbackLog?.[Number(i)]; if (!f) return; await saveAdn({ rules: [...(client().adn?.rules || []), f.text] }); toast('Ajouté aux règles permanentes'); },
+  async 'add-idea'() { const v = $('#newIdea').value.trim(); if (!v) return; await saveAdn({ ideas: [...ideas(), { title: v, source: 'manuel', status: 'proposée' }] }); },
+  async 'del-idea'(id) { await saveAdn({ ideas: ideas().filter((x) => x.id !== id) }); },
+  async 'analyze-onboarding'(_id, btn) {
+    await saveOnboarding('adnOnboarding', 'onboarding', ui.data.editorial.onboarding);
+    btn.disabled = true; btn.textContent = 'Analyse en cours… (jusqu\'à 1 min)';
+    try { await api('POST', `/api/clients/${ui.clientId}/onboarding/analyze`); toast('Analyse prête : valide ce qui est juste'); } finally { await refresh(); }
+  },
+  async 'apply-analysis'(block) { await api('POST', `/api/clients/${ui.clientId}/onboarding/apply`, { block }); await refresh(); toast('Ajouté à la fiche (à vérifier)'); },
+  async 'analyze-interview'(_id, btn) {
+    await saveOnboarding('adnInterview', 'interview', ui.data.editorial.interview);
+    btn.disabled = true; btn.textContent = 'Extraction…';
+    try { await api('POST', `/api/clients/${ui.clientId}/interview/analyze`); toast('Idées ajoutées à la banque'); } finally { await refresh(); }
+  },
+  'toggle-hooks'(id) { if (ui.hooksOpen.has(id)) ui.hooksOpen.delete(id); else ui.hooksOpen.add(id); render(); },
+  'toggle-quality'(id) { if (ui.qualityOpen.has(id)) ui.qualityOpen.delete(id); else ui.qualityOpen.add(id); render(); },
+  'toggle-retouch'(id) { if (ui.retouchOpen.has(id)) ui.retouchOpen.delete(id); else ui.retouchOpen.add(id); render(); },
+  async 'gen-hooks'(id, btn) { btn.disabled = true; btn.textContent = 'Génération…'; try { await api('POST', `/api/posts/${id}/hooks`, {}); ui.hooksOpen.add(id); } finally { await refresh(); } },
+  async 'apply-hook'(id, btn) { await api('POST', `/api/posts/${id}/apply-hook`, { index: btn.dataset.index }); await refresh(); toast('Hook appliqué'); },
+  async quality(id, btn) { btn.disabled = true; btn.textContent = 'Analyse…'; try { await api('POST', `/api/posts/${id}/quality`); ui.qualityOpen.add(id); } finally { await refresh(); } },
+  async retouch(id, btn) { btn.disabled = true; btn.textContent = '…'; try { await api('POST', `/api/posts/${id}/action`, { action: btn.dataset.kind }); ui.expanded.add(id); toast('Post retouché'); } finally { await refresh(); } },
+  async undo(id) { await api('POST', `/api/posts/${id}/undo`); await refresh(); toast('Version précédente restaurée'); },
+  async 'gen-hook-tool'(n) {
+    const topic = $('#hgTopic').value.trim();
+    if (!topic) throw new Error('Indique un sujet.');
+    ui.hookGen = { topic, personaId: $('#hgPersona').value, loading: true };
+    render();
+    try { const r = await api('POST', '/api/hooks/generate', { clientId: ui.clientId, personaId: ui.hookGen.personaId, topic, count: Number(n) }); ui.hookGen = { ...ui.hookGen, ...r, loading: false }; } catch (e) { ui.hookGen.loading = false; throw e; } finally { render(); }
+  },
+  'hook-family'(f) { ui.hookFamily = f || ''; ui.hookLimit = 60; render(); },
+  'hook-fav-only'() { ui.hookFavOnly = !ui.hookFavOnly; render(); },
+  'hook-more'() { ui.hookLimit += 100; render(); },
+  async 'hook-fav'(id) { await api('PUT', '/api/hooks/prefs', { id, fav: !ui.data.hookPrefs?.[id]?.fav }); await refresh(); },
+  async 'hook-off'(id) { await api('PUT', '/api/hooks/prefs', { id, off: !ui.data.hookPrefs?.[id]?.off }); await refresh(); },
   go(v) { ui.view = v; store.set('view', v); render(); window.scrollTo(0, 0); },
   dictate(_id, btn) { if (recognition) stopDictation(); else startDictation(btn); },
   count(n) { ui.count = Number(n); store.set('count', ui.count); render(); },
@@ -936,6 +1239,7 @@ document.addEventListener('click', run(async (e) => {
 
 document.addEventListener('input', (e) => {
   if (e.target.id === 'instruction') ui.instruction = e.target.value;
+  if (e.target.id === 'hookSearch') { ui.hookSearch = e.target.value; ui.hookLimit = 60; clearTimeout(ui.hsT); ui.hsT = setTimeout(() => { render(); const el = $('#hookSearch'); el?.focus(); el?.setSelectionRange(el.value.length, el.value.length); }, 250); }
   const ed = e.target.closest('[data-editor] textarea');
   if (ed) {
     const count = ed.closest('[data-editor]').querySelector('.count');
@@ -954,6 +1258,26 @@ document.addEventListener('change', run(async (e) => {
     store.set('clientId', ui.clientId);
     ui.niche = undefined; ui.lastCreated = []; ui.relay = null;
     await refresh();
+    return;
+  }
+  if (t.id === 'personaSel') { ui.personaId = t.value; return; }
+  if (t.id === 'objectiveSel') { ui.objective = t.value; return; }
+  if (t.id === 'awarenessSel') { ui.awareness = t.value; return; }
+  if (t.id === 'ideaSel') { ui.ideaId = t.value; return; }
+  if (t.id === 'hookLang') { ui.hookLang = t.value; render(); return; }
+  if (t.dataset.metric) {
+    const card = t.closest('details');
+    const metrics = Object.fromEntries([...card.querySelectorAll('[data-metric]')].map((x) => [x.dataset.metric, x.value]));
+    await api('PUT', `/api/posts/${t.dataset.id}`, { metrics });
+    await refresh();
+    return;
+  }
+  if (t.dataset.optimize !== undefined && t.value) {
+    const h = ui.hookGen.hooks[Number(t.dataset.optimize)];
+    toast('Optimisation…');
+    const r = await api('POST', '/api/hooks/optimize', { clientId: ui.clientId, personaId: ui.hookGen.personaId, hook: h.text, mode: t.value });
+    h.variants = r.hooks;
+    render();
     return;
   }
   if (t.dataset.date) {
@@ -996,6 +1320,29 @@ document.addEventListener('submit', run(async (e) => {
   e.preventDefault();
   const data = Object.fromEntries(new FormData(form));
   if (form.id === 'loginForm') { store.set('password', data.password); await refresh(); return; }
+  if (form.id === 'adnProfile') {
+    const get = (pre) => Object.fromEntries(Object.entries(data).filter(([k]) => k.startsWith(pre)).map(([k, v]) => [k.slice(pre.length), v]));
+    await api('PUT', `/api/clients/${ui.clientId}`, get('c.'));
+    await api('PUT', `/api/clients/${ui.clientId}/adn`, { profile: get('p.'), forbiddenTopics: data['a.forbiddenTopics'] || '', objectives: JSON.parse($('#objChips').dataset.list || '[]') });
+    ui.niche = undefined;
+    toast('Profil enregistré');
+  }
+  if (form.classList.contains('persona-form')) {
+    const id = form.dataset.persona;
+    await api('PUT', `/api/clients/${ui.clientId}/adn`, { personas: personas().map((x) => (x.id === id ? { ...x, ...data, awareness: Number(data.awareness) || '' } : x)) });
+    toast('Persona enregistré');
+  }
+  if (form.id === 'adnVoice') {
+    await api('PUT', `/api/clients/${ui.clientId}/adn`, { voice: Object.fromEntries(Object.entries(data).map(([k, v]) => [k.replace(/^v\./, ''), v])) });
+    toast('Voix enregistrée');
+  }
+  if (form.id === 'adnProofs') {
+    const proofs = [...form.querySelectorAll('[data-proof]')].map((el) => ({ id: el.dataset.proof, type: el.querySelector('[name=type]').value, status: el.querySelector('[name=status]').value, text: el.querySelector('[name=text]').value, source: el.querySelector('[name=source]').value, date: el.querySelector('[name=date]').value, permission: el.querySelector('[name=permission]').checked }));
+    await api('PUT', `/api/clients/${ui.clientId}/adn`, { proofs });
+    toast('Preuves enregistrées');
+  }
+  if (form.id === 'adnOnboarding') { await saveOnboarding('adnOnboarding', 'onboarding', ui.data.editorial.onboarding); toast('Réponses enregistrées'); }
+  if (form.id === 'adnInterview') { await saveOnboarding('adnInterview', 'interview', ui.data.editorial.interview); toast('Réponses enregistrées'); }
   if (form.id === 'clientForm') { await api('PUT', `/api/clients/${ui.clientId}`, data); ui.niche = undefined; toast('Fiche enregistrée'); }
   if (form.id === 'openaiForm' || form.id === 'linkedinForm') { await api('PUT', '/api/settings', data); toast('Enregistré'); }
   if (form.id === 'gptForm') {

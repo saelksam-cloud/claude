@@ -82,7 +82,7 @@ const isModelProblem = (status, err = {}) =>
   status === 404 || err.code === 'model_not_found' || /model|verif/i.test(err.message || '') && status !== 401 && status !== 429;
 
 // Les fonctions Netlify ont 60 s par appel : un post = 2 appels (content + hooker) de 28 s max.
-async function chat(settings, system, user, { json: asJson = false, timeout = 28_000 } = {}) {
+export async function chat(settings, system, user, { json: asJson = false, timeout = 28_000 } = {}) {
   if (!settings.openaiKey) throw new Error("Ajoute ta clé API OpenAI dans l'onglet Réglages.");
   const chosen = /^[\w.:-]+$/.test(settings.openaiModel || '') ? settings.openaiModel : DEFAULT_MODEL;
   const models = [chosen, ...FALLBACK_MODELS.filter((m) => m !== chosen)];
