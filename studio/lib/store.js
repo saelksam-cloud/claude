@@ -122,6 +122,7 @@ export async function loadSettings() {
     openaiModel: s.openaiModel || '',
     apifyToken: s.apifyToken || process.env.APIFY_TOKEN || '',
     apifyActor: s.apifyActor || '',
+    imageModel: s.imageModel || '',
     modules: s.modules || [],
   };
 }

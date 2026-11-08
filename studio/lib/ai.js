@@ -247,17 +247,48 @@ ${styles.length ? `\nStyles des visuels qui marchent chez les concurrents (s'en 
   return out.replace(/^["']|["']$/g, '').trim();
 }
 
-export async function generateImage(settings, prompt) {
-  if (!settings.openaiKey) throw new Error("Ajoute ta clé API OpenAI dans l'onglet Réglages.");
+// Liste les modèles d'images accessibles avec la clé (les noms changent selon les époques et les comptes).
+export async function listImageModels(settings) {
+  const res = await fetch('https://api.openai.com/v1/models', { headers: { Authorization: `Bearer ${settings.openaiKey}` }, signal: AbortSignal.timeout(15_000) });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(explain(res.status, json.error));
+  const ids = (json.data || []).map((m) => m.id).filter((id) => /image|dall-e/i.test(id) && !/edit|variation|realtime|audio/i.test(id));
+  // Préférence : le gpt-image le plus récent (hors « mini »), puis mini, puis DALL·E 3.
+  const rank = (id) => (/^gpt-image/.test(id) ? 0 : /^chatgpt-image/.test(id) ? 1 : /dall-e-3/.test(id) ? 3 : 4) + (/mini/.test(id) ? 0.5 : 0);
+  return ids.sort((a, b) => rank(a) - rank(b) || b.localeCompare(a, 'en', { numeric: true }));
+}
+
+async function requestImage(settings, model, prompt) {
+  const dalle = /dall-e/i.test(model);
+  const body = dalle
+    ? { model, prompt, size: '1024x1024', n: 1, response_format: 'b64_json', ...(/dall-e-3/.test(model) ? { quality: 'standard' } : {}) }
+    : { model, prompt, size: '1024x1024', quality: 'medium', n: 1, output_format: 'jpeg', output_compression: 85 };
   const res = await fetch('https://api.openai.com/v1/images/generations', {
     method: 'POST',
     headers: { Authorization: `Bearer ${settings.openaiKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: settings.imageModel || 'gpt-image-1', prompt, size: '1024x1024', quality: 'medium', n: 1, output_format: 'jpeg', output_compression: 85 }),
-    signal: AbortSignal.timeout(55_000),
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(50_000),
   }).catch((e) => { throw new Error(e.name === 'TimeoutError' ? "La génération d'image a pris trop de temps : réessaie." : `OpenAI injoignable : ${e.message}`); });
   const json = await res.json().catch(() => ({}));
+  return { res, json };
+}
+
+// Renvoie l'image et le modèle réellement utilisé (pour le mémoriser).
+export async function generateImage(settings, prompt) {
+  if (!settings.openaiKey) throw new Error("Ajoute ta clé API OpenAI dans l'onglet Réglages.");
+  let model = settings.imageModel;
+  if (!model) model = (await listImageModels(settings))[0];
+  if (!model) throw new Error("Ta clé OpenAI n'a accès à aucun modèle d'images.");
+  let { res, json } = await requestImage(settings, model, prompt);
+  if (!res.ok && (res.status === 404 || json.error?.code === 'model_not_found' || /does not exist|not found|unsupported|unknown parameter/i.test(json.error?.message || ''))) {
+    const others = (await listImageModels(settings)).filter((m) => m !== model);
+    for (const m of others.slice(0, 3)) {
+      ({ res, json } = await requestImage(settings, m, prompt));
+      if (res.ok) { model = m; break; }
+    }
+  }
   if (!res.ok) throw new Error(explain(res.status, json.error));
   const b64 = json.data?.[0]?.b64_json;
   if (!b64) throw new Error("OpenAI n'a renvoyé aucune image.");
-  return Buffer.from(b64, 'base64');
+  return { buffer: Buffer.from(b64, 'base64'), model };
 }

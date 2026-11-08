@@ -5,7 +5,7 @@ import {
   pickClientFields, pickPostFields, loadSettings, saveSettings, publicSettings,
 } from './store.js';
 import * as linkedin from './linkedin.js';
-import { writePost, analyzeNiche, testKey, hookPass, extractPosts, studyFeedback, balancedTop, describeImage, chooseImage, imagePrompt, generateImage } from './ai.js';
+import { writePost, analyzeNiche, testKey, hookPass, extractPosts, studyFeedback, balancedTop, describeImage, chooseImage, imagePrompt, generateImage, listImageModels } from './ai.js';
 import { engagement, statsText } from './stats.js';
 import * as apify from './apify.js';
 
@@ -384,7 +384,8 @@ async function writeFull(db, settings, client, opts) {
 
 route('POST', '/api/settings/test-openai', async ({ settings }) => {
   const model = await testKey(settings);
-  return json({ ok: true, model });
+  const imageModels = await listImageModels(settings).catch(() => []);
+  return json({ ok: true, model, imageModels });
 });
 
 // Prochain jour ouvré libre à 8 h 30 (heure de Paris) après le dernier post programmé du client.
@@ -571,7 +572,8 @@ route('POST', '/api/posts/:id/image/prompt', async ({ db, settings, post }) => {
 route('POST', '/api/posts/:id/image/generate', async ({ settings, post, body }) => {
   const prompt = String(body.prompt || post.imagePrompt || '').trim();
   if (!prompt) throw new HttpError(400, "Pas de consigne d'image.");
-  const buffer = await generateImage(settings, prompt);
+  const { buffer, model } = await generateImage(settings, prompt);
+  if (model && model !== settings.imageModel) await saveSettings({ ...settings, imageModel: model }); // mémorise le modèle qui marche
   await dropPostImage(post);
   post.image = `gen-${post.id}-${crypto.randomBytes(6).toString('hex')}.jpg`;
   await uploads().set(post.image, buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.length), { metadata: { type: 'image/jpeg' } });
