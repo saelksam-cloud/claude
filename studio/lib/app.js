@@ -581,6 +581,30 @@ route('POST', '/api/posts/:id/image/generate', async ({ settings, post, body }) 
   return json(post);
 });
 
+// ---------- Déménagement des données depuis un autre site (protégé par le mot de passe) ----------
+route('POST', '/api/admin/import', async ({ db, body }) => {
+  if (body.confirm !== 'REMPLACER') throw new HttpError(400, 'Confirmation manquante');
+  const src = body.db || {};
+  for (const k of ['clients', 'posts', 'veille', 'analyses', 'profiles', 'images']) db[k] = Array.isArray(src[k]) ? src[k] : [];
+  for (const c of db.clients) c.linkedin = null; // les connexions LinkedIn sont à refaire sur le nouveau site
+  return json({ ok: true, counts: Object.fromEntries(['clients', 'posts', 'veille', 'analyses', 'images'].map((k) => [k, db[k].length])) });
+});
+
+route('POST', '/api/admin/blob', async ({ body }) => {
+  const key = String(body.key || '');
+  if (!/^[\w.-]+$/.test(key)) throw new HttpError(400, 'Clé invalide');
+  const img = decodeDataUrl(body.dataUrl);
+  await uploads().set(key, img.buffer, { metadata: { type: img.type } });
+  return json({ ok: true });
+});
+
+route('POST', '/api/admin/modules', async ({ settings, body }) => {
+  const next = { ...settings, modules: Array.isArray(body.modules) ? body.modules : settings.modules };
+  if (typeof body.linkedinClientId === 'string') next.linkedinClientId = body.linkedinClientId;
+  await saveSettings(next);
+  return json({ ok: true });
+});
+
 // Images : servies par une clé aléatoire impossible à deviner (les balises <img> n'envoient pas le mot de passe).
 route('GET', '/uploads/:key', async ({ params }) => {
   const entry = await uploads().getWithMetadata(params.key, { type: 'arrayBuffer' });

@@ -1,6 +1,6 @@
 # Link Motion Studio
 
-Le tableau de bord de ghostwriting LinkedIn de Link Motion. Il est en ligne sur https://link-motion-studio.netlify.app et protégé par mot de passe.
+Le tableau de bord de ghostwriting LinkedIn de Link Motion. Il est en ligne sur https://linkmotion-studio.netlify.app et protégé par mot de passe.
 
 Il a quatre onglets :
 
@@ -43,7 +43,7 @@ Après chaque modification d'une variable : **Deploys → Trigger deploy**.
 
 1. Va sur https://www.linkedin.com/developers/apps et clique « Create app ». L'app doit être rattachée à la page entreprise LinkedIn de Link Motion.
 2. Dans l'onglet **Products**, ajoute « Sign In with LinkedIn using OpenID Connect » et « Share on LinkedIn ».
-3. Dans l'onglet **Auth**, ajoute l'URL de redirection `https://link-motion-studio.netlify.app/auth/linkedin/callback`.
+3. Dans l'onglet **Auth**, ajoute l'URL de redirection `https://linkmotion-studio.netlify.app/auth/linkedin/callback`.
 4. Ajoute `LINKEDIN_CLIENT_ID` et `LINKEDIN_CLIENT_SECRET` dans les variables Netlify, puis redéploie.
 
 ## Le cycle mensuel
