@@ -5,7 +5,7 @@ import {
   pickClientFields, pickPostFields, loadSettings, saveSettings, publicSettings,
 } from './store.js';
 import * as linkedin from './linkedin.js';
-import { writePost, analyzeNiche, testKey, hookPass, extractPosts, studyFeedback, balancedTop, describeImage, chooseImage, imagePrompt, generateImage, listImageModels } from './ai.js';
+import { writePost, analyzeNiche, testKey, hookPass, extractPosts, studyFeedback, balancedTop, describeImage, chooseImage, imagePrompt, generateImage, listImageModels, listTextModels } from './ai.js';
 import { engagement, statsText } from './stats.js';
 import * as apify from './apify.js';
 
@@ -355,6 +355,7 @@ route('PUT', '/api/settings', async ({ settings, body }) => {
         url: /^https:\/\/chatgpt\.com\//.test(String(m.url || '').trim()) ? String(m.url).trim() : '',
         instructions: String(m.instructions || '').slice(0, MAX_MODULE_CHARS),
         knowledge: String(m.knowledge || '').slice(0, MAX_MODULE_CHARS),
+        examples: String(m.examples || '').slice(0, 30_000),
       }));
   }
   await saveSettings(next);
@@ -385,7 +386,8 @@ async function writeFull(db, settings, client, opts) {
 route('POST', '/api/settings/test-openai', async ({ settings }) => {
   const model = await testKey(settings);
   const imageModels = await listImageModels(settings).catch(() => []);
-  return json({ ok: true, model, imageModels });
+  const textModels = await listTextModels(settings).catch(() => []);
+  return json({ ok: true, model, imageModels, textModels });
 });
 
 // Prochain jour ouvré libre à 8 h 30 (heure de Paris) après le dernier post programmé du client.

@@ -214,16 +214,16 @@ function renderRelay() {
       <div class="row between"><h3 style="margin:0">Étape ${r.step} / 2 · ${esc(m?.name || (r.step === 1 ? 'Mode content' : 'Mode hooker'))}</h3>
         <button class="btn ghost sm" data-action="relay-cancel">Annuler</button></div>
       <p class="small" style="margin:0">${r.step === 1 ? '1. Copie. 2. Ouvre le GPT et colle. 3. Colle sa réponse ici.' : `Les ${r.texts.length} posts sont prêts. Fais retravailler les hooks, ou passe cette étape.`}</p>
-      <textarea readonly rows="5" id="briefText">${esc(brief)}</textarea>
+      <textarea readonly rows="3" id="briefText" hidden>${esc(brief)}</textarea>
       <div class="row">
-        <button class="btn soft" data-action="copy-brief">📋 Copier</button>
-        <a class="btn" href="${esc(m?.url || 'https://chatgpt.com/gpts')}" target="_blank" rel="noopener">↗ Ouvrir ${esc(m?.name || 'ChatGPT')}</a>
-      </div>
-      <textarea id="relayAnswer" rows="7" placeholder="Colle ici la réponse du GPT" data-novoice></textarea>
-      <div class="row">
-        <button class="btn primary" data-action="relay-next">${r.step === 1 ? 'Étape suivante' : 'Terminer'}</button>
+        <button class="btn primary" data-action="relay-open" data-url="${esc(m?.url || '')}">1. ↗ Ouvrir ${esc(m?.name || 'ChatGPT')} avec le texte prêt</button>
+        <button class="btn primary" data-action="relay-paste">2. 📋 Coller sa réponse</button>
         ${r.step === 2 ? '<button class="btn ghost" data-action="relay-skip">Passer cette étape</button>' : ''}
       </div>
+      <p class="small" style="margin:0">Dans ChatGPT, attends la réponse puis clique sur son bouton « Copier » (icône sous le message), et reviens ici.${m?.url ? '' : ' <b>Ajoute le lien du GPT dans Réglages pour l\'ouvrir directement.</b>'}</p>
+      <details><summary class="small" style="cursor:pointer">Coller à la main</summary>
+        <textarea id="relayAnswer" rows="6" placeholder="Colle ici la réponse du GPT" data-novoice style="margin-top:6px"></textarea>
+        <button class="btn sm" data-action="relay-next" style="margin-top:6px">Valider</button></details>
     </div>`;
 }
 
@@ -592,7 +592,9 @@ function renderSettings() {
       <p class="small" style="margin:0">${hint}</p>
       <label class="f">Nom<input name="name" value="${esc(m.name || '')}" placeholder="Basic - Linka - Mode ${role === 'hooker' ? 'hooker' : 'content'}" data-novoice></label>
       <label class="f">Lien du GPT (adresse de la page dans ChatGPT)<input name="url" value="${esc(m.url || '')}" placeholder="https://chatgpt.com/g/…"></label>
-      <details><summary class="small" style="cursor:pointer">Instructions du GPT (facultatif, améliore le mode automatique)</summary>
+      <label class="f">${role === 'hooker' ? '10 à 20 hooks écrits par ce GPT' : '5 à 10 posts écrits par ce GPT'} (colle-les ici : le mode automatique imitera ce style)
+        <textarea name="examples" rows="7" placeholder="${role === 'hooker' ? 'Un hook par ligne…' : 'Colle les posts les uns après les autres…'}" data-novoice>${esc(m.examples || '')}</textarea></label>
+      <details><summary class="small" style="cursor:pointer">Instructions du GPT (si tu y as accès)</summary>
         <textarea name="instructions" rows="6" style="margin-top:8px">${esc(m.instructions || '')}</textarea></details>
     </fieldset>`;
 
@@ -738,6 +740,22 @@ const actions = {
   stop() { if (ui.job) ui.job.stop = true; toast('Arrêt après le post en cours'); },
   async 'copy-brief'() { await navigator.clipboard.writeText($('#briefText').value); toast('Copié : colle-le dans le GPT'); },
   'relay-cancel'() { ui.relay = null; render(); },
+  // Ouvre le GPT avec la consigne déjà tapée (et la copie aussi, au cas où ChatGPT ne la reprend pas).
+  async 'relay-open'(_id, btn) {
+    const brief = $('#briefText').value;
+    await navigator.clipboard.writeText(brief).catch(() => {});
+    const base = btn.dataset.url || 'https://chatgpt.com/';
+    const url = brief.length < 6000 ? `${base}${base.includes('?') ? '&' : '?'}q=${encodeURIComponent(brief)}` : base;
+    window.open(url, '_blank', 'noopener');
+    toast(brief.length < 6000 ? 'Le texte est déjà dans ChatGPT (et copié, au cas où : Ctrl+V)' : 'Texte copié : colle-le dans ChatGPT (Ctrl+V)');
+  },
+  async 'relay-paste'() {
+    let text = '';
+    try { text = await navigator.clipboard.readText(); } catch { throw new Error('Ton navigateur bloque la lecture du presse-papiers : utilise « Coller à la main ».'); }
+    if (!text.trim()) throw new Error('Le presse-papiers est vide : copie d\'abord la réponse du GPT.');
+    $('#relayAnswer').value = text;
+    await actions['relay-next']();
+  },
   async 'relay-next'() {
     const r = ui.relay;
     const answer = $('#relayAnswer').value;
@@ -937,6 +955,7 @@ document.addEventListener('submit', run(async (e) => {
       name: f.querySelector('[name=name]').value || (f.dataset.role === 'hooker' ? 'Mode hooker' : 'Mode content'),
       url: f.querySelector('[name=url]').value,
       instructions: f.querySelector('[name=instructions]').value,
+      examples: f.querySelector('[name=examples]').value,
     }));
     const others = modules().filter((m) => !roles.some((r) => r.id === m.id));
     await api('PUT', '/api/settings', { modules: [...roles, ...others] });

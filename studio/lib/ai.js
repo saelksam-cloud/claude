@@ -1,9 +1,10 @@
 // Rédaction par IA via l'API OpenAI (clé saisie dans Réglages).
 // La veille (exemples + posts des profils analysés) est partagée entre tous les clients :
 // on prend d'abord les exemples de la niche du client, puis les meilleurs des autres niches.
-// gpt-4.1 : rapide et bon rédacteur (les fonctions Netlify sont limitées à 60 s par appel).
-const DEFAULT_MODEL = 'gpt-4.1';
-const FALLBACK_MODELS = ['gpt-5-mini', 'gpt-4o-mini'];
+// gpt-6.1-sol : le meilleur rapport qualité / vitesse testé sur ton compte (un post complet en ~20 s,
+// les fonctions Netlify étant limitées à 60 s par appel).
+const DEFAULT_MODEL = 'gpt-6.1-sol';
+const FALLBACK_MODELS = ['gpt-6-luna', 'gpt-5.5', 'gpt-4.1'];
 
 function clientBrief(c) {
   return [
@@ -111,6 +112,7 @@ export async function writePost(settings, { client, module, subject, format, vei
   const system = [
     module?.instructions ? `# Méthode d'écriture (module « ${module.name} »)\n${module.instructions}` : '',
     module?.knowledge ? `# Connaissances du module\n${module.knowledge}` : '',
+    module?.examples ? `# Posts écrits par « ${module.name} » (c'est LE style à reproduire : ton, rythme, structure, longueur, mise en forme)\n${module.examples.slice(0, 12000)}` : '',
     `# Brief client\n${clientBrief(client)}`,
     analysis ? `# Ce qui marche dans la niche (étude de marché)\n${analysis.slice(0, 4000)}` : '',
     client.feedbackLog?.length ? `# Retours précédents de l'auteur (à respecter absolument)\n${client.feedbackLog.slice(-15).map((f) => `- ${f.text}`).join('\n')}` : '',
@@ -161,12 +163,21 @@ export async function hookPass(settings, { text, module, topHooks = [] }) {
   const system = [
     module?.instructions ? `# Méthode « ${module.name} »\n${module.instructions}` : '',
     module?.knowledge ? `# Connaissances\n${module.knowledge}` : '',
-    "# Ton rôle\nTu es spécialiste des hooks LinkedIn : les 1 à 3 premières lignes, visibles avant « … voir plus ». Elles doivent arrêter le scroll et donner envie de cliquer.",
-    topHooks.length ? `# Hooks qui performent le mieux dans la niche (s'en inspirer, ne pas copier)\n${topHooks.map((h) => `- ${h}`).join('\n')}` : '',
-    "# Règles\n- Réécris SEULEMENT le hook (les 1 à 3 premières lignes) ; garde le reste du post identique.\n- Moins de 200 caractères pour le hook.\n- Pas de markdown, pas de commentaire : réponds avec le post complet final.",
+    module?.examples ? `# Hooks écrits par « ${module.name} » (LE style à reproduire)\n${module.examples.slice(0, 8000)}` : '',
+    "# Ton rôle\nTu es le meilleur spécialiste des hooks LinkedIn francophones. Le hook = les 1 à 3 premières lignes, visibles avant « … voir plus ». Il doit arrêter le scroll et rendre la suite irrésistible.",
+    topHooks.length ? `# Hooks qui performent le mieux chez les concurrents (s'inspirer des mécaniques, ne pas copier)\n${topHooks.map((h) => `- ${h}`).join('\n')}` : '',
+    `# Méthode
+1. Écris 5 hooks différents, chacun avec une mécanique différente (contraste/paradoxe, chiffre précis, aveu, contre-pied d'une croyance, scène concrète, question qui pique…).
+2. Note chacun sur 10 : spécifique (pas générique), tension ou curiosité, court (moins de 200 caractères), naturel à l'oral, fidèle au fond du post.
+3. Garde le meilleur et intègre-le : réécris seulement les 1 à 3 premières lignes, le reste du post ne bouge pas.
+Interdits : « Et si… », « Saviez-vous que », « Dans un monde où », emojis en début de ligne, questions banales, promesses creuses.
+Réponds en JSON : { "hooks": ["…", "…", "…", "…", "…"], "best": numéro, "post": "le post complet final, sans markdown" }`,
   ].filter(Boolean).join('\n\n');
-  const { text: out } = await chat(settings, system, `Post :\n${text}`);
-  return out.replace(/\*\*|__/g, '').replace(/^\s*SUJET\s*:.*\n+/i, '').trim();
+  const { text: out } = await chat(settings, system, `Post :\n${text}`, { json: true });
+  let post = '';
+  try { post = JSON.parse(out).post || ''; } catch { post = ''; }
+  if (!post.trim()) return text; // en cas de souci, on garde le post tel quel
+  return post.replace(/\*\*|__/g, '').replace(/^\s*SUJET\s*:.*\n+/i, '').trim();
 }
 
 // ---------- Veille : extraction des posts depuis un copier-coller ----------
@@ -291,4 +302,11 @@ export async function generateImage(settings, prompt) {
   const b64 = json.data?.[0]?.b64_json;
   if (!b64) throw new Error("OpenAI n'a renvoyé aucune image.");
   return { buffer: Buffer.from(b64, 'base64'), model };
+}
+
+export async function listTextModels(settings) {
+  const res = await fetch('https://api.openai.com/v1/models', { headers: { Authorization: `Bearer ${settings.openaiKey}` }, signal: AbortSignal.timeout(15_000) });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) return [];
+  return (json.data || []).map((m) => m.id).filter((id) => /^(gpt|o\d|chatgpt)/.test(id) && !/image|audio|realtime|tts|transcribe|search|embedding|moderation|codex|instruct/i.test(id)).sort();
 }
