@@ -5,7 +5,7 @@ import {
   pickClientFields, pickPostFields, loadSettings, saveSettings, publicSettings,
 } from './store.js';
 import * as linkedin from './linkedin.js';
-import { writePost, analyzeNiche, testKey, hookPass, extractPosts, studyFeedback, balancedTop, describeImage, chooseImage, imagePrompt, generateImage, listImageModels, listTextModels } from './ai.js';
+import { writePost, analyzeNiche, testKey, hookPass, extractPosts, studyFeedback, balancedTop, extractStructures, describeImage, chooseImage, imagePrompt, generateImage, listImageModels, listTextModels } from './ai.js';
 import { engagement, statsText } from './stats.js';
 import * as apify from './apify.js';
 
@@ -380,7 +380,12 @@ const moduleByRole = (settings, role) =>
   settings.modules.find((m) => m.role === role) || settings.modules.find((m) => new RegExp(role === 'hooker' ? 'hook' : 'content', 'i').test(m.name)) || null;
 const nicheItems = (db, niche) => db.veille.filter((v) => niche && (v.niche || '').trim().toLowerCase() === niche.trim().toLowerCase());
 const byAuthor = (items, author) => (author ? items.filter((v) => (v.author || '').trim().toLowerCase() === author.trim().toLowerCase()) : items);
-const topHooks = (db, niche, author = '') => balancedTop(byAuthor(nicheItems(db, niche), author).filter((v) => v.hook), 20).map((v) => v.hook);
+// Hooks : ceux de la niche (fond + forme) puis les meilleurs des autres niches (mécanique seulement).
+const topHooks = (db, niche, author = '') => {
+  const own = balancedTop(byAuthor(nicheItems(db, niche), author).filter((v) => v.hook), 15).map((v) => v.hook);
+  const others = author ? [] : balancedTop(db.veille.filter((v) => v.hook && !nicheItems(db, niche).includes(v)), 8).map((v) => `(autre niche, reprendre la mécanique) ${v.hook}`);
+  return [...own, ...others];
+};
 
 async function writeFull(db, settings, client, opts) {
   const content = opts.moduleId ? findModule(settings, opts.moduleId) : moduleByRole(settings, 'content');
@@ -473,9 +478,22 @@ route('POST', '/api/veille/paste', async ({ db, settings, body }) => {
     id: newId('vei'), source: 'paste', niche, author: String(p.author || '').slice(0, 80), hook: String(p.hook || '').slice(0, 300),
     text: String(p.excerpt || p.hook || '').slice(0, 1200), likes: toNum(p.likes), comments: toNum(p.comments), reposts: toNum(p.reposts),
     length: toNum(p.length), topic: String(p.topic || '').slice(0, 40), hookType: String(p.hookType || '').slice(0, 30),
-    format: String(p.format || '').slice(0, 30), createdAt: now(),
+    format: String(p.format || '').slice(0, 30), structure: String(p.structure || '').slice(0, 260), createdAt: now(),
   })));
   return json({ found: posts.length, added: fresh.length });
+});
+
+// Analyse la forme des posts de veille qui n'en ont pas encore (par lots de 15).
+route('POST', '/api/veille/structures', async ({ db, settings }) => {
+  const todo = db.veille.filter((v) => !v.structure && (v.text || v.hook)).slice(0, 15);
+  if (todo.length) {
+    const out = await extractStructures(settings, todo);
+    for (const o of out) {
+      const v = db.veille.find((x) => x.id === o.id);
+      if (v && o.structure) v.structure = String(o.structure).slice(0, 260);
+    }
+  }
+  return json({ done: todo.length, remaining: db.veille.filter((v) => !v.structure && (v.text || v.hook)).length });
 });
 
 // ---------- Étude de marché : retour écrit par l'IA ----------

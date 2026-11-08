@@ -50,9 +50,13 @@ export function pickExamples(veille, niche, author = '') {
   const pool = workingPosts(veille);
   const inNiche = pool.filter((v) => sameNiche(v.niche, niche) && (!author || sameNiche(v.author, author)));
   const mine = balancedTop(inNiche, 12);
-  const others = author ? [] : balancedTop(pool.filter((v) => !sameNiche(v.niche, niche)), 3);
-  return { mine, others };
+  const others = author ? [] : balancedTop(pool.filter((v) => !sameNiche(v.niche, niche)), 6);
+  // La FORME sert à tous les clients, quelle que soit la niche : les structures des posts qui marchent le mieux.
+  const forms = balancedTop(pool.filter((v) => v.structure && (!author || sameNiche(v.author, author))), 14);
+  return { mine, others, forms };
 }
+
+const fmtForms = (list) => list.map((v) => `- [${v.likes || 0} 👍 / ${v.comments || 0} 💬 · hook ${v.hookType || '?'} · ${v.format || '?'}] ${v.structure}`).join('\n');
 
 const fmtExamples = (list) => list.map((v, i) => `--- Exemple ${i + 1}${v.author ? ` — ${v.author}` : ''} (${v.likes || '?'} réactions, ${v.comments || '?'} commentaires)\n${v.text.slice(0, 2500)}`).join('\n');
 
@@ -108,7 +112,7 @@ export async function testKey(settings) {
 }
 
 export async function writePost(settings, { client, module, subject, format, veille = [], analysis, previous, feedback, inspiration, avoidThemes = [], instruction = '', author = '' }) {
-  const { mine, others } = pickExamples(veille, client.niche, author);
+  const { mine, others, forms } = pickExamples(veille, client.niche, author);
   const system = [
     module?.instructions ? `# Méthode d'écriture (module « ${module.name} »)\n${module.instructions}` : '',
     module?.knowledge ? `# Connaissances du module\n${module.knowledge}` : '',
@@ -116,8 +120,9 @@ export async function writePost(settings, { client, module, subject, format, vei
     `# Brief client\n${clientBrief(client)}`,
     analysis ? `# Ce qui marche dans la niche (étude de marché)\n${analysis.slice(0, 4000)}` : '',
     client.feedbackLog?.length ? `# Retours précédents de l'auteur (à respecter absolument)\n${client.feedbackLog.slice(-15).map((f) => `- ${f.text}`).join('\n')}` : '',
-    mine.length ? `# Posts qui performent le mieux chez ${author ? `le concurrent ${author}` : 'les concurrents de la niche'} (étude de marché : s'inspirer de leurs hooks, structures, formats et sujets qui marchent, ne jamais copier)\n${fmtExamples(mine)}` : '',
-    others.length ? `# Posts qui performent dans d'autres niches (reprendre uniquement les mécaniques : hook, rythme, format)\n${fmtExamples(others)}` : '',
+    forms.length ? `# LA FORME QUI MARCHE (toutes niches confondues) : choisis UNE de ces structures et applique-la au sujet de l'auteur\n${fmtForms(forms)}` : '',
+    mine.length ? `# LE FOND : posts qui marchent le mieux chez ${author ? `le concurrent ${author}` : `les concurrents de la niche ${client.niche || ''}`} (sujets, angles, vocabulaire de la cible ; forme ET fond utiles, ne jamais copier)\n${fmtExamples(mine)}` : '',
+    others.length ? `# Posts qui marchent dans d'AUTRES niches : prends uniquement la forme (hook, rythme, mise en page, longueur), ignore complètement leur sujet\n${fmtExamples(others)}` : '',
     RULES,
   ].filter(Boolean).join('\n\n');
 
@@ -186,7 +191,8 @@ export const FORMATS = ['Texte court', 'Texte long', 'Liste', 'Storytelling', 'C
 
 export async function extractPosts(settings, { text, niche, knownTopics = [] }) {
   const system = `Tu extrais des posts LinkedIn à partir d'un copier-coller brut (posts isolés ou page « Activité » d'un profil, avec du bruit : menus, boutons, « J'aime », « Commenter »…).
-Réponds en JSON : { "posts": [ { "author": "", "hook": "", "excerpt": "", "likes": 0, "comments": 0, "reposts": 0, "length": 0, "topic": "", "hookType": "", "format": "" } ] }
+Réponds en JSON : { "posts": [ { "author": "", "hook": "", "excerpt": "", "likes": 0, "comments": 0, "reposts": 0, "length": 0, "topic": "", "hookType": "", "format": "", "structure": "" } ] }
+- structure : la FORME du post, sans son sujet, réutilisable dans n'importe quel secteur (ex. « Hook paradoxe en 2 lignes → 3 exemples courts en liste → retournement → leçon en 1 phrase → question ouverte »), 220 caractères maximum.
 - hook : la ou les 2 premières lignes du post, telles quelles.
 - excerpt : le texte du post, 1 200 caractères maximum, texte exact.
 - likes / comments / reposts : nombres lus dans le texte (« 1 234 », « 1,2k » = 1200), 0 si absent.
@@ -309,4 +315,14 @@ export async function listTextModels(settings) {
   const json = await res.json().catch(() => ({}));
   if (!res.ok) return [];
   return (json.data || []).map((m) => m.id).filter((id) => /^(gpt|o\d|chatgpt)/.test(id) && !/image|audio|realtime|tts|transcribe|search|embedding|moderation|codex|instruct/i.test(id)).sort();
+}
+
+// Analyse la FORME (structure réutilisable) de posts déjà en veille, par lots.
+export async function extractStructures(settings, items) {
+  const system = `Pour chaque post LinkedIn, décris sa FORME sans son sujet, réutilisable dans n'importe quel secteur : enchaînement des parties, type de hook, rythme (phrases courtes, listes, sauts de ligne), fin de post. 220 caractères maximum par post.
+Exemple : « Hook paradoxe en 2 lignes → 3 exemples courts en liste → retournement → leçon en 1 phrase → question ouverte ».
+Réponds en JSON : { "items": [ { "id": "", "structure": "" } ] }`;
+  const user = items.map((v) => `### id: ${v.id}\n${(v.text || v.hook || '').slice(0, 1200)}`).join('\n\n');
+  const { text } = await chat(settings, system, user, { json: true, timeout: 55_000 });
+  try { return JSON.parse(text).items || []; } catch { return []; }
 }

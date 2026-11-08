@@ -469,7 +469,8 @@ function renderVeille() {
       </div>
       <div class="card">
         <div class="row between" style="margin-bottom:12px"><h3 style="margin:0">${items.length} post(s) · ${esc(niche || 'aucune niche')}</h3>
-          ${items.length >= 5 ? '<button class="btn soft sm" data-action="go" data-id="study">Voir l\'étude →</button>' : ''}</div>
+          <div class="row">${ui.data.veille.some((v) => !v.structure) ? `<button class="btn sm" data-action="analyze-forms">🧩 Analyser la forme (${ui.data.veille.filter((v) => !v.structure).length})</button>` : ''}
+          ${items.length >= 5 ? '<button class="btn soft sm" data-action="go" data-id="study">Voir l\'étude →</button>' : ''}</div></div>
         ${nicheChips()}
         ${authorChips(niche)}
         <div style="margin-top:12px">
@@ -480,6 +481,7 @@ function renderVeille() {
               ${v.author ? `<span>· ${esc(v.author)}</span>` : ''}
               ${v.topic ? `<span class="tag">${esc(v.topic)}</span>` : ''}${v.hookType ? `<span class="tag">Hook : ${esc(v.hookType)}</span>` : ''}${v.format ? `<span class="tag">${esc(v.format)}</span>` : ''}
               <button class="btn ghost sm" data-action="del-veille" data-id="${v.id}" style="margin-left:auto" title="Supprimer">🗑</button></div>
+            ${v.structure ? `<div class="small" style="margin-top:4px">🧩 <b>Forme :</b> ${esc(v.structure)}</div>` : ''}
             ${v.text && v.text !== v.hook ? `<details><summary class="small" style="cursor:pointer;margin-top:4px">Voir le texte</summary><div class="vtext">${esc(v.text)}</div></details>` : ''}
           </div>`).join('') : '<p class="empty">Rien pour l\'instant. Colle des posts à gauche.</p>'}
         </div>
@@ -531,6 +533,17 @@ function compareTable(items) {
   </table></div><p class="small" style="margin:8px 0 0">Clique sur un nom pour voir son étude détaillée.</p></div>`;
 }
 
+// La forme sert à toutes les niches : les structures des posts qui marchent le mieux, toutes niches confondues.
+function formsTable() {
+  const list = ui.data.veille.filter((v) => v.structure).sort((a, b) => engagement(b) - engagement(a)).slice(0, 10);
+  if (!list.length) return '<div class="card"><h3>🧩 Les structures qui marchent</h3><p class="small" style="margin:0">Va dans Veille et clique « Analyser la forme » pour remplir ce tableau.</p></div>';
+  return `<div class="card"><h3>🧩 Les structures qui marchent (toutes niches)</h3>
+    <p class="small" style="margin:0 0 8px">La forme est réutilisée pour tous tes clients, même dans une autre niche (BTP…). Le fond, lui, reste propre à chaque niche.</p>
+    <div style="overflow-x:auto"><table><tr><th>Structure</th><th>Niche</th><th class="num">👍</th><th class="num">💬</th></tr>
+    ${list.map((v) => `<tr><td>${esc(v.structure)}</td><td>${esc(v.niche || '')}</td><td class="num">${nf(v.likes || 0)}</td><td class="num">${nf(v.comments || 0)}</td></tr>`).join('')}
+    </table></div></div>`;
+}
+
 function hookTable(title, list) {
   return `<div class="card"><h3>${title}</h3><div style="overflow-x:auto"><table>
     <tr><th>Hook</th><th>Type</th><th>Auteur</th><th class="num">👍</th><th class="num">💬</th></tr>
@@ -575,6 +588,7 @@ function renderStudy() {
       ${barChart('Par format', groupBy(items, (v) => v.format), overall)}
       ${barChart('Par longueur', groupBy(items, lengthBucket), overall)}
     </div>
+    <div style="margin-top:16px">${formsTable()}</div>
     <div style="margin-top:16px">${hookTable('🏆 Les 10 hooks qui marchent le mieux', sorted.slice(0, 10))}</div>
     <div style="margin-top:16px">${hookTable('📉 Ceux qui marchent le moins', sorted.slice(-5).reverse())}</div>`;
 }
@@ -595,8 +609,9 @@ function renderSettings() {
       <label class="f">Lien du GPT (adresse de la page dans ChatGPT)<input name="url" value="${esc(m.url || '')}" placeholder="https://chatgpt.com/g/…"></label>
       <label class="f">${role === 'hooker' ? '10 à 20 hooks écrits par ce GPT' : '5 à 10 posts écrits par ce GPT'} (colle-les ici : le mode automatique imitera ce style)
         <textarea name="examples" rows="7" placeholder="${role === 'hooker' ? 'Un hook par ligne…' : 'Colle les posts les uns après les autres…'}" data-novoice>${esc(m.examples || '')}</textarea></label>
-      <details><summary class="small" style="cursor:pointer">Instructions du GPT (si tu y as accès)</summary>
-        <textarea name="instructions" rows="6" style="margin-top:8px">${esc(m.instructions || '')}</textarea></details>
+      <label class="f">Sa méthode, décrite par le GPT lui-même
+        <textarea name="instructions" rows="7" placeholder="Clique sur « Copier la demande », envoie-la à ce GPT dans ChatGPT, puis colle sa réponse ici." data-novoice>${esc(m.instructions || '')}</textarea></label>
+      <button type="button" class="btn soft sm" data-action="copy-self" data-id="${role}" style="align-self:flex-start">📋 Copier la demande à envoyer au GPT</button>
     </fieldset>`;
 
   view.innerHTML = `
@@ -650,6 +665,25 @@ function renderSettings() {
       </form>
     </div>`;
 }
+
+// Demandes à envoyer aux GPTs pour qu'ils décrivent leur méthode (collée ensuite dans Réglages).
+const SELF_PROMPTS = {
+  content: `Je veux appliquer ta méthode dans un autre outil. Décris-la le plus précisément possible, pour qu'un autre rédacteur obtienne exactement les mêmes posts que toi :
+1. Tes principes d'écriture de posts LinkedIn (ce qui fait un bon post selon toi).
+2. Les structures de posts que tu utilises : pour chacune, son nom, quand l'utiliser et son schéma étape par étape.
+3. Tes règles de style : longueur, rythme, phrases, sauts de ligne, ton, mots ou tournures à éviter.
+4. Comment tu choisis l'angle et le sujet d'un post.
+5. Comment tu termines un post (fin, question, appel à l'action).
+6. Trois posts complets qui illustrent parfaitement ta méthode.
+Sois exhaustif et concret.`,
+  hooker: `Je veux appliquer ta méthode de hooks dans un autre outil. Décris-la le plus précisément possible, pour qu'un autre rédacteur écrive exactement les mêmes hooks que toi :
+1. Ce qui fait un hook qui arrête le scroll selon toi.
+2. Tous les types de hooks que tu utilises : pour chacun, son nom, sa formule et quand l'utiliser.
+3. Tes règles : longueur, nombre de lignes, ponctuation, mots puissants, ce qu'il faut absolument éviter.
+4. Comment tu choisis le meilleur hook parmi plusieurs.
+5. Quinze exemples de hooks variés que tu considères excellents.
+Sois exhaustif et concret.`,
+};
 
 // ---------- petite fenêtre (nouveau client, déplacement LinkedIn) ----------
 function ask({ title, fields, submit = 'OK' }) {
@@ -863,6 +897,20 @@ const actions = {
 
   async copy(text) { await navigator.clipboard.writeText(text); toast('Copié'); },
   async 'test-openai'() { const r = await api('POST', '/api/settings/test-openai'); toast(`Clé OK ✅ (${r.model})`); },
+  async 'copy-self'(role) { await navigator.clipboard.writeText(SELF_PROMPTS[role]); toast('Copié : colle-le dans ton GPT, puis colle sa réponse dans la case'); },
+  async 'analyze-forms'(_id, btn) {
+    btn.disabled = true;
+    let left = Infinity;
+    for (let i = 0; i < 40; i++) {
+      const r = await api('POST', '/api/veille/structures');
+      if (!r.done || r.remaining >= left) break; // rien de plus à analyser, ou l'IA n'a rien renvoyé
+      left = r.remaining;
+      btn.textContent = `Analyse de la forme… (${left} restants)`;
+      if (!left) break;
+    }
+    await refresh();
+    toast('Forme de toute la veille analysée');
+  },
   async 'check-linkedin'() { const r = await api('POST', `/api/clients/${ui.clientId}/check-linkedin`); toast(`Connexion OK ✅ (${r.name}), valable jusqu'au ${new Date(r.expiresAt).toLocaleDateString('fr-FR')}`); },
   async disconnect() { await api('POST', `/api/clients/${ui.clientId}/disconnect`); await refresh(); },
   async 'move-linkedin'() {
