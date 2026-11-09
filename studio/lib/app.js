@@ -10,7 +10,7 @@ import { engagement, statsText } from './stats.js';
 import * as apify from './apify.js';
 import { chat } from './ai.js';
 import * as ed from './editorial.js';
-import { bannerCopyPrompt, profileAuditPrompt } from './profile.js';
+import { bannerCopyPrompt, profileAuditPrompt, visualPlanPrompt, visualItemPrompt } from './profile.js';
 
 const liCfg = (settings) => ({ clientId: settings.linkedinClientId, clientSecret: settings.linkedinClientSecret });
 
@@ -74,8 +74,9 @@ export async function publishPost(db, post, settings) {
     if (!linkedin.isConfigured(liCfg(settings))) throw new Error("L'app LinkedIn n'est pas encore configurée (onglet Réglages).");
     if (!client?.linkedin) throw new Error(`${client?.name || 'Le client'} n'a pas encore connecté son LinkedIn.`);
     if (Date.parse(client.linkedin.expiresAt) < Date.now()) throw new Error('Autorisation LinkedIn expirée : renvoie le lien de connexion au client.');
-    const imageData = post.image ? await uploads().get(post.image, { type: 'arrayBuffer' }) : null;
-    post.linkedinPostId = await linkedin.publish(client.linkedin, { text: post.text, imageData, altText: post.altText });
+    const documentData = post.document ? await uploads().get(post.document, { type: 'arrayBuffer' }) : null;
+    const imageData = !documentData && post.image ? await uploads().get(post.image, { type: 'arrayBuffer' }) : null;
+    post.linkedinPostId = await linkedin.publish(client.linkedin, { text: post.text, imageData, altText: post.altText, documentData, documentTitle: post.documentTitle });
     post.status = 'published';
     post.publishedAt = now();
     post.error = '';
@@ -121,6 +122,7 @@ route('GET', '/api/state', async ({ db, settings }) => json({
   images: db.images,
   hookPrefs: db.hookPrefs,
   banners: db.banners || [],
+  visuals: db.visuals || [],
   editorial: { objectives: ed.OBJECTIVES, postTypes: ed.POST_TYPES, awareness: ed.AWARENESS, families: ed.HOOK_FAMILIES, onboarding: ed.ONBOARDING_QUESTIONS, interview: ed.INTERVIEW_QUESTIONS, actions: Object.keys(ed.REWRITE_ACTIONS), knowledge: ed.knowledgeCounts },
   linkedinConfigured: linkedin.isConfigured(liCfg(settings)),
   redirectUri: linkedin.redirectUri(),
@@ -871,6 +873,60 @@ route('POST', '/api/profile/audit', async ({ db, settings, body }) => {
   client.adn ||= {};
   client.adn.profileAudit = { ...audit, profileText: String(body.profileText || '').slice(0, 12000), at: now() };
   return json(publicClient(client));
+});
+
+
+// =================== VISUELS À VALEUR ===================
+route('POST', '/api/visuals/plan', async ({ db, settings, body }) => {
+  const client = clientOf(db, body.clientId);
+  const persona = (client.adn?.personas || []).find((p) => p.id === body.personaId);
+  const kind = body.kind === 'carousel' ? 'carousel' : 'image';
+  const r = await askJson(settings, visualPlanPrompt({ client, topic: String(body.topic || '').trim(), count: Math.max(1, Math.min(3, Number(body.count) || 3)), kind, personaText: persona ? ed.personaText(persona) : '' }), { timeout: 40_000 });
+  const items = (r.items || []).slice(0, kind === 'carousel' ? 1 : 3).map((i) => ({ ...i, type: kind === 'carousel' ? 'carousel' : (i.type in { liste: 1, comparaison: 1, process: 1, matrice: 1, chiffre: 1, citation: 1 } ? i.type : 'liste') }));
+  return json({ subject: r.subject || body.topic || '', items });
+});
+
+// Un visuel + son post (le post est créé « à valider », l'image ou le PDF y est attaché ensuite par le navigateur).
+route('POST', '/api/visuals/item', async ({ db, settings, body }) => {
+  const client = clientOf(db, body.clientId);
+  const persona = (client.adn?.personas || []).find((p) => p.id === body.personaId);
+  const kind = body.kind === 'carousel' ? 'carousel' : 'image';
+  const r = await askJson(settings, visualItemPrompt({ client, subject: body.subject, subtopic: body.subtopic, type: body.type, kind, personaText: persona ? ed.personaText(persona) : '' }), { timeout: 52_000 });
+  if (!r.spec) throw new HttpError(502, "L'IA n'a pas renvoyé de visuel : réessaie.");
+  const [post] = importPosts(db, client.id, [{ text: String(r.post || '').replace(/\*\*|__/g, '').trim() || 'Post à rédiger', theme: String(body.subtopic || body.subject || '').slice(0, 60), format: kind === 'carousel' ? 'Carrousel' : 'Image', scheduledAt: nextFreeSlot(db, client.id) }]);
+  post.history = [{ at: now(), action: `Écrit avec un visuel « ${kind === 'carousel' ? 'carrousel' : body.type} »` }];
+  post.personaId = body.personaId || '';
+  db.visuals ||= [];
+  const visual = { id: newId('vis'), clientId: client.id, kind, format: body.format === 'square' ? 'square' : 'portrait', style: body.style || {}, spec: r.spec, subject: body.subject, subtopic: body.subtopic, postId: post.id, createdAt: now() };
+  post.visualId = visual.id;
+  db.visuals.unshift(visual);
+  return json({ visual, post });
+});
+
+route('PUT', '/api/visuals/:id', async ({ db, params, body }) => {
+  const v = (db.visuals || []).find((x) => x.id === params.id);
+  if (!v) throw new HttpError(404, 'Visuel introuvable');
+  for (const k of ['spec', 'style', 'format']) if (body[k] !== undefined) v[k] = body[k];
+  v.updatedAt = now();
+  return json(v);
+});
+
+route('DELETE', '/api/visuals/:id', async ({ db, params }) => {
+  db.visuals = (db.visuals || []).filter((x) => x.id !== params.id);
+  return json({ ok: true });
+});
+
+// Carrousel : le PDF généré dans le navigateur est attaché au post (publié comme document sur LinkedIn).
+route('POST', '/api/posts/:id/document', async ({ post, body }) => {
+  const m = /^data:application\/pdf;base64,(.+)$/s.exec(body.dataUrl || '');
+  if (!m) throw new HttpError(400, 'PDF attendu');
+  if (post.document) await uploads().delete(post.document);
+  const bytes = Buffer.from(m[1], 'base64');
+  post.document = `doc-${post.id}-${crypto.randomBytes(6).toString('hex')}.pdf`;
+  await uploads().set(post.document, bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.length), { metadata: { type: 'application/pdf' } });
+  post.documentTitle = String(body.title || 'Carrousel').slice(0, 200);
+  log(post, 'Carrousel PDF attaché');
+  return json(post);
 });
 
 // Images : servies par une clé aléatoire impossible à deviner (les balises <img> n'envoient pas le mot de passe).

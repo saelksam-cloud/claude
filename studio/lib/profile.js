@@ -30,3 +30,39 @@ Réponds en JSON :
   const user = profileText?.trim() ? `Profil actuel (copié depuis LinkedIn) :\n${profileText.slice(0, 12000)}` : "Pas de profil fourni : propose un profil complet à partir de la fiche client.";
   return { system, user };
 }
+
+// ---------- Visuels à valeur (images et carrousels) ----------
+const VISUAL_SPECS = `Types de visuels et leur contenu JSON (textes COURTS, lisibles sur mobile) :
+- liste : { "type": "liste", "title": "titre ≤ 10 mots avec *mot clé*", "subtitle": "≤ 14 mots", "items": [ { "t": "≤ 6 mots", "d": "≤ 12 mots" } ] } (3 à 6 items)
+- comparaison : { "type": "comparaison", "title": "", "left": { "label": "Avant / Ce qu'on fait souvent", "items": ["≤ 8 mots"] }, "right": { "label": "Après / Ce qui marche", "items": ["≤ 8 mots"] } } (3 à 5 items par côté)
+- process : { "type": "process", "title": "", "steps": [ { "t": "≤ 5 mots", "d": "≤ 14 mots" } ] } (3 à 5 étapes)
+- matrice : { "type": "matrice", "title": "", "xAxis": "", "yAxis": "", "quadrants": [ { "t": "haut gauche", "d": "" }, { "t": "haut droite (la meilleure case)", "d": "" }, { "t": "bas gauche", "d": "" }, { "t": "bas droite", "d": "" } ] }
+- chiffre : { "type": "chiffre", "title": "", "value": "", "label": "", "source": "" } UNIQUEMENT avec une preuve vérifiée fournie ou une source publique réelle et précise ; sinon value = "[À COMPLÉTER]" et source vide.
+- citation : { "type": "citation", "quote": "conviction du client ≤ 30 mots avec *mot clé*", "author": "nom du client" }`;
+
+const POST_RULES = `Le post accompagne le visuel : hook fort (≤ 12 mots, pas d'emoji), il développe l'idée du visuel sans le recopier, 100 à 180 mots, phrases courtes, aéré, fin par une question ou un CTA adapté. Pas de markdown. Aucun chiffre ni anecdote inventés (sinon [À COMPLÉTER : …]).`;
+
+export function visualPlanPrompt({ client, topic, count, kind, personaText }) {
+  const system = `Tu es le directeur éditorial de LinkedMotion. Tu prépares des visuels « à valeur » (schémas, checklists, comparatifs, frameworks) qui apportent une vraie réponse aux prospects du client.
+${adnText(client, { includeProofs: true })}
+${personaText || ''}
+Réponds en JSON : { "subject": "", "items": [ { "subtopic": "sous-sujet précis et utile", "type": "liste|comparaison|process|matrice|chiffre|citation", "why": "≤ 15 mots" } ] }`;
+  const user = `${topic ? `Sujet : ${topic}` : 'Choisis toi-même un sujet utile tiré des piliers, des problèmes de la cible ou des idées du client.'}
+${kind === 'carousel' ? 'Prévois UN carrousel : un seul item, type "carousel".' : `Découpe-le en ${count} sous-sujets complémentaires, avec des types de visuels variés (évite « chiffre » sans preuve vérifiée).`}`;
+  return { system, user };
+}
+
+export function visualItemPrompt({ client, subject, subtopic, type, kind, personaText }) {
+  const system = `Tu crées un visuel LinkedIn à valeur et le post qui l'accompagne, pour ${client.name}.
+${adnText(client, { includeProofs: true })}
+${personaText || ''}
+${kind === 'carousel' ? `Carrousel (document PDF) : 6 à 9 diapositives.
+- Couverture : { "kind": "cover", "title": "≤ 12 mots avec *mot clé*", "subtitle": "≤ 14 mots" }
+- Contenu : { "kind": "content", "title": "≤ 6 mots", "text": "≤ 20 mots", "items": ["optionnel, ≤ 8 mots", "…"] }
+- Dernière : { "kind": "end", "title": "récap ≤ 8 mots", "text": "≤ 25 mots, pas d'appel à l'action commercial par défaut" }
+Réponds en JSON : { "spec": { "type": "carousel", "slides": [ … ] }, "post": "" }` : `${VISUAL_SPECS}
+Réponds en JSON : { "spec": { … le visuel du type demandé … }, "post": "" }`}
+${POST_RULES}`;
+  const user = `Sujet : ${subject}\nSous-sujet : ${subtopic}\n${kind === 'carousel' ? '' : `Type de visuel : ${type}`}`;
+  return { system, user };
+}

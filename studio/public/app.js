@@ -1,5 +1,6 @@
 // Link Motion Studio — interface (vanilla JS, aucun build).
 import * as Banner from '/banner.js';
+import * as Vis from '/visuals.js';
 const $ = (sel, el = document) => el.querySelector(sel);
 const view = $('#view');
 
@@ -52,6 +53,10 @@ const ui = {
   banner: null,
   bannerVariants: [],
   bannerOverlay: true,
+  vis: store.get('vis', { kind: 'image', count: 3, format: 'portrait', preset: 'clair', accent: '' }),
+  visTopic: '',
+  visSlide: {},
+  visEdit: {},
 };
 
 // ---------- utilitaires ----------
@@ -127,7 +132,7 @@ function render() {
   const c = client();
   $('#banner').innerHTML = c && !c.linkedin.connected && ['create', 'posts'].includes(ui.view)
     ? `<div class="banner">Le LinkedIn de ${esc(c.name)} n'est pas connecté : les posts seront prêts mais pas publiés. <a href="#" data-action="go" data-id="settings">Le connecter</a></div>` : '';
-  ({ create: renderCreate, posts: renderPosts, adn: renderAdn, hooks: renderHooks, banner: renderBannerView, images: renderImages, veille: renderVeille, study: renderStudy, settings: renderSettings }[ui.view] || renderCreate)();
+  ({ create: renderCreate, posts: renderPosts, adn: renderAdn, hooks: renderHooks, banner: renderBannerView, visuals: renderVisualsView, images: renderImages, veille: renderVeille, study: renderStudy, settings: renderSettings }[ui.view] || renderCreate)();
   enhanceVoice(view);
 }
 
@@ -775,6 +780,110 @@ const imgToDataUrl = (file, max, type) => new Promise((resolve, reject) => {
   img.src = URL.createObjectURL(file);
 });
 
+// ================= VISUELS À VALEUR =================
+const visualsOf = () => (ui.data.visuals || []).filter((v) => v.clientId === ui.clientId);
+const visCurrent = (v) => ({ ...v, spec: ui.visEdit[v.id] || v.spec, author: client()?.name || '' });
+const TD = (arr) => (arr || []).map((x) => (typeof x === 'string' ? x : `${x.t || ''}${x.d ? ` — ${x.d}` : ''}`)).join('\n');
+const parseTD = (txt) => String(txt).split('\n').map((l) => l.trim()).filter(Boolean).map((l) => { const [t, ...d] = l.split(/\s+[—–-]\s+/); return { t: t.trim(), d: d.join(' — ').trim() }; });
+const getPath = (o, path) => path.split('.').reduce((a, k) => (a == null ? a : a[k]), o);
+const setPath = (o, path, val) => { const ks = path.split('.'); let a = o; ks.slice(0, -1).forEach((k) => { a[k] ??= {}; a = a[k]; }); a[ks.at(-1)] = val; };
+
+function visFields(v) {
+  const sp = visCurrent(v).spec;
+  const inp = (path, label) => `<label class="f">${label}<input data-vid="${v.id}" data-vpath="${path}" value="${esc(getPath(sp, path) || '')}"></label>`;
+  const area = (path, label, fmt, rows = 4) => { const val = getPath(sp, path); return `<label class="f">${label}<textarea rows="${rows}" data-vid="${v.id}" data-vpath="${path}" data-vfmt="${fmt}">${esc(fmt === 'td' ? TD(val) : (val || []).join('\n'))}</textarea></label>`; };
+  if (v.kind === 'carousel') {
+    return (sp.slides || []).map((sl, i) => `<fieldset class="slide-edit"><legend class="small">Diapo ${i + 1} · ${sl.kind === 'cover' ? 'couverture' : sl.kind === 'end' ? 'fin' : 'contenu'}</legend>
+      ${inp(`slides.${i}.title`, 'Titre')}${sl.kind === 'cover' ? inp(`slides.${i}.subtitle`, 'Sous-titre') : inp(`slides.${i}.text`, 'Texte')}
+      ${sl.kind === 'content' ? area(`slides.${i}.items`, 'Puces (une par ligne)', 'lines', 3) : ''}</fieldset>`).join('');
+  }
+  const t = sp.type;
+  if (t === 'liste') return inp('title', 'Titre (*mot* = couleur)') + inp('subtitle', 'Sous-titre') + area('items', 'Éléments : « titre — détail », un par ligne', 'td', 6);
+  if (t === 'comparaison') return inp('title', 'Titre') + inp('left.label', 'Colonne gauche') + area('left.items', 'Éléments gauche', 'lines') + inp('right.label', 'Colonne droite') + area('right.items', 'Éléments droite', 'lines');
+  if (t === 'process') return inp('title', 'Titre') + area('steps', 'Étapes : « titre — détail »', 'td', 5);
+  if (t === 'matrice') return inp('title', 'Titre') + inp('xAxis', 'Axe horizontal') + inp('yAxis', 'Axe vertical') + area('quadrants', '4 cases (haut gauche, haut droite, bas gauche, bas droite) : « titre — détail »', 'td', 4);
+  if (t === 'chiffre') return inp('title', 'Titre') + inp('value', 'Chiffre') + inp('label', 'Explication') + inp('source', 'Source (obligatoire)');
+  if (t === 'citation') return inp('quote', 'Citation') + inp('author', 'Auteur');
+  return '';
+}
+
+function renderVisualsView() {
+  const c = client();
+  const o = ui.vis;
+  const j = ui.job?.kind === 'visuals' ? ui.job : null;
+  const list = visualsOf().slice(0, 12);
+  view.innerHTML = `
+    <h2>Visuels à valeur</h2>
+    <p class="sub">Schémas, checklists, comparatifs, frameworks et carrousels qui apportent une vraie réponse aux prospects de ${esc(c.name)}, chacun avec son post. Textes exacts et modifiables, aucun chiffre inventé.</p>
+    <div class="card stack">
+      <div class="row" style="align-items:flex-end">
+        <label class="f" style="flex:1;min-width:240px">Sujet (laisse vide pour un sujet au hasard)<input id="visTopic" value="${esc(ui.visTopic)}" placeholder="Ex. comment préparer un post en 15 minutes"></label>
+        <button class="btn" data-action="vis-random">🎲 Au hasard</button>
+      </div>
+      <div class="row">
+        <div class="seg"><button class="${o.kind === 'image' ? 'on' : ''}" data-action="vis-opt" data-id="kind:image">Images + posts</button><button class="${o.kind === 'carousel' ? 'on' : ''}" data-action="vis-opt" data-id="kind:carousel">Carrousel + post</button></div>
+        ${o.kind === 'image' ? `<div class="seg">${[1, 2, 3].map((n) => `<button class="${o.count === n ? 'on' : ''}" data-action="vis-opt" data-id="count:${n}">${n} sous-sujet${n > 1 ? 's' : ''}</button>`).join('')}</div>` : ''}
+        <div class="seg">${Object.entries(Vis.FORMATS).map(([k, f]) => `<button class="${o.format === k ? 'on' : ''}" data-action="vis-opt" data-id="format:${k}">${esc(f.name)}</button>`).join('')}</div>
+      </div>
+      <div class="row">
+        <label class="f">Style<select id="visPreset">${Object.entries(Vis.STYLES).map(([k, st]) => `<option value="${k}" ${o.preset === k ? 'selected' : ''}>${esc(st.name)}</option>`).join('')}</select></label>
+        <label class="f">Accent<input type="color" id="visAccent" value="${esc(o.accent || Vis.STYLES[o.preset].accent)}" style="height:42px;width:80px;padding:4px"></label>
+        <label class="f">Cible<select id="visPersona"><option value="">Générale</option>${personas().map((x) => `<option value="${x.id}">${esc(x.name || x.role)}</option>`).join('')}</select></label>
+      </div>
+      ${j ? `<div class="row"><div class="progress"><span style="width:${Math.round((100 * j.done) / j.total)}%"></span></div><span class="small">${esc(j.step)}</span></div>` : ''}
+      <button class="btn primary big" data-action="vis-create" ${j ? 'disabled' : ''}>${o.kind === 'carousel' ? 'Créer le carrousel et son post' : `Créer ${o.count} visuel${o.count > 1 ? 's' : ''} et leurs posts`}</button>
+    </div>
+    ${list.length ? list.map((v) => {
+      const n = Vis.slideCount(visCurrent(v));
+      const i = Math.min(ui.visSlide[v.id] || 0, n - 1);
+      const post = ui.data.posts.find((p) => p.id === v.postId);
+      return `<div class="card vis-card">
+        <div class="vis-preview"><canvas data-vis="${v.id}" class="vis-canvas"></canvas>
+          ${n > 1 ? `<div class="row" style="justify-content:center"><button class="btn sm" data-action="vis-slide" data-id="${v.id}" data-d="-1">‹</button><span class="small">${i + 1} / ${n}</span><button class="btn sm" data-action="vis-slide" data-id="${v.id}" data-d="1">›</button></div>` : ''}</div>
+        <div class="stack" style="min-width:0">
+          <div class="row between"><div><b>${esc(v.subtopic || v.subject || '')}</b><div class="small">${v.kind === 'carousel' ? 'Carrousel' : esc(Vis.VISUAL_TYPES[v.spec?.type] || '')} · ${fmtDate(v.createdAt)}</div></div>
+            <button class="btn ghost sm danger" data-action="vis-del" data-id="${v.id}">🗑</button></div>
+          <details><summary class="small" style="cursor:pointer"><b>✎ Modifier les textes du visuel</b></summary><div class="stack" style="margin-top:8px">${visFields(v)}</div></details>
+          <div class="row">
+            <button class="btn primary sm" data-action="vis-attach" data-id="${v.id}">💾 Enregistrer et mettre à jour le post</button>
+            <button class="btn sm" data-action="vis-png" data-id="${v.id}">⬇ PNG${n > 1 ? ' (diapo)' : ''}</button>
+            ${v.kind === 'carousel' ? `<button class="btn sm" data-action="vis-pdf" data-id="${v.id}">⬇ PDF</button>` : ''}
+          </div>
+          ${post ? `<div class="inline-box"><div class="row between"><b class="small">Post associé · <span class="badge s-${post.status}">${STATUS[post.status]}</span></b><a href="#" class="small" data-action="vis-goto-post" data-id="${post.id}">Ouvrir dans Posts →</a></div><div class="vtext" style="color:var(--text)">${esc(post.text.slice(0, 420))}${post.text.length > 420 ? '…' : ''}</div>${post.document ? '<div class="small">📎 Carrousel PDF attaché</div>' : post.image ? '<div class="small">📎 Image attachée</div>' : ''}</div>` : ''}
+        </div>
+      </div>`;
+    }).join('') : '<div class="card empty">Aucun visuel pour l\'instant.</div>'}`;
+  for (const v of list) {
+    const cv = view.querySelector(`[data-vis="${v.id}"]`);
+    if (cv) Vis.renderVisual(cv, visCurrent(v), ui.visSlide[v.id] || 0);
+  }
+}
+
+// Rendu hors écran → image PNG ou PDF (carrousel), puis rattachement au post.
+async function visualFiles(v) {
+  const cur = visCurrent(v);
+  const n = Vis.slideCount(cur);
+  const cv = document.createElement('canvas');
+  if (cur.kind !== 'carousel') { await Vis.renderVisual(cv, cur, 0); return { png: cv.toDataURL('image/png') }; }
+  const f = Vis.FORMATS[cur.format] || Vis.FORMATS.portrait;
+  const jpegs = [];
+  for (let i = 0; i < n; i++) { await Vis.renderVisual(cv, cur, i); jpegs.push(cv.toDataURL('image/jpeg', 0.9)); }
+  return { pdf: Vis.jpegsToPdf(jpegs, f.w, f.h) };
+}
+
+async function attachVisual(v) {
+  const files = await visualFiles(v);
+  if (files.png) await api('POST', `/api/posts/${v.postId}/image`, { dataUrl: files.png });
+  if (files.pdf) await api('POST', `/api/posts/${v.postId}/document`, { dataUrl: files.pdf, title: (visCurrent(v).spec.slides?.[0]?.title || v.subject || 'Carrousel').replace(/[*_\[\]]/g, '') });
+}
+
+function download(dataUrl, name) {
+  const a = document.createElement('a');
+  a.href = dataUrl;
+  a.download = name.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w.-]+/g, '-').toLowerCase();
+  a.click();
+}
+
 // ================= VEILLE =================
 const authorsOf = (niche) => {
   const counts = new Map();
@@ -1120,6 +1229,48 @@ function chunkText(text, size = 6_000) {
 }
 
 const actions = {
+  'vis-opt'(kv) { const [k, v] = kv.split(':'); ui.vis = { ...ui.vis, [k]: k === 'count' ? Number(v) : v }; store.set('vis', ui.vis); render(); },
+  'vis-random'() { ui.visTopic = ''; const el = $('#visTopic'); if (el) el.value = ''; toast("Sujet au hasard : l'IA choisira dans les piliers et les problèmes de la cible"); },
+  'vis-slide'(id, btn) { const v = visualsOf().find((x) => x.id === id); const n = Vis.slideCount(visCurrent(v)); ui.visSlide[id] = ((ui.visSlide[id] || 0) + Number(btn.dataset.d) + n) % n; render(); },
+  async 'vis-create'() {
+    if (!ui.data.settings.hasOpenaiKey) throw new Error('Ajoute ta clé OpenAI dans Réglages.');
+    const o = ui.vis;
+    const style = { preset: o.preset, accent: o.accent };
+    const personaId = $('#visPersona')?.value || '';
+    ui.visTopic = $('#visTopic')?.value || '';
+    ui.job = { kind: 'visuals', total: 1, done: 0, step: 'Choix des sous-sujets…' };
+    render();
+    try {
+      const plan = await api('POST', '/api/visuals/plan', { clientId: ui.clientId, topic: ui.visTopic, count: o.count, kind: o.kind, personaId });
+      ui.job.total = plan.items.length;
+      for (const [i, it] of plan.items.entries()) {
+        ui.job.step = `${i + 1} / ${plan.items.length} : ${it.subtopic} (visuel + post)…`;
+        render();
+        const r = await api('POST', '/api/visuals/item', { clientId: ui.clientId, subject: plan.subject, subtopic: it.subtopic, type: it.type, kind: o.kind, format: o.format, style, personaId });
+        await refresh();
+        ui.job.step = `${i + 1} / ${plan.items.length} : on attache le visuel au post…`;
+        render();
+        await attachVisual(r.visual).catch((e) => toast(`Visuel ${i + 1} non attaché : ${e.message}`, true));
+        ui.job.done = i + 1;
+      }
+      toast('Visuels et posts prêts (posts « à valider »)');
+    } finally { ui.job = null; await refresh(); }
+  },
+  async 'vis-attach'(id, btn) {
+    const v = visualsOf().find((x) => x.id === id);
+    btn.disabled = true; btn.textContent = 'Mise à jour…';
+    try {
+      if (ui.visEdit[id]) await api('PUT', `/api/visuals/${id}`, { spec: ui.visEdit[id] });
+      await refresh();
+      delete ui.visEdit[id];
+      await attachVisual(visualsOf().find((x) => x.id === id) || v);
+      toast('Visuel enregistré et attaché au post');
+    } finally { await refresh(); }
+  },
+  async 'vis-png'(id) { const v = visualsOf().find((x) => x.id === id); const cv = document.createElement('canvas'); await Vis.renderVisual(cv, visCurrent(v), ui.visSlide[id] || 0); download(cv.toDataURL('image/png'), `${v.subtopic || 'visuel'}.png`); },
+  async 'vis-pdf'(id) { const v = visualsOf().find((x) => x.id === id); const f = await visualFiles(v); download(f.pdf, `${v.subtopic || v.subject || 'carrousel'}.pdf`); },
+  async 'vis-del'(id) { await api('DELETE', `/api/visuals/${id}`); await refresh(); },
+  'vis-goto-post'(id) { ui.view = 'posts'; ui.filter = 'all'; store.set('view', 'posts'); render(); goto(id); },
   'banner-tab'(t) { ui.bannerTab = t; store.set('bannerTab', t); render(); },
   'banner-template'(id) {
     ui.banner.templateId = id;
@@ -1399,6 +1550,17 @@ document.addEventListener('input', (e) => {
     if (t.name === '_name') ui.banner.name = t.value; else ui.banner.fields[t.name] = t.value;
     redrawBanner();
   }
+  if (e.target.dataset.vpath) {
+    const t = e.target;
+    const v = visualsOf().find((x) => x.id === t.dataset.vid);
+    const spec = ui.visEdit[v.id] || JSON.parse(JSON.stringify(v.spec));
+    setPath(spec, t.dataset.vpath, t.dataset.vfmt === 'td' ? parseTD(t.value) : t.dataset.vfmt === 'lines' ? t.value.split('\n').map((x) => x.trim()).filter(Boolean) : t.value);
+    ui.visEdit[v.id] = spec;
+    clearTimeout(ui.visT);
+    ui.visT = setTimeout(() => { const cv = view.querySelector(`[data-vis="${v.id}"]`); if (cv) Vis.renderVisual(cv, visCurrent(v), ui.visSlide[v.id] || 0); }, 150);
+  }
+  if (e.target.id === 'visTopic') ui.visTopic = e.target.value;
+  if (e.target.id === 'visAccent') { ui.vis = { ...ui.vis, accent: e.target.value }; store.set('vis', ui.vis); }
   if (e.target.id === 'bannerAccent' && ui.banner) { ui.banner.style = { ...ui.banner.style, accent: e.target.value }; redrawBanner(); }
   if (e.target.id === 'hookSearch') { ui.hookSearch = e.target.value; ui.hookLimit = 60; clearTimeout(ui.hsT); ui.hsT = setTimeout(() => { render(); const el = $('#hookSearch'); el?.focus(); el?.setSelectionRange(el.value.length, el.value.length); }, 250); }
   const ed = e.target.closest('[data-editor] textarea');
@@ -1422,6 +1584,7 @@ document.addEventListener('change', run(async (e) => {
     return;
   }
   if (t.id === 'personaSel') { ui.personaId = t.value; return; }
+  if (t.id === 'visPreset') { ui.vis = { ...ui.vis, preset: t.value, accent: '' }; store.set('vis', ui.vis); render(); return; }
   if (t.id === 'bannerPreset') { ui.banner.style = { ...ui.banner.style, preset: t.value, accent: '' }; render(); return; }
   if (t.id === 'bannerOverlay') { ui.bannerOverlay = t.checked; redrawBanner(); return; }
   if (t.dataset.bannerImg && t.files.length) {

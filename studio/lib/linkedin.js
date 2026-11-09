@@ -83,7 +83,20 @@ async function uploadImage(token, owner, imageData) {
   return value.image;
 }
 
-export async function publish({ accessToken, personUrn }, { text, imageData, altText }) {
+async function uploadDocument(token, owner, data) {
+  const init = await fetch(`${API}/rest/documents?action=initializeUpload`, {
+    method: 'POST',
+    headers: restHeaders(token),
+    body: JSON.stringify({ initializeUploadRequest: { owner } }),
+  });
+  await check(init, "Initialisation de l'envoi du document");
+  const { value } = await init.json();
+  const put = await fetch(value.uploadUrl, { method: 'PUT', headers: { Authorization: `Bearer ${token}` }, body: data });
+  await check(put, 'Envoi du document');
+  return value.document;
+}
+
+export async function publish({ accessToken, personUrn }, { text, imageData, altText, documentData, documentTitle }) {
   const body = {
     author: personUrn,
     commentary: toLittleText(text),
@@ -92,7 +105,11 @@ export async function publish({ accessToken, personUrn }, { text, imageData, alt
     lifecycleState: 'PUBLISHED',
     isReshareDisabledByAuthor: false,
   };
-  if (imageData) {
+  if (documentData) {
+    // Carrousel : LinkedIn l'affiche comme un document PDF que l'on fait défiler.
+    const documentUrn = await uploadDocument(accessToken, personUrn, documentData);
+    body.content = { media: { id: documentUrn, title: (documentTitle || 'Carrousel').slice(0, 200) } };
+  } else if (imageData) {
     const imageUrn = await uploadImage(accessToken, personUrn, imageData);
     body.content = { media: { id: imageUrn, altText: altText || '' } };
   }
