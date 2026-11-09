@@ -1005,15 +1005,23 @@ const goto = (id) => {
   setTimeout(() => el?.classList.remove('flash'), 1500);
 };
 
-function chunkText(text, size = 12_000) {
+// Retire le bruit d'une page LinkedIn copiée (boutons, menus) puis découpe en morceaux de ~6 000 caractères.
+const NOISE = /^(j['’]aime|commenter|republier|envoyer|suivre|\+ suivre|voir la traduction|voir plus|… voir plus|afficher plus|répondre|like|comment|repost|send|follow|see translation|see more|…more|\d+\s*(h|j|sem\.?|mois|an|d|w|mo|yr)\s*•?.*|•\s*\d+(er|e)?\+?|activer pour afficher l['’]image|image de .*|aucune autre description.*)$/i;
+function chunkText(text, size = 6_000) {
+  const lines = text.split('\n').map((l) => l.trim())
+    .filter((l) => !NOISE.test(l) && !/^(j['’]aime|like)\b.*\b(commenter|comment)\b/i.test(l));
   const chunks = [];
-  let cur = '';
-  for (const b of text.split(/\n{2,}/)) {
-    if ((cur + b).length > size && cur) { chunks.push(cur); cur = ''; }
-    cur += `${b}\n\n`;
+  let cur = [];
+  let len = 0;
+  for (const l of lines) {
+    cur.push(l);
+    len += l.length + 1;
+    // On coupe de préférence après la ligne des réactions (fin d'un post), sinon sur une ligne vide.
+    const endOfPost = /(réactions?|reactions?|commentaires?|comments?|republications?|reposts?)\s*$/i.test(l);
+    if ((len > size && endOfPost) || (len > size * 1.3 && !l) || len > size * 1.8) { chunks.push(cur.join('\n')); cur = []; len = 0; }
   }
-  if (cur.trim()) chunks.push(cur);
-  return chunks;
+  if (cur.join('').trim()) chunks.push(cur.join('\n'));
+  return chunks.map((c) => c.replace(/\n{3,}/g, '\n\n')).filter((c) => c.trim().length > 40);
 }
 
 const actions = {
@@ -1177,18 +1185,27 @@ const actions = {
     const chunks = chunkText(text);
     let added = 0;
     let found = 0;
+    const failed = [];
     ui.niche = niche;
     ui.job = { kind: 'paste', total: chunks.length, done: 0, step: 'Analyse…' };
     try {
       for (const [i, chunk] of chunks.entries()) {
-        ui.job.step = `Analyse ${i + 1} / ${chunks.length}…`;
+        ui.job.step = `Analyse ${i + 1} / ${chunks.length} (environ 20 s chacune)…`;
         render();
-        const r = await api('POST', '/api/veille/paste', { text: chunk, niche });
-        added += r.added; found += r.found; ui.job.done = i + 1;
+        let r = null;
+        for (let attempt = 0; attempt < 2 && !r; attempt++) { // un morceau qui échoue est retenté une fois, puis on passe au suivant
+          r = await api('POST', '/api/veille/paste', { text: chunk, niche }).catch(() => null);
+        }
+        if (r) { added += r.added; found += r.found; } else failed.push(i + 1);
+        ui.job.done = i + 1;
       }
-    } finally { ui.job = null; }
-    await refresh();
-    toast(`${found} post(s) trouvés, ${added} ajoutés à la veille ${niche}`);
+    } finally {
+      ui.job = null;
+      await refresh().catch(() => render());
+    }
+    if (!found && failed.length) throw new Error("L'analyse n'a pas abouti : réessaie dans un instant, ou colle un plus petit morceau.");
+    $('#pasteText') && ($('#pasteText').value = '');
+    toast(`${found} post(s) trouvés, ${added} ajoutés à la veille ${niche}${failed.length ? ` · ${failed.length} morceau(x) non analysé(s), recolle-les si besoin` : ''}`, failed.length > 0);
   },
   async 'del-veille'(id) { await api('DELETE', `/api/veille/${id}`); await refresh(); },
   async study(_id, btn) {

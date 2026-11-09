@@ -5,6 +5,8 @@
 // les fonctions Netlify étant limitées à 60 s par appel).
 const DEFAULT_MODEL = 'gpt-6.1-sol';
 const FALLBACK_MODELS = ['gpt-6-luna', 'gpt-5.5', 'gpt-4.1'];
+// Extraction de veille (tâche mécanique, gros volume) : modèle rapide pour rester sous la limite de 60 s.
+const FAST_MODEL = 'gpt-4.1';
 
 function clientBrief(c) {
   return [
@@ -82,9 +84,9 @@ const isModelProblem = (status, err = {}) =>
   status === 404 || err.code === 'model_not_found' || /model|verif/i.test(err.message || '') && status !== 401 && status !== 429;
 
 // Les fonctions Netlify ont 60 s par appel : un post = 2 appels (content + hooker) de 28 s max.
-export async function chat(settings, system, user, { json: asJson = false, timeout = 28_000 } = {}) {
+export async function chat(settings, system, user, { json: asJson = false, timeout = 28_000, model: forced = '' } = {}) {
   if (!settings.openaiKey) throw new Error("Ajoute ta clé API OpenAI dans l'onglet Réglages.");
-  const chosen = /^[\w.:-]+$/.test(settings.openaiModel || '') ? settings.openaiModel : DEFAULT_MODEL;
+  const chosen = forced || (/^[\w.:-]+$/.test(settings.openaiModel || '') ? settings.openaiModel : DEFAULT_MODEL);
   const models = [chosen, ...FALLBACK_MODELS.filter((m) => m !== chosen)];
   let lastError;
   for (const model of models) {
@@ -201,7 +203,7 @@ Réponds en JSON : { "posts": [ { "author": "", "hook": "", "excerpt": "", "like
 - hookType : un parmi ${HOOK_TYPES.join(' | ')}.
 - format : un parmi ${FORMATS.join(' | ')} (Image/Carrousel/Vidéo si le texte mentionne un média).
 Ignore les commentaires des autres personnes et les publicités. N'invente rien. Niche : ${niche || 'non précisée'}.`;
-  const { text: out } = await chat(settings, system, text.slice(0, 30_000), { json: true, timeout: 55_000 });
+  const { text: out } = await chat(settings, system, text.slice(0, 12_000), { json: true, timeout: 50_000, model: FAST_MODEL });
   let data;
   try { data = JSON.parse(out); } catch { throw new Error("L'IA n'a pas renvoyé un résultat lisible : réessaie avec un plus petit morceau."); }
   return (data.posts || []).filter((p) => p && (p.hook || p.excerpt));
@@ -323,6 +325,6 @@ export async function extractStructures(settings, items) {
 Exemple : « Hook paradoxe en 2 lignes → 3 exemples courts en liste → retournement → leçon en 1 phrase → question ouverte ».
 Réponds en JSON : { "items": [ { "id": "", "structure": "" } ] }`;
   const user = items.map((v) => `### id: ${v.id}\n${(v.text || v.hook || '').slice(0, 1200)}`).join('\n\n');
-  const { text } = await chat(settings, system, user, { json: true, timeout: 55_000 });
+  const { text } = await chat(settings, system, user, { json: true, timeout: 50_000, model: FAST_MODEL });
   try { return JSON.parse(text).items || []; } catch { return []; }
 }
