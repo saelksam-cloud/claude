@@ -1,9 +1,12 @@
 // Link Motion Studio — interface (vanilla JS, aucun build).
 import * as Banner from '/banner.js';
 import * as Vis from '/visuals.js';
+import { calendarMarkup, calendarDate } from '/calendar.js';
 const $ = (sel, el = document) => el.querySelector(sel);
 const view = $('#view');
 
+const PAGE_NAMES = {"create":"Studio","posts":"Posts","calendar":"Calendrier","visuals":"Visuels","adn":"ADN client","banner":"Profil et bannière","images":"Photothèque","veille":"Veille","study":"Étude de marché","hooks":"Hooks","settings":"Réglages"};
+const ICONS = {"pen":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m13 6 5 5M4 20l4.5-1 11-11a2.1 2.1 0 0 0-3-3l-11 11L4 20Z\"/></svg>","files":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"6\" y=\"3\" width=\"13\" height=\"17\" rx=\"2\"/><path d=\"M9 8h7m-7 4h7m-7 4h4M3 7v12a4 4 0 0 0 4 4\"/></svg>","calendar":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"5\" width=\"18\" height=\"16\" rx=\"2\"/><path d=\"M7 3v4m10-4v4M3 10h18m-14 4h2m3 0h2m3 0h1m-11 3h2m3 0h2\"/></svg>","image":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"3\" width=\"18\" height=\"18\" rx=\"3\"/><circle cx=\"8.5\" cy=\"8.5\" r=\"1.5\"/><path d=\"m3 17 5-5 4 4 4-6 5 7\"/></svg>","person":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1\"/></svg>","layout":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"16\" rx=\"2\"/><path d=\"M3 9h18m-12 0v11\"/></svg>","photos":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"7\" y=\"3\" width=\"14\" height=\"14\" rx=\"2\"/><path d=\"M3 8v11a2 2 0 0 0 2 2h11m-9-7 4-4 3 3 3-5 4 5\"/></svg>","radar":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 7a5 5 0 1 0 5 5m-5 0 7-7\"/><circle cx=\"12\" cy=\"12\" r=\"1\"/></svg>","chart":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 4v16h16M8 16v-4m5 4V8m5 8V5\"/></svg>","hook":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M13 7v10a4 4 0 0 1-8 0v-3l3 2m5-9a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z\"/></svg>","settings":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"3\"/><path d=\"m9 3-1 3-3 1-2 4 2 2v4l3 2 3-1 3 2 4-2v-3l3-3-2-4-3-1-1-3Z\"/></svg>","menu":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 6h16M4 12h16M4 18h16\"/></svg>","activity":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 12h4l3-7 4 14 3-7h4\"/></svg>","search":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"10\" cy=\"10\" r=\"6\"/><path d=\"m14.5 14.5 5 5\"/></svg>","arrow":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 12h15m-6-6 6 6-6 6\"/></svg>","spark":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 2c0 6 4 10 10 10-6 0-10 4-10 10 0-6-4-10-10-10 6 0 10-4 10-10Z\"/></svg>"};
 const STATUS = { review: 'À valider', approved: 'Programmé', published: 'Publié', draft: 'Brouillon', rejected: 'À refaire' };
 const PLACEHOLDER = /\[À COMPLÉTER/i;
 const MAX_CHARS = 3000;
@@ -20,7 +23,17 @@ const ui = {
   clientId: store.get('clientId', null),
   view: store.get('view', 'create'),
   filter: 'review',
-  count: store.get('count', 3),
+  detailId: null,
+  studioPost: null,
+  draftText: {},
+  manual: {},
+  advanced: false,
+  tools: 'hooks',
+  calCursor: new Date(),
+  calMode: 'month',
+  pendingJob: store.get('studio.pendingJob', null),
+  recentJob: store.get('studio.recentJob', null),
+  count: store.get('count', 1),
   engine: store.get('engine', 'auto'),
   instruction: '',
   niche: undefined,
@@ -95,11 +108,12 @@ async function api(method, url, body) {
 
 function showLogin(message = '') {
   document.body.classList.add('locked');
+  for (const el of document.querySelectorAll('dialog[open]')) el.close();
   view.innerHTML = `
     <form class="card stack login" id="loginForm">
       <h2>Link Motion Studio</h2>
       <p class="sub" style="margin:0">Entre ton mot de passe.</p>
-      <input type="password" name="password" placeholder="Mot de passe" autocomplete="current-password" required autofocus>
+      <input type="password" aria-label="Mot de passe" name="password" placeholder="Mot de passe" autocomplete="current-password" required autofocus>
       ${message ? `<div class="alert err">${esc(message)}</div>` : ''}
       <button class="btn primary" type="submit">Se connecter</button>
     </form>`;
@@ -128,12 +142,25 @@ function render() {
   $('#clientSelect').innerHTML = ui.data.clients.map((c) => `<option value="${c.id}" ${c.id === ui.clientId ? 'selected' : ''}>${esc(c.name || 'Sans nom')}${c.niche ? ` · ${esc(c.niche)}` : ''}</option>`).join('')
     + '<option value="__new">+ Nouveau client…</option>';
   if (!client()) ui.view = 'settings';
-  document.querySelectorAll('#tabs button').forEach((b) => b.classList.toggle('active', b.dataset.view === ui.view));
+  $('#location').textContent = PAGE_NAMES[ui.view] || PAGE_NAMES.create;
+  document.querySelectorAll('[data-view]').forEach((button) => {
+    const active = button.dataset.view === ui.view;
+    button.classList.toggle('active', active);
+    if (active) button.setAttribute('aria-current', 'page');
+    else button.removeAttribute('aria-current');
+  });
+  const reviewCount = clientPosts().filter((p) => ['review', 'draft', 'rejected'].includes(p.status)).length;
+  document.querySelectorAll('[data-review-count]').forEach((badge) => {
+    badge.hidden = !reviewCount;
+    badge.textContent = reviewCount;
+  });
+  renderActivity();
   const c = client();
   $('#banner').innerHTML = c && !c.linkedin.connected && ['create', 'posts'].includes(ui.view)
     ? `<div class="banner">Le LinkedIn de ${esc(c.name)} n'est pas connecté : les posts seront prêts mais pas publiés. <a href="#" data-action="go" data-id="settings">Le connecter</a></div>` : '';
-  ({ create: renderCreate, posts: renderPosts, adn: renderAdn, hooks: renderHooks, banner: renderBannerView, visuals: renderVisualsView, images: renderImages, veille: renderVeille, study: renderStudy, settings: renderSettings }[ui.view] || renderCreate)();
+  ({ create: renderCreate, posts: renderPosts, calendar: renderCalendar, adn: renderAdn, hooks: renderHooks, banner: renderBannerView, visuals: renderVisualsView, images: renderImages, veille: renderVeille, study: renderStudy, settings: renderSettings }[ui.view] || renderCreate)();
   enhanceVoice(view);
+  renderDrawer();
 }
 
 // ================= CRÉER =================
@@ -144,18 +171,36 @@ function renderCreate() {
   const nicheCount = ui.data.veille.filter((v) => sameNiche(v.niche, c.niche)).length;
   const competitors = authorsOf(c.niche);
   if (ui.inspireFrom && !competitors.some(([a]) => sameNiche(a, ui.inspireFrom))) ui.inspireFrom = '';
-  const created = ui.lastCreated.map((id) => ui.data.posts.find((p) => p.id === id)).filter(Boolean);
+  const drafts = clientPosts().filter((p) => ['review', 'draft', 'rejected'].includes(p.status));
+  const created = [...new Set([...ui.lastCreated, ...drafts.slice(0, 12).map((p) => p.id)])]
+    .map((id) => drafts.find((p) => p.id === id)).filter(Boolean);
+  const active = created.find((p) => p.id === ui.studioPost);
+  const manual = ui.manual[c.id] || '';
+  const busy = Boolean(ui.job && !ui.job.finished);
+  const pending = ui.pendingJob;
   const j = ui.job?.kind === 'create' ? ui.job : null;
 
   view.innerHTML = `
-  <div class="create">
-    <h2>Créer des posts</h2>
-    <p class="sub">Pour <b>${esc(c.name)}</b>${c.niche ? ` · niche ${esc(c.niche)}` : ''}. Les posts arrivent dans <b>Posts</b>, à valider.</p>
-    <div class="card stack">
-      <div class="f">Combien de posts ?
+  <div class="studio">
+    <header class="page-heading">
+      <div><div class="eyebrow">ESPACE DE CRÉATION</div><h1>Studio de création</h1><p>Du brief au post prêt à publier.</p></div>
+      <div class="row heading-actions"><button class="btn" data-action="go" data-id="visuals">${ICONS.image} Créer un visuel</button><button class="btn" data-action="go" data-id="posts">Voir les posts ${ICONS.arrow}</button></div>
+    </header>
+    <div class="studio-grid">
+      <section class="work-panel brief-panel">
+        <header class="panel-heading"><span class="step-number">01</span><div><h2>Brief</h2><p>Pose le cadre de ton post</p></div></header>
+        <div class="panel-body stack">
+          <div class="client-card"><span class="client-avatar">${esc(initials(c.name))}</span><div><strong>${esc(c.name)}</strong><span>${esc(c.niche || c.company || 'Espace client')}</span></div><button class="btn icon-btn ghost" data-action="go" data-id="adn" title="Ouvrir l’ADN client" aria-label="Ouvrir l’ADN client">${ICONS.arrow}</button></div>
+                <label class="f">Sujet ou idée de départ
+        <textarea id="instruction" rows="5" placeholder="Ex. le coût caché de la double saisie, ou quelques bullet points, ou « ton plus personnel »…">${esc(ui.instruction)}</textarea>
+      </label>
+
+                <div class="f">Nombre de posts
         <div class="seg">${COUNTS.map((n) => `<button type="button" class="${ui.count === n ? 'on' : ''}" data-action="count" data-id="${n}">${n}</button>`).join('')}</div>
       </div>
-      <div class="grid2">
+
+          <details class="brief-options" ${ui.advanced ? 'open' : ''}><summary>Options du brief</summary><div class="stack">
+                  <div class="grid2">
         <label class="f">Pour quelle cible ?
           <select id="personaSel"><option value="">${personas().length ? 'Choix automatique' : 'Aucun persona (onglet ADN)'}</option>${personas().map((p) => `<option value="${p.id}" ${p.id === ui.personaId ? 'selected' : ''}>${esc(p.name || p.role || 'Persona')}${p.status === 'hypothesis' ? ' (à valider)' : ''}</option>`).join('')}</select></label>
         <label class="f">Objectif du post
@@ -165,10 +210,8 @@ function renderCreate() {
         <label class="f">Partir d'une idée validée
           <select id="ideaSel"><option value="">Aucune</option>${ideas().filter((i) => i.status !== 'utilisée').map((i) => `<option value="${i.id}" ${i.id === ui.ideaId ? 'selected' : ''}>${esc(i.title.slice(0, 70))}</option>`).join('')}</select></label>
       </div>
-      <label class="f">Sujet, notes ou consigne (facultatif)
-        <textarea id="instruction" rows="3" placeholder="Ex. le coût caché de la double saisie, ou quelques bullet points, ou « ton plus personnel »…">${esc(ui.instruction)}</textarea>
-      </label>
-      <div class="f">Image
+
+                  <div class="f">Image
         <div class="seg">
           <button type="button" class="${ui.imageMode === 'none' ? 'on' : ''}" data-action="image-mode" data-id="none">Sans image</button>
           <button type="button" class="${ui.imageMode === 'library' ? 'on' : ''}" data-action="image-mode" data-id="library">📸 Mes photos (${myPhotos().length})</button>
@@ -181,22 +224,50 @@ function renderCreate() {
           ${competitors.slice(0, 6).map(([a]) => `<button type="button" class="${sameNiche(a, ui.inspireFrom) ? 'on' : ''}" data-action="inspire" data-id="${esc(a)}">${esc(a)}</button>`).join('')}
         </div>
       </div>` : ''}
-      <div class="f">Qui écrit ?
+
+          </div></details>
+                <div class="f">Mode de rédaction
         <div class="seg">
-          <button type="button" class="${ui.engine === 'auto' ? 'on' : ''}" data-action="engine" data-id="auto">⚡ Automatique</button>
-          <button type="button" class="${ui.engine === 'gpt' ? 'on' : ''}" data-action="engine" data-id="gpt">🤖 Mes GPTs (copier-coller)</button>
+          <button type="button" class="${ui.engine === 'auto' ? 'on' : ''}" data-action="engine" data-id="auto">Automatique</button>
+          <button type="button" class="${ui.engine === 'gpt' ? 'on' : ''}" data-action="engine" data-id="gpt">Mes GPTs</button>
         </div>
       </div>
       <p class="small" style="margin:0">${ui.engine === 'auto'
         ? `1 clic. ${esc(content?.name || 'Mode content')} écrit, puis ${esc(hooker?.name || 'Mode hooker')} retravaille le hook. S'appuie sur ${ui.inspireFrom ? `les meilleurs posts de <b>${esc(ui.inspireFrom)}</b>` : `les meilleurs posts de chaque concurrent (${nicheCount} en veille ${esc(c.niche || '')})`}, l'étude de marché et tes retours passés.${ui.data.settings.hasOpenaiKey ? '' : ' <b>Clé OpenAI requise (Réglages).</b>'}`
         : `Tes vrais GPTs ChatGPT : l'app prépare le texte, tu le colles dans ${esc(content?.name || 'Mode content')}, puis dans ${esc(hooker?.name || 'Mode hooker')}.`}</p>
-      ${j ? `<div class="row"><div class="progress"><span style="width:${Math.round((100 * j.done) / j.total)}%"></span></div><span class="small">${esc(j.step)}</span>
-          ${j.finished ? '' : '<button class="btn sm" data-action="stop">Arrêter</button>'}</div>` : ''}
-      ${ui.relay ? '' : `<button class="btn primary big" data-action="create" ${j && !j.finished ? 'disabled' : ''}>Créer ${ui.count} post${ui.count > 1 ? 's' : ''}</button>`}
+
+          ${j ? `<div class="job-inline small"><div class="progress"><span style="width:${Math.round((100 * j.done) / j.total)}%"></span></div><span>${esc(j.step)}</span></div>` : ''}
+          ${ui.relay ? '' : `<button class="btn primary" data-action="create" ${busy || (pending && ui.engine === 'auto') ? 'disabled' : ''}>${ICONS.spark} ${ui.engine === 'gpt' ? 'Préparer le brief GPT' : `Créer ${ui.count} post${ui.count > 1 ? 's' : ''}`}</button>`}
+          ${pending && !busy ? '<button class="btn" data-action="jobs">Voir la génération interrompue</button>' : ''}
+        </div>
+      </section>
+      <section class="work-panel writing-panel">
+        <header class="panel-heading"><span class="step-number">02</span><div><h2>Rédaction</h2><p>Écris ou reprends un brouillon</p></div></header>
+        <div class="panel-body stack">
+          ${ui.relay ? renderRelay() : `
+          ${created.length ? `<label class="f draft-select">Brouillon<select id="studioDraft"><option value="">Nouveau brouillon</option>${created.map((p) => `<option value="${esc(p.id)}" ${p === active ? 'selected' : ''}>${esc(p.theme || p.text.split('\n')[0].slice(0, 68))}</option>`).join('')}</select></label>` : ''}
+          ${active ? `<div class="row between"><span class="badge s-${active.status}">${STATUS[active.status]}</span><button class="btn ghost sm" data-action="post-detail" data-id="${active.id}">Aperçu et publication →</button></div>
+            ${postEditor(active)}
+            ${active.plan ? strategyPanel(active) : ''}
+            ${PLACEHOLDER.test(active.text) ? '<div class="alert warn">Complète les passages signalés avant de valider.</div>' : ''}`
+            : `<div class="editor-empty"><span class="editor-icon">${ICONS.pen}</span><div><strong>À toi d’écrire</strong><p>Pars du brief à gauche ou rédige directement ici.</p></div></div>
+              <label class="f writing-field"><span class="sr-only">Texte du nouveau brouillon</span><textarea id="manualDraft" rows="11" maxlength="3000" placeholder="Écris ton post ici…">${esc(manual)}</textarea></label>
+              <div class="row between"><span class="small" id="manualCount">${manual.length} / 3 000</span><button class="btn" id="manualSave" data-action="manual-save" ${manual.trim() ? '' : 'disabled'}>Enregistrer le brouillon</button></div>`}
+          `}
+        </div>
+      </section>
+      <aside class="work-panel tools-panel">
+        <header class="panel-heading"><span class="step-number">03</span><div><h2>Contrôle éditorial</h2><p>Affine avant de valider</p></div></header>
+        <div class="panel-body stack">
+          ${[['hooks','Hooks','Compare les accroches et leurs notes.','hook'],['quality','Qualité','Repère les points à retravailler.','search'],['retouch','Retouches','Ajuste le rythme, le ton ou la longueur.','spark']].map(([key, label, hint, glyph]) => `
+            <button class="tool-option ${active && ui.tools === key ? 'selected' : ''}" data-action="studio-tool" data-id="${key}" ${active ? 'aria-pressed="' + (ui.tools === key) + '"' : 'disabled'}><span class="tool-icon">${ICONS[glyph]}</span><span><strong>${label}</strong><small>${hint}</small></span><span aria-hidden="true">›</span></button>`).join('')}
+          ${active ? (ui.tools ? { hooks: hooksPanel, quality: qualityPanel, retouch: retouchPanel }[ui.tools](active) : '<div class="tool-note">Choisis un outil pour travailler sur le brouillon enregistré.</div>')
+            : '<div class="tool-note">Les outils s’activent dès que tu ouvres un brouillon enregistré.</div>'}
+        </div>
+      </aside>
     </div>
-    ${ui.relay ? renderRelay() : ''}
-    ${created.length ? `<h3 style="margin-top:24px">Tout juste créés</h3>${created.map(postCard).join('')}` : ''}
   </div>`;
+  $('.brief-options').addEventListener('toggle', (event) => { ui.advanced = event.currentTarget.open; });
 }
 
 // ---------- Mode « mes GPTs » : 2 copier-coller guidés ----------
@@ -263,42 +334,126 @@ function renderRelay() {
 }
 
 // Pour chaque post : plan éditorial → rédaction (structure Linka) → 10 hooks notés /100 → image éventuelle.
-async function createAuto() {
+function checkpoint(job) {
+  ui.pendingJob = job;
+  store.set('studio.pendingJob', job);
+}
+
+async function createAuto(resume) {
   if (!ui.data.settings.hasOpenaiKey) throw new Error("Ajoute ta clé OpenAI dans Réglages, ou choisis « Mes GPTs ».");
-  const total = ui.count;
-  ui.lastCreated = [];
-  ui.job = { kind: 'create', done: 0, total, step: 'Préparation…', stop: false };
-  const avoid = { angles: [], structures: [] };
-  render();
-  try {
-    for (let i = 0; i < total && !ui.job.stop; i++) {
-      const step = (t) => { ui.job.step = `Post ${i + 1} / ${total} : ${t}`; render(); };
-      step('plan éditorial (angle, structure)…');
-      const plan = await api('POST', '/api/plan', { clientId: ui.clientId, personaId: ui.personaId, objective: ui.objective, awareness: ui.awareness, topic: ui.instruction, ideaId: i === 0 ? ui.ideaId : '', avoid });
-      avoid.angles.push(plan.angle?.type); avoid.structures.push(plan.structureId);
-      step(`rédaction (${plan.structureName})…`);
-      const p = await api('POST', '/api/write', { clientId: ui.clientId, plan, author: ui.inspireFrom });
-      ui.lastCreated.push(p.id);
-      step('10 hooks notés sur 100…');
-      await api('POST', `/api/posts/${p.id}/hooks`, {}).catch((e) => toast(`Hooks du post ${i + 1} : ${e.message}`, true));
-      if (ui.imageMode !== 'none') {
-        step('image…');
-        await addImage(p.id, ui.imageMode).catch((e) => toast(`Image du post ${i + 1} : ${e.message}`, true));
+  if (ui.job && !ui.job.finished) throw new Error('Un traitement est déjà en cours.');
+  const job = resume || {
+    id: String(Date.now()),
+    clientId: ui.clientId,
+    total: ui.count,
+    done: 0,
+    ids: [],
+    plan: null,
+    postId: '',
+    hooksDone: false,
+    inFlight: '',
+    avoid: { angles: [], structures: [] },
+    brief: { personaId: ui.personaId, objective: ui.objective, awareness: ui.awareness, topic: ui.instruction, ideaId: ui.ideaId },
+    author: ui.inspireFrom,
+    imageMode: ui.imageMode,
+  };
+  if (navigator.locks) {
+    return navigator.locks.request('link-motion-create', { ifAvailable: true }, async (lock) => {
+      if (!lock) throw new Error('La génération tourne déjà dans un autre onglet.');
+      const current = store.get('studio.pendingJob', null);
+      if ((!resume && current) || (resume && current?.id !== resume.id)) {
+        ui.pendingJob = current;
+        render();
+        throw new Error('La file d’activité a changé. Rouvre Activité IA.');
       }
-      ui.job.done = i + 1;
-      await refresh();
+      await runCreate(job);
+    });
+  }
+  await runCreate(job);
+}
+
+async function runCreate(job) {
+  const { clientId, total, brief, author, imageMode } = job;
+  checkpoint(job);
+  ui.job = { kind: 'create', done: job.done, total, step: 'Préparation…', stop: false };
+  render();
+  const step = (message) => {
+    ui.job.step = 'Post ' + (job.done + 1) + ' / ' + total + ' · ' + message;
+    const inline = $('.job-inline');
+    if (inline) {
+      inline.lastElementChild.textContent = ui.job.step;
+      inline.querySelector('.progress span').style.width = (100 * job.done / total) + '%';
     }
-    ui.ideaId = '';
-    ui.job = { ...ui.job, finished: true, step: ui.job.stop ? 'Arrêté.' : `${ui.job.done} post(s) prêt(s), à valider ci-dessous.` };
+    renderActivity();
+  };
+  let outcome;
+  try {
+    while (job.done < total && !ui.job.stop) {
+      if (!job.plan) {
+        step('Plan éditorial…');
+        job.plan = await api('POST', '/api/plan', { ...brief, clientId, ideaId: job.done === 0 ? brief.ideaId : '', avoid: job.avoid });
+        job.avoid.angles.push(job.plan.angle?.type);
+        job.avoid.structures.push(job.plan.structureId);
+        checkpoint(job);
+      }
+      if (ui.job.stop) break;
+      if (!job.postId) {
+        step('Rédaction…');
+        job.beforeWrite = ui.data.posts.filter((p) => p.clientId === clientId).map((p) => p.id).concat(job.ids);
+        job.inFlight = 'write';
+        checkpoint(job);
+        const post = await api('POST', '/api/write', { clientId, plan: job.plan, author });
+        job.postId = post.id;
+        job.ids.push(post.id);
+        job.inFlight = '';
+        checkpoint(job);
+      }
+      if (ui.job.stop) break;
+      if (!job.hooksDone) {
+        step('Notation des hooks…');
+        await api('POST', '/api/posts/' + job.postId + '/hooks', {}).catch((error) => toast('Hooks · ' + error.message, true));
+        job.hooksDone = true;
+        checkpoint(job);
+      }
+      if (ui.job.stop) break;
+      if (imageMode !== 'none') {
+        step('Préparation de l’image…');
+        await addImage(job.postId, imageMode).catch((error) => toast('Image · ' + error.message, true));
+      }
+      job.done++;
+      job.plan = null;
+      job.postId = '';
+      job.hooksDone = false;
+      ui.job.done = job.done;
+      checkpoint(job);
+    }
+    if (job.done === total) {
+      checkpoint(null);
+      if (ui.clientId === clientId) ui.ideaId = '';
+      outcome = job.done + ' brouillon(s) à relire.';
+    } else {
+      outcome = 'Génération en pause.';
+    }
   } catch (e) {
-    ui.job = { ...ui.job, finished: true, step: `Arrêté : ${e.message}` };
+    outcome = 'Génération interrompue. ' + e.message;
     throw e;
-  } finally { await refresh().catch(() => render()); }
+  } finally {
+    if (ui.clientId === clientId && job.ids.length) {
+      ui.lastCreated = job.ids;
+      ui.studioPost = job.ids[0];
+    }
+    ui.recentJob = { kind: 'create', step: outcome };
+    store.set('studio.recentJob', ui.recentJob);
+    ui.job = null;
+    await refresh().catch(() => render());
+    if (job.done === total) toast(outcome);
+  }
 }
 
 async function saveRelayPosts(texts) {
   const r = await api('POST', `/api/clients/${ui.clientId}/import`, { posts: texts.map((text) => ({ text })) });
   ui.lastCreated = r.ids;
+  ui.studioPost = r.ids[0] || null;
   ui.relay = null;
   await refresh();
   if (ui.imageMode !== 'none') {
@@ -382,19 +537,33 @@ function renderPosts() {
   const shown = ui.filter === 'all' ? posts : by(ui.filter);
   view.innerHTML = `
     <div class="row between" style="margin-bottom:16px">
-      <div><h2>Posts</h2><p class="sub" style="margin:0">Valide, ou donne ton retour : le post est refait et l'IA s'en souvient pour les suivants.</p></div>
+      <div class="page-heading"><div><div class="eyebrow">SUIVI ÉDITORIAL</div><h1>Posts</h1><p>Relis, ajuste et valide les posts de ton client.</p></div></div>
       ${by('review').length ? `<button class="btn primary" data-action="approve-all">✓ Tout valider (${by('review').length})</button>` : ''}
     </div>
     ${ui.filter === 'approved' ? `<div class="alert ok" style="margin-bottom:12px">Les posts programmés restent dans l'app et sont publiés sur LinkedIn à l'heure prévue (vérification toutes les 15 minutes). C'est normal qu'ils n'apparaissent pas dans les « posts programmés » de LinkedIn : ils y arrivent directement, publiés, au bon moment.</div>` : ''}
     <div class="chips" style="margin-bottom:16px">${tabs.map(([k, l]) => `<button class="chip ${ui.filter === k ? 'on' : ''}" data-action="filter" data-id="${k}">${l}<b>${k === 'all' ? posts.length : by(k).length}</b></button>`).join('')}</div>
-    ${shown.length ? shown.map(postCard).join('') : '<div class="card empty">Aucun post ici. <a href="#" data-action="go" data-id="create">Créer des posts</a></div>'}`;
+    ${shown.length ? shown.map((post) => postCard(post)).join('') : '<div class="card empty">Aucun post ici. <a href="#" data-action="go" data-id="create">Créer des posts</a></div>'}`;
 }
 
-function postCard(p) {
+function postEditor(p) {
+  const text = ui.draftText[p.id] ?? p.text;
+  return `
+    <div class="stack" data-editor="${p.id}">
+      <textarea name="text" aria-label="Texte du post" rows="14">${esc(text)}</textarea>
+      <div class="count">${text.length} / ${MAX_CHARS}</div>
+      <div class="row">
+        <button class="btn primary sm" data-action="save" data-id="${p.id}">Enregistrer</button>
+        <button class="btn ghost sm" data-action="cancel-edit" data-id="${p.id}">Annuler</button>
+
+      </div>
+    </div>`;
+}
+
+function postCard(p, detail = false) {
   const c = ui.data.clients.find((x) => x.id === p.clientId) || client();
-  const editing = ui.editing.has(p.id);
-  const fbOpen = ui.feedbackOpen.has(p.id);
-  const long = p.text.length > FOLD_AT && !ui.expanded.has(p.id);
+  const editing = detail && ui.editing.has(p.id);
+  const fbOpen = detail && ui.feedbackOpen.has(p.id);
+  const long = !detail && p.text.length > FOLD_AT && !ui.expanded.has(p.id);
   const text = long ? `${esc(p.text.slice(0, FOLD_AT).trimEnd())}… <button class="li-more" data-action="expand" data-id="${p.id}">voir plus</button>` : esc(p.text);
   const locked = p.status === 'published';
   const hasPh = PLACEHOLDER.test(p.text);
@@ -405,26 +574,15 @@ function postCard(p) {
       <div class="li-text">${text}</div>
       ${p.image ? `<img class="li-img" src="/uploads/${esc(p.image)}" alt="${esc(p.altText)}">` : ''}
     </div>`;
-  const editor = `
-    <div class="stack" data-editor="${p.id}">
-      <textarea name="text" rows="14">${esc(p.text)}</textarea>
-      <div class="count">${p.text.length} / ${MAX_CHARS}</div>
-      <div class="row">
-        <button class="btn primary sm" data-action="save" data-id="${p.id}">Enregistrer</button>
-        <button class="btn ghost sm" data-action="cancel-edit" data-id="${p.id}">Annuler</button>
-
-      </div>
-    </div>`;
-
   return `
-  <article class="post" id="${p.id}">
+  <article class="post ${detail ? 'post-detail' : 'post-summary'}" ${detail ? '' : `id="${p.id}"`}>
     <div>
-      ${editing ? editor : preview}
-      ${p.plan ? strategyPanel(p) : ''}
-      ${ui.hooksOpen.has(p.id) ? hooksPanel(p) : ''}
-      ${ui.qualityOpen.has(p.id) ? qualityPanel(p) : ''}
-      ${ui.retouchOpen.has(p.id) ? retouchPanel(p) : ''}
-      ${ui.imageOpen.has(p.id) ? imagePanel(p) : ''}
+      ${editing ? postEditor(p) : preview}
+      ${detail && p.plan ? strategyPanel(p) : ''}
+      ${detail && ui.hooksOpen.has(p.id) ? hooksPanel(p) : ''}
+      ${detail && ui.qualityOpen.has(p.id) ? qualityPanel(p) : ''}
+      ${detail && ui.retouchOpen.has(p.id) ? retouchPanel(p) : ''}
+      ${detail && ui.imageOpen.has(p.id) ? imagePanel(p) : ''}
       ${fbOpen ? `<div class="inline-box" data-feedback="${p.id}">
         <textarea rows="3" placeholder="Qu'est-ce qui ne va pas ? Ex. hook trop long, trop formel, parle plus de mes résultats…"></textarea>
         <div class="row"><button class="btn primary sm" data-action="send-feedback" data-id="${p.id}">Refaire avec ce retour</button>
@@ -433,7 +591,7 @@ function postCard(p) {
     </div>
     <aside class="side">
       <div class="row between"><span class="badge s-${p.status}">${STATUS[p.status]}</span>${p.theme ? `<span class="tag">${esc(p.theme)}</span>` : ''}</div>
-      ${locked ? `<div class="small">Publié ${fmtDate(p.publishedAt)}</div>${metricsForm(p)}`
+      ${!detail ? `<div class="small">${p.publishedAt ? 'Publié ' + fmtDate(p.publishedAt) : p.scheduledAt ? fmtDate(p.scheduledAt) : 'Sans date'}</div>` : locked ? `<div class="small">Publié ${fmtDate(p.publishedAt)}</div>${metricsForm(p)}`
         : `<label class="f">Publication<input type="datetime-local" data-date="${p.id}" value="${toLocalInput(p.scheduledAt)}"></label>`}
       ${hasPh ? '<div class="alert warn">Remplace les [À COMPLÉTER] avant de valider (✎ Modifier).</div>' : ''}
       ${p.error ? `<div class="alert err">${esc(p.error)}</div>` : ''}
@@ -442,9 +600,9 @@ function postCard(p) {
           ? `<button class="btn sm" data-action="unapprove" data-id="${p.id}">↩ Retirer</button>`
           : `<button class="btn primary sm" data-action="approve" data-id="${p.id}" ${hasPh ? 'disabled' : ''}>✓ Valider</button>`}
         <button class="btn soft sm" data-action="open-feedback" data-id="${p.id}">💬 Retour</button>
-        <button class="btn sm" data-action="toggle-image" data-id="${p.id}">🖼 Image</button>
+        ${detail ? `<button class="btn sm" data-action="toggle-image" data-id="${p.id}">🖼 Image</button>` : ''}
       </div>
-      <div class="actions">
+      ${detail ? `<div class="actions">
         <button class="btn sm" data-action="toggle-hooks" data-id="${p.id}">🪝 Hooks${p.hooks?.length ? ` · ${p.hooks[p.hookIndex ?? 0]?.total ?? ''}/100` : ''}</button>
         <button class="btn sm" data-action="toggle-quality" data-id="${p.id}">✅ Qualité</button>
         <button class="btn sm" data-action="toggle-retouch" data-id="${p.id}">✨ Retoucher</button>
@@ -452,9 +610,86 @@ function postCard(p) {
         ${editing ? '' : `<button class="btn sm" data-action="edit" data-id="${p.id}">✎ Modifier</button>`}
         <button class="btn ghost sm danger" data-action="delete" data-id="${p.id}" title="Supprimer">🗑</button>
       </div>
-      ${p.status === 'approved' ? `<button class="btn ghost sm" data-action="publish-now" data-id="${p.id}" style="align-self:flex-start">Publier maintenant</button>` : ''}`}
+      ${p.status === 'approved' ? `<button class="btn ghost sm" data-action="publish-now" data-id="${p.id}" style="align-self:flex-start">Publier maintenant</button>` : ''}` : ''}`}
+      ${detail ? '' : `<button class="btn sm post-more" data-action="post-detail" data-id="${p.id}" aria-label="Détails et actions du post">⋯ <span>Détails et actions</span></button>`}
     </aside>
   </article>`;
+}
+
+function renderCalendar() {
+  view.innerHTML = '<header class="page-heading"><div><div class="eyebrow">SUIVI ÉDITORIAL</div><h1>Calendrier</h1><p>Déplace un post pour changer sa date, ou ouvre-le pour modifier l’heure.</p></div>' +
+    '<button class="btn" data-action="go" data-id="posts">Voir les posts ' + ICONS.arrow + '</button></header>' +
+    calendarMarkup({ posts: clientPosts(), cursor: ui.calCursor, mode: ui.calMode, statuses: STATUS, esc });
+}
+
+function renderDrawer() {
+  const drawer = $('#postDrawer');
+  const post = clientPosts().find((p) => p.id === ui.detailId);
+  if (!post) { if (drawer.open) drawer.close(); return; }
+  const previousFocus = drawer.contains(document.activeElement) ? document.activeElement : null;
+  drawer.innerHTML = '<header class="drawer-heading"><div><div class="eyebrow">FICHE DU POST</div><h2 id="drawerTitle">' +
+    esc(post.theme || 'Aperçu du post') + '</h2></div><button class="btn icon-btn" data-action="close-dialog" data-id="postDrawer" aria-label="Fermer le post" autofocus>✕</button></header>' +
+    postCard(post, true);
+  enhanceVoice(drawer);
+  if (!drawer.open) drawer.showModal();
+  if (previousFocus?.dataset.action) {
+    [...drawer.querySelectorAll('[data-action]')].find((button) => button.dataset.action === previousFocus.dataset.action && button.dataset.id === previousFocus.dataset.id)?.focus();
+  }
+}
+
+function renderActivity() {
+  const active = ui.job && !ui.job.finished;
+  const pending = ui.pendingJob;
+  const recent = ui.recentJob;
+  $('.job-dot').hidden = !active && !pending;
+  const dialog = $('#activityDialog');
+  if (!dialog.open) return;
+  const close = '<button class="btn icon-btn" data-action="close-dialog" data-id="activityDialog" aria-label="Fermer l’activité">✕</button>';
+  const title = (kind) => ({ create: 'Rédaction de posts', visuals: 'Création de visuels', paste: 'Analyse de la veille' }[kind] || 'Traitement IA');
+  let entry = '<p class="empty">Tes générations et analyses apparaîtront ici.</p>';
+  if (active) {
+    entry = '<div class="activity-item"><strong>' + title(ui.job.kind) + '</strong><span class="badge s-approved">En cours</span>' +
+      '<p class="small">' + esc(ui.job.step) + '</p><progress value="' + ui.job.done + '" max="' + ui.job.total + '"></progress>' +
+      (ui.job.kind === 'create' ? '<button class="btn sm" data-action="stop" ' + (ui.job.stop ? 'disabled' : '') + '>Mettre en pause après cette étape</button>' : '') + '</div>';
+  } else if (pending) {
+    const sameClient = pending.clientId === ui.clientId;
+    entry = '<div class="activity-item"><strong>Rédaction de posts</strong><span class="badge s-review">En pause</span>' +
+      '<p class="small">' + pending.ids.length + ' brouillon(s) enregistré(s) sur ' + pending.total + '.</p>' +
+      (pending.inFlight === 'write' ? '<p class="alert warn">Vérifie les posts du client avant de reprendre. Si l’écriture a déjà abouti, rattache le brouillon existant.</p>' + recoveryPicker(pending) : '') +
+      (!sameClient ? '<p class="small">Sélectionne le client « ' + esc(ui.data.clients.find((c) => c.id === pending.clientId)?.name || 'Client précédent') + ' » pour reprendre.</p>' : '') +
+      '<div class="row">' + (sameClient && pending.inFlight !== 'write' ? '<button class="btn primary sm" data-action="resume-job">Reprendre</button>' : '') +
+      '<button class="btn sm" data-action="dismiss-job">Abandonner la génération</button></div></div>';
+  }
+  if (recent) entry += '<div class="activity-item"><strong>' + title(recent.kind) + '</strong><p class="small">' + esc(recent.step) + '</p></div>';
+  dialog.innerHTML = '<div class="row between"><h2 id="activityTitle">Activité IA</h2>' + close + '</div>' + entry;
+}
+
+function recoveryPicker(pending) {
+  if (pending.clientId !== ui.clientId) return '';
+  const matches = clientPosts().filter((p) => !pending.beforeWrite?.includes(p.id) && !pending.ids.includes(p.id) && p.status !== 'published');
+  return '<div class="stack">' + (matches.length ? '<label class="f">Brouillon à rattacher<select id="recoverPost">' +
+    matches.map((p) => '<option value="' + esc(p.id) + '">' + esc(p.theme || p.text.slice(0, 65)) + '</option>').join('') +
+    '</select></label><button class="btn sm" data-action="resolve-job" data-id="attach">Rattacher et reprendre</button>' : '') +
+    '<button class="btn sm" data-action="resolve-job" data-id="retry">Relancer l’écriture</button></div>';
+}
+
+function renderSearch() {
+  const input = $('#quickQuery');
+  const query = input.value.trim().toLocaleLowerCase('fr');
+  const pages = Object.entries(PAGE_NAMES).filter(([, name]) => name.toLocaleLowerCase('fr').includes(query));
+  const posts = query ? clientPosts().filter((p) => (p.theme + ' ' + p.text).toLocaleLowerCase('fr').includes(query)).slice(0, 8) : [];
+  $('#searchResults').innerHTML = pages.map(([key, name]) => '<button class="search-result" data-action="search-go" data-id="' + key + '">' +
+    esc(name) + ' <span aria-hidden="true">→</span></button>').join('') + posts.map((post) =>
+    '<button class="search-result" data-action="search-post" data-id="' + esc(post.id) + '">' + esc(post.theme || post.text.slice(0, 65)) +
+    ' <span class="small">Post</span></button>').join('') || '<div class="empty">Aucun résultat pour ce client.</div>';
+}
+
+function setMobileMenu(open, restoreFocus = false) {
+  document.body.classList.toggle('menu-open', open);
+  const button = $('.mobile-nav [data-action="mobile-menu"]');
+  button.setAttribute('aria-expanded', String(open));
+  if (open) $('#tabs [aria-current="page"], #tabs button')?.focus();
+  if (restoreFocus) button.focus();
 }
 
 function imagePanel(p) {
@@ -521,8 +756,8 @@ function qualityPanel(p) {
     <div class="row between"><b>✅ Contrôle qualité</b><div class="row"><button class="btn ghost sm" data-action="quality" data-id="${p.id}">↻ Réanalyser</button><button class="btn ghost sm" data-action="toggle-quality" data-id="${p.id}">Fermer</button></div></div>
     ${q.summary ? `<div class="small">${esc(q.summary)}</div>` : ''}
     ${q.inventedRisk && String(q.inventedRisk).trim() ? `<div class="alert err">Faits à vérifier : ${esc(Array.isArray(q.inventedRisk) ? q.inventedRisk.join(' · ') : q.inventedRisk)}</div>` : ''}
-    <table><tr><th>Critère</th><th>Niveau</th><th>Amélioration</th></tr>
-    ${(q.criteria || []).map((c) => `<tr><td>${esc(c.name)}</td><td><span class="badge ${lv[c.level] || 's-draft'}">${esc(c.level)}</span></td><td class="small">${c.issue ? `${esc(c.issue)}<br>` : ''}${c.fix ? `💡 ${esc(c.fix)}` : ''}</td></tr>`).join('')}</table>
+    <div class="quality-scroll"><table><tr><th>Critère</th><th>Niveau</th><th>Amélioration</th></tr>
+    ${(q.criteria || []).map((c) => `<tr><td>${esc(c.name)}</td><td><span class="badge ${lv[c.level] || 's-draft'}">${esc(c.level)}</span></td><td class="small">${c.issue ? `${esc(c.issue)}<br>` : ''}${c.fix ? `💡 ${esc(c.fix)}` : ''}</td></tr>`).join('')}</table></div>
   </div>`;
 }
 
@@ -531,7 +766,8 @@ function retouchPanel(p) {
   return `<div class="inline-box">
     <div class="row between"><b>✨ Retoucher</b><button class="btn ghost sm" data-action="toggle-retouch" data-id="${p.id}">Fermer</button></div>
     <div class="row">${Object.entries(RETOUCH).map(([k, l]) => `<button class="btn soft sm" data-action="retouch" data-id="${p.id}" data-kind="${k}">${l}</button>`).join('')}</div>
-    <p class="small" style="margin:0">Une retouche ne devient pas une règle permanente. Tu peux toujours revenir en arrière avec « ↶ Annuler ».</p>
+    ${p.versions?.length ? `<button class="btn sm" data-action="undo" data-id="${p.id}">↶ Annuler la dernière retouche</button>` : ''}
+    <p class="small" style="margin:0">Les retouches s’appliquent au brouillon enregistré.</p>
   </div>`;
 }
 
@@ -561,6 +797,17 @@ function renderAdn() {
   const c = client();
   const a = c.adn || {};
   const tab = ui.adnTab;
+  const count = (object, fields) => fields.filter(([key]) => String(object?.[key] || '').trim()).length;
+  const questions = ui.data.editorial.onboarding;
+  const answers = a.onboarding?.answers || {};
+  const answered = questions.filter((q) => String(answers[q] || '').trim()).length;
+  const milestones = [
+    ['profile', 'Profil', count(a.profile, PROFILE_FIELDS), PROFILE_FIELDS.length],
+    ['personas', 'Cible confirmée', (a.personas || []).some((p) => p.status === 'confirmed') ? 1 : 0, 1],
+    ['voice', 'Voix', count(a.voice, VOICE_FIELDS), VOICE_FIELDS.length],
+    ['proofs', 'Preuve vérifiée', (a.proofs || []).some((p) => p.status === 'verified' && p.permission !== false) ? 1 : 0, 1],
+    ['onboarding', 'Entretien initial', answered, questions.length],
+  ];
   let body = '';
   if (tab === 'profile') {
     body = `<form class="card stack" id="adnProfile">
@@ -616,7 +863,15 @@ function renderAdn() {
     const ans = a.onboarding?.answers || {};
     const an = a.analysis;
     body = `<form class="card stack" id="adnOnboarding"><p class="small" style="margin:0">Réponds à ce que tu sais, le reste plus tard. Tu peux dicter 🎤.</p>
-      ${ui.data.editorial.onboarding.map((q, i) => `<label class="f">${i + 1}. ${esc(q)}<textarea name="q${i}" rows="2">${esc(ans[q] || '')}</textarea></label>`).join('')}
+      ${questions.length ? ['Activité et positionnement', 'Audience et preuves', 'Voix et contenu'].map((label, group) => {
+        const size = Math.ceil(questions.length / 3);
+        const offset = group * size;
+        const items = questions.slice(offset, offset + size);
+        if (!items.length) return '';
+        const complete = items.filter((q) => String(ans[q] || '').trim()).length;
+        const earlierComplete = questions.slice(0, offset).every((q) => String(ans[q] || '').trim());
+        return `<details class="adn-section" ${earlierComplete && complete < items.length ? 'open' : ''}><summary>${label} <span class="tag">${complete}/${items.length}</span></summary><div class="stack">${items.map((q, i) => `<label class="f">${offset + i + 1}. ${esc(q)}<textarea name="q${offset + i}" rows="2">${esc(ans[q] || '')}</textarea></label>`).join('')}</div></details>`;
+      }).join('') : ''}
       <div class="row" style="justify-content:flex-end"><button class="btn" type="submit">Enregistrer</button><button type="button" class="btn primary" data-action="analyze-onboarding">🧠 Enregistrer et analyser</button></div></form>
       ${an ? `<div class="card stack"><div class="row between"><h3 style="margin:0">Analyse proposée</h3><span class="badge s-review">Hypothèses IA à valider</span></div>
         ${an.summary ? `<div><b>Résumé :</b> ${esc(an.summary)}</div>` : ''}
@@ -645,10 +900,10 @@ function renderAdn() {
       <p class="small" style="margin:0">Chaque fois que tu modifies un post, l'original et ta correction sont gardés ici. Rien n'est transformé en règle sans ton accord.</p>
       ${mem.map((m) => `<details class="vitem"><summary class="small" style="cursor:pointer">${fmtDate(m.at)} · ${esc(m.type)}</summary><div class="grid2 small"><div><b>Avant</b><div class="vtext">${esc(m.before)}</div></div><div><b>Après</b><div class="vtext">${esc(m.after)}</div></div></div></details>`).join('') || '<p class="small" style="margin:0">Aucune correction pour l\'instant.</p>'}</div>`;
   }
-  const filled = ['profile', 'personas', 'voice', 'proofs'].filter((k) => (k === 'personas' || k === 'proofs' ? (a[k] || []).length : Object.values(a[k] || {}).some(Boolean))).length;
+  const next = milestones.find(([, , value, total]) => value < total);
   view.innerHTML = `
-    <h2>ADN éditorial · ${esc(c.name)}</h2>
-    <p class="sub">Tout ce que l'IA sait du client, de sa cible et de sa voix. Utilisé automatiquement à chaque post. (${filled}/4 sections remplies)</p>
+    <header class="page-heading"><div><div class="eyebrow">ESPACE CLIENT</div><h1>ADN éditorial</h1><p>Profil, voix et preuves de ${esc(c.name)}.</p></div>${next ? `<button class="btn" data-action="adn-tab" data-id="${next[0]}">Continuer · ${next[1]}</button>` : ''}</header>
+    <div class="card adn-overview">${milestones.map(([key, label, value, total]) => `<div><button class="btn ghost sm" data-action="adn-tab" data-id="${key}">${label} · ${value}/${total}</button><progress value="${value}" max="${total || 1}" aria-label="${label}"></progress></div>`).join('')}</div>
     <div class="chips" style="margin-bottom:16px">${ADN_TABS.map(([k, l]) => `<button class="chip ${tab === k ? 'on' : ''}" data-action="adn-tab" data-id="${k}">${l}</button>`).join('')}</div>
     ${body}`;
 }
@@ -1229,10 +1484,84 @@ function chunkText(text, size = 6_000) {
 }
 
 const actions = {
+  'mobile-menu'() {
+    const open = !document.body.classList.contains('menu-open');
+    setMobileMenu(open, !open);
+  },
+  'close-dialog'(id) { document.getElementById(id).close(); },
+  'post-detail'(id) { ui.detailId = id; renderDrawer(); },
+  'studio-tool'(tool) {
+    ui.tools = tool;
+    render();
+    view.querySelector('[data-action="studio-tool"][data-id="' + tool + '"]')?.focus();
+  },
+  async 'manual-save'(_id, button) {
+    const id = ui.clientId;
+    const text = ui.manual[id]?.trim();
+    if (!text) return;
+    button.disabled = true;
+    try {
+      const post = await api('POST', '/api/posts', { clientId: id, text });
+      delete ui.manual[id];
+      if (ui.clientId === id) {
+        ui.lastCreated.unshift(post.id);
+        ui.studioPost = post.id;
+      }
+      await refresh();
+      toast('Brouillon enregistré');
+    } finally { button.disabled = false; }
+  },
+  'calendar-mode'(mode) { ui.calMode = mode; render(); view.querySelector('[data-action="calendar-mode"][aria-pressed="true"]')?.focus(); },
+  'calendar-move'(direction) {
+    ui.calCursor = calendarDate(ui.calCursor, ui.calMode, Number(direction));
+    render();
+    view.querySelector('[data-action="calendar-move"][data-id="' + direction + '"]')?.focus();
+  },
+  jobs() {
+    if (!$('#activityDialog').open) $('#activityDialog').showModal();
+    renderActivity();
+    $('#activityDialog button')?.focus();
+  },
+  async 'resume-job'() {
+    if (ui.pendingJob?.clientId !== ui.clientId || ui.pendingJob.inFlight === 'write') return;
+    $('#activityDialog').close();
+    await createAuto(ui.pendingJob);
+  },
+  async 'resolve-job'(mode) {
+    const pending = ui.pendingJob;
+    if (!pending || pending.clientId !== ui.clientId || pending.inFlight !== 'write') return;
+    if (mode === 'attach') {
+      pending.postId = $('#recoverPost')?.value;
+      if (!pending.postId) return;
+      pending.ids.push(pending.postId);
+    } else if (!confirm('As-tu vérifié qu’aucun brouillon ne correspond à cette écriture ?')) return;
+    pending.inFlight = '';
+    checkpoint(pending);
+    await actions['resume-job']();
+  },
+  'dismiss-job'() {
+    if (!confirm('Abandonner les étapes restantes ? Les brouillons déjà enregistrés restent dans Posts.')) return;
+    checkpoint(null);
+    render();
+  },
+  'quick-search'() {
+    const dialog = $('#searchDialog');
+    if (dialog.open) return;
+    dialog.innerHTML = '<div class="row between"><h2 id="searchTitle">Rechercher</h2><button class="btn icon-btn" data-action="close-dialog" data-id="searchDialog" aria-label="Fermer la recherche">✕</button></div>' +
+      '<label class="f">Pages et posts du client<input id="quickQuery" type="search" placeholder="Un écran, un titre, une expression…" autofocus></label>' +
+      '<div id="searchResults" class="search-results" aria-live="polite"></div>';
+    dialog.showModal();
+    renderSearch();
+  },
+  'search-go'(id) { $('#searchDialog').close(); actions.go(id); },
+  'search-post'(id) { $('#searchDialog').close(); actions['post-detail'](id); },
+
   'vis-opt'(kv) { const [k, v] = kv.split(':'); ui.vis = { ...ui.vis, [k]: k === 'count' ? Number(v) : v }; store.set('vis', ui.vis); render(); },
   'vis-random'() { ui.visTopic = ''; const el = $('#visTopic'); if (el) el.value = ''; toast("Sujet au hasard : l'IA choisira dans les piliers et les problèmes de la cible"); },
   'vis-slide'(id, btn) { const v = visualsOf().find((x) => x.id === id); const n = Vis.slideCount(visCurrent(v)); ui.visSlide[id] = ((ui.visSlide[id] || 0) + Number(btn.dataset.d) + n) % n; render(); },
   async 'vis-create'() {
+    if (ui.job && !ui.job.finished) throw new Error('Un traitement est déjà en cours.');
+    const clientId = ui.clientId;
     if (!ui.data.settings.hasOpenaiKey) throw new Error('Ajoute ta clé OpenAI dans Réglages.');
     const o = ui.vis;
     const style = { preset: o.preset, accent: o.accent };
@@ -1241,12 +1570,12 @@ const actions = {
     ui.job = { kind: 'visuals', total: 1, done: 0, step: 'Choix des sous-sujets…' };
     render();
     try {
-      const plan = await api('POST', '/api/visuals/plan', { clientId: ui.clientId, topic: ui.visTopic, count: o.count, kind: o.kind, personaId });
+      const plan = await api('POST', '/api/visuals/plan', { clientId, topic: ui.visTopic, count: o.count, kind: o.kind, personaId });
       ui.job.total = plan.items.length;
       for (const [i, it] of plan.items.entries()) {
         ui.job.step = `${i + 1} / ${plan.items.length} : ${it.subtopic} (visuel + post)…`;
         render();
-        const r = await api('POST', '/api/visuals/item', { clientId: ui.clientId, subject: plan.subject, subtopic: it.subtopic, type: it.type, kind: o.kind, format: o.format, style, personaId });
+        const r = await api('POST', '/api/visuals/item', { clientId, subject: plan.subject, subtopic: it.subtopic, type: it.type, kind: o.kind, format: o.format, style, personaId });
         await refresh();
         ui.job.step = `${i + 1} / ${plan.items.length} : on attache le visuel au post…`;
         render();
@@ -1344,9 +1673,9 @@ const actions = {
     btn.disabled = true; btn.textContent = 'Extraction…';
     try { await api('POST', `/api/clients/${ui.clientId}/interview/analyze`); toast('Idées ajoutées à la banque'); } finally { await refresh(); }
   },
-  'toggle-hooks'(id) { if (ui.hooksOpen.has(id)) ui.hooksOpen.delete(id); else ui.hooksOpen.add(id); render(); },
-  'toggle-quality'(id) { if (ui.qualityOpen.has(id)) ui.qualityOpen.delete(id); else ui.qualityOpen.add(id); render(); },
-  'toggle-retouch'(id) { if (ui.retouchOpen.has(id)) ui.retouchOpen.delete(id); else ui.retouchOpen.add(id); render(); },
+  'toggle-hooks'(id) { if (ui.view === 'create' && !ui.detailId) { ui.tools = ''; render(); return; } if (ui.hooksOpen.has(id)) ui.hooksOpen.delete(id); else ui.hooksOpen.add(id); render(); },
+  'toggle-quality'(id) { if (ui.view === 'create' && !ui.detailId) { ui.tools = ''; render(); return; } if (ui.qualityOpen.has(id)) ui.qualityOpen.delete(id); else ui.qualityOpen.add(id); render(); },
+  'toggle-retouch'(id) { if (ui.view === 'create' && !ui.detailId) { ui.tools = ''; render(); return; } if (ui.retouchOpen.has(id)) ui.retouchOpen.delete(id); else ui.retouchOpen.add(id); render(); },
   async 'gen-hooks'(id, btn) { btn.disabled = true; btn.textContent = 'Génération…'; try { await api('POST', `/api/posts/${id}/hooks`, {}); ui.hooksOpen.add(id); } finally { await refresh(); } },
   async 'apply-hook'(id, btn) { await api('POST', `/api/posts/${id}/apply-hook`, { index: btn.dataset.index }); await refresh(); toast('Hook appliqué'); },
   async quality(id, btn) { btn.disabled = true; btn.textContent = 'Analyse…'; try { await api('POST', `/api/posts/${id}/quality`); ui.qualityOpen.add(id); } finally { await refresh(); } },
@@ -1364,7 +1693,16 @@ const actions = {
   'hook-more'() { ui.hookLimit += 100; render(); },
   async 'hook-fav'(id) { await api('PUT', '/api/hooks/prefs', { id, fav: !ui.data.hookPrefs?.[id]?.fav }); await refresh(); },
   async 'hook-off'(id) { await api('PUT', '/api/hooks/prefs', { id, off: !ui.data.hookPrefs?.[id]?.off }); await refresh(); },
-  go(v) { ui.view = v; store.set('view', v); render(); window.scrollTo(0, 0); },
+  go(v) {
+    if (!PAGE_NAMES[v]) return;
+    ui.view = v;
+    ui.detailId = null;
+    setMobileMenu(false);
+    store.set('view', v);
+    render();
+    window.scrollTo(0, 0);
+    view.focus({ preventScroll: true });
+  },
   dictate(_id, btn) { if (recognition) stopDictation(); else startDictation(btn); },
   count(n) { ui.count = Number(n); store.set('count', ui.count); render(); },
   engine(e) { ui.engine = e; store.set('engine', e); ui.relay = null; render(); },
@@ -1372,7 +1710,12 @@ const actions = {
     if (ui.engine === 'gpt') { ui.relay = { step: 1, count: ui.count, instruction: ui.instruction, texts: [] }; render(); return; }
     await createAuto();
   },
-  stop() { if (ui.job) ui.job.stop = true; toast('Arrêt après le post en cours'); },
+  stop() {
+    if (ui.job?.kind !== 'create') return;
+    ui.job.stop = true;
+    renderActivity();
+    toast('Pause après l’étape en cours');
+  },
   async 'copy-brief'() { await navigator.clipboard.writeText($('#briefText').value); toast('Copié : colle-le dans le GPT'); },
   'relay-cancel'() { ui.relay = null; render(); },
   // Ouvre le GPT avec la consigne déjà tapée (et la copie aussi, au cas où ChatGPT ne la reprend pas).
@@ -1405,13 +1748,14 @@ const actions = {
   filter(f) { ui.filter = f; render(); },
   expand(id) { ui.expanded.add(id); render(); },
   edit(id) { ui.editing.add(id); render(); },
-  'cancel-edit'(id) { ui.editing.delete(id); render(); },
+  'cancel-edit'(id) { delete ui.draftText[id]; ui.editing.delete(id); render(); },
   async save(id) {
-    await api('PUT', `/api/posts/${id}`, { text: $(`[data-editor="${id}"] textarea`).value });
+    await api('PUT', `/api/posts/${id}`, { text: ui.draftText[id] ?? ui.data.posts.find((p) => p.id === id).text });
+    delete ui.draftText[id];
     ui.editing.delete(id);
     await refresh();
   },
-  'open-feedback'(id) { ui.feedbackOpen.add(id); render(); $(`[data-feedback="${id}"] textarea`)?.focus(); },
+  'open-feedback'(id) { ui.detailId = id; ui.feedbackOpen.add(id); render(); $(`[data-feedback="${id}"] textarea`)?.focus(); },
   'close-feedback'(id) { ui.feedbackOpen.delete(id); render(); },
   async 'send-feedback'(id, btn) {
     const feedback = $(`[data-feedback="${id}"] textarea`).value;
@@ -1466,6 +1810,7 @@ const actions = {
   author(a) { ui.author = a || ''; render(); window.scrollTo(0, 0); },
   inspire(a) { ui.inspireFrom = a || ''; store.set('inspireFrom', ui.inspireFrom); render(); },
   async paste() {
+    if (ui.job && !ui.job.finished) throw new Error('Un traitement est déjà en cours.');
     const text = $('#pasteText').value;
     const niche = $('#pasteNiche').value.trim();
     if (text.trim().length < 40) throw new Error('Colle au moins un post complet.');
@@ -1535,7 +1880,7 @@ const actions = {
 };
 
 document.addEventListener('click', run(async (e) => {
-  const tab = e.target.closest('#tabs button');
+  const tab = e.target.closest('[data-view]');
   if (tab) { actions.go(tab.dataset.view); return; }
   const el = e.target.closest('[data-action]');
   if (!el || el.tagName === 'INPUT') return;
@@ -1544,6 +1889,12 @@ document.addEventListener('click', run(async (e) => {
 }));
 
 document.addEventListener('input', (e) => {
+  if (e.target.id === 'quickQuery') renderSearch();
+  if (e.target.id === 'manualDraft') {
+    ui.manual[ui.clientId] = e.target.value;
+    $('#manualCount').textContent = e.target.value.length + ' / 3 000';
+    $('#manualSave').disabled = !e.target.value.trim();
+  }
   if (e.target.id === 'instruction') ui.instruction = e.target.value;
   if (e.target.closest('#bannerForm') && ui.banner) {
     const t = e.target;
@@ -1565,7 +1916,9 @@ document.addEventListener('input', (e) => {
   if (e.target.id === 'hookSearch') { ui.hookSearch = e.target.value; ui.hookLimit = 60; clearTimeout(ui.hsT); ui.hsT = setTimeout(() => { render(); const el = $('#hookSearch'); el?.focus(); el?.setSelectionRange(el.value.length, el.value.length); }, 250); }
   const ed = e.target.closest('[data-editor] textarea');
   if (ed) {
-    const count = ed.closest('[data-editor]').querySelector('.count');
+    const editor = ed.closest('[data-editor]');
+    ui.draftText[editor.dataset.editor] = ed.value;
+    const count = editor.querySelector('.count');
     count.textContent = `${ed.value.length} / ${MAX_CHARS}`;
     count.classList.toggle('over', ed.value.length > MAX_CHARS);
   }
@@ -1579,10 +1932,12 @@ document.addEventListener('change', run(async (e) => {
       if (r?.name) { const c = await api('POST', '/api/clients', r); ui.clientId = c.id; ui.view = 'settings'; }
     } else ui.clientId = t.value;
     store.set('clientId', ui.clientId);
-    ui.niche = undefined; ui.lastCreated = []; ui.relay = null;
+    ui.niche = undefined; ui.lastCreated = []; ui.relay = null; ui.studioPost = null; ui.detailId = null;
+    ui.personaId = ''; ui.objective = ''; ui.awareness = ''; ui.ideaId = ''; ui.instruction = '';
     await refresh();
     return;
   }
+  if (t.id === 'studioDraft') { ui.studioPost = t.value || null; render(); $('#studioDraft')?.focus(); return; }
   if (t.id === 'personaSel') { ui.personaId = t.value; return; }
   if (t.id === 'visPreset') { ui.vis = { ...ui.vis, preset: t.value, accent: '' }; store.set('vis', ui.vis); render(); return; }
   if (t.id === 'bannerPreset') { ui.banner.style = { ...ui.banner.style, preset: t.value, accent: '' }; render(); return; }
@@ -1628,6 +1983,7 @@ document.addEventListener('change', run(async (e) => {
     return;
   }
   if (t.dataset.library && t.files.length) {
+    if (ui.job && !ui.job.finished) throw new Error('Un traitement est déjà en cours.');
     const files = [...t.files];
     const kind = t.dataset.library;
     ui.job = { kind: 'upload', total: files.length, done: 0, step: 'Envoi…' };
@@ -1722,5 +2078,61 @@ document.addEventListener('mousemove', (e) => {
   tip.style.left = `${Math.min(e.clientX + 14, innerWidth - 280)}px`;
   tip.style.top = `${e.clientY + 14}px`;
 });
+
+$('#postDrawer').addEventListener('close', () => {
+  if ($('#postDrawer').open) return;
+  const id = ui.detailId;
+  ui.detailId = null;
+  ui.feedbackOpen.delete(id);
+  ui.editing.delete(id);
+});
+
+document.addEventListener('keydown', (event) => {
+  if (!ui.data || document.body.classList.contains('locked')) return;
+  if (event.key === 'Escape' && document.body.classList.contains('menu-open')) setMobileMenu(false, true);
+  if (event.defaultPrevented || event.ctrlKey || event.altKey || event.metaKey || event.repeat ||
+      document.querySelector('dialog[open]') || event.target.closest?.('input, textarea, select, [contenteditable]')) return;
+  if (event.key.toLowerCase() === 'n') {
+    event.preventDefault();
+    ui.studioPost = null;
+    actions.go('create');
+    $('#manualDraft')?.focus();
+  }
+  if (event.key === '/') { event.preventDefault(); actions['quick-search'](); }
+});
+
+let draggedPost;
+view.addEventListener('dragstart', (event) => {
+  const post = event.target.closest('[data-calendar-post][draggable="true"]');
+  if (!post) return;
+  draggedPost = post.dataset.calendarPost;
+  event.dataTransfer.setData('text/plain', draggedPost);
+  event.dataTransfer.effectAllowed = 'move';
+});
+view.addEventListener('dragover', (event) => {
+  const target = event.target.closest('[data-drop-date]');
+  if (!target || !draggedPost) return;
+  event.preventDefault();
+  event.dataTransfer.dropEffect = 'move';
+  view.querySelector('.drop-target')?.classList.remove('drop-target');
+  target.classList.add('drop-target');
+});
+view.addEventListener('dragend', () => {
+  draggedPost = null;
+  view.querySelector('.drop-target')?.classList.remove('drop-target');
+});
+view.addEventListener('drop', run(async (event) => {
+  const target = event.target.closest('[data-drop-date]');
+  if (!target || !draggedPost) return;
+  event.preventDefault();
+  const post = clientPosts().find((p) => p.id === draggedPost);
+  draggedPost = null;
+  target.classList.remove('drop-target');
+  if (!post || post.status === 'published') return;
+  const clock = toLocalInput(post.scheduledAt).slice(11) || '09:00';
+  await api('PUT', '/api/posts/' + post.id, { scheduledAt: new Date(target.dataset.dropDate + 'T' + clock).toISOString() });
+  await refresh();
+  toast('Date de publication mise à jour');
+}));
 
 run(refresh)();
