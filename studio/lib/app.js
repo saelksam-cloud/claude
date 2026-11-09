@@ -10,6 +10,7 @@ import { engagement, statsText } from './stats.js';
 import * as apify from './apify.js';
 import { chat } from './ai.js';
 import * as ed from './editorial.js';
+import { bannerCopyPrompt, profileAuditPrompt } from './profile.js';
 
 const liCfg = (settings) => ({ clientId: settings.linkedinClientId, clientSecret: settings.linkedinClientSecret });
 
@@ -119,6 +120,7 @@ route('GET', '/api/state', async ({ db, settings }) => json({
   analyses: db.analyses,
   images: db.images,
   hookPrefs: db.hookPrefs,
+  banners: db.banners || [],
   editorial: { objectives: ed.OBJECTIVES, postTypes: ed.POST_TYPES, awareness: ed.AWARENESS, families: ed.HOOK_FAMILIES, onboarding: ed.ONBOARDING_QUESTIONS, interview: ed.INTERVIEW_QUESTIONS, actions: Object.keys(ed.REWRITE_ACTIONS), knowledge: ed.knowledgeCounts },
   linkedinConfigured: linkedin.isConfigured(liCfg(settings)),
   redirectUri: linkedin.redirectUri(),
@@ -836,6 +838,39 @@ route('POST', '/api/hooks/optimize', async ({ db, settings, body }) => {
   const client = clientOf(db, body.clientId);
   const r = await askJson(settings, ed.optimizeHookPrompt({ client, personaId: body.personaId, hook: body.hook, mode: body.mode }), { timeout: 45_000 });
   return json({ hooks: ed.normalizeHooks(r.hooks) });
+});
+
+
+// =================== PROFILS & BANNIÈRES ===================
+route('POST', '/api/banners/suggest', async ({ db, settings, body }) => {
+  const client = clientOf(db, body.clientId);
+  const r = await askJson(settings, bannerCopyPrompt({ client, templateName: body.templateName || '' }), { timeout: 50_000 });
+  return json({ variants: (r.variants || []).slice(0, 3) });
+});
+
+// Une bannière = un modèle + des textes + des couleurs + des petites images (logos, avatars) déjà réduites.
+route('POST', '/api/banners', async ({ db, body }) => {
+  db.banners ||= [];
+  if (!db.clients.some((c) => c.id === body.clientId)) throw new HttpError(404, 'Client introuvable');
+  const data = { clientId: body.clientId, name: String(body.name || 'Bannière').slice(0, 80), templateId: String(body.templateId || ''), fields: body.fields || {}, style: body.style || {}, images: Array.isArray(body.images) ? body.images.slice(0, 10) : [] };
+  if (JSON.stringify(data).length > 1_500_000) throw new HttpError(400, 'Trop d\'images ou images trop lourdes.');
+  let b = db.banners.find((x) => x.id === body.id);
+  if (b) Object.assign(b, data, { updatedAt: now() });
+  else { b = { id: newId('ban'), ...data, createdAt: now() }; db.banners.unshift(b); }
+  return json(b);
+});
+
+route('DELETE', '/api/banners/:id', async ({ db, params }) => {
+  db.banners = (db.banners || []).filter((b) => b.id !== params.id);
+  return json({ ok: true });
+});
+
+route('POST', '/api/profile/audit', async ({ db, settings, body }) => {
+  const client = clientOf(db, body.clientId);
+  const audit = await askJson(settings, profileAuditPrompt({ client, profileText: body.profileText || '' }), { timeout: 55_000 });
+  client.adn ||= {};
+  client.adn.profileAudit = { ...audit, profileText: String(body.profileText || '').slice(0, 12000), at: now() };
+  return json(publicClient(client));
 });
 
 // Images : servies par une clé aléatoire impossible à deviner (les balises <img> n'envoient pas le mot de passe).

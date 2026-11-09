@@ -33,6 +33,7 @@ function migrate(db) {
   db.profiles ||= [];
   db.images ||= [];
   db.hookPrefs ||= {};
+  db.banners ||= [];
   for (const c of db.clients) if (c.niche === undefined) c.niche = guessNiche(c);
   const nicheOf = (clientId) => db.clients.find((c) => c.id === clientId)?.niche || '';
   for (const v of db.veille) {

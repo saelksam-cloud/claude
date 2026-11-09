@@ -1,4 +1,5 @@
 // Link Motion Studio — interface (vanilla JS, aucun build).
+import * as Banner from '/banner.js';
 const $ = (sel, el = document) => el.querySelector(sel);
 const view = $('#view');
 
@@ -47,6 +48,10 @@ const ui = {
   hookLang: '',
   hookFavOnly: false,
   hookLimit: 60,
+  bannerTab: store.get('bannerTab', 'banner'),
+  banner: null,
+  bannerVariants: [],
+  bannerOverlay: true,
 };
 
 // ---------- utilitaires ----------
@@ -122,7 +127,7 @@ function render() {
   const c = client();
   $('#banner').innerHTML = c && !c.linkedin.connected && ['create', 'posts'].includes(ui.view)
     ? `<div class="banner">Le LinkedIn de ${esc(c.name)} n'est pas connecté : les posts seront prêts mais pas publiés. <a href="#" data-action="go" data-id="settings">Le connecter</a></div>` : '';
-  ({ create: renderCreate, posts: renderPosts, adn: renderAdn, hooks: renderHooks, images: renderImages, veille: renderVeille, study: renderStudy, settings: renderSettings }[ui.view] || renderCreate)();
+  ({ create: renderCreate, posts: renderPosts, adn: renderAdn, hooks: renderHooks, banner: renderBannerView, images: renderImages, veille: renderVeille, study: renderStudy, settings: renderSettings }[ui.view] || renderCreate)();
   enhanceVoice(view);
 }
 
@@ -680,6 +685,96 @@ function renderHooks() {
     </div>`;
 }
 
+// ================= PROFIL & BANNIÈRE =================
+const newBanner = () => ({ name: `Bannière ${client().name}`, templateId: 'promesse', fields: { ...Banner.DEFAULT_FIELDS, brand: client().company || client().name }, style: {}, images: [] });
+const BANNER_FIELDS = [['proof', 'Preuve sociale (haut gauche)'], ['headline', 'Promesse — *mot* = couleur · [[mot]] = surligné · __mot__ = souligné', 2], ['subline', 'Ligne de soutien / rôle'], ['steps', 'Étapes (séparées par des virgules)'],
+  ['pills', 'Compétences en pastilles (virgules)'], ['title', 'Métier en gros (modèle « Métier en bloc »)'], ['brand', 'Marque (*mot* = couleur)'], ['cta', 'Appel à l\'action (RDV / lien en sélection)'],
+  ['bubble', 'Bulle (« Comme eux, contactez-moi ! »)'], ['followText', 'Phrase près du bouton Suivre'], ['logosTitle', 'Titre de la barre de logos']];
+
+let bannerTimer;
+const redrawBanner = () => {
+  clearTimeout(bannerTimer);
+  bannerTimer = setTimeout(() => { const c = $('#bannerCanvas'); if (c && ui.banner) Banner.renderBanner(c, ui.banner, { overlay: ui.bannerOverlay }); }, 120);
+};
+
+function renderBannerView() {
+  const c = client();
+  const tabs = `<div class="chips" style="margin-bottom:16px"><button class="chip ${ui.bannerTab === 'banner' ? 'on' : ''}" data-action="banner-tab" data-id="banner">Bannière</button><button class="chip ${ui.bannerTab === 'profile' ? 'on' : ''}" data-action="banner-tab" data-id="profile">Optimisation du profil</button></div>`;
+  if (ui.bannerTab === 'profile') { view.innerHTML = `<h2>Profil & bannière · ${esc(c.name)}</h2><p class="sub">Audit et réécriture du profil LinkedIn à partir de l'ADN du client.</p>${tabs}${profileAuditHtml(c)}`; return; }
+  if (!ui.banner || ui.banner.clientId && ui.banner.clientId !== c.id) ui.banner = newBanner();
+  const b = ui.banner;
+  const saved = (ui.data.banners || []).filter((x) => x.clientId === c.id);
+  const preset = b.style.preset || Banner.TEMPLATES.find((t) => t.id === b.templateId)?.preset;
+  view.innerHTML = `
+    <h2>Profil & bannière · ${esc(c.name)}</h2>
+    <p class="sub">Bannière LinkedIn 1584 × 396 px : textes exacts et modifiables, export PNG prêt à mettre sur le profil.</p>
+    ${tabs}
+    <div class="card stack">
+      <canvas id="bannerCanvas" class="banner-canvas" width="1584" height="396"></canvas>
+      <div class="row between">
+        <div class="chips">${Banner.TEMPLATES.map((t) => `<button class="chip ${t.id === b.templateId ? 'on' : ''}" data-action="banner-template" data-id="${t.id}" title="${esc(t.hint)}">${esc(t.name)}</button>`).join('')}</div>
+        <div class="row">
+          <label class="small"><input type="checkbox" id="bannerOverlay" ${ui.bannerOverlay ? 'checked' : ''} style="width:auto"> Zone de la photo</label>
+          <button class="btn primary" data-action="banner-ai">✨ Proposer les textes (IA)</button>
+          <button class="btn" data-action="banner-save">💾 Enregistrer</button>
+          <button class="btn primary" data-action="banner-download">⬇ Télécharger PNG</button>
+        </div>
+      </div>
+    </div>
+    ${ui.bannerVariants.length ? `<div class="card stack"><h3 style="margin:0">Propositions de l'IA</h3><div class="grid3">${ui.bannerVariants.map((v, i) => `<div class="variant"><div class="small"><b>${esc(v.angle || `Variante ${i + 1}`)}</b></div><div class="vhook">${esc(v.headline).replace(/\n/g, '<br>')}</div><div class="small">${esc(v.proof || '')}</div><button class="btn soft sm" data-action="banner-variant" data-id="${i}">Utiliser</button></div>`).join('')}</div></div>` : ''}
+    <div class="two-col banner-cols">
+      <div class="card stack">
+        <h3 style="margin:0">Style</h3>
+        <label class="f">Fond<select id="bannerPreset">${Object.entries(Banner.PRESETS).map(([k, v]) => `<option value="${k}" ${k === preset ? 'selected' : ''}>${esc(v.name)}</option>`).join('')}</select></label>
+        <label class="f">Couleur d'accent<input type="color" id="bannerAccent" value="${esc(b.style.accent || Banner.PRESETS[preset]?.accent || '#2FBF71')}" style="height:42px;padding:4px"></label>
+        <h3 style="margin:8px 0 0">Images</h3>
+        <div class="row"><label class="btn sm">+ Logos clients / médias<input type="file" accept="image/*" multiple data-banner-img="logo" hidden></label><label class="btn sm">+ Photos (preuve sociale)<input type="file" accept="image/*" multiple data-banner-img="avatar" hidden></label></div>
+        <div class="thumbs">${b.images.map((im, i) => `<div class="thumb on" style="position:relative;background:#fff"><img src="${im.src}" alt="" style="object-fit:contain"><button class="btn sm" data-action="banner-img-del" data-id="${i}" style="position:absolute;top:2px;right:2px;padding:0 6px">×</button></div>`).join('')}</div>
+        <p class="small" style="margin:0">Logos : PNG à fond transparent de préférence. Photos de personnes accompagnées : uniquement avec leur accord.</p>
+        ${saved.length ? `<h3 style="margin:8px 0 0">Bannières enregistrées</h3>${saved.map((x) => `<div class="row between vitem"><a href="#" data-action="banner-load" data-id="${x.id}">${esc(x.name)}</a><button class="btn ghost sm danger" data-action="banner-del" data-id="${x.id}">🗑</button></div>`).join('')}` : ''}
+        <button class="btn ghost sm" data-action="banner-new" style="align-self:flex-start">+ Nouvelle bannière</button>
+      </div>
+      <form class="card stack" id="bannerForm" onsubmit="return false">
+        <h3 style="margin:0">Textes</h3>
+        <label class="f">Nom de la bannière<input name="_name" value="${esc(b.name)}" data-novoice></label>
+        ${BANNER_FIELDS.map(([k, l, rows]) => `<label class="f">${l}${rows ? `<textarea name="${k}" rows="${rows}">${esc(b.fields[k] || '')}</textarea>` : `<input name="${k}" value="${esc(b.fields[k] || '')}">`}</label>`).join('')}
+      </form>
+    </div>`;
+  redrawBanner();
+}
+
+function profileAuditHtml(c) {
+  const a = c.adn?.profileAudit;
+  return `<div class="card stack">
+      <label class="f">Colle ici le profil LinkedIn actuel (titre, infos, expériences… : sur le profil, Ctrl+A puis Ctrl+C)
+        <textarea id="profileText" rows="8" data-novoice>${esc(a?.profileText || '')}</textarea></label>
+      <button class="btn primary" data-action="profile-audit" style="align-self:flex-start">🔍 Analyser et réécrire le profil</button>
+    </div>
+    ${a ? `<div class="card stack">
+      <div class="row between"><h3 style="margin:0">Score du profil</h3><span class="badge ${scoreClass(a.score)}">${esc(a.score)}/100</span></div>
+      <table><tr><th>Section</th><th class="num">Note</th><th>Problème</th><th>À faire</th></tr>${(a.sections || []).map((x) => `<tr><td>${esc(x.name)}</td><td class="num">${esc(x.score)}/10</td><td class="small">${esc(x.issue)}</td><td class="small">${esc(x.fix)}</td></tr>`).join('')}</table>
+      ${a.quickWins?.length ? `<div class="alert ok"><b>Actions rapides :</b> ${a.quickWins.map(esc).join(' · ')}</div>` : ''}
+    </div>
+    <div class="card stack"><h3 style="margin:0">Titres proposés</h3>${(a.headlines || []).map((h) => `<div class="row between vitem"><span>${esc(h)} <span class="small">(${h.length}/220)</span></span><button class="btn ghost sm" data-action="copy" data-id="${esc(h)}">Copier</button></div>`).join('')}</div>
+    <div class="card stack"><div class="row between"><h3 style="margin:0">Section « Infos »</h3><button class="btn ghost sm" data-action="copy" data-id="${esc(a.about || '')}">Copier</button></div><div class="vtext" style="color:var(--text)">${esc(a.about || '')}</div><div class="small">${(a.about || '').length}/2600 caractères</div></div>
+    <div class="grid2"><div class="card stack" style="margin:0"><h3 style="margin:0">À épingler en « Sélection »</h3><ul class="small">${(a.featured || []).map((x) => `<li>${esc(x)}</li>`).join('')}</ul></div>
+    <div class="card stack" style="margin:0"><h3 style="margin:0">Expériences</h3><ul class="small">${(a.experience || []).map((x) => `<li>${esc(x)}</li>`).join('')}</ul></div></div>` : ''}`;
+}
+
+const imgToDataUrl = (file, max, type) => new Promise((resolve, reject) => {
+  const img = new Image();
+  img.onload = () => {
+    const k = Math.min(1, max / Math.max(img.width, img.height));
+    const cv = document.createElement('canvas');
+    cv.width = Math.round(img.width * k); cv.height = Math.round(img.height * k);
+    cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+    URL.revokeObjectURL(img.src);
+    resolve(cv.toDataURL(type, 0.9));
+  };
+  img.onerror = () => reject(new Error(`Image illisible : ${file.name}`));
+  img.src = URL.createObjectURL(file);
+});
+
 // ================= VEILLE =================
 const authorsOf = (niche) => {
   const counts = new Map();
@@ -1025,6 +1120,49 @@ function chunkText(text, size = 6_000) {
 }
 
 const actions = {
+  'banner-tab'(t) { ui.bannerTab = t; store.set('bannerTab', t); render(); },
+  'banner-template'(id) {
+    ui.banner.templateId = id;
+    ui.banner.style = { ...ui.banner.style, preset: Banner.TEMPLATES.find((t) => t.id === id).preset, accent: '' };
+    render();
+  },
+  'banner-new'() { ui.banner = newBanner(); ui.bannerVariants = []; render(); },
+  'banner-load'(id) { const b = ui.data.banners.find((x) => x.id === id); if (b) { ui.banner = JSON.parse(JSON.stringify(b)); ui.bannerVariants = []; render(); } },
+  async 'banner-del'(id) { await api('DELETE', `/api/banners/${id}`); if (ui.banner?.id === id) ui.banner = null; await refresh(); },
+  'banner-img-del'(i) { ui.banner.images.splice(Number(i), 1); render(); },
+  async 'banner-ai'(_id, btn) {
+    btn.disabled = true; btn.textContent = 'L\'IA écrit…';
+    try {
+      const r = await api('POST', '/api/banners/suggest', { clientId: ui.clientId, templateName: Banner.TEMPLATES.find((t) => t.id === ui.banner.templateId)?.name });
+      ui.bannerVariants = r.variants || [];
+    } finally { render(); }
+  },
+  'banner-variant'(i) {
+    const v = ui.bannerVariants[Number(i)];
+    const f = ui.banner.fields;
+    for (const k of ['headline', 'proof', 'subline', 'cta', 'followText', 'bubble', 'title', 'brand']) if (v[k]) f[k] = v[k];
+    if (v.steps?.length) f.steps = v.steps.join(', ');
+    if (v.pills?.length) f.pills = v.pills.join(', ');
+    render();
+  },
+  async 'banner-save'() {
+    const b = await api('POST', '/api/banners', { ...ui.banner, clientId: ui.clientId });
+    ui.banner = JSON.parse(JSON.stringify(b));
+    await refresh();
+    toast('Bannière enregistrée');
+  },
+  async 'banner-download'() {
+    const cv = document.createElement('canvas');
+    await Banner.renderBanner(cv, ui.banner, { overlay: false });
+    const a = document.createElement('a');
+    a.href = cv.toDataURL('image/png');
+    a.download = `${(ui.banner.name || 'banniere').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w-]+/g, '-').toLowerCase()}.png`;
+    a.click();
+  },
+  async 'profile-audit'(_id, btn) {
+    btn.disabled = true; btn.textContent = 'Analyse du profil… (jusqu\'à 1 min)';
+    try { await api('POST', '/api/profile/audit', { clientId: ui.clientId, profileText: $('#profileText').value }); toast('Audit prêt'); } finally { await refresh(); }
+  },
   'adn-tab'(t) { ui.adnTab = t; store.set('adnTab', t); render(); },
   'toggle-objective'(o) {
     const box = $('#objChips');
@@ -1256,6 +1394,12 @@ document.addEventListener('click', run(async (e) => {
 
 document.addEventListener('input', (e) => {
   if (e.target.id === 'instruction') ui.instruction = e.target.value;
+  if (e.target.closest('#bannerForm') && ui.banner) {
+    const t = e.target;
+    if (t.name === '_name') ui.banner.name = t.value; else ui.banner.fields[t.name] = t.value;
+    redrawBanner();
+  }
+  if (e.target.id === 'bannerAccent' && ui.banner) { ui.banner.style = { ...ui.banner.style, accent: e.target.value }; redrawBanner(); }
   if (e.target.id === 'hookSearch') { ui.hookSearch = e.target.value; ui.hookLimit = 60; clearTimeout(ui.hsT); ui.hsT = setTimeout(() => { render(); const el = $('#hookSearch'); el?.focus(); el?.setSelectionRange(el.value.length, el.value.length); }, 250); }
   const ed = e.target.closest('[data-editor] textarea');
   if (ed) {
@@ -1278,6 +1422,16 @@ document.addEventListener('change', run(async (e) => {
     return;
   }
   if (t.id === 'personaSel') { ui.personaId = t.value; return; }
+  if (t.id === 'bannerPreset') { ui.banner.style = { ...ui.banner.style, preset: t.value, accent: '' }; render(); return; }
+  if (t.id === 'bannerOverlay') { ui.bannerOverlay = t.checked; redrawBanner(); return; }
+  if (t.dataset.bannerImg && t.files.length) {
+    for (const f of [...t.files]) {
+      const logo = t.dataset.bannerImg === 'logo';
+      ui.banner.images.push({ kind: t.dataset.bannerImg, src: await imgToDataUrl(f, logo ? 320 : 180, logo ? 'image/png' : 'image/jpeg') });
+    }
+    render();
+    return;
+  }
   if (t.id === 'objectiveSel') { ui.objective = t.value; return; }
   if (t.id === 'awarenessSel') { ui.awareness = t.value; return; }
   if (t.id === 'ideaSel') { ui.ideaId = t.value; return; }

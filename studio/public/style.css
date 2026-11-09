@@ -250,3 +250,10 @@ code { word-break: break-all; font-size: 12px; }
 .vitem.off { opacity: .45; }
 .proof { border-top: 1px solid var(--border); padding-top: 12px; display: flex; flex-direction: column; gap: 8px; }
 .proof:first-child { border-top: none; padding-top: 0; }
+
+/* Bannières */
+.banner-canvas { width: 100%; height: auto; aspect-ratio: 1584 / 396; border-radius: 10px; border: 1px solid var(--border); background: var(--surface-2); }
+.grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.variant { border: 1px solid var(--border); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 6px; }
+.banner-cols { grid-template-columns: 340px minmax(0, 1fr); }
+@media (max-width: 900px) { .banner-cols { grid-template-columns: 1fr; } }
