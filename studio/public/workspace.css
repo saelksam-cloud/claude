@@ -303,3 +303,59 @@ hr.sep { border: 0; border-top: 1px solid var(--border); margin: 4px 0; width: 1
 .tool-tab svg { width: 15px; height: 15px; }
 .tool-tab:hover { border-color: var(--accent); }
 .tool-tab.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+/* ===== Atelier : tableau blanc façon Miro ===== */
+.at-board { --sticky: #FFF1A8; --sticky-ink: #4A3F00; background-color: var(--surface); background-image: radial-gradient(var(--border) 1.2px, transparent 1.2px); background-size: 22px 22px; border: 1px solid var(--border); border-radius: 16px; overflow-x: auto; }
+:root[data-theme="dark"] .at-board { --sticky: #5A4F12; --sticky-ink: #FFF4C2; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .at-board { --sticky: #5A4F12; --sticky-ink: #FFF4C2; } }
+.at-flow { display: flex; align-items: flex-start; padding: 24px 18px 28px; min-width: min-content; }
+.at-node { width: 330px; flex: none; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 1px 2px rgba(0,0,0,.05), 0 6px 18px rgba(0,0,0,.06); display: grid; gap: 10px; padding: 14px; min-width: 0; }
+.at-node > * { min-width: 0; }
+.at-col { display: grid; gap: 14px; flex: none; width: 330px; }
+.at-col .at-node { width: 100%; }
+.at-head { display: flex; align-items: center; gap: 8px; }
+.at-head h3 { margin: 0; font-size: 15px; }
+.at-head > :last-child:not(h3) { margin-left: auto; }
+.at-step { width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; font-size: 12px; font-weight: 700; flex: none; }
+.at-arrow { flex: none; width: 46px; align-self: center; display: grid; place-items: center; color: var(--accent); }
+.at-arrow svg { width: 38px; height: 24px; }
+.at-empty { padding: 22px 12px; text-align: center; border: 1.5px dashed var(--border); border-radius: 10px; }
+.at-node .inline-box { margin: 0; padding: 0; border: 0; background: transparent; }
+.at-node textarea[name="text"] { min-height: 280px; }
+.at-node select { width: 100%; }
+.at-sticky { background: var(--sticky); color: var(--sticky-ink); border-radius: 4px 4px 14px 4px; padding: 12px 14px; box-shadow: 0 6px 16px rgba(0,0,0,.08); transform: rotate(-.8deg); display: grid; gap: 6px; }
+.at-sticky ul { margin: 0; padding-left: 16px; display: grid; gap: 4px; font-size: 13px; }
+.at-sticky li span:first-child { overflow-wrap: anywhere; }
+.at-sticky li { display: list-item; }
+.at-sticky li > .row { display: inline-flex; vertical-align: middle; }
+.at-sticky .small, .at-sticky p { color: inherit; opacity: .78; margin: 0; }
+.at-x { border: 0; background: transparent; color: inherit; opacity: .65; padding: 0 3px; cursor: pointer; font-size: 12px; }
+.at-x:hover { opacity: 1; }
+.at-when { padding: 8px 10px; border-radius: 9px; background: var(--surface-2); font-weight: 600; font-size: 13px; }
+.at-when.warn { color: #9A5B00; }
+.at-li .li-img { max-height: 260px; object-fit: contain; }
+details.more summary { cursor: pointer; }
+/* Marché */
+.mk-lanes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; align-items: start; }
+.mk-lane { display: grid; gap: 8px; min-width: 0; }
+.mk-lane .img-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+.mk-lane .card h3 { font-size: 15px; }
+.mk-post { border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; display: grid; gap: 4px; font-size: 13px; }
+.mk-learn { background: var(--surface-2); border-radius: 8px; padding: 5px 8px; }
+.mk-uses { font-size: 12.5px; color: var(--accent-strong); font-weight: 600; padding: 0 4px; }
+@media (max-width: 1100px) { .mk-lanes { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 760px) {
+  .at-board { overflow-x: visible; }
+  .at-flow { flex-direction: column; align-items: stretch; padding: 14px 10px; min-width: 0; }
+  .at-node, .at-col { width: 100%; }
+  .at-arrow { width: 100%; height: 40px; }
+  .at-arrow svg { transform: rotate(90deg); }
+}
+/* Les 4 étapes tiennent dans la largeur de l'écran (défilement horizontal seulement si très étroit) */
+@media (min-width: 761px) {
+  .at-flow { display: grid; grid-template-columns: minmax(250px, 1fr) 36px minmax(250px, 1fr) 36px minmax(250px, 1fr) 36px minmax(250px, 1fr); align-items: start; padding: 22px 14px 26px; min-width: 1140px; }
+  .at-node, .at-col { width: auto; }
+  .at-arrow { width: 36px; align-self: start; margin-top: 140px; }
+  .at-arrow svg { width: 30px; }
+}
+.at-node .chat-box > .row:first-child { display: none !important; }

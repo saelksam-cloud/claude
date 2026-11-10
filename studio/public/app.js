@@ -6,7 +6,7 @@ import { calendarMarkup, calendarDate } from '/calendar.js';
 const $ = (sel, el = document) => el.querySelector(sel);
 const view = $('#view');
 
-const PAGE_NAMES = {"create":"Studio","posts":"Posts","calendar":"Calendrier","visuals":"Visuels","adn":"ADN client","banner":"Profil et bannière","images":"Photothèque","veille":"Veille","study":"Étude de marché","hooks":"Hooks","settings":"Réglages"};
+const PAGE_NAMES = {"atelier":"Atelier","marche":"Marché","create":"Studio","posts":"Posts","calendar":"Calendrier","visuals":"Visuels","adn":"ADN client","banner":"Profil et bannière","images":"Photothèque","veille":"Veille","study":"Étude de marché","hooks":"Hooks","settings":"Réglages"};
 const ICONS = {"pen":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m13 6 5 5M4 20l4.5-1 11-11a2.1 2.1 0 0 0-3-3l-11 11L4 20Z\"/></svg>","files":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"6\" y=\"3\" width=\"13\" height=\"17\" rx=\"2\"/><path d=\"M9 8h7m-7 4h7m-7 4h4M3 7v12a4 4 0 0 0 4 4\"/></svg>","calendar":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"5\" width=\"18\" height=\"16\" rx=\"2\"/><path d=\"M7 3v4m10-4v4M3 10h18m-14 4h2m3 0h2m3 0h1m-11 3h2m3 0h2\"/></svg>","image":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"3\" width=\"18\" height=\"18\" rx=\"3\"/><circle cx=\"8.5\" cy=\"8.5\" r=\"1.5\"/><path d=\"m3 17 5-5 4 4 4-6 5 7\"/></svg>","person":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1\"/></svg>","layout":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"16\" rx=\"2\"/><path d=\"M3 9h18m-12 0v11\"/></svg>","photos":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"7\" y=\"3\" width=\"14\" height=\"14\" rx=\"2\"/><path d=\"M3 8v11a2 2 0 0 0 2 2h11m-9-7 4-4 3 3 3-5 4 5\"/></svg>","radar":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 7a5 5 0 1 0 5 5m-5 0 7-7\"/><circle cx=\"12\" cy=\"12\" r=\"1\"/></svg>","chart":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 4v16h16M8 16v-4m5 4V8m5 8V5\"/></svg>","hook":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M13 7v10a4 4 0 0 1-8 0v-3l3 2m5-9a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z\"/></svg>","settings":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"3\"/><path d=\"m9 3-1 3-3 1-2 4 2 2v4l3 2 3-1 3 2 4-2v-3l3-3-2-4-3-1-1-3Z\"/></svg>","menu":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 6h16M4 12h16M4 18h16\"/></svg>","activity":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 12h4l3-7 4 14 3-7h4\"/></svg>","search":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"10\" cy=\"10\" r=\"6\"/><path d=\"m14.5 14.5 5 5\"/></svg>","arrow":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 12h15m-6-6 6 6-6 6\"/></svg>","spark":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 2c0 6 4 10 10 10-6 0-10 4-10 10 0-6-4-10-10-10 6 0 10-4 10-10Z\"/></svg>"};
 const STATUS = { review: 'À valider', approved: 'Programmé', published: 'Publié', draft: 'Brouillon', rejected: 'À refaire' };
 const PLACEHOLDER = /\[À COMPLÉTER/i;
@@ -22,7 +22,7 @@ const store = {
 const ui = {
   data: null,
   clientId: store.get('clientId', null),
-  view: store.get('view', 'create'),
+  view: store.get('view', 'atelier'),
   filter: 'review',
   detailId: null,
   studioPost: null,
@@ -33,6 +33,7 @@ const ui = {
   chatDraft: {},
   chatPending: null,
   memoryOpen: false,
+  visMoreOpen: false,
   postVisType: 'auto',
   calCursor: new Date(),
   calMode: 'month',
@@ -165,7 +166,7 @@ function render() {
   const c = client();
   $('#banner').innerHTML = c && !c.linkedin.connected && ['create', 'posts'].includes(ui.view)
     ? `<div class="banner">Le LinkedIn de ${esc(c.name)} n'est pas connecté : les posts seront prêts mais pas publiés. <a href="#" data-action="go" data-id="settings">Le connecter</a></div>` : '';
-  ({ create: renderCreate, posts: renderPosts, calendar: renderCalendar, adn: renderAdn, hooks: renderHooks, banner: renderBannerView, visuals: renderVisualsView, images: renderImages, veille: renderVeille, study: renderStudy, settings: renderSettings }[ui.view] || renderCreate)();
+  ({ atelier: renderAtelier, marche: renderMarche, create: renderCreate, posts: renderPosts, calendar: renderCalendar, adn: renderAdn, hooks: renderHooks, banner: renderBannerView, visuals: renderVisualsView, images: renderImages, veille: renderVeille, study: renderStudy, settings: renderSettings }[ui.view] || renderCreate)();
   enhanceVoice(view);
   renderDrawer();
 }
@@ -486,7 +487,7 @@ const INSP = {
   banner: { title: '🎨 Inspirations : bannières concurrentes', hint: "Ajoute des captures de bannières qui te plaisent. L'IA analyse leur construction (preuve sociale, promesse, appel à l'action, décor) et s'en inspire pour proposer tes textes." },
   image: { title: '🎨 Style des images générées', hint: "Captures d'images de posts concurrents : l'IA en retient le style (cadrage, couleurs, ambiance) pour les images qu'elle génère." },
 };
-function inspirationsCard(category) {
+function inspirationsCard(category, { compact = false } = {}) {
   const niche = currentNiche();
   const list = inspirationImages(niche, category);
   const j = ui.job?.kind === 'upload' ? ui.job : null;
@@ -494,7 +495,7 @@ function inspirationsCard(category) {
     <div class="row between"><h3 style="margin:0">${INSP[category].title} · ${esc(niche || 'sans niche')} (${list.length})</h3>
       <label class="btn primary">+ Ajouter (images ou PDF)<input type="file" accept="image/*,application/pdf" multiple data-library="inspiration" data-category="${category}" hidden></label></div>
     <p class="small" style="margin:0">${INSP[category].hint} Partagé avec tous les clients de la niche.</p>
-    ${allNiches().length > 1 ? nicheChips(ui.data.images.filter((im) => im.kind === 'inspiration' && (im.category || 'image') === category)) : ''}
+    ${!compact && allNiches().length > 1 ? nicheChips(ui.data.images.filter((im) => im.kind === 'inspiration' && (im.category || 'image') === category)) : ''}
     ${j ? `<div class="row"><div class="progress"><span style="width:${Math.round((100 * j.done) / j.total)}%"></span></div><span class="small">${esc(j.step)}</span></div>` : ''}
     ${list.length ? `<div class="img-grid">${list.map((im) => `
       <figure class="img-card">
@@ -792,7 +793,7 @@ function visualPanel(p) {
     <div class="chips">${VIS_FOR_POST.map(([k, l]) => `<button class="chip ${(ui.postVisType || 'auto') === k ? 'on' : ''}" data-action="post-vis-type" data-id="${k}">${l}</button>`).join('')}</div>
     <button class="btn primary sm" data-action="post-visual" data-id="${p.id}" ${busy || !ui.data.settings.hasOpenaiKey ? 'disabled' : ''}>${busy ? esc(ui.job.step) : p.image || p.document ? '↻ Créer un nouveau visuel' : '✨ Créer le visuel'}</button>
     ${mine ? `<button class="btn ghost sm" data-action="post-vis-edit" data-id="${mine.id}">✎ Modifier les textes du visuel (onglet Visuels)</button>` : ''}
-    <hr class="sep">
+    <details class="more" ${ui.visMoreOpen ? 'open' : ''}><summary class="small"><b>Autres options</b> : photo, image IA, import, visuel déjà créé</summary><div class="stack" style="margin-top:8px">
     <b>📸 Photo ou image</b>
     <div class="row">
       ${photos.length ? `<button class="btn soft sm" data-action="img-auto" data-id="${p.id}">📸 Meilleure photo</button>` : ''}
@@ -802,11 +803,123 @@ function visualPanel(p) {
     ${photos.length ? `<div class="thumbs">${photos.map((im) => `<button class="thumb ${p.imageId === im.id ? 'on' : ''}" data-action="img-pick" data-id="${p.id}" data-img="${im.id}" title="${esc(im.description)}"><img src="/uploads/${esc(im.key)}" alt=""></button>`).join('')}</div>` : ''}
     ${others.length ? `<hr class="sep"><b>📎 Rattacher un visuel déjà créé</b>
       <div class="stack" style="gap:6px">${others.map((v) => `<button class="vis-pick" data-action="post-link-visual" data-id="${p.id}" data-vis="${v.id}"><span class="tag">${v.kind === 'carousel' ? 'Carrousel' : esc(v.spec?.type || 'visuel')}</span> ${esc(v.subtopic || v.subject || 'Visuel')}${v.postId ? ' <span class="small">(lié à un autre post)</span>' : ''}</button>`).join('')}</div>` : ''}
+    </div></details>
+  </div>`;
+}
+
+// ================= ATELIER : un post de gauche à droite (post → critique → visuel → publication) =================
+const ARROW = '<div class="at-arrow" aria-hidden="true"><svg viewBox="0 0 40 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h34M28 5l8 7-8 7"/></svg></div>';
+const whenLetters = (iso) => {
+  if (!iso) return { text: 'Sans date : choisis-en une', warn: true };
+  const d = new Date(iso);
+  const days = Math.round((d - Date.now()) / 864e5);
+  if (d < Date.now()) return { text: '⚠️ Date passée : le post partira dans les 15 minutes après validation', warn: true };
+  return { text: `📅 Partira le ${d.toLocaleString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Paris' })}${days > 14 ? ` (dans ${days} jours)` : ''}`, warn: days > 14 };
+};
+function atelierPosts() {
+  return clientPosts().filter((p) => p.status !== 'published').sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+}
+function renderAtelier() {
+  const c = client();
+  const list = atelierPosts();
+  const p = list.find((x) => x.id === ui.studioPost) || null;
+  const j = ui.job?.kind === 'create' ? ui.job : null;
+  const busy = Boolean(ui.job && !ui.job.finished);
+  const manual = ui.manual[c.id] || '';
+  const picker = `<select id="studioDraft" aria-label="Choisir un post"><option value="">➕ Nouveau post</option>${list.map((x) => `<option value="${esc(x.id)}" ${x === p ? 'selected' : ''}>${x.status === 'approved' ? '📅 ' : ''}${esc((x.theme || x.text.split('\n')[0]).slice(0, 60))}</option>`).join('')}</select>`;
+  const empty = (msg) => `<div class="at-empty small">${msg}</div>`;
+
+  const card1 = p ? `
+      <header class="at-head"><span class="at-step">1</span><h3>Le post</h3><span class="badge s-${p.status}">${STATUS[p.status]}</span></header>
+      ${picker}
+      ${postEditor(p)}
+      ${PLACEHOLDER.test(p.text) ? '<div class="alert warn">Complète les [À COMPLÉTER] avant de valider.</div>' : ''}
+      ${p.versions?.length ? `<button class="btn ghost sm" data-action="undo" data-id="${p.id}">↶ Version précédente</button>` : ''}`
+    : `
+      <header class="at-head"><span class="at-step">1</span><h3>Le post</h3></header>
+      ${picker}
+      <label class="f">Sujet ou idée<textarea id="instruction" rows="3" placeholder="Ex. le coût caché de la double saisie… (vide = l'IA choisit)">${esc(ui.instruction)}</textarea></label>
+      ${j ? `<div class="job-inline small"><div class="progress"><span style="width:${Math.round((100 * j.done) / j.total)}%"></span></div><span>${esc(j.step)}</span></div>` : ''}
+      <button class="btn primary" data-action="atelier-create" ${busy || !ui.data.settings.hasOpenaiKey ? 'disabled' : ''}>${ICONS.spark} Écrire le post avec l'IA</button>
+      <details ${manual ? 'open' : ''}><summary class="small" style="cursor:pointer">… ou l'écrire moi-même</summary>
+        <textarea id="manualDraft" rows="8" maxlength="3000" placeholder="Écris ton post ici…" style="margin-top:6px">${esc(manual)}</textarea>
+        <div class="row between" style="margin-top:6px"><span class="small" id="manualCount">${manual.length} / 3 000</span><button class="btn sm" id="manualSave" data-action="manual-save" ${manual.trim() ? '' : 'disabled'}>Enregistrer</button></div></details>`;
+
+  const tool = ['chat', 'hooks', 'quality', 'retouch'].includes(ui.tools) ? ui.tools : 'chat';
+  const card2 = `
+      <header class="at-head"><span class="at-step">2</span><h3>Ta critique</h3><span class="small">l'IA retient</span></header>
+      ${p ? `<div class="tool-tabs">${STUDIO_TOOLS.filter(([k]) => k !== 'visual').map(([key, label, , glyph]) => `<button class="tool-tab ${tool === key ? 'on' : ''}" data-action="studio-tool" data-id="${key}">${ICONS[glyph]}<span>${key === 'chat' ? 'Critique' : label}</span></button>`).join('')}</div>
+        ${tool === 'chat' ? chatPanel(p, { sticky: true }) : { hooks: hooksPanel, quality: qualityPanel, retouch: retouchPanel }[tool](p)}` : empty('Crée ou ouvre un post à gauche, puis dis ici ce qui ne va pas.')}`;
+  const lessons = c.adn?.lessons || [];
+  const sticky = `<aside class="at-sticky" aria-label="Mémoire de l'IA">
+      <b>🧠 Ce que l'IA retient pour ${esc(c.name)}</b>
+      ${lessons.length ? `<ul>${lessons.slice().reverse().map((l) => `<li><span>${esc(l.text)}</span><span class="row" style="gap:0"><button class="at-x" data-action="lesson-rule" data-id="${l.id}" title="En faire une règle permanente">📌</button><button class="at-x" data-action="lesson-del" data-id="${l.id}" title="Oublier" aria-label="Oublier">✕</button></span></li>`).join('')}</ul>` : '<p class="small">Rien pour l\'instant : chaque critique générale sera notée ici.</p>'}
+      <span class="small">Appliqué à chaque nouveau post. ✕ pour oublier, 📌 pour en faire une règle permanente.</span>
+    </aside>`;
+
+  const card3 = `
+      <header class="at-head"><span class="at-step">3</span><h3>Le visuel</h3><span class="small">tiré du post</span></header>
+      ${p ? `${p.image || p.document ? `<div class="media-preview">${p.image ? `<img src="/uploads/${esc(p.image)}" alt="">` : ''}<div class="row between"><span class="small">${p.document ? '📎 Carrousel PDF attaché' : '🖼 Attaché au post'}</span><button class="btn ghost sm danger" data-action="remove-image" data-id="${p.id}">Retirer</button></div></div>` : ''}
+        ${visualPanel(p)}` : empty('Le visuel se crée à partir du texte du post.')}`;
+
+  const w = p ? whenLetters(p.scheduledAt) : null;
+  const card4 = `
+      <header class="at-head"><span class="at-step">4</span><h3>Publication</h3><span class="small">aperçu LinkedIn</span></header>
+      ${p ? `<div class="li at-li">
+          <div class="li-head"><div class="avatar">${initials(c.name)}</div><div><div class="li-name">${esc(c.linkedin?.name || c.name)}</div><div class="li-sub">${esc(c.company || c.niche || '')}</div></div></div>
+          <div class="li-text">${esc(p.text.split('\n').slice(0, 4).join('\n'))}${p.text.split('\n').length > 4 ? ' <span class="small"><b>… voir plus</b></span>' : ''}</div>
+          ${p.image ? `<img class="li-img" src="/uploads/${esc(p.image)}" alt="">` : ''}
+        </div>
+        <label class="f">Date et heure<input type="datetime-local" data-date="${p.id}" value="${toLocalInput(p.scheduledAt)}"></label>
+        <div class="at-when ${w.warn ? 'warn' : ''}">${esc(w.text)}</div>
+        ${p.error ? `<div class="alert err">${esc(p.error)}</div>` : ''}
+        ${!c.linkedin ? '<div class="alert warn">LinkedIn non connecté pour ce client : le post sera prêt mais pas publié.</div>' : ''}
+        ${p.status === 'approved'
+          ? `<div class="row"><button class="btn sm" data-action="unapprove" data-id="${p.id}">↩ Retirer de la programmation</button>${c.linkedin ? `<button class="btn soft sm" data-action="publish-now" data-id="${p.id}">Publier maintenant</button>` : ''}</div>`
+          : `<button class="btn primary" data-action="approve" data-id="${p.id}" ${PLACEHOLDER.test(p.text) ? 'disabled' : ''}>✓ Valider et programmer</button>`}
+        <button class="btn ghost sm" data-action="delete" data-id="${p.id}">🗑 Supprimer ce post</button>` : empty('L\'aperçu et la date apparaissent ici.')}`;
+
+  view.innerHTML = `
+  <header class="page-heading"><div><div class="eyebrow">ATELIER</div><h1>Un post, de gauche à droite</h1><p>Tu écris, tu critiques, l'IA corrige et retient, puis on fait le visuel et on programme.</p></div>
+    <div class="row heading-actions"><button class="btn" data-action="go" data-id="marche">${ICONS.radar} Marché concurrentiel</button></div></header>
+  <div class="at-board"><div class="at-flow">
+    <article class="at-node">${card1}</article>${ARROW}
+    <div class="at-col"><article class="at-node">${card2}</article>${sticky}</div>${ARROW}
+    <article class="at-node">${card3}</article>${ARROW}
+    <article class="at-node">${card4}</article>
+  </div></div>`;
+  scrollChat();
+}
+
+// ================= MARCHÉ : tout ce que font les concurrents =================
+function renderMarche() {
+  const niche = currentNiche();
+  const items = ui.data.veille.filter((v) => sameNiche(v.niche, niche)).sort((a, b) => engagement(b) - engagement(a));
+  const j = ui.job?.kind === 'paste' ? ui.job : null;
+  view.innerHTML = `
+  <header class="page-heading"><div><div class="eyebrow">MARCHÉ CONCURRENTIEL</div><h1>Ce que font les concurrents · ${esc(niche || 'sans niche')}</h1><p>Tu déposes ici, l'IA analyse ce qui marche, et l'Atelier s'en sert.</p></div>
+    <div class="row heading-actions"><button class="btn" data-action="go" data-id="atelier">${ICONS.pen} Retour à l'Atelier</button></div></header>
+  ${allNiches().length > 1 ? nicheChips() : ''}
+  <div class="mk-lanes">
+    <section class="mk-lane">
+      <div class="card stack">
+        <h3 style="margin:0">✍️ Posts concurrents (${items.length})</h3>
+        <p class="small" style="margin:0">Copie des posts depuis LinkedIn, avec les likes et commentaires. Sert à écrire les posts et à noter les hooks (Atelier, étapes 1 et 2).</p>
+        <input id="pasteNiche" type="hidden" value="${esc(niche)}">
+        <textarea id="pasteText" rows="6" placeholder="Colle un ou plusieurs posts, ou toute la page Activité d'un profil" data-novoice></textarea>
+        ${j ? `<div class="row"><div class="progress"><span style="width:${Math.round((100 * j.done) / j.total)}%"></span></div><span class="small">${esc(j.step)}</span></div>` : ''}
+        <button class="btn primary" data-action="paste" ${ui.job && !ui.job.finished ? 'disabled' : ''}>Analyser</button>
+        ${items.length ? `<div class="stack" style="gap:8px">${items.slice(0, 6).map((v) => `<div class="mk-post"><div class="row between small"><b>${esc(v.author || 'Concurrent')}</b><span>${Number(v.likes) || 0} 👍 · ${Number(v.comments) || 0} 💬</span></div><div>${esc((v.hook || v.text || '').split('\n')[0].slice(0, 140))}</div>${v.structure ? `<div class="small mk-learn">L'IA retient : ${esc(v.structure.slice(0, 160))}</div>` : ''}</div>`).join('')}</div>` : '<p class="empty">Aucun post pour l\'instant.</p>'}
+        <div class="row"><button class="btn ghost sm" data-action="go" data-id="veille">Toute la veille →</button><button class="btn ghost sm" data-action="go" data-id="study">Étude de marché →</button></div>
+      </div>
+    </section>
+    <section class="mk-lane">${inspirationsCard('visual', { compact: true })}<div class="mk-uses">→ Sert à créer le visuel (Atelier, étape 3)</div></section>
+    <section class="mk-lane">${inspirationsCard('banner', { compact: true })}<div class="mk-uses">→ Sert à proposer ta bannière · <a href="#" data-action="go" data-id="banner">ouvrir l'éditeur</a></div></section>
   </div>`;
 }
 
 // ---------- Studio : améliorer le post en discutant avec l'IA ----------
-function chatPanel(p) {
+function chatPanel(p, { sticky = false } = {}) {
   const c = client();
   const lessons = c.adn?.lessons || [];
   const msgs = p.chat || [];
@@ -823,11 +936,11 @@ function chatPanel(p) {
     <textarea id="chatMsg" rows="3" placeholder="Ta critique ou ta consigne… (Entrée pour envoyer, Maj+Entrée pour aller à la ligne)" ${pending ? 'disabled' : ''}>${esc(ui.chatDraft[p.id] || '')}</textarea>
     <div class="row between"><button class="btn primary sm" data-action="chat-send" data-id="${p.id}" ${pending ? 'disabled' : ''}>Envoyer</button>
       <span class="small">${lessons.length} leçon${lessons.length > 1 ? 's' : ''} en mémoire</span></div>
-    <details class="memory" ${ui.memoryOpen ? 'open' : ''}><summary class="small">🧠 Ce que l'IA a retenu pour ${esc(c.name)} (${lessons.length})</summary>
+    ${sticky ? '' : `<details class="memory" ${ui.memoryOpen ? 'open' : ''}><summary class="small">🧠 Ce que l'IA a retenu pour ${esc(c.name)} (${lessons.length})</summary>
       ${lessons.length ? `<div class="stack" style="gap:4px;margin-top:6px">${lessons.slice().reverse().map((l) => `<div class="row between vitem"><span class="small">${esc(l.text)}</span><span class="row" style="gap:2px"><button class="btn ghost sm" data-action="lesson-rule" data-id="${l.id}" title="En faire une règle permanente">📌</button><button class="btn ghost sm danger" data-action="lesson-del" data-id="${l.id}" title="Oublier">✕</button></span></div>`).join('')}</div>`
         : '<p class="small" style="margin:6px 0 0">Rien pour l\'instant : chaque critique générale sera mémorisée ici.</p>'}
       <p class="small" style="margin:6px 0 0">Ces leçons sont appliquées à chaque nouveau post de ${esc(c.name)} (création, retouches, hooks). Tu peux les retirer à tout moment.</p>
-    </details>
+    </details>`}
   </div>`;
 }
 
@@ -1961,6 +2074,11 @@ const actions = {
     toast(`${r.approved} programmé(s)${r.skipped.length ? ` · ${r.skipped.length} à compléter d'abord` : ''}`);
   },
   async delete(id) { await api('DELETE', `/api/posts/${id}`); ui.lastCreated = ui.lastCreated.filter((x) => x !== id); await refresh(); },
+  async 'atelier-create'() {
+    const n = ui.count;
+    ui.count = 1;
+    try { await createAuto(); } finally { ui.count = n; }
+  },
   async 'chat-send'(id) {
     const box = $('#chatMsg');
     const message = (box?.value || '').trim();
@@ -2327,6 +2445,7 @@ $('#postDrawer').addEventListener('close', () => {
   ui.editing.delete(id);
 });
 
+document.addEventListener('toggle', (e) => { if (e.target.matches?.('details.more')) ui.visMoreOpen = e.target.open; }, true);
 // Discussion avec l'IA : Entrée envoie, Maj+Entrée va à la ligne.
 document.addEventListener('keydown', (event) => {
   if (event.target.id !== 'chatMsg' || event.key !== 'Enter' || event.shiftKey || event.isComposing) return;
