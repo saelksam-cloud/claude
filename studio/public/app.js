@@ -6,7 +6,7 @@ import { calendarMarkup, calendarDate } from '/calendar.js';
 const $ = (sel, el = document) => el.querySelector(sel);
 const view = $('#view');
 
-const PAGE_NAMES = {"atelier":"Atelier","marche":"Marché","create":"Studio","posts":"Posts","calendar":"Calendrier","visuals":"Visuels","adn":"ADN client","banner":"Profil et bannière","images":"Photothèque","veille":"Veille","study":"Étude de marché","hooks":"Hooks","settings":"Réglages"};
+const PAGE_NAMES = {"atelier":"Atelier","marche":"Marché","create":"Studio","posts":"Posts","calendar":"Calendrier","visuals":"Visuels (ancien)","adn":"ADN client","banner":"Bannière","images":"Visuels","veille":"Veille","study":"Étude de marché","hooks":"Hooks","settings":"Réglages"};
 const ICONS = {"pen":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m13 6 5 5M4 20l4.5-1 11-11a2.1 2.1 0 0 0-3-3l-11 11L4 20Z\"/></svg>","files":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"6\" y=\"3\" width=\"13\" height=\"17\" rx=\"2\"/><path d=\"M9 8h7m-7 4h7m-7 4h4M3 7v12a4 4 0 0 0 4 4\"/></svg>","calendar":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"5\" width=\"18\" height=\"16\" rx=\"2\"/><path d=\"M7 3v4m10-4v4M3 10h18m-14 4h2m3 0h2m3 0h1m-11 3h2m3 0h2\"/></svg>","image":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"3\" width=\"18\" height=\"18\" rx=\"3\"/><circle cx=\"8.5\" cy=\"8.5\" r=\"1.5\"/><path d=\"m3 17 5-5 4 4 4-6 5 7\"/></svg>","person":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1\"/></svg>","layout":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"16\" rx=\"2\"/><path d=\"M3 9h18m-12 0v11\"/></svg>","photos":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"7\" y=\"3\" width=\"14\" height=\"14\" rx=\"2\"/><path d=\"M3 8v11a2 2 0 0 0 2 2h11m-9-7 4-4 3 3 3-5 4 5\"/></svg>","radar":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 7a5 5 0 1 0 5 5m-5 0 7-7\"/><circle cx=\"12\" cy=\"12\" r=\"1\"/></svg>","chart":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 4v16h16M8 16v-4m5 4V8m5 8V5\"/></svg>","hook":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M13 7v10a4 4 0 0 1-8 0v-3l3 2m5-9a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z\"/></svg>","settings":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"3\"/><path d=\"m9 3-1 3-3 1-2 4 2 2v4l3 2 3-1 3 2 4-2v-3l3-3-2-4-3-1-1-3Z\"/></svg>","menu":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 6h16M4 12h16M4 18h16\"/></svg>","activity":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 12h4l3-7 4 14 3-7h4\"/></svg>","search":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"10\" cy=\"10\" r=\"6\"/><path d=\"m14.5 14.5 5 5\"/></svg>","arrow":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 12h15m-6-6 6 6-6 6\"/></svg>","spark":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 2c0 6 4 10 10 10-6 0-10 4-10 10 0-6-4-10-10-10 6 0 10-4 10-10Z\"/></svg>"};
 const STATUS = { review: 'À valider', approved: 'Programmé', published: 'Publié', draft: 'Brouillon', rejected: 'À refaire' };
 const PLACEHOLDER = /\[À COMPLÉTER/i;
@@ -33,6 +33,11 @@ const ui = {
   chatDraft: {},
   chatPending: null,
   memoryOpen: false,
+  pillar: '',
+  hookPillar: '',
+  hookIdeas: [],
+  daDraft: null,
+  postVisBg: '',
   visMoreOpen: false,
   postVisType: 'auto',
   calCursor: new Date(),
@@ -166,7 +171,7 @@ function render() {
   const c = client();
   $('#banner').innerHTML = c && !c.linkedin.connected && ['create', 'posts'].includes(ui.view)
     ? `<div class="banner">Le LinkedIn de ${esc(c.name)} n'est pas connecté : les posts seront prêts mais pas publiés. <a href="#" data-action="go" data-id="settings">Le connecter</a></div>` : '';
-  ({ atelier: renderAtelier, marche: renderMarche, create: renderCreate, posts: renderPosts, calendar: renderCalendar, adn: renderAdn, hooks: renderHooks, banner: renderBannerView, visuals: renderVisualsView, images: renderImages, veille: renderVeille, study: renderStudy, settings: renderSettings }[ui.view] || renderCreate)();
+  ({ atelier: renderAtelier, marche: renderMarche, create: renderCreate, hooks: renderHookBank, posts: renderPosts, calendar: renderCalendar, adn: renderAdn, hooksLib: renderHooks, banner: renderBannerView, visuals: renderVisualsView, images: renderImages, veille: renderVeille, study: renderStudy, settings: renderSettings }[ui.view] || renderCreate)();
   enhanceVoice(view);
   renderDrawer();
 }
@@ -364,7 +369,7 @@ async function createAuto(resume) {
     hooksDone: false,
     inFlight: '',
     avoid: { angles: [], structures: [] },
-    brief: { personaId: ui.personaId, objective: ui.objective, awareness: ui.awareness, topic: ui.instruction, ideaId: ui.ideaId },
+    brief: { personaId: ui.personaId, objective: ui.objective, awareness: ui.awareness, topic: ui.instruction, ideaId: ui.ideaId, pillar: ui.hookDev?.pillar || ui.pillar || '', hook: ui.hookDev?.hook || '', hookId: ui.hookDev?.hookId || '' },
     author: ui.inspireFrom,
     imageMode: ui.imageMode,
   };
@@ -420,6 +425,7 @@ async function runCreate(job) {
         checkpoint(job);
       }
       if (ui.job.stop) break;
+      if (!job.hooksDone && brief.hook) job.hooksDone = true; // hook choisi par l'auteur : on le garde
       if (!job.hooksDone) {
         step('Notation des hooks…');
         await api('POST', '/api/posts/' + job.postId + '/hooks', {}).catch((error) => toast('Hooks · ' + error.message, true));
@@ -552,33 +558,43 @@ function resizeImage(file, max = 1600) {
   });
 }
 
+const DA_DEFAULT = { colors: ['#0E6B4A', '#14231C'], backgrounds: ['clair', 'fonce', 'couleur'] };
+const daOf = (c = client()) => ({ ...DA_DEFAULT, ...(c?.adn?.da || {}) });
+const SAMPLE_SPEC = { type: 'liste', title: 'Les *3 règles* d\'un bon post', subtitle: 'Aperçu de ta direction artistique', items: [{ t: 'Une seule idée', d: 'Tirée d\'une vraie question client' }, { t: 'Un hook court', d: 'Compris en une seconde' }, { t: 'Une vraie fin', d: 'Une question, pas une vente' }] };
 function renderImages() {
   const c = client();
   const niche = currentNiche();
-  const mine = myPhotos();
-  const insp = inspirationImages(niche);
+  const da = ui.daDraft || daOf(c);
   const j = ui.job?.kind === 'upload' ? ui.job : null;
-  const grid = (list, kind) => list.length ? `<div class="img-grid">${list.map((im) => `
-      <figure class="img-card">
-        <img src="/uploads/${esc(im.key)}" alt="${esc(im.description)}" loading="lazy">
-        <figcaption>
-          <textarea rows="3" data-imgdesc="${im.id}" placeholder="Description (aide l'IA à choisir la bonne photo)" data-novoice>${esc(im.description)}</textarea>
-          <div class="row between"><span class="small">${kind === 'mine' ? `Utilisée ${im.uses || 0} fois` : esc(im.niche || '')}</span>
-          <button class="btn ghost sm danger" data-action="del-image" data-id="${im.id}" title="Supprimer">🗑</button></div>
-        </figcaption>
-      </figure>`).join('')}</div>` : '';
+  const lane = (category, title, hint) => {
+    const list = inspirationImages(niche, category);
+    return `<section class="card stack vis-lane" data-dropcat="${category}">
+      <div class="row between"><h3 style="margin:0">${title} (${list.length})</h3><label class="btn primary sm">+ Ajouter<input type="file" accept="image/*,application/pdf" multiple data-library="inspiration" data-category="${category}" hidden></label></div>
+      <div class="dropzone">⬇ Glisse-dépose ici tes ${hint}<br><span class="small">PNG, JPG ou PDF · l'IA analyse leur forme et leur style</span></div>
+      ${list.length ? `<div class="img-grid">${list.map((im) => `
+        <figure class="img-card">
+          <div class="insp-thumb"><img src="/uploads/${esc(im.key)}" alt="" loading="lazy">${im.pages?.length > 1 ? `<span class="insp-pages">📄 ${im.pages.length} pages</span>` : ''}</div>
+          <figcaption><details><summary class="small" style="cursor:pointer">Ce que l'IA en retient</summary><textarea rows="4" data-imgdesc="${im.id}" data-novoice>${esc(im.description)}</textarea></details>
+            <div class="row between"><span class="small">${esc(im.fileName || '')}</span><button class="btn ghost sm danger" data-action="del-image" data-id="${im.id}" title="Supprimer">🗑</button></div></figcaption>
+        </figure>`).join('')}</div>` : ''}
+    </section>`;
+  };
   view.innerHTML = `
-    <h2>Photothèque</h2>
-    <p class="sub">Les photos du client pour illustrer ses posts, et le style de référence des images générées par l'IA. Les inspirations de visuels et de bannières sont dans leurs sections.</p>
-    ${j ? `<div class="row" style="margin-bottom:12px"><div class="progress"><span style="width:${Math.round((100 * j.done) / j.total)}%"></span></div><span class="small">${esc(j.step)}</span></div>` : ''}
-    <div class="card stack">
-      <div class="row between"><h3 style="margin:0">📸 Photos de ${esc(c.name)} (${mine.length})</h3>
-        <label class="btn primary">+ Ajouter des photos<input type="file" accept="image/*" multiple data-library="mine" hidden></label></div>
-      <p class="small" style="margin:0">Toi, ton setup, ton bureau, tes événements… L'IA décrit chaque photo et choisit la plus adaptée à chaque post. Une même photo peut resservir.</p>
-      ${grid(mine, 'mine') || '<p class="empty">Aucune photo pour l\'instant.</p>'}
-    </div>
-    ${inspirationsCard('image')}
-`;
+  <header class="page-heading"><div><div class="eyebrow">VISUELS</div><h1>Visuels de ${esc(c.name)}</h1><p>Une direction artistique par profil : mêmes couleurs, même forme, et seul le fond change d'un visuel à l'autre. Les visuels concurrents servent d'inspiration pour la forme.</p></div></header>
+  ${j ? `<div class="row" style="margin-bottom:12px"><div class="progress"><span style="width:${Math.round((100 * j.done) / j.total)}%"></span></div><span class="small">${esc(j.step)}</span></div>` : ''}
+  <section class="card stack">
+    <div class="row between"><h3 style="margin:0">🎨 Direction artistique (DA)</h3><button class="btn primary sm" data-action="da-save" ${ui.daDraft ? '' : 'disabled'}>Enregistrer la DA</button></div>
+    <p class="small" style="margin:0">2 couleurs, 3 au maximum. Elles servent à tous les visuels de ${esc(c.name)} créés dans l'Atelier.</p>
+    <div class="row da-colors">${[0, 1, 2].map((i) => `<label class="da-color"><input type="color" data-da-color="${i}" value="${da.colors[i] || '#cccccc'}" ${i === 2 && !da.colors[2] ? 'data-empty="1"' : ''}><span>${['Couleur principale', 'Couleur 2', 'Couleur 3 (option)'][i]}</span>${i === 2 && da.colors[2] ? '<button class="btn ghost sm" data-action="da-drop3">✕</button>' : ''}</label>`).join('')}</div>
+    <div class="f">Fonds utilisés à tour de rôle
+      <div class="chips">${Object.entries(Vis.DA_BACKGROUNDS).map(([k, l]) => `<button class="chip ${da.backgrounds.includes(k) ? 'on' : ''}" data-action="da-bg" data-id="${k}">${l}</button>`).join('')}</div></div>
+    <div class="da-previews">${Object.keys(Vis.DA_BACKGROUNDS).map((k) => `<canvas class="da-prev ${da.backgrounds.includes(k) ? '' : 'off'}" data-da-prev="${k}" aria-label="Aperçu ${Vis.DA_BACKGROUNDS[k]}"></canvas>`).join('')}</div>
+  </section>
+  <div class="vis-lanes">
+    ${lane('carousel', '📑 Carrousels concurrents', 'carrousels (PDF ou captures)')}
+    ${lane('visual', '🖼 Visuels concurrents', 'visuels (schémas, listes, comparatifs…)')}
+  </div>`;
+  for (const cv of view.querySelectorAll('[data-da-prev]')) Vis.renderVisual(cv, { kind: 'image', format: 'portrait', spec: SAMPLE_SPEC, style: { da, variant: cv.dataset.daPrev }, author: c.name });
 }
 
 // ================= POSTS =================
@@ -677,10 +693,39 @@ function postCard(p, detail = false) {
   </article>`;
 }
 
+const PILLAR_NAMES = { authenticite: 'Authenticité', valeur: 'Valeur', routine: 'Routine' };
+const pillarTag = (k) => (PILLAR_NAMES[k] ? `<span class="pillar p-${k}">${PILLAR_NAMES[k]}</span>` : '');
 function renderCalendar() {
-  view.innerHTML = '<header class="page-heading"><div><div class="eyebrow">SUIVI ÉDITORIAL</div><h1>Calendrier</h1><p>Déplace un post pour changer sa date, ou ouvre-le pour modifier l’heure.</p></div>' +
-    '<button class="btn" data-action="go" data-id="posts">Voir les posts ' + ICONS.arrow + '</button></header>' +
-    calendarMarkup({ posts: clientPosts(), cursor: ui.calCursor, mode: ui.calMode, statuses: STATUS, esc });
+  const posts = clientPosts();
+  const filters = [['all', 'Tous'], ['review', 'À valider'], ['approved', 'Programmés'], ['published', 'Publiés']];
+  const f = filters.some(([k]) => k === ui.filter) ? ui.filter : 'all';
+  const shown = (f === 'all' ? posts : posts.filter((p) => (f === 'review' ? ['review', 'draft', 'rejected'].includes(p.status) : p.status === f)))
+    .slice().sort((a, b) => String(a.scheduledAt || a.publishedAt || '9').localeCompare(String(b.scheduledAt || b.publishedAt || '9')));
+  for (const id of [...ui.selected]) if (!shown.some((p) => p.id === id)) ui.selected.delete(id);
+  const sel = ui.selected.size;
+  const counts = Object.fromEntries(Object.keys(PILLAR_NAMES).map((k) => [k, posts.filter((p) => p.pillar === k && p.status !== 'published').length]));
+  view.innerHTML = `<header class="page-heading"><div><div class="eyebrow">SUIVI ÉDITORIAL</div><h1>Calendrier</h1><p>Tous les posts à gauche, le calendrier à droite. Clique sur un post pour le modifier, glisse-le dans le calendrier pour changer sa date.</p></div>
+    <div class="row heading-actions"><span class="small">À venir : ${Object.entries(counts).map(([k, n]) => `${pillarTag(k)} ${n}`).join(' · ')}</span></div></header>
+  <div class="cal-split">
+    <aside class="cal-list card">
+      <div class="chips">${filters.map(([k, l]) => `<button class="chip ${f === k ? 'on' : ''}" data-action="filter" data-id="${k}">${l}</button>`).join('')}</div>
+      <div class="row between bulk-bar ${sel ? 'on' : ''}">
+        <label class="small"><input type="checkbox" data-select-all ${shown.length && shown.every((p) => ui.selected.has(p.id)) ? 'checked' : ''}> Tout (${shown.length})</label>
+        ${sel ? `<span class="row"><button class="btn danger sm" data-action="bulk-delete">🗑 Supprimer (${sel})</button><button class="btn ghost sm" data-action="bulk-clear">Annuler</button></span>` : ''}
+      </div>
+      <div class="cal-items">${shown.length ? shown.map((p) => `
+        <div class="cal-item ${ui.selected.has(p.id) ? 'selected' : ''}">
+          <input type="checkbox" data-select="${p.id}" ${ui.selected.has(p.id) ? 'checked' : ''} aria-label="Sélectionner">
+          <button class="cal-open" data-action="post-detail" data-id="${p.id}">
+            <span class="row" style="gap:6px"><span class="badge s-${p.status}">${STATUS[p.status]}</span>${pillarTag(p.pillar)}<span class="small">${p.publishedAt ? fmtDate(p.publishedAt) : p.scheduledAt ? fmtDate(p.scheduledAt) : 'Sans date'}</span></span>
+            <span class="cal-title">${esc((p.text || '').split('\n')[0].slice(0, 110) || 'Post vide')}</span>
+            ${p.error ? `<span class="small" style="color:var(--danger, #B42318)">⚠️ ${esc(p.error.slice(0, 90))}</span>` : ''}
+          </button>
+          ${p.status !== 'published' ? `<button class="btn ghost sm" data-action="open-atelier" data-id="${p.id}" title="Ouvrir dans l'Atelier">✎</button>` : ''}
+        </div>`).join('') : '<p class="empty">Aucun post ici.</p>'}</div>
+    </aside>
+    <div class="cal-main">${calendarMarkup({ posts, cursor: ui.calCursor, mode: ui.calMode, statuses: STATUS, esc })}</div>
+  </div>`;
 }
 
 function renderDrawer() {
@@ -789,7 +834,8 @@ function visualPanel(p) {
   const busy = ui.job?.kind === 'post-visual' && ui.job.id === p.id;
   return `<div class="inline-box stack">
     <b>🎨 Visuel à valeur tiré du post</b>
-    <p class="small" style="margin:0">L'IA lit le post et en fait un schéma (liste, étapes, comparatif…) aux couleurs choisies dans Visuels. Il est attaché au post et publié avec lui.</p>
+    <p class="small" style="margin:0">L'IA lit le post et en fait un schéma aux couleurs de la DA de ${esc(client().name)} (<a href="#" data-action="go" data-id="images">modifier</a>). Il est attaché au post et publié avec lui.</p>
+    <div class="row small">Fond : ${[['', 'À tour de rôle'], ...Object.entries(Vis.DA_BACKGROUNDS)].map(([k, l]) => `<button class="chip sm ${(ui.postVisBg || '') === k ? 'on' : ''}" data-action="post-vis-bg" data-id="${k}">${l.replace('Fond ', '')}</button>`).join('')}</div>
     <div class="chips">${VIS_FOR_POST.map(([k, l]) => `<button class="chip ${(ui.postVisType || 'auto') === k ? 'on' : ''}" data-action="post-vis-type" data-id="${k}">${l}</button>`).join('')}</div>
     <button class="btn primary sm" data-action="post-visual" data-id="${p.id}" ${busy || !ui.data.settings.hasOpenaiKey ? 'disabled' : ''}>${busy ? esc(ui.job.step) : p.image || p.document ? '↻ Créer un nouveau visuel' : '✨ Créer le visuel'}</button>
     ${mine ? `<button class="btn ghost sm" data-action="post-vis-edit" data-id="${mine.id}">✎ Modifier les textes du visuel (onglet Visuels)</button>` : ''}
@@ -805,6 +851,35 @@ function visualPanel(p) {
       <div class="stack" style="gap:6px">${others.map((v) => `<button class="vis-pick" data-action="post-link-visual" data-id="${p.id}" data-vis="${v.id}"><span class="tag">${v.kind === 'carousel' ? 'Carrousel' : esc(v.spec?.type || 'visuel')}</span> ${esc(v.subtopic || v.subject || 'Visuel')}${v.postId ? ' <span class="small">(lié à un autre post)</span>' : ''}</button>`).join('')}</div>` : ''}
     </div></details>
   </div>`;
+}
+
+// ================= HOOKS : l'IA propose, tu gardes, on développe =================
+function renderHookBank() {
+  const c = client();
+  const bank = c.adn?.hookBank || [];
+  const kept = bank.filter((h) => h.status === 'liked' && (!ui.hookPillar || h.pillar === ui.hookPillar));
+  const used = bank.filter((h) => h.status === 'used');
+  const ideas = (ui.hookIdeas || []).filter((h) => !bank.some((b) => b.text === h.text));
+  const busy = ui.job?.kind === 'hooks';
+  const creating = ui.job?.kind === 'create' ? ui.job : null;
+  view.innerHTML = `
+  <header class="page-heading"><div><div class="eyebrow">HOOKS</div><h1>Banque de hooks</h1><p>L'IA propose plein de lignes de hook. Tu gardes celles qui te plaisent (👍) et tu écartes les autres (✕). Elle apprend ton goût. Ensuite, un clic pour développer un post.</p></div></header>
+  <section class="card stack">
+    <div class="chips">${[['', 'Les 3 catégories'], ...Object.entries(PILLAR_NAMES)].map(([k, l]) => `<button class="chip ${(ui.hookPillar || '') === k ? 'on' : ''}" data-action="hook-pillar" data-id="${k}">${l}</button>`).join('')}</div>
+    <p class="small" style="margin:0"><b>Authenticité</b> : coulisses, vécu, erreurs, convictions. <b>Valeur</b> : conseil actionnable, méthode. <b>Routine</b> : ton quotidien, tes habitudes de travail. Jamais de post de vente.</p>
+    <div class="row"><input id="hookTopic" placeholder="Sujet (facultatif) : ex. la peur de publier" value="${esc(ui.hookTopic || '')}" style="flex:1;min-width:200px">
+      <button class="btn primary" data-action="hook-ideas" ${busy || !ui.data.settings.hasOpenaiKey ? 'disabled' : ''}>${busy ? 'Écriture des hooks…' : '✨ Proposer 20 hooks'}</button></div>
+  </section>
+  ${ideas.length ? `<section class="card stack"><h3 style="margin:0">Propositions (${ideas.length})</h3>
+    <div class="hk-list">${ideas.map((h, i) => `<div class="hk-row"><div><div class="hk-text">${esc(h.text)}</div><div class="small">${pillarTag(h.pillar)} ${esc(h.idea || '')}</div></div>
+      <span class="row" style="gap:4px;flex:none"><button class="btn soft sm" data-action="hook-keep" data-id="${i}" title="Je garde">👍</button><button class="btn ghost sm" data-action="hook-reject" data-id="${i}" title="Écarter">✕</button></span></div>`).join('')}</div></section>` : ''}
+  <section class="card stack"><h3 style="margin:0">👍 Mes hooks gardés (${kept.length})</h3>
+    ${creating ? `<div class="row"><div class="progress"><span style="width:${Math.round((100 * creating.done) / creating.total)}%"></span></div><span class="small">${esc(creating.step)}</span></div>` : ''}
+    ${kept.length ? `<div class="hk-list">${kept.slice().reverse().map((h) => `<div class="hk-row"><div><div class="hk-text">${esc(h.text)}</div><div class="small">${pillarTag(h.pillar)} ${esc(h.idea || '')}</div></div>
+      <span class="row" style="gap:4px;flex:none"><button class="btn primary sm" data-action="hook-develop" data-id="${h.id}" ${ui.job && !ui.job.finished ? 'disabled' : ''}>✍️ Développer en post</button><button class="btn ghost sm danger" data-action="hook-del" data-id="${h.id}" title="Retirer">🗑</button></span></div>`).join('')}</div>`
+      : '<p class="empty">Garde des hooks parmi les propositions : ils arrivent ici.</p>'}
+  </section>
+  ${used.length ? `<details class="card"><summary class="small" style="cursor:pointer">Déjà développés (${used.length})</summary><div class="hk-list" style="margin-top:8px">${used.slice().reverse().map((h) => `<div class="hk-row"><div class="hk-text">${esc(h.text)}</div>${h.postId ? `<button class="btn ghost sm" data-action="open-atelier" data-id="${h.postId}">Voir le post →</button>` : ''}</div>`).join('')}</div></details>` : ''}`;
 }
 
 // ================= ATELIER : un post de gauche à droite (post → critique → visuel → publication) =================
@@ -830,7 +905,8 @@ function renderAtelier() {
   const empty = (msg) => `<div class="at-empty small">${msg}</div>`;
 
   const card1 = p ? `
-      <header class="at-head"><span class="at-step">1</span><h3>Le post</h3><span class="badge s-${p.status}">${STATUS[p.status]}</span></header>
+      <header class="at-head"><span class="at-step">1</span><h3>Le post</h3><span class="row" style="gap:4px">${pillarTag(p.pillar)}<span class="badge s-${p.status}">${STATUS[p.status]}</span></span></header>
+      <div class="chips">${Object.entries(PILLAR_NAMES).map(([k, l]) => `<button class="chip sm ${p.pillar === k ? 'on' : ''}" data-action="set-pillar" data-id="${p.id}" data-pillar="${k}">${l}</button>`).join('')}</div>
       ${picker}
       ${postEditor(p)}
       ${PLACEHOLDER.test(p.text) ? '<div class="alert warn">Complète les [À COMPLÉTER] avant de valider.</div>' : ''}
@@ -838,7 +914,9 @@ function renderAtelier() {
     : `
       <header class="at-head"><span class="at-step">1</span><h3>Le post</h3></header>
       ${picker}
+      <div class="f">Catégorie<div class="chips">${[['', 'Auto'], ...Object.entries(PILLAR_NAMES)].map(([k, l]) => `<button class="chip ${(ui.pillar || '') === k ? 'on' : ''}" data-action="pillar" data-id="${k}">${l}</button>`).join('')}</div></div>
       <label class="f">Sujet ou idée<textarea id="instruction" rows="3" placeholder="Ex. le coût caché de la double saisie… (vide = l'IA choisit)">${esc(ui.instruction)}</textarea></label>
+      <p class="small" style="margin:0">Astuce : choisis d'abord un hook dans <a href="#" data-action="go" data-id="hooks">Hooks</a>, puis « Développer en post ».</p>
       ${j ? `<div class="job-inline small"><div class="progress"><span style="width:${Math.round((100 * j.done) / j.total)}%"></span></div><span>${esc(j.step)}</span></div>` : ''}
       <button class="btn primary" data-action="atelier-create" ${busy || !ui.data.settings.hasOpenaiKey ? 'disabled' : ''}>${ICONS.spark} Écrire le post avec l'IA</button>
       <details ${manual ? 'open' : ''}><summary class="small" style="cursor:pointer">… ou l'écrire moi-même</summary>
@@ -881,7 +959,7 @@ function renderAtelier() {
 
   view.innerHTML = `
   <header class="page-heading"><div><div class="eyebrow">ATELIER</div><h1>Un post, de gauche à droite</h1><p>Tu écris, tu critiques, l'IA corrige et retient, puis on fait le visuel et on programme.</p></div>
-    <div class="row heading-actions"><button class="btn" data-action="go" data-id="marche">${ICONS.radar} Marché concurrentiel</button></div></header>
+    <div class="row heading-actions"><button class="btn" data-action="go" data-id="veille">${ICONS.radar} Veille concurrentielle</button></div></header>
   <div class="at-board"><div class="at-flow">
     <article class="at-node">${card1}</article>${ARROW}
     <div class="at-col"><article class="at-node">${card2}</article>${sticky}</div>${ARROW}
@@ -2074,10 +2152,36 @@ const actions = {
     toast(`${r.approved} programmé(s)${r.skipped.length ? ` · ${r.skipped.length} à compléter d'abord` : ''}`);
   },
   async delete(id) { await api('DELETE', `/api/posts/${id}`); ui.lastCreated = ui.lastCreated.filter((x) => x !== id); await refresh(); },
+  pillar(k) { ui.pillar = k; render(); },
+  async 'set-pillar'(id, btn) { const p = ui.data.posts.find((x) => x.id === id); await api('PUT', `/api/posts/${id}`, { pillar: p?.pillar === btn.dataset.pillar ? '' : btn.dataset.pillar }); await refresh(); },
+  'post-vis-bg'(k) { ui.postVisBg = k; render(); },
+  'open-atelier'(id) { ui.studioPost = id; if ($('#postDrawer')?.open) $('#postDrawer').close(); actions.go('atelier'); },
+  'hook-pillar'(k) { ui.hookPillar = k; render(); },
+  async 'hook-ideas'() {
+    if (ui.job && !ui.job.finished) throw new Error('Un traitement est déjà en cours.');
+    ui.hookTopic = $('#hookTopic')?.value || '';
+    ui.job = { kind: 'hooks', total: 1, done: 0, step: 'Écriture des hooks…' }; render();
+    try { const r = await api('POST', '/api/hooks/ideas', { clientId: ui.clientId, pillar: ui.hookPillar || '', topic: ui.hookTopic, count: 20 }); ui.hookIdeas = r.hooks; }
+    finally { ui.job = null; render(); }
+  },
+  async 'hook-keep'(i) { const h = ui.hookIdeas[Number(i)]; if (!h) return; ui.hookIdeas = ui.hookIdeas.filter((x) => x !== h); await api('POST', `/api/clients/${ui.clientId}/hooks`, { ...h, status: 'liked' }); await refresh(); },
+  async 'hook-reject'(i) { const h = ui.hookIdeas[Number(i)]; if (!h) return; ui.hookIdeas = ui.hookIdeas.filter((x) => x !== h); render(); await api('POST', `/api/clients/${ui.clientId}/hooks`, { ...h, status: 'rejected' }); await refresh(); },
+  async 'hook-del'(hid) { await api('DELETE', `/api/clients/${ui.clientId}/hooks/${hid}`); await refresh(); },
+  async 'hook-develop'(hid) {
+    const h = (client().adn?.hookBank || []).find((x) => x.id === hid); if (!h) return;
+    const keep = { count: ui.count, imageMode: ui.imageMode, instruction: ui.instruction };
+    ui.count = 1; ui.imageMode = 'none'; ui.instruction = h.idea || '';
+    ui.hookDev = { hook: h.text, hookId: h.id, pillar: h.pillar };
+    try { await createAuto(); } finally { Object.assign(ui, keep); ui.hookDev = null; }
+    if (ui.studioPost) actions.go('atelier');
+  },
+  'da-bg'(k) { const da = ui.daDraft || { ...daOf() }; const set = new Set(da.backgrounds); if (set.has(k)) { if (set.size > 1) set.delete(k); } else set.add(k); ui.daDraft = { ...da, backgrounds: Object.keys(Vis.DA_BACKGROUNDS).filter((x) => set.has(x)) }; render(); },
+  'da-drop3'() { const da = ui.daDraft || { ...daOf() }; ui.daDraft = { ...da, colors: da.colors.slice(0, 2) }; render(); },
+  async 'da-save'() { await api('PUT', `/api/clients/${ui.clientId}/da`, ui.daDraft); ui.daDraft = null; await refresh(); toast('Direction artistique enregistrée'); },
   async 'atelier-create'() {
-    const n = ui.count;
-    ui.count = 1;
-    try { await createAuto(); } finally { ui.count = n; }
+    const keep = { count: ui.count, imageMode: ui.imageMode };
+    ui.count = 1; ui.imageMode = 'none';
+    try { await createAuto(); } finally { Object.assign(ui, keep); }
   },
   async 'chat-send'(id) {
     const box = $('#chatMsg');
@@ -2108,7 +2212,10 @@ const actions = {
     ui.job = { kind: 'post-visual', id, step: "L'IA prépare le visuel…" };
     render();
     try {
-      const r = await api('POST', `/api/posts/${id}/visual`, { kind, type: kind === 'carousel' ? '' : t, format: ui.vis.format, style: { preset: ui.vis.preset, accent: ui.vis.accent } });
+      const da = daOf();
+      const n = visualsOf().length;
+      const variant = ui.postVisBg || da.backgrounds[n % da.backgrounds.length] || 'clair';
+      const r = await api('POST', `/api/posts/${id}/visual`, { kind, type: kind === 'carousel' ? '' : t, format: ui.vis.format, style: { da: { colors: da.colors, backgrounds: da.backgrounds }, variant } });
       ui.job.step = 'On dessine et on attache…'; render();
       await refresh();
       await attachVisual(r.visual);
@@ -2240,6 +2347,14 @@ document.addEventListener('input', (e) => {
   }
   if (e.target.id === 'instruction') ui.instruction = e.target.value;
   if (e.target.id === 'chatMsg' && ui.studioPost) ui.chatDraft[ui.studioPost] = e.target.value;
+  if (e.target.dataset.daColor !== undefined) {
+    const da = ui.daDraft || { ...daOf() };
+    const colors = [...da.colors];
+    colors[Number(e.target.dataset.daColor)] = e.target.value;
+    ui.daDraft = { ...da, colors: colors.filter(Boolean) };
+    const btn = $('[data-action="da-save"]'); if (btn) btn.disabled = false;
+    for (const cv of view.querySelectorAll('[data-da-prev]')) Vis.renderVisual(cv, { kind: 'image', format: 'portrait', spec: SAMPLE_SPEC, style: { da: ui.daDraft, variant: cv.dataset.daPrev }, author: client().name });
+  }
   if (e.target.dataset.vpath) {
     const t = e.target;
     const v = visualsOf().find((x) => x.id === t.dataset.vid);
@@ -2330,10 +2445,18 @@ document.addEventListener('change', run(async (e) => {
     return;
   }
   if (t.dataset.library && t.files.length) {
+    await uploadLibrary([...t.files], t.dataset.library, t.dataset.category || '');
+    t.value = '';
+    return;
+  }
+  if (t.dataset.imgdesc) {
+    await api('PUT', `/api/images/${t.dataset.imgdesc}`, { description: t.value });
+    toast('Description enregistrée');
+  }
+}));
+
+async function uploadLibrary(files, kind, category) {
     if (ui.job && !ui.job.finished) throw new Error('Un traitement est déjà en cours.');
-    const files = [...t.files];
-    const kind = t.dataset.library;
-    const category = t.dataset.category || '';
     ui.job = { kind: 'upload', total: files.length, done: 0, step: 'Envoi…' };
     const failed = [];
     try {
@@ -2346,21 +2469,24 @@ document.addEventListener('change', run(async (e) => {
             const pages = await pdfToImages(f);
             if (!pages.length) throw new Error('PDF vide');
             await api('POST', '/api/images', { kind, category, clientId: ui.clientId, niche: currentNiche(), dataUrl: pages[0], pages, fileName: f.name });
-          } else {
-            await api('POST', '/api/images', { kind, category, clientId: ui.clientId, niche: currentNiche(), dataUrl: await resizeImage(f) });
-          }
+          } else if (f.type.startsWith('image/')) {
+            await api('POST', '/api/images', { kind, category, clientId: ui.clientId, niche: currentNiche(), dataUrl: await resizeImage(f), fileName: f.name });
+          } else throw new Error('format non accepté');
         } catch (err) { failed.push(`${f.name} (${err.message})`); }
         ui.job.done = i + 1;
       }
     } finally { ui.job = null; await refresh(); }
     toast(`${files.length - failed.length} fichier(s) ajouté(s)${failed.length ? ` · non ajoutés : ${failed.join(', ')}` : ''}`, failed.length > 0);
-    return;
-  }
-  if (t.dataset.imgdesc) {
-    await api('PUT', `/api/images/${t.dataset.imgdesc}`, { description: t.value });
-    toast('Description enregistrée');
-  }
-}));
+}
+// Glisser-déposer sur les colonnes de la page Visuels
+document.addEventListener('dragover', (e) => { const z = e.target.closest?.('[data-dropcat]'); if (!z) return; e.preventDefault(); z.classList.add('over'); });
+document.addEventListener('dragleave', (e) => { const z = e.target.closest?.('[data-dropcat]'); if (z && !z.contains(e.relatedTarget)) z.classList.remove('over'); });
+document.addEventListener('drop', (e) => {
+  const z = e.target.closest?.('[data-dropcat]'); if (!z) return;
+  e.preventDefault(); z.classList.remove('over');
+  const files = [...(e.dataTransfer?.files || [])];
+  if (files.length) uploadLibrary(files, 'inspiration', z.dataset.dropcat).catch((err) => toast(err.message, true));
+});
 
 document.addEventListener('submit', run(async (e) => {
   const form = e.target;

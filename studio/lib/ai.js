@@ -66,7 +66,8 @@ const RULES = `Règles de sortie :
 - Texte final du post LinkedIn uniquement, sans titre, sans guillemets, sans commentaire avant ou après.
 - Pas de markdown (pas de **gras**, pas de #titres). Sauts de ligne pour aérer.
 - 3 000 caractères maximum.
-- N'invente jamais de chiffres, de clients ou d'anecdotes : si une info réelle manque, écris « [À COMPLÉTER : ce qu'il faut] ».`;
+- N'invente jamais de chiffres, de clients ou d'anecdotes : si une info réelle manque, écris « [À COMPLÉTER : ce qu'il faut] ».
+- Pas de post de vente : ne cite ni le nom de l'entreprise ni l'offre de l'auteur, pas d'appel à acheter ou à prendre rendez-vous ; l'autorité vient de la valeur et de l'authenticité.`;
 
 // Traduit les erreurs OpenAI en consignes claires.
 function explain(status, err = {}) {

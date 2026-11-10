@@ -585,7 +585,7 @@ route('POST', '/api/images', async ({ db, settings, body }) => {
   const client = db.clients.find((c) => c.id === body.clientId);
   if (kind === 'mine' && !client) throw new HttpError(404, 'Client introuvable');
   // category (inspirations) : 'visual' (visuels et carrousels), 'banner' (bannières) ou 'image' (style des images générées)
-  const category = kind === 'inspiration' ? (['visual', 'banner'].includes(body.category) ? body.category : 'image') : '';
+  const category = kind === 'inspiration' ? (['visual', 'carousel', 'banner'].includes(body.category) ? body.category : 'image') : '';
   const pagesIn = (Array.isArray(body.pages) && body.pages.length ? body.pages : [body.dataUrl]).slice(0, 10);
   const pageKeys = [];
   for (const d of pagesIn) {
@@ -595,7 +595,7 @@ route('POST', '/api/images', async ({ db, settings, body }) => {
     pageKeys.push(k);
   }
   let description = '';
-  if (settings.openaiKey) description = await (kind === 'inspiration' ? describeInspiration(settings, pagesIn, category) : describeImage(settings, pagesIn[0], kind)).catch(() => '');
+  if (settings.openaiKey) description = await (kind === 'inspiration' ? describeInspiration(settings, pagesIn, category === 'carousel' ? 'visual' : category) : describeImage(settings, pagesIn[0], kind)).catch(() => '');
   const item = {
     id: newId('img'), kind, key: pageKeys[0], description, uses: 0, createdAt: now(),
     clientId: kind === 'mine' ? client.id : null,
@@ -760,6 +760,7 @@ route('POST', '/api/plan', async ({ db, settings, body }) => {
   const plan = await askJson(settings, ed.planPrompt({
     client, personaId: body.personaId, objective: body.objective, awareness: Number(body.awareness) || 0,
     topic: body.topic, idea: idea ? `${idea.title}${idea.angle ? ` — ${idea.angle}` : ''}` : '', inspiration: inspiration?.text,
+    pillar: body.pillar, hook: String(body.hook || '').trim().slice(0, 300),
     avoid: {
       angles: [...(body.avoid?.angles || []), ...recent.map((p) => p.plan?.angle?.type).filter(Boolean)].slice(-12),
       structures: [...(body.avoid?.structures || []), ...recent.map((p) => p.plan?.structureId).filter(Boolean)].slice(-12),
@@ -770,6 +771,9 @@ route('POST', '/api/plan', async ({ db, settings, body }) => {
   plan.structureName = ed.findStructure(plan.structureId).name;
   plan.personaId = body.personaId || '';
   plan.ideaId = body.ideaId || '';
+  plan.pillar = ed.PILLARS[body.pillar] ? body.pillar : (ed.PILLARS[plan.pillar] ? plan.pillar : '');
+  plan.hook = String(body.hook || '').trim().slice(0, 300);
+  plan.hookId = String(body.hookId || '');
   return json(plan);
 });
 
@@ -787,6 +791,9 @@ route('POST', '/api/write', async ({ db, settings, body }) => {
   const [post] = importPosts(db, client.id, [{ text, theme: (plan.topic || plan.angle?.idea || '').slice(0, 60), format: plan.postType || 'Texte', scheduledAt: body.scheduledAt || nextFreeSlot(db, client.id) }]);
   post.plan = plan;
   post.personaId = plan.personaId || '';
+  post.pillar = plan.pillar || '';
+  if (plan.hook && !text.startsWith(plan.hook)) post.text = ed.applyHook(text, plan.hook);
+  if (plan.hookId) { const h = (client.adn?.hookBank || []).find((x) => x.id === plan.hookId); if (h) { h.status = 'used'; h.postId = post.id; } }
   post.history = [{ at: now(), action: `Écrit par LinkedMotion (structure ${plan.structureId} · ${plan.structureName})` }];
   if (plan.ideaId) { const i = (client.adn?.ideas || []).find((x) => x.id === plan.ideaId); if (i) i.status = 'utilisée'; }
   return json(post);
@@ -916,6 +923,39 @@ route('POST', '/api/hooks/generate', async ({ db, settings, body }) => {
   return json({ hooks: (r.hooks || []).filter((h) => h.text), scored: false });
 });
 
+// ---- Banque de hooks : l'IA propose beaucoup de lignes, l'auteur garde celles qu'il aime, puis on en développe un post ----
+route('POST', '/api/hooks/ideas', async ({ db, settings, body }) => {
+  const client = clientOf(db, body.clientId);
+  const bank = client.adn?.hookBank || [];
+  const r = await askJson(settings, ed.hookIdeasPrompt({ client, pillar: body.pillar, topic: String(body.topic || '').trim(), count: Math.max(5, Math.min(30, Number(body.count) || 20)), liked: bank.filter((h) => h.status !== 'rejected').map((h) => h.text), rejected: bank.filter((h) => h.status === 'rejected').map((h) => h.text) }), { timeout: 55_000 });
+  const hooks = (r.hooks || []).filter((h) => h?.text).map((h) => ({ text: String(h.text).replace(/\*\*/g, '').trim().slice(0, 300), pillar: ed.PILLARS[h.pillar] ? h.pillar : (ed.PILLARS[body.pillar] ? body.pillar : ''), idea: String(h.idea || '').slice(0, 300) }));
+  return json({ hooks });
+});
+route('POST', '/api/clients/:id/hooks', async ({ client, body }) => {
+  client.adn ||= {};
+  const text = String(body.text || '').trim().slice(0, 300);
+  if (!text) throw new HttpError(400, 'Hook vide');
+  const status = body.status === 'rejected' ? 'rejected' : 'liked';
+  client.adn.hookBank = (client.adn.hookBank || []).filter((h) => h.text !== text);
+  client.adn.hookBank.push({ id: newId('hk'), text, pillar: ed.PILLARS[body.pillar] ? body.pillar : '', idea: String(body.idea || '').slice(0, 300), status, at: now() });
+  client.adn.hookBank = client.adn.hookBank.slice(-300);
+  return json(publicClient(client));
+});
+route('DELETE', '/api/clients/:id/hooks/:hid', async ({ client, params }) => {
+  client.adn ||= {};
+  client.adn.hookBank = (client.adn.hookBank || []).filter((h) => h.id !== params.hid);
+  return json(publicClient(client));
+});
+// Direction artistique du client : 2 ou 3 couleurs et les fonds utilisés à tour de rôle.
+route('PUT', '/api/clients/:id/da', async ({ client, body }) => {
+  client.adn ||= {};
+  const hex = (c) => (/^#[0-9a-f]{6}$/i.test(c || '') ? c : '');
+  const colors = (Array.isArray(body.colors) ? body.colors : []).map(hex).filter(Boolean).slice(0, 3);
+  const backgrounds = (Array.isArray(body.backgrounds) ? body.backgrounds : []).filter((b) => ['clair', 'fonce', 'couleur'].includes(b));
+  client.adn.da = { colors: colors.length >= 2 ? colors : ['#0E6B4A', '#14231C'], backgrounds: backgrounds.length ? backgrounds : ['clair', 'fonce', 'couleur'], notes: String(body.notes || '').slice(0, 500), updatedAt: now() };
+  return json(publicClient(client));
+});
+
 route('POST', '/api/hooks/optimize', async ({ db, settings, body }) => {
   const client = clientOf(db, body.clientId);
   const r = await askJson(settings, ed.optimizeHookPrompt({ client, personaId: body.personaId, hook: body.hook, mode: body.mode }), { timeout: 45_000 });
@@ -925,7 +965,8 @@ route('POST', '/api/hooks/optimize', async ({ db, settings, body }) => {
 
 // Inspirations concurrentes d'une catégorie : celles de la niche du client d'abord, puis les autres.
 const inspirationsFor = (db, client, category) => {
-  const list = db.images.filter((x) => x.kind === 'inspiration' && x.category === category && x.description);
+  const cats = category === 'visual' ? ['visual', 'carousel'] : [category];
+  const list = db.images.filter((x) => x.kind === 'inspiration' && cats.includes(x.category) && x.description);
   const mine = list.filter((x) => client.niche && (x.niche || '').toLowerCase() === client.niche.toLowerCase());
   return [...mine, ...list.filter((x) => !mine.includes(x))].slice(0, 8).map((x) => x.description);
 };

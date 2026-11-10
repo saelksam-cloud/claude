@@ -200,11 +200,33 @@ function drawSlide(ctx, d, st, sl, meta) {
   footer(ctx, d, st, meta);
 }
 
+// Direction artistique d'un client : 2 ou 3 couleurs, et 3 fonds possibles (clair, foncé, couleur) qu'on alterne.
+const lum = (hex) => { const n = parseInt(hex.slice(1), 16); const c = [n >> 16, (n >> 8) & 255, n & 255].map((x) => { x /= 255; return x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4; }); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; };
+const mix = (hex, to, k) => { const a = parseInt(hex.slice(1), 16); const b = parseInt(to.slice(1), 16); const ch = (s) => Math.round(((a >> s) & 255) * (1 - k) + ((b >> s) & 255) * k); return `#${[16, 8, 0].map((s) => ch(s).toString(16).padStart(2, '0')).join('')}`; };
+const ink = (bg) => (lum(bg) > 0.4 ? '#111827' : '#FFFFFF');
+export const DA_BACKGROUNDS = { clair: 'Fond clair', fonce: 'Fond foncé', couleur: 'Fond couleur' };
+export function styleFromDA(da, variant = 'clair') {
+  const [c1 = '#0E6B4A', c2 = '#14231C', c3] = da?.colors || [];
+  const dark = lum(c1) < lum(c2) ? c1 : c2; // la plus foncée des deux sert de fond « foncé »
+  const vivid = dark === c1 ? c2 : c1;
+  const third = c3 || (lum(vivid) > 0.5 ? mix(vivid, '#000000', 0.35) : mix(vivid, '#FFFFFF', 0.55));
+  if (variant === 'fonce') {
+    const bg = lum(dark) > 0.08 ? mix(dark, '#000000', 0.55) : dark;
+    return { bg, card: mix(bg, '#FFFFFF', 0.1), text: '#FFFFFF', sub: mix('#FFFFFF', bg, 0.3), accent: lum(vivid) > 0.12 ? vivid : third, onAccent: ink(lum(vivid) > 0.12 ? vivid : third) };
+  }
+  if (variant === 'couleur') {
+    const t = ink(vivid);
+    return { bg: vivid, card: t === '#FFFFFF' ? 'rgba(255,255,255,.14)' : 'rgba(0,0,0,.07)', text: t, sub: t === '#FFFFFF' ? mix('#FFFFFF', vivid, 0.2) : mix('#111827', vivid, 0.25), accent: c3 || (t === '#FFFFFF' ? '#FFFFFF' : dark), onAccent: ink(c3 || (t === '#FFFFFF' ? '#FFFFFF' : dark)) };
+  }
+  const accent = lum(vivid) < 0.5 ? vivid : dark;
+  return { bg: '#FFFFFF', card: mix(vivid, '#FFFFFF', 0.88), text: '#111827', sub: '#5B6470', accent, onAccent: ink(accent) };
+}
+
 export async function renderVisual(canvas, v, slideIndex = 0) {
   await Promise.all(['800 40px Poppins', '700 40px Poppins', '600 40px Poppins', '500 40px Poppins'].map((f) => document.fonts?.load(f).catch(() => {})));
   const d = FORMATS[v.format] || FORMATS.portrait;
-  const st = { ...(STYLES[v.style?.preset] || STYLES.clair) };
-  if (v.style?.accent) st.accent = v.style.accent;
+  const st = v.style?.da ? styleFromDA(v.style.da, v.style.variant) : { ...(STYLES[v.style?.preset] || STYLES.clair) };
+  if (!v.style?.da && v.style?.accent) st.accent = v.style.accent;
   canvas.width = d.w; canvas.height = d.h;
   const ctx = canvas.getContext('2d');
   ctx.fillStyle = st.bg; ctx.fillRect(0, 0, d.w, d.h);

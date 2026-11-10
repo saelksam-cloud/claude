@@ -22,6 +22,7 @@ const GLOBAL_RULES = `# Règles LinkedMotion (toujours)
 - INTERDIT : inventer des chiffres, des résultats, des clients, des témoignages ou des anecdotes personnelles. N'utilise QUE les preuves fournies et vérifiées. S'il manque une info réelle, écris [À COMPLÉTER : ce qu'il faut].
 - Aucune promesse de viralité. Pas de clichés LinkedIn (« Et si… », « Dans un monde où », « Saviez-vous que », « Voici pourquoi c'est important »).
 - Respecte strictement la voix du client plutôt qu'un style LinkedIn générique.
+- PAS DE POST DE VENTE : ne cite ni le nom de l'entreprise du client ni son offre, ne fais pas la promotion de ses services, pas d'appel à acheter ou à prendre rendez-vous. En 2026 les prospects fuient la pub : l'autorité vient de la valeur donnée et de l'authenticité. CTA = une question, une invitation à réagir ou à partager son expérience.
 
 # Masterclass Copywriting (Linka)
 ${KB.rules.copywriting.text.slice(0, 4200)}`;
@@ -103,7 +104,15 @@ export function pickExamplePosts({ query = '', seed = '', n = 3, exclude = [] })
 }
 
 // ---------- Prompts des étapes ----------
-export function planPrompt({ client, personaId, objective, awareness, topic, idea, avoid = {}, inspiration }) {
+// Les 3 catégories de posts (équilibre éditorial demandé par l'agence).
+export const PILLARS = {
+  authenticite: { name: 'Authenticité', text: "coulisses, vécu, doutes, erreurs, convictions personnelles, histoire vraie de l'auteur (aucune anecdote inventée : [À COMPLÉTER : …] si un fait manque)" },
+  valeur: { name: 'Valeur', text: 'conseil actionnable, méthode, cadre, erreurs à éviter, exemple concret : le lecteur repart avec quelque chose d\'utile' },
+  routine: { name: 'Routine', text: "le quotidien de l'auteur : habitudes, organisation, rituels de travail, outils, ce qu'il fait chaque semaine et pourquoi" },
+};
+export const pillarLine = (k) => (PILLARS[k] ? `Catégorie du post : ${PILLARS[k].name} (${PILLARS[k].text}).` : '');
+
+export function planPrompt({ client, personaId, objective, awareness, topic, idea, avoid = {}, inspiration, pillar, hook }) {
   const system = `Tu es le stratège éditorial de LinkedMotion. Avant toute rédaction, tu prépares le plan d'UN post LinkedIn pour ce client.
 ${adnText(client, { personaId })}
 
@@ -127,6 +136,8 @@ Réponds en JSON : { "topic": "", "angle": { "type": "", "idea": "", "target": "
     objective ? `Objectif du post : ${objective}` : '',
     awareness ? `Niveau de conscience visé : ${AWARENESS[awareness]}` : '',
     inspiration ? `Post de veille dont reprendre la mécanique (pas le sujet) :\n${inspiration.slice(0, 1200)}` : '',
+    pillarLine(pillar),
+    hook ? `Hook choisi par l'auteur (le post commencera exactement par lui ; construis le plan pour le tenir) : ${hook}` : '',
   ].filter(Boolean).join('\n');
   return { system, user };
 }
@@ -145,7 +156,7 @@ export function writePrompt({ client, personaId, plan, extra = {} }) {
     extra.niche ? `# Fond : posts qui marchent dans la niche du client (sujets, vocabulaire de la cible)\n${extra.niche}` : '',
     extra.module ? extra.module : '',
   ].filter(Boolean).join('\n\n');
-  const user = `Plan validé :\n${JSON.stringify(plan, null, 1)}\n\nRédige le post complet en suivant le plan et la structure. Le hook sera optimisé ensuite : écris une première version correcte.\nRéponds uniquement avec le texte du post.`;
+  const user = `Plan validé :\n${JSON.stringify(plan, null, 1)}\n\n${pillarLine(plan.pillar)}\n${plan.hook ? `Le post commence EXACTEMENT par ce hook (mot pour mot, en première ligne) : ${plan.hook}\n` : 'Le hook sera optimisé ensuite : écris une première version correcte.\n'}Rédige le post complet en suivant le plan et la structure.\nRéponds uniquement avec le texte du post.`;
   return { system, user };
 }
 
@@ -280,6 +291,24 @@ Règles : environ 10 mots, aucun emoji, compris immédiatement, fidèle à un po
 Modèles Linka à adapter :\n${templates.map((h) => `- [${h.family}] ${h.template}`).join('\n')}
 Réponds en JSON : { "hooks": [ { "text": "", "family": "" } ] }`;
   return { system, user: `Sujet : ${topic}\nÉcris ${count} hooks répartis entre ces familles : ${families.join(', ')}.` };
+}
+
+// Banque de hooks : beaucoup de lignes de hook, chacune avec l'idée du post qu'elle annonce, par catégorie.
+export function hookIdeasPrompt({ client, pillar, topic, count = 20, liked = [], rejected = [] }) {
+  const cats = PILLARS[pillar] ? [pillar] : Object.keys(PILLARS);
+  const system = `Tu écris des hooks LinkedIn en français pour ${client.name}. Chaque hook ouvre un futur post.
+${adnText(client, { includeProofs: true })}
+# Catégories
+${cats.map((k) => `- ${k} = ${PILLARS[k].name} : ${PILLARS[k].text}`).join('\n')}
+# Règles
+- Environ 6 à 12 mots, aucun emoji, compris immédiatement, ton de l'auteur, pas de cliché (« Et si… », « Saviez-vous »).
+- Variés : affirmation, chiffre (uniquement s'il est prouvé), aveu, contre-pied, question rare, liste, scène du quotidien.
+- AUCUN hook de vente : pas de nom d'entreprise, pas d'offre, pas de promesse commerciale.
+- Rien d'inventé : un hook qui suppose un fait personnel non fourni reste général ou contient [À COMPLÉTER].
+${liked.length ? `- Hooks que l'auteur a aimés (même goût, sans répéter) :\n${liked.slice(-15).map((h) => `  • ${h}`).join('\n')}` : ''}
+${rejected.length ? `- Hooks qu'il a écartés (évite ce style) :\n${rejected.slice(-15).map((h) => `  • ${h}`).join('\n')}` : ''}
+Réponds en JSON : { "hooks": [ { "text": "", "pillar": "${cats.join('|')}", "idea": "en 1 phrase, ce que dira le post" } ] }`;
+  return { system, user: `${topic ? `Sujet : ${topic}\n` : 'Sujets libres, tirés de l\'ADN, des problèmes de la cible et du quotidien de l\'auteur.\n'}Écris ${count} hooks${cats.length > 1 ? ', répartis entre les 3 catégories' : ''}.` };
 }
 
 export function optimizeHookPrompt({ client, personaId, hook, mode }) {
