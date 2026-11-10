@@ -246,6 +246,20 @@ export async function describeImage(settings, dataUrl, kind) {
   return text.slice(0, 600);
 }
 
+// Analyse d'une inspiration concurrente (une image, ou plusieurs pages d'un PDF de carrousel).
+const INSPIRATION_ASK = {
+  visual: "Visuel ou carrousel LinkedIn d'un concurrent (plusieurs images = pages d'un même carrousel). Décris en 3 à 5 phrases ce qui est réutilisable : type (checklist, schéma, comparatif, framework, carrousel…), structure et enchaînement des pages, quantité de texte par page, hiérarchie des titres, couleurs, typographie, éléments graphiques, et pourquoi c'est efficace. Pas de nom de personne ni de marque.",
+  banner: "Bannière LinkedIn d'un concurrent. Décris en 3 à 5 phrases sa construction réutilisable : ce qu'il y a à gauche, au centre et à droite (preuve sociale, promesse, appel à l'action, logos…), formulation de la promesse, couleurs, typographie, éléments décoratifs (flèches, bulles, surlignages), et ce qui la rend efficace. Pas de nom de personne ni de marque.",
+  image: "Visuel d'un post LinkedIn concurrent. Décris en 2 phrases son style réutilisable : type d'image (photo, carrousel, schéma, citation, capture…), cadrage, couleurs, texte incrusté, ambiance. Pas de nom de personne.",
+};
+export async function describeInspiration(settings, dataUrls, category = 'image') {
+  const { text } = await chat(settings, 'Tu analyses des visuels LinkedIn en français, de façon factuelle et utile pour un designer.', [
+    { type: 'text', text: INSPIRATION_ASK[category] || INSPIRATION_ASK.image },
+    ...dataUrls.slice(0, 4).map((url) => ({ type: 'image_url', image_url: { url, detail: 'low' } })),
+  ], { timeout: 45_000 });
+  return text.slice(0, 900);
+}
+
 // Choisit la photo de la photothèque qui colle le mieux au post (en évitant de répéter les mêmes).
 export async function chooseImage(settings, { text, images }) {
   const list = images.map((im, i) => `${i + 1}. ${im.description || 'photo sans description'} (déjà utilisée ${im.uses || 0} fois)`).join('\n');

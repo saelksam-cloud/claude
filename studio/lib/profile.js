@@ -9,11 +9,12 @@ const BANNER_RULES = `Règles d'une bannière LinkedIn qui convertit (format 158
 - Une phrase près du bouton Suivre (« Je partage mes conseils chaque semaine »).
 - Ton et adresse du client (tu / vous). Pas d'emoji dans les textes. Rien d'inventé.`;
 
-export function bannerCopyPrompt({ client, templateName }) {
+export function bannerCopyPrompt({ client, templateName, inspirations = [] }) {
   const system = `Tu es directeur artistique et copywriter spécialisé dans les bannières LinkedIn.
 ${adnText(client, { includeProofs: true })}
 
 ${BANNER_RULES}
+${inspirations.length ? `\nBannières concurrentes qui marchent (s'inspirer de leur construction et de leurs formulations, sans copier) :\n${inspirations.map((d) => `- ${d}`).join('\n')}\n` : ''}
 Réponds en JSON : { "variants": [ { "headline": "ligne 1\\nligne 2 avec *mots clés*", "proof": "", "subline": "", "steps": ["", "", ""], "pills": ["", "", ""], "cta": "", "followText": "", "bubble": "Comme eux, contactez-moi !", "brand": "", "title": "métier en 1 à 2 mots", "angle": "en 5 mots, l'idée de cette variante" } ] }`;
   const user = `Modèle visuel choisi : ${templateName}. Propose 3 variantes vraiment différentes (bénéfice, autorité, résultat).`;
   return { system, user };
@@ -42,17 +43,18 @@ const VISUAL_SPECS = `Types de visuels et leur contenu JSON (textes COURTS, lisi
 
 const POST_RULES = `Le post accompagne le visuel : hook fort (≤ 12 mots, pas d'emoji), il développe l'idée du visuel sans le recopier, 100 à 180 mots, phrases courtes, aéré, fin par une question ou un CTA adapté. Pas de markdown. Aucun chiffre ni anecdote inventés (sinon [À COMPLÉTER : …]).`;
 
-export function visualPlanPrompt({ client, topic, count, kind, personaText }) {
+export function visualPlanPrompt({ client, topic, count, kind, personaText, inspirations = [] }) {
   const system = `Tu es le directeur éditorial de LinkedMotion. Tu prépares des visuels « à valeur » (schémas, checklists, comparatifs, frameworks) qui apportent une vraie réponse aux prospects du client.
 ${adnText(client, { includeProofs: true })}
 ${personaText || ''}
+${inspirations.length ? `Visuels et carrousels concurrents qui marchent (privilégie ces types et ces formats) :\n${inspirations.map((d) => `- ${d}`).join('\n')}\n` : ''}
 Réponds en JSON : { "subject": "", "items": [ { "subtopic": "sous-sujet précis et utile", "type": "liste|comparaison|process|matrice|chiffre|citation", "why": "≤ 15 mots" } ] }`;
   const user = `${topic ? `Sujet : ${topic}` : 'Choisis toi-même un sujet utile tiré des piliers, des problèmes de la cible ou des idées du client.'}
 ${kind === 'carousel' ? 'Prévois UN carrousel : un seul item, type "carousel".' : `Découpe-le en ${count} sous-sujets complémentaires, avec des types de visuels variés (évite « chiffre » sans preuve vérifiée).`}`;
   return { system, user };
 }
 
-export function visualItemPrompt({ client, subject, subtopic, type, kind, personaText }) {
+export function visualItemPrompt({ client, subject, subtopic, type, kind, personaText, inspirations = [] }) {
   const system = `Tu crées un visuel LinkedIn à valeur et le post qui l'accompagne, pour ${client.name}.
 ${adnText(client, { includeProofs: true })}
 ${personaText || ''}
@@ -62,7 +64,8 @@ ${kind === 'carousel' ? `Carrousel (document PDF) : 6 à 9 diapositives.
 - Dernière : { "kind": "end", "title": "récap ≤ 8 mots", "text": "≤ 25 mots, pas d'appel à l'action commercial par défaut" }
 Réponds en JSON : { "spec": { "type": "carousel", "slides": [ … ] }, "post": "" }` : `${VISUAL_SPECS}
 Réponds en JSON : { "spec": { … le visuel du type demandé … }, "post": "" }`}
-${POST_RULES}`;
+${POST_RULES}
+${inspirations.length ? `\nVisuels concurrents qui marchent (reprends leur densité de texte, leur structure et leur ton, sans copier) :\n${inspirations.map((d) => `- ${d}`).join('\n')}` : ''}`;
   const user = `Sujet : ${subject}\nSous-sujet : ${subtopic}\n${kind === 'carousel' ? '' : `Type de visuel : ${type}`}`;
   return { system, user };
 }

@@ -1,5 +1,6 @@
 // Link Motion Studio — interface (vanilla JS, aucun build).
 import * as Banner from '/banner.js';
+import * as BE from '/banner-editor.js';
 import * as Vis from '/visuals.js';
 import { calendarMarkup, calendarDate } from '/calendar.js';
 const $ = (sel, el = document) => el.querySelector(sel);
@@ -43,6 +44,7 @@ const ui = {
   job: null,
   relay: null,
   lastCreated: [],
+  selected: new Set(),
   author: '',          // concurrent choisi dans Veille / Étude ('' = tous)
   inspireFrom: store.get('inspireFrom', ''), // concurrent choisi dans Créer
   imageMode: store.get('imageMode', 'none'),   // none | library | ai
@@ -66,6 +68,7 @@ const ui = {
   banner: null,
   bannerVariants: [],
   bannerOverlay: true,
+  visTab: 'create',
   vis: store.get('vis', { kind: 'image', count: 3, format: 'portrait', preset: 'clair', accent: '' }),
   visTopic: '',
   visSlide: {},
@@ -468,7 +471,53 @@ async function saveRelayPosts(texts) {
 
 // ---------- Images ----------
 const myPhotos = () => ui.data.images.filter((im) => im.kind === 'mine' && im.clientId === ui.clientId);
-const inspirationImages = (niche) => ui.data.images.filter((im) => im.kind === 'inspiration' && sameNiche(im.niche, niche));
+const inspirationImages = (niche, category = 'image') => ui.data.images.filter((im) => im.kind === 'inspiration' && sameNiche(im.niche, niche) && (im.category || 'image') === category);
+
+// Bloc « Inspirations » réutilisé dans Visuels, Bannière et Photothèque. Accepte images et PDF (carrousels).
+const INSP = {
+  visual: { title: '🎨 Inspirations : visuels et carrousels concurrents', hint: "Ajoute des captures ou des PDF de carrousels qui marchent dans la niche. L'IA analyse leur structure, leur densité de texte et leur style, et s'en inspire pour tes visuels (sans copier)." },
+  banner: { title: '🎨 Inspirations : bannières concurrentes', hint: "Ajoute des captures de bannières qui te plaisent. L'IA analyse leur construction (preuve sociale, promesse, appel à l'action, décor) et s'en inspire pour proposer tes textes." },
+  image: { title: '🎨 Style des images générées', hint: "Captures d'images de posts concurrents : l'IA en retient le style (cadrage, couleurs, ambiance) pour les images qu'elle génère." },
+};
+function inspirationsCard(category) {
+  const niche = currentNiche();
+  const list = inspirationImages(niche, category);
+  const j = ui.job?.kind === 'upload' ? ui.job : null;
+  return `<div class="card stack">
+    <div class="row between"><h3 style="margin:0">${INSP[category].title} · ${esc(niche || 'sans niche')} (${list.length})</h3>
+      <label class="btn primary">+ Ajouter (images ou PDF)<input type="file" accept="image/*,application/pdf" multiple data-library="inspiration" data-category="${category}" hidden></label></div>
+    <p class="small" style="margin:0">${INSP[category].hint} Partagé avec tous les clients de la niche.</p>
+    ${allNiches().length > 1 ? nicheChips(ui.data.images.filter((im) => im.kind === 'inspiration' && (im.category || 'image') === category)) : ''}
+    ${j ? `<div class="row"><div class="progress"><span style="width:${Math.round((100 * j.done) / j.total)}%"></span></div><span class="small">${esc(j.step)}</span></div>` : ''}
+    ${list.length ? `<div class="img-grid">${list.map((im) => `
+      <figure class="img-card">
+        <div class="insp-thumb"><img src="/uploads/${esc(im.key)}" alt="" loading="lazy">${im.pages?.length > 1 ? `<span class="insp-pages">📄 ${im.pages.length} pages</span>` : ''}</div>
+        ${im.pages?.length > 1 ? `<details><summary class="small" style="cursor:pointer;padding:0 8px">Voir les pages</summary><div class="thumbs" style="padding:6px 8px">${im.pages.map((k) => `<a href="/uploads/${esc(k)}" target="_blank" rel="noopener" class="thumb"><img src="/uploads/${esc(k)}" alt=""></a>`).join('')}</div></details>` : ''}
+        <figcaption>
+          <textarea rows="4" data-imgdesc="${im.id}" placeholder="Analyse de l'IA (modifiable)" data-novoice>${esc(im.description)}</textarea>
+          <div class="row between"><span class="small">${esc(im.fileName || '')}</span><button class="btn ghost sm danger" data-action="del-image" data-id="${im.id}" title="Supprimer">🗑</button></div>
+        </figcaption>
+      </figure>`).join('')}</div>` : '<p class="empty">Aucune inspiration pour l\'instant.</p>'}
+  </div>`;
+}
+
+// PDF → images (une par page, 10 max), avec la bibliothèque PDF de Mozilla intégrée à l'app.
+async function pdfToImages(file, max = 10) {
+  const pdfjs = await import('/vendor/pdf.min.mjs');
+  pdfjs.GlobalWorkerOptions.workerSrc = '/vendor/pdf.worker.min.mjs';
+  const doc = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
+  const out = [];
+  for (let i = 1; i <= Math.min(doc.numPages, max); i++) {
+    const page = await doc.getPage(i);
+    const base = page.getViewport({ scale: 1 });
+    const vp = page.getViewport({ scale: Math.min(2, 1080 / base.width) });
+    const cv = document.createElement('canvas');
+    cv.width = Math.round(vp.width); cv.height = Math.round(vp.height);
+    await page.render({ canvasContext: cv.getContext('2d'), viewport: vp }).promise;
+    out.push(cv.toDataURL('image/jpeg', 0.82));
+  }
+  return out;
+}
 
 // mode 'library' : la meilleure photo de la photothèque ; mode 'ai' : image générée (2 appels pour tenir dans les délais).
 async function addImage(postId, mode) {
@@ -511,8 +560,8 @@ function renderImages() {
         </figcaption>
       </figure>`).join('')}</div>` : '';
   view.innerHTML = `
-    <h2>Images</h2>
-    <p class="sub">Tes photos servent à illustrer tes posts. Les visuels des concurrents servent de modèle de style aux images générées par l'IA.</p>
+    <h2>Photothèque</h2>
+    <p class="sub">Les photos du client pour illustrer ses posts, et le style de référence des images générées par l'IA. Les inspirations de visuels et de bannières sont dans leurs sections.</p>
     ${j ? `<div class="row" style="margin-bottom:12px"><div class="progress"><span style="width:${Math.round((100 * j.done) / j.total)}%"></span></div><span class="small">${esc(j.step)}</span></div>` : ''}
     <div class="card stack">
       <div class="row between"><h3 style="margin:0">📸 Photos de ${esc(c.name)} (${mine.length})</h3>
@@ -520,13 +569,8 @@ function renderImages() {
       <p class="small" style="margin:0">Toi, ton setup, ton bureau, tes événements… L'IA décrit chaque photo et choisit la plus adaptée à chaque post. Une même photo peut resservir.</p>
       ${grid(mine, 'mine') || '<p class="empty">Aucune photo pour l\'instant.</p>'}
     </div>
-    <div class="card stack">
-      <div class="row between"><h3 style="margin:0">🎨 Visuels concurrents · ${esc(niche || 'sans niche')} (${insp.length})</h3>
-        <label class="btn">+ Ajouter des visuels<input type="file" accept="image/*" multiple data-library="inspiration" hidden></label></div>
-      <p class="small" style="margin:0">Fais des captures des images des posts concurrents qui marchent. L'IA en retient le style (type de visuel, cadrage, couleurs) pour tes images générées. Partagé avec tous les clients de la niche.</p>
-      ${nicheChips()}
-      ${grid(insp, 'inspiration') || '<p class="empty">Aucun visuel pour l\'instant.</p>'}
-    </div>`;
+    ${inspirationsCard('image')}
+`;
 }
 
 // ================= POSTS =================
@@ -535,6 +579,8 @@ function renderPosts() {
   const by = (s) => posts.filter((p) => (s === 'review' ? ['review', 'draft', 'rejected'].includes(p.status) : p.status === s));
   const tabs = [['review', 'À valider'], ['approved', 'Programmés'], ['published', 'Publiés'], ['all', 'Tous']];
   const shown = ui.filter === 'all' ? posts : by(ui.filter);
+  for (const id of [...ui.selected]) if (!shown.some((p) => p.id === id)) ui.selected.delete(id); // la sélection suit le filtre affiché
+  const selCount = ui.selected.size;
   view.innerHTML = `
     <div class="row between" style="margin-bottom:16px">
       <div class="page-heading"><div><div class="eyebrow">SUIVI ÉDITORIAL</div><h1>Posts</h1><p>Relis, ajuste et valide les posts de ton client.</p></div></div>
@@ -542,6 +588,12 @@ function renderPosts() {
     </div>
     ${ui.filter === 'approved' ? `<div class="alert ok" style="margin-bottom:12px">Les posts programmés restent dans l'app et sont publiés sur LinkedIn à l'heure prévue (vérification toutes les 15 minutes). C'est normal qu'ils n'apparaissent pas dans les « posts programmés » de LinkedIn : ils y arrivent directement, publiés, au bon moment.</div>` : ''}
     <div class="chips" style="margin-bottom:16px">${tabs.map(([k, l]) => `<button class="chip ${ui.filter === k ? 'on' : ''}" data-action="filter" data-id="${k}">${l}<b>${k === 'all' ? posts.length : by(k).length}</b></button>`).join('')}</div>
+    ${shown.length ? `<div class="bulk-bar">
+      <label class="bulk-all"><input type="checkbox" data-select-all ${shown.every((p) => ui.selected.has(p.id)) ? 'checked' : ''}> Tout sélectionner (${shown.length})</label>
+      ${selCount ? `<span class="small"><b>${selCount}</b> sélectionné${selCount > 1 ? 's' : ''}</span>
+        <button class="btn danger sm" data-action="bulk-delete">🗑 Supprimer la sélection</button>
+        <button class="btn ghost sm" data-action="bulk-clear">Annuler</button>` : '<span class="small">Coche des posts pour les supprimer en une fois.</span>'}
+    </div>` : ''}
     ${shown.length ? shown.map((post) => postCard(post)).join('') : '<div class="card empty">Aucun post ici. <a href="#" data-action="go" data-id="create">Créer des posts</a></div>'}`;
 }
 
@@ -575,8 +627,9 @@ function postCard(p, detail = false) {
       ${p.image ? `<img class="li-img" src="/uploads/${esc(p.image)}" alt="${esc(p.altText)}">` : ''}
     </div>`;
   return `
-  <article class="post ${detail ? 'post-detail' : 'post-summary'}" ${detail ? '' : `id="${p.id}"`}>
+  <article class="post ${detail ? 'post-detail' : 'post-summary'} ${!detail && ui.selected.has(p.id) ? 'selected' : ''}" ${detail ? '' : `id="${p.id}"`}>
     <div>
+      ${detail ? '' : `<label class="post-check" title="Sélectionner"><input type="checkbox" data-select="${p.id}" ${ui.selected.has(p.id) ? 'checked' : ''} aria-label="Sélectionner ce post"></label>`}
       ${editing ? postEditor(p) : preview}
       ${detail && p.plan ? strategyPanel(p) : ''}
       ${detail && ui.hooksOpen.has(p.id) ? hooksPanel(p) : ''}
@@ -947,60 +1000,86 @@ function renderHooks() {
 
 // ================= PROFIL & BANNIÈRE =================
 const newBanner = () => ({ name: `Bannière ${client().name}`, templateId: 'promesse', fields: { ...Banner.DEFAULT_FIELDS, brand: client().company || client().name }, style: {}, images: [] });
-const BANNER_FIELDS = [['proof', 'Preuve sociale (haut gauche)'], ['headline', 'Promesse — *mot* = couleur · [[mot]] = surligné · __mot__ = souligné', 2], ['subline', 'Ligne de soutien / rôle'], ['steps', 'Étapes (séparées par des virgules)'],
-  ['pills', 'Compétences en pastilles (virgules)'], ['title', 'Métier en gros (modèle « Métier en bloc »)'], ['brand', 'Marque (*mot* = couleur)'], ['cta', 'Appel à l\'action (RDV / lien en sélection)'],
-  ['bubble', 'Bulle (« Comme eux, contactez-moi ! »)'], ['followText', 'Phrase près du bouton Suivre'], ['logosTitle', 'Titre de la barre de logos']];
-
-let bannerTimer;
-const redrawBanner = () => {
-  clearTimeout(bannerTimer);
-  bannerTimer = setTimeout(() => { const c = $('#bannerCanvas'); if (c && ui.banner) Banner.renderBanner(c, ui.banner, { overlay: ui.bannerOverlay }); }, 120);
-};
+// Bannière éditable façon Canva : calques déplaçables, panneau de propriétés, textes de l'IA, export PNG.
+function ensureBannerElements(b) {
+  if (!Array.isArray(b.elements) || !b.elements.length) b.elements = Banner.templateElements(b.templateId || 'promesse', b.fields || {}, b.images || []);
+  b.style ||= {};
+  if (!b.style.preset) b.style.preset = Banner.TEMPLATES.find((t) => t.id === b.templateId)?.preset || 'mint';
+  return b;
+}
+// Textes actuels des calques ayant un rôle (pour les garder quand on change de mise en page).
+function fieldsFromElements(els) {
+  const f = {};
+  const strip = (t) => t.replace(/\s+↓$/, '').replace(/^▶ /, '').replace(/^🔔 /, '');
+  for (const e of els) {
+    if (e.type !== 'text' || !e.role) continue;
+    if (e.role === 'steps') f.steps = e.text.replace(/^✦\s*/, '').split(/\s*➜\s*/).join(', ');
+    else if (e.role.startsWith('pill-')) f.pills = [f.pills, e.text].filter(Boolean).join(', ');
+    else f[{ follow: 'followText' }[e.role] || e.role] = strip(e.text);
+  }
+  return f;
+}
 
 function renderBannerView() {
   const c = client();
-  const tabs = `<div class="chips" style="margin-bottom:16px"><button class="chip ${ui.bannerTab === 'banner' ? 'on' : ''}" data-action="banner-tab" data-id="banner">Bannière</button><button class="chip ${ui.bannerTab === 'profile' ? 'on' : ''}" data-action="banner-tab" data-id="profile">Optimisation du profil</button></div>`;
-  if (ui.bannerTab === 'profile') { view.innerHTML = `<h2>Profil & bannière · ${esc(c.name)}</h2><p class="sub">Audit et réécriture du profil LinkedIn à partir de l'ADN du client.</p>${tabs}${profileAuditHtml(c)}`; return; }
-  if (!ui.banner || ui.banner.clientId && ui.banner.clientId !== c.id) ui.banner = newBanner();
-  const b = ui.banner;
+  const nInsp = inspirationImages(currentNiche(), 'banner').length;
+  const tabs = `<div class="chips" style="margin-bottom:16px">${[['banner', 'Bannière'], ['insp', `Inspirations<b>${nInsp}</b>`], ['profile', 'Optimisation du profil']].map(([k, l]) => `<button class="chip ${ui.bannerTab === k ? 'on' : ''}" data-action="banner-tab" data-id="${k}">${l}</button>`).join('')}</div>`;
+  const head = `<h2>Profil & bannière · ${esc(c.name)}</h2>`;
+  if (ui.bannerTab === 'profile') { view.innerHTML = `${head}<p class="sub">Audit et réécriture du profil LinkedIn à partir de l'ADN du client.</p>${tabs}${profileAuditHtml(c)}`; return; }
+  if (ui.bannerTab === 'insp') { view.innerHTML = `${head}<p class="sub">Les bannières concurrentes qui servent de référence aux propositions de l'IA.</p>${tabs}${inspirationsCard('banner')}`; return; }
+  if (!ui.banner || (ui.banner.clientId && ui.banner.clientId !== c.id)) { ui.banner = ensureBannerElements(newBanner()); BE.resetHistory(); }
+  const b = ensureBannerElements(ui.banner);
   const saved = (ui.data.banners || []).filter((x) => x.clientId === c.id);
-  const preset = b.style.preset || Banner.TEMPLATES.find((t) => t.id === b.templateId)?.preset;
+  const preset = b.style.preset;
   view.innerHTML = `
-    <h2>Profil & bannière · ${esc(c.name)}</h2>
-    <p class="sub">Bannière LinkedIn 1584 × 396 px : textes exacts et modifiables, export PNG prêt à mettre sur le profil.</p>
+    ${head}
+    <p class="sub">Clique sur un élément pour le modifier, glisse-le pour le déplacer, tire la poignée pour l'agrandir. Export PNG au format LinkedIn (1584 × 396).${nInsp ? ` L'IA s'inspire de ${nInsp} bannière${nInsp > 1 ? 's' : ''} concurrente${nInsp > 1 ? 's' : ''}.` : ''}</p>
     ${tabs}
-    <div class="card stack">
-      <canvas id="bannerCanvas" class="banner-canvas" width="1584" height="396"></canvas>
+    <div class="card stack be-editor" id="bannerEditor">
+      <div class="be-toolbar">
+        <button type="button" class="btn sm" data-be-add="text" title="Ajouter un texte"><b>T</b> Texte</button>
+        <button type="button" class="btn sm" data-be-add="pill">◯ Pastille</button>
+        <label class="btn sm">🏷 Logos<input type="file" accept="image/*" multiple data-be-file="logo" hidden></label>
+        <label class="btn sm">👤 Photos<input type="file" accept="image/*" multiple data-be-file="avatar" hidden></label>
+        <label class="btn sm">🖼 Image<input type="file" accept="image/*" data-be-file="image" hidden></label>
+        <button type="button" class="btn sm" data-be-add="shape">▭ Forme</button>
+        <button type="button" class="btn sm" data-be-add="arrow">⤵ Flèche</button>
+        <span class="be-sep"></span>
+        ${['🔔', '✦', '➜', '↓', '✓', '⭐'].map((e) => `<button type="button" class="btn sm ghost" data-be-add="emoji" data-val="${e}" title="Ajouter ${e}">${e}</button>`).join('')}
+        <span class="be-sep"></span>
+        <button type="button" class="btn sm ghost" data-be="undo" title="Annuler (Ctrl+Z)">↶</button>
+        <button type="button" class="btn sm ghost" data-be="redo" title="Rétablir (Ctrl+Y)">↷</button>
+      </div>
+      <div class="be-stage"><canvas id="bannerCanvas" class="banner-canvas" width="1584" height="396"></canvas><div class="be-overlay"></div></div>
       <div class="row between">
-        <div class="chips">${Banner.TEMPLATES.map((t) => `<button class="chip ${t.id === b.templateId ? 'on' : ''}" data-action="banner-template" data-id="${t.id}" title="${esc(t.hint)}">${esc(t.name)}</button>`).join('')}</div>
         <div class="row">
+          <label class="f be-inline">Fond<select id="bannerPreset">${Object.entries(Banner.PRESETS).map(([k, v]) => `<option value="${k}" ${k === preset && !b.style.bgImage ? 'selected' : ''}>${esc(v.name)}</option>`).join('')}${b.style.bgImage ? '<option selected>Image importée</option>' : ''}</select></label>
+          <label class="f be-inline">Accent<input type="color" id="bannerAccent" value="${esc(b.style.accent || Banner.PRESETS[preset]?.accent || '#2FBF71')}"></label>
+          <label class="btn sm">Fond image<input type="file" accept="image/*" data-be-file="bg" hidden></label>
+          ${b.style.bgImage ? '<button class="btn sm ghost" data-action="banner-bg-clear">Retirer le fond image</button>' : ''}
           <label class="small"><input type="checkbox" id="bannerOverlay" ${ui.bannerOverlay ? 'checked' : ''} style="width:auto"> Zone de la photo</label>
-          <button class="btn primary" data-action="banner-ai">✨ Proposer les textes (IA)</button>
+        </div>
+        <div class="row">
+          <button class="btn primary" data-action="banner-ai">✨ Textes par l'IA</button>
           <button class="btn" data-action="banner-save">💾 Enregistrer</button>
-          <button class="btn primary" data-action="banner-download">⬇ Télécharger PNG</button>
+          <button class="btn primary" data-action="banner-download">⬇ PNG</button>
         </div>
       </div>
-    </div>
-    ${ui.bannerVariants.length ? `<div class="card stack"><h3 style="margin:0">Propositions de l'IA</h3><div class="grid3">${ui.bannerVariants.map((v, i) => `<div class="variant"><div class="small"><b>${esc(v.angle || `Variante ${i + 1}`)}</b></div><div class="vhook">${esc(v.headline).replace(/\n/g, '<br>')}</div><div class="small">${esc(v.proof || '')}</div><button class="btn soft sm" data-action="banner-variant" data-id="${i}">Utiliser</button></div>`).join('')}</div></div>` : ''}
-    <div class="two-col banner-cols">
-      <div class="card stack">
-        <h3 style="margin:0">Style</h3>
-        <label class="f">Fond<select id="bannerPreset">${Object.entries(Banner.PRESETS).map(([k, v]) => `<option value="${k}" ${k === preset ? 'selected' : ''}>${esc(v.name)}</option>`).join('')}</select></label>
-        <label class="f">Couleur d'accent<input type="color" id="bannerAccent" value="${esc(b.style.accent || Banner.PRESETS[preset]?.accent || '#2FBF71')}" style="height:42px;padding:4px"></label>
-        <h3 style="margin:8px 0 0">Images</h3>
-        <div class="row"><label class="btn sm">+ Logos clients / médias<input type="file" accept="image/*" multiple data-banner-img="logo" hidden></label><label class="btn sm">+ Photos (preuve sociale)<input type="file" accept="image/*" multiple data-banner-img="avatar" hidden></label></div>
-        <div class="thumbs">${b.images.map((im, i) => `<div class="thumb on" style="position:relative;background:#fff"><img src="${im.src}" alt="" style="object-fit:contain"><button class="btn sm" data-action="banner-img-del" data-id="${i}" style="position:absolute;top:2px;right:2px;padding:0 6px">×</button></div>`).join('')}</div>
-        <p class="small" style="margin:0">Logos : PNG à fond transparent de préférence. Photos de personnes accompagnées : uniquement avec leur accord.</p>
-        ${saved.length ? `<h3 style="margin:8px 0 0">Bannières enregistrées</h3>${saved.map((x) => `<div class="row between vitem"><a href="#" data-action="banner-load" data-id="${x.id}">${esc(x.name)}</a><button class="btn ghost sm danger" data-action="banner-del" data-id="${x.id}">🗑</button></div>`).join('')}` : ''}
-        <button class="btn ghost sm" data-action="banner-new" style="align-self:flex-start">+ Nouvelle bannière</button>
+      <div class="row"><span class="small">Mise en page de départ :</span>${Banner.TEMPLATES.map((t) => `<button class="chip ${t.id === b.templateId ? 'on' : ''}" data-action="banner-template" data-id="${t.id}" title="${esc(t.hint)}">${esc(t.name)}</button>`).join('')}</div>
+      <div class="banner-cols two-col">
+        <div class="be-panel card" style="margin:0"></div>
+        <div class="stack">
+          ${ui.bannerVariants.length ? `<div class="card stack" style="margin:0"><h3 style="margin:0">Propositions de l'IA</h3>${ui.bannerVariants.map((v, i) => `<div class="variant"><div class="small"><b>${esc(v.angle || `Variante ${i + 1}`)}</b></div><div class="vhook">${esc(v.headline).replace(/\n/g, '<br>')}</div><div class="small">${esc(v.proof || '')}</div><button class="btn soft sm" data-action="banner-variant" data-id="${i}">Appliquer à la bannière</button></div>`).join('')}</div>` : ''}
+          <div class="card stack" style="margin:0">
+            <label class="f">Nom de la bannière<input id="bannerName" value="${esc(b.name || '')}" data-novoice></label>
+            ${saved.length ? `<h3 style="margin:4px 0 0">Bannières enregistrées</h3>${saved.map((x) => `<div class="row between vitem"><a href="#" data-action="banner-load" data-id="${x.id}">${esc(x.name)}${x.id === b.id ? ' (ouverte)' : ''}</a><button class="btn ghost sm danger" data-action="banner-del" data-id="${x.id}">🗑</button></div>`).join('')}` : ''}
+            <button class="btn ghost sm" data-action="banner-new" style="align-self:flex-start">+ Nouvelle bannière</button>
+            <p class="small" style="margin:0">Photos de personnes accompagnées : uniquement avec leur accord.</p>
+          </div>
+        </div>
       </div>
-      <form class="card stack" id="bannerForm" onsubmit="return false">
-        <h3 style="margin:0">Textes</h3>
-        <label class="f">Nom de la bannière<input name="_name" value="${esc(b.name)}" data-novoice></label>
-        ${BANNER_FIELDS.map(([k, l, rows]) => `<label class="f">${l}${rows ? `<textarea name="${k}" rows="${rows}">${esc(b.fields[k] || '')}</textarea>` : `<input name="${k}" value="${esc(b.fields[k] || '')}">`}</label>`).join('')}
-      </form>
     </div>`;
-  redrawBanner();
+  BE.mountEditor($('#bannerEditor'), b, { overlay: ui.bannerOverlay, onChange: () => { ui.bannerDirty = true; } });
 }
 
 function profileAuditHtml(c) {
@@ -1067,9 +1146,13 @@ function renderVisualsView() {
   const o = ui.vis;
   const j = ui.job?.kind === 'visuals' ? ui.job : null;
   const list = visualsOf().slice(0, 12);
+  const nInsp = inspirationImages(currentNiche(), 'visual').length;
+  const tabs = `<div class="chips" style="margin-bottom:16px"><button class="chip ${ui.visTab !== 'insp' ? 'on' : ''}" data-action="vis-tab" data-id="create">Créer</button><button class="chip ${ui.visTab === 'insp' ? 'on' : ''}" data-action="vis-tab" data-id="insp">Inspirations<b>${nInsp}</b></button></div>`;
+  if (ui.visTab === 'insp') { view.innerHTML = `<h2>Visuels à valeur</h2><p class="sub">Les visuels et carrousels concurrents qui servent de référence.</p>${tabs}${inspirationsCard('visual')}`; return; }
   view.innerHTML = `
     <h2>Visuels à valeur</h2>
-    <p class="sub">Schémas, checklists, comparatifs, frameworks et carrousels qui apportent une vraie réponse aux prospects de ${esc(c.name)}, chacun avec son post. Textes exacts et modifiables, aucun chiffre inventé.</p>
+    <p class="sub">Schémas, checklists, comparatifs, frameworks et carrousels qui apportent une vraie réponse aux prospects de ${esc(c.name)}, chacun avec son post. Textes exacts et modifiables, aucun chiffre inventé.${nInsp ? ` S'inspire de ${nInsp} visuel${nInsp > 1 ? 's' : ''} concurrent${nInsp > 1 ? 's' : ''}.` : ''}</p>
+    ${tabs}
     <div class="card stack">
       <div class="row" style="align-items:flex-end">
         <label class="f" style="flex:1;min-width:240px">Sujet (laisse vide pour un sujet au hasard)<input id="visTopic" value="${esc(ui.visTopic)}" placeholder="Ex. comment préparer un post en 15 minutes"></label>
@@ -1154,9 +1237,9 @@ function authorChips(niche) {
     <button class="chip ${!ui.author ? 'on' : ''}" data-action="author" data-id="">Tous<b>${total}</b></button>
     ${list.map(([a, n]) => `<button class="chip ${sameNiche(a, ui.author) ? 'on' : ''}" data-action="author" data-id="${esc(a)}">${esc(a)}<b>${n}</b></button>`).join('')}</div>`;
 }
-function nicheChips() {
+function nicheChips(items = ui.data.veille) {
   const n = currentNiche();
-  return `<div class="chips">${allNiches().map((x) => `<button class="chip ${sameNiche(x, n) ? 'on' : ''}" data-action="niche" data-id="${esc(x)}">${esc(x)}<b>${ui.data.veille.filter((v) => sameNiche(v.niche, x)).length}</b></button>`).join('')}</div>`;
+  return `<div class="chips">${allNiches().map((x) => `<button class="chip ${sameNiche(x, n) ? 'on' : ''}" data-action="niche" data-id="${esc(x)}">${esc(x)}<b>${items.filter((v) => sameNiche(v.niche, x)).length}</b></button>`).join('')}</div>`;
 }
 
 function renderVeille() {
@@ -1484,6 +1567,19 @@ function chunkText(text, size = 6_000) {
 }
 
 const actions = {
+  'vis-tab'(t) { ui.visTab = t; render(); },
+  async 'bulk-delete'() {
+    const ids = [...ui.selected];
+    if (!ids.length) return;
+    const published = ui.data.posts.filter((p) => ids.includes(p.id) && p.status === 'published').length;
+    if (!confirm(`Supprimer définitivement ${ids.length} post${ids.length > 1 ? 's' : ''} de l'app ?${published ? `\n(${published} déjà publié${published > 1 ? 's' : ''} : ils restent sur LinkedIn, seuls leurs brouillons sont supprimés de l'app.)` : ''}`)) return;
+    const r = await api('POST', '/api/posts/bulk-delete', { ids });
+    ui.selected.clear();
+    ui.lastCreated = ui.lastCreated.filter((x) => !ids.includes(x));
+    await refresh();
+    toast(`${r.deleted} post${r.deleted > 1 ? 's' : ''} supprimé${r.deleted > 1 ? 's' : ''}`);
+  },
+  'bulk-clear'() { ui.selected.clear(); render(); },
   'mobile-menu'() {
     const open = !document.body.classList.contains('menu-open');
     setMobileMenu(open, !open);
@@ -1602,41 +1698,49 @@ const actions = {
   'vis-goto-post'(id) { ui.view = 'posts'; ui.filter = 'all'; store.set('view', 'posts'); render(); goto(id); },
   'banner-tab'(t) { ui.bannerTab = t; store.set('bannerTab', t); render(); },
   'banner-template'(id) {
-    ui.banner.templateId = id;
-    ui.banner.style = { ...ui.banner.style, preset: Banner.TEMPLATES.find((t) => t.id === id).preset, accent: '' };
+    const b = ui.banner;
+    if (b.elements?.length && !confirm('Changer de mise en page ? Tes textes, logos et photos sont gardés ; les positions et les ajouts manuels sont remplacés.')) return;
+    const fields = { ...b.fields, ...fieldsFromElements(b.elements || []) };
+    const images = (b.elements || []).filter((e) => e.type === 'image' && ['logo', 'avatar'].includes(e.role)).map((e) => ({ kind: e.role, src: e.src }));
+    b.templateId = id;
+    b.fields = fields;
+    b.elements = Banner.templateElements(id, fields, images.length ? images : b.images || []);
+    b.style = { ...b.style, preset: Banner.TEMPLATES.find((t) => t.id === id).preset, accent: '', bgImage: undefined };
     render();
   },
-  'banner-new'() { ui.banner = newBanner(); ui.bannerVariants = []; render(); },
-  'banner-load'(id) { const b = ui.data.banners.find((x) => x.id === id); if (b) { ui.banner = JSON.parse(JSON.stringify(b)); ui.bannerVariants = []; render(); } },
-  async 'banner-del'(id) { await api('DELETE', `/api/banners/${id}`); if (ui.banner?.id === id) ui.banner = null; await refresh(); },
-  'banner-img-del'(i) { ui.banner.images.splice(Number(i), 1); render(); },
+  'banner-new'() { ui.banner = ensureBannerElements(newBanner()); ui.bannerVariants = []; BE.resetHistory(); render(); },
+  'banner-load'(id) { const b = ui.data.banners.find((x) => x.id === id); if (b) { ui.banner = ensureBannerElements(JSON.parse(JSON.stringify(b))); ui.bannerVariants = []; BE.resetHistory(); render(); } },
+  async 'banner-del'(id) { if (!confirm('Supprimer cette bannière ?')) return; await api('DELETE', `/api/banners/${id}`); if (ui.banner?.id === id) ui.banner = null; await refresh(); },
+  'banner-bg-clear'() { ui.banner.style = { ...ui.banner.style, bgImage: undefined }; render(); },
   async 'banner-ai'(_id, btn) {
-    btn.disabled = true; btn.textContent = 'L\'IA écrit…';
+    btn.disabled = true; btn.textContent = "L'IA écrit…";
     try {
       const r = await api('POST', '/api/banners/suggest', { clientId: ui.clientId, templateName: Banner.TEMPLATES.find((t) => t.id === ui.banner.templateId)?.name });
       ui.bannerVariants = r.variants || [];
     } finally { render(); }
   },
   'banner-variant'(i) {
-    const v = ui.bannerVariants[Number(i)];
-    const f = ui.banner.fields;
-    for (const k of ['headline', 'proof', 'subline', 'cta', 'followText', 'bubble', 'title', 'brand']) if (v[k]) f[k] = v[k];
-    if (v.steps?.length) f.steps = v.steps.join(', ');
-    if (v.pills?.length) f.pills = v.pills.join(', ');
-    render();
+    BE.mutate((b) => Banner.applyTextsToElements(b.elements, ui.bannerVariants[Number(i)]));
+    toast('Textes appliqués (Ctrl+Z pour annuler)');
   },
-  async 'banner-save'() {
-    const b = await api('POST', '/api/banners', { ...ui.banner, clientId: ui.clientId });
-    ui.banner = JSON.parse(JSON.stringify(b));
-    await refresh();
-    toast('Bannière enregistrée');
+  async 'banner-save'(_id, btn) {
+    btn.disabled = true;
+    try {
+      const b = ui.banner;
+      b.name = $('#bannerName')?.value || b.name;
+      const saved = await api('POST', '/api/banners', { id: b.id, name: b.name, templateId: b.templateId, fields: b.fields || {}, style: b.style, elements: b.elements, clientId: ui.clientId });
+      ui.banner = ensureBannerElements(JSON.parse(JSON.stringify(saved)));
+      ui.bannerDirty = false;
+      await refresh();
+      toast('Bannière enregistrée');
+    } finally { btn.disabled = false; }
   },
   async 'banner-download'() {
     const cv = document.createElement('canvas');
-    await Banner.renderBanner(cv, ui.banner, { overlay: false });
+    await Banner.renderElements(cv, ui.banner, { overlay: false });
     const a = document.createElement('a');
     a.href = cv.toDataURL('image/png');
-    a.download = `${(ui.banner.name || 'banniere').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w-]+/g, '-').toLowerCase()}.png`;
+    a.download = `${(ui.banner.name || 'banniere').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w-]+/g, '-').toLowerCase()}.png`;
     a.click();
   },
   async 'profile-audit'(_id, btn) {
@@ -1896,11 +2000,6 @@ document.addEventListener('input', (e) => {
     $('#manualSave').disabled = !e.target.value.trim();
   }
   if (e.target.id === 'instruction') ui.instruction = e.target.value;
-  if (e.target.closest('#bannerForm') && ui.banner) {
-    const t = e.target;
-    if (t.name === '_name') ui.banner.name = t.value; else ui.banner.fields[t.name] = t.value;
-    redrawBanner();
-  }
   if (e.target.dataset.vpath) {
     const t = e.target;
     const v = visualsOf().find((x) => x.id === t.dataset.vid);
@@ -1912,7 +2011,7 @@ document.addEventListener('input', (e) => {
   }
   if (e.target.id === 'visTopic') ui.visTopic = e.target.value;
   if (e.target.id === 'visAccent') { ui.vis = { ...ui.vis, accent: e.target.value }; store.set('vis', ui.vis); }
-  if (e.target.id === 'bannerAccent' && ui.banner) { ui.banner.style = { ...ui.banner.style, accent: e.target.value }; redrawBanner(); }
+  if (e.target.id === 'bannerAccent' && ui.banner) { ui.banner.style = { ...ui.banner.style, accent: e.target.value }; BE.redraw(); }
   if (e.target.id === 'hookSearch') { ui.hookSearch = e.target.value; ui.hookLimit = 60; clearTimeout(ui.hsT); ui.hsT = setTimeout(() => { render(); const el = $('#hookSearch'); el?.focus(); el?.setSelectionRange(el.value.length, el.value.length); }, 250); }
   const ed = e.target.closest('[data-editor] textarea');
   if (ed) {
@@ -1925,6 +2024,14 @@ document.addEventListener('input', (e) => {
 });
 
 document.addEventListener('change', run(async (e) => {
+  if (e.target.dataset.select) { if (e.target.checked) ui.selected.add(e.target.dataset.select); else ui.selected.delete(e.target.dataset.select); render(); return; }
+  if (e.target.hasAttribute('data-select-all')) {
+    const posts = clientPosts();
+    const shown = ui.filter === 'all' ? posts : posts.filter((p) => (ui.filter === 'review' ? ['review', 'draft', 'rejected'].includes(p.status) : p.status === ui.filter));
+    if (e.target.checked) shown.forEach((p) => ui.selected.add(p.id)); else ui.selected.clear();
+    render();
+    return;
+  }
   const t = e.target;
   if (t.id === 'clientSelect') {
     if (t.value === '__new') {
@@ -1940,8 +2047,8 @@ document.addEventListener('change', run(async (e) => {
   if (t.id === 'studioDraft') { ui.studioPost = t.value || null; render(); $('#studioDraft')?.focus(); return; }
   if (t.id === 'personaSel') { ui.personaId = t.value; return; }
   if (t.id === 'visPreset') { ui.vis = { ...ui.vis, preset: t.value, accent: '' }; store.set('vis', ui.vis); render(); return; }
-  if (t.id === 'bannerPreset') { ui.banner.style = { ...ui.banner.style, preset: t.value, accent: '' }; render(); return; }
-  if (t.id === 'bannerOverlay') { ui.bannerOverlay = t.checked; redrawBanner(); return; }
+  if (t.id === 'bannerPreset') { if (Banner.PRESETS[t.value]) BE.mutate((b) => { b.style = { ...b.style, preset: t.value, accent: '', bgImage: undefined }; }); render(); return; }
+  if (t.id === 'bannerOverlay') { ui.bannerOverlay = t.checked; BE.setOverlay(t.checked); return; }
   if (t.dataset.bannerImg && t.files.length) {
     for (const f of [...t.files]) {
       const logo = t.dataset.bannerImg === 'logo';
@@ -1986,16 +2093,27 @@ document.addEventListener('change', run(async (e) => {
     if (ui.job && !ui.job.finished) throw new Error('Un traitement est déjà en cours.');
     const files = [...t.files];
     const kind = t.dataset.library;
+    const category = t.dataset.category || '';
     ui.job = { kind: 'upload', total: files.length, done: 0, step: 'Envoi…' };
+    const failed = [];
     try {
       for (const [i, f] of files.entries()) {
-        ui.job.step = `Photo ${i + 1} / ${files.length} : envoi et description par l'IA…`;
+        ui.job.step = `${i + 1} / ${files.length} : ${f.type === 'application/pdf' ? 'lecture du PDF, ' : ''}envoi et analyse par l'IA…`;
         render();
-        await api('POST', '/api/images', { kind, clientId: ui.clientId, niche: currentNiche(), dataUrl: await resizeImage(f) });
+        try {
+          if (f.type === 'application/pdf') {
+            if (kind !== 'inspiration') throw new Error('PDF accepté seulement pour les inspirations');
+            const pages = await pdfToImages(f);
+            if (!pages.length) throw new Error('PDF vide');
+            await api('POST', '/api/images', { kind, category, clientId: ui.clientId, niche: currentNiche(), dataUrl: pages[0], pages, fileName: f.name });
+          } else {
+            await api('POST', '/api/images', { kind, category, clientId: ui.clientId, niche: currentNiche(), dataUrl: await resizeImage(f) });
+          }
+        } catch (err) { failed.push(`${f.name} (${err.message})`); }
         ui.job.done = i + 1;
       }
     } finally { ui.job = null; await refresh(); }
-    toast(`${files.length} image(s) ajoutée(s)`);
+    toast(`${files.length - failed.length} fichier(s) ajouté(s)${failed.length ? ` · non ajoutés : ${failed.join(', ')}` : ''}`, failed.length > 0);
     return;
   }
   if (t.dataset.imgdesc) {

@@ -106,8 +106,8 @@ function parseRich(text) {
   return runs;
 }
 
-function layoutRich(ctx, text, size, maxW, weight, upper) {
-  ctx.font = `${weight} ${size}px ${FONT}`;
+function layoutRich(ctx, text, size, maxW, weight, upper, family = FONT) {
+  ctx.font = `${weight} ${size}px ${family}`;
   const lines = [];
   for (const raw of String(text || '').split('\n')) {
     const words = [];
@@ -389,4 +389,233 @@ export async function renderBanner(canvas, { templateId, fields, style = {}, ima
     text(ctx, 'Photo de profil', 92, 330, { size: 20, weight: 700, color: '#C2003A' });
     ctx.restore();
   }
+}
+
+
+// =====================================================================
+// ÉDITEUR À CALQUES (façon Canva) : chaque élément est indépendant.
+// Élément : { id, type: 'text'|'image'|'shape'|'arrow', x, y, rot, role?, ...props }
+// =====================================================================
+export const FONTS = { poppins: FONT, caveat: HAND, serif: 'Georgia, "Times New Roman", serif' };
+let seq = 0;
+export const uid = () => `el${Date.now().toString(36)}${(seq++).toString(36)}`;
+
+// Dessine un texte riche dans une boîte ; renvoie sa taille (pour la sélection à la souris).
+function drawTextEl(ctx, el, p) {
+  const family = FONTS[el.font] || FONT;
+  const size = el.size || 32;
+  const weight = el.weight || 700;
+  const maxW = el.maxW || 2000;
+  const lines = layoutRich(ctx, el.text || ' ', size, maxW, weight, el.upper, family);
+  const lh = (el.lh || 1.18) * size;
+  const widths = lines.map((l) => l.reduce((a, w) => a + w.w, 0));
+  const textW = Math.max(10, ...widths);
+  const boxW = el.maxW ? Math.max(textW, Math.min(el.maxW, textW)) : textW;
+  const padX = el.bg ? (el.padX ?? size * 0.5) : 0;
+  const padY = el.bg ? (el.padY ?? size * 0.28) : 0;
+  const w = boxW + padX * 2;
+  const h = Math.max(1, lines.length) * lh + padY * 2 - (lh - size) * 0.6;
+  if (el.bg) {
+    rr(ctx, el.x, el.y, w, h, el.radius ?? 999);
+    ctx.fillStyle = el.bg; ctx.fill();
+    if (el.border) { ctx.strokeStyle = el.border; ctx.lineWidth = 2.5; ctx.stroke(); }
+  }
+  ctx.font = `${weight} ${size}px ${family}`;
+  ctx.textBaseline = 'alphabetic';
+  const accent = el.accent || p.accent;
+  lines.forEach((line, i) => {
+    const lw = widths[i];
+    let cx = el.x + padX + (el.align === 'center' ? (boxW - lw) / 2 : el.align === 'right' ? boxW - lw : 0);
+    const cy = el.y + padY + size * 0.92 + i * lh;
+    // surlignage [[…]]
+    let k = 0;
+    let hx = cx;
+    while (k < line.length) {
+      if (!line[k].hl) { hx += line[k].w; k++; continue; }
+      const start = hx; let j = k;
+      while (j < line.length && line[j].hl) { hx += line[j].w; j++; }
+      ctx.fillStyle = el.hlBg || accent;
+      ctx.fillRect(start - size * 0.1, cy - size * 0.9, hx - start + size * 0.2, size * 1.14);
+      k = j;
+    }
+    for (const wd of line) {
+      ctx.fillStyle = wd.hl ? (el.hlColor || '#FFFFFF') : wd.accent ? accent : (el.color || p.text);
+      ctx.fillText(wd.text, cx, cy);
+      if (wd.ul && wd.text.trim()) { ctx.fillStyle = el.ulColor || accent; ctx.fillRect(cx, cy + size * 0.12, wd.w, Math.max(3, size * 0.08)); }
+      cx += wd.w;
+    }
+  });
+  return { w, h };
+}
+
+function drawArrowEl(ctx, el) {
+  const { x, y } = el;
+  const w = el.w || 80; const h = el.h || 60;
+  const c = el.color || '#111'; const lw = el.width || 3;
+  ctx.save(); ctx.strokeStyle = c; ctx.fillStyle = c; ctx.lineWidth = lw; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  if (el.kind === 'down') {
+    ctx.fillRect(x + w / 2 - w * 0.13, y, w * 0.26, h * 0.6);
+    ctx.beginPath(); ctx.moveTo(x, y + h * 0.55); ctx.lineTo(x + w, y + h * 0.55); ctx.lineTo(x + w / 2, y + h); ctx.fill();
+  } else if (el.kind === 'right') {
+    ctx.beginPath(); ctx.moveTo(x, y + h / 2); ctx.lineTo(x + w - 4, y + h / 2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x + w - h * 0.4, y + h * 0.1); ctx.lineTo(x + w, y + h / 2); ctx.lineTo(x + w - h * 0.4, y + h * 0.9); ctx.stroke();
+  } else {
+    const x1 = x + 4; const y1 = y + 4; const x2 = x + w - 4; const y2 = y + h - 4;
+    const cx = x1 + w * 0.05; const cy = y2;
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.quadraticCurveTo(cx, cy, x2, y2); ctx.stroke();
+    const a = Math.atan2(y2 - cy, x2 - cx);
+    ctx.beginPath();
+    ctx.moveTo(x2, y2); ctx.lineTo(x2 - 16 * Math.cos(a - 0.5), y2 - 16 * Math.sin(a - 0.5));
+    ctx.moveTo(x2, y2); ctx.lineTo(x2 - 16 * Math.cos(a + 0.5), y2 - 16 * Math.sin(a + 0.5));
+    ctx.stroke();
+  }
+  ctx.restore();
+  return { w, h };
+}
+
+async function drawImageEl(ctx, el) {
+  const img = el.src ? await loadImg(el.src) : null;
+  const w = el.w || 120;
+  const h = el.h || (img ? (img.height / img.width) * w : 60);
+  if (!img) { ctx.save(); ctx.strokeStyle = '#999'; ctx.setLineDash([6, 6]); ctx.strokeRect(el.x, el.y, w, h); ctx.restore(); return { w, h }; }
+  ctx.save();
+  if (el.round) {
+    const r = Math.min(w, h) / 2;
+    ctx.beginPath(); ctx.arc(el.x + w / 2, el.y + h / 2, r + (el.ring ? 3 : 0), 0, 7); ctx.fillStyle = el.ring || 'transparent'; ctx.fill();
+    ctx.beginPath(); ctx.arc(el.x + w / 2, el.y + h / 2, r, 0, 7); ctx.clip();
+    const sc = Math.max(w / img.width, h / img.height);
+    ctx.drawImage(img, el.x + w / 2 - (img.width * sc) / 2, el.y + h / 2 - (img.height * sc) / 2, img.width * sc, img.height * sc);
+  } else {
+    if (el.white) ctx.filter = 'brightness(0) invert(1)';
+    if (el.opacity != null) ctx.globalAlpha = el.opacity;
+    ctx.drawImage(img, el.x, el.y, w, h);
+  }
+  ctx.restore();
+  return { w, h };
+}
+
+function drawShapeEl(ctx, el) {
+  const w = el.w || 200; const h = el.h || 80;
+  ctx.save();
+  if (el.opacity != null) ctx.globalAlpha = el.opacity;
+  if (el.kind === 'line') { ctx.strokeStyle = el.fill || '#000'; ctx.lineWidth = el.stroke || 3; ctx.beginPath(); ctx.moveTo(el.x, el.y + h / 2); ctx.lineTo(el.x + w, el.y + h / 2); ctx.stroke(); }
+  else if (el.kind === 'circle') { ctx.beginPath(); ctx.ellipse(el.x + w / 2, el.y + h / 2, w / 2, h / 2, 0, 0, 7); ctx.fillStyle = el.fill || '#000'; ctx.fill(); }
+  else { rr(ctx, el.x, el.y, w, h, el.radius ?? 16); ctx.fillStyle = el.fill || '#000'; ctx.fill(); if (el.stroke) { ctx.strokeStyle = el.strokeColor || '#fff'; ctx.lineWidth = el.stroke; ctx.stroke(); } }
+  ctx.restore();
+  return { w, h };
+}
+
+// Rendu complet d'une bannière à calques. Renvoie les boîtes de chaque élément (pour l'éditeur).
+export async function renderElements(canvas, banner, { overlay = false } = {}) {
+  await Promise.all(['800 40px Poppins', '700 40px Poppins', '600 40px Poppins', '500 40px Poppins', '700 30px Caveat'].map((f) => document.fonts?.load(f).catch(() => {})));
+  const style = banner.style || {};
+  const base = PRESETS[style.preset] || PRESETS.mint;
+  const p = { ...base, accent: style.accent || base.accent };
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, W, H);
+  if (style.bgImage) { const bi = await loadImg(style.bgImage); if (bi) { const sc = Math.max(W / bi.width, H / bi.height); ctx.drawImage(bi, (W - bi.width * sc) / 2, (H - bi.height * sc) / 2, bi.width * sc, bi.height * sc); } else background(ctx, p); }
+  else background(ctx, p);
+  const boxes = {};
+  for (const el of banner.elements || []) {
+    if (el.hidden) continue;
+    ctx.save();
+    // On mesure d'abord (sans dessiner) pour pouvoir tourner autour du centre.
+    let size;
+    if (el.rot) {
+      const probe = document.createElement('canvas').getContext('2d');
+      size = el.type === 'text' ? drawTextEl(probe, { ...el, x: 0, y: 0 }, p) : el.type === 'image' ? { w: el.w || 120, h: el.h || 60 } : { w: el.w || 100, h: el.h || 60 };
+      const cx = el.x + size.w / 2; const cy = el.y + size.h / 2;
+      ctx.translate(cx, cy); ctx.rotate((el.rot * Math.PI) / 180); ctx.translate(-cx, -cy);
+    }
+    if (el.type === 'text') size = drawTextEl(ctx, el, p);
+    else if (el.type === 'image') size = await drawImageEl(ctx, el);
+    else if (el.type === 'arrow') size = drawArrowEl(ctx, el);
+    else size = drawShapeEl(ctx, el);
+    ctx.restore();
+    boxes[el.id] = { x: el.x, y: el.y, w: size.w, h: size.h, rot: el.rot || 0 };
+  }
+  if (overlay) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(255,0,80,.16)'; ctx.strokeStyle = 'rgba(255,0,80,.85)'; ctx.setLineDash([10, 8]); ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(170, 400, 135, 0, 7); ctx.fill(); ctx.stroke();
+    ctx.setLineDash([]); ctx.font = `700 20px ${FONT}`; ctx.fillStyle = '#C2003A'; ctx.fillText('Photo de profil', 92, 330);
+    ctx.restore();
+  }
+  return boxes;
+}
+
+// ---------- Les modèles, traduits en calques modifiables ----------
+const T = (props) => ({ id: uid(), type: 'text', weight: 700, ...props });
+const steps = (s) => String(s || '').split(/[,;\n]/).map((x) => x.trim()).filter(Boolean);
+
+export function templateElements(templateId, fields = {}, images = []) {
+  const f = { ...DEFAULT_FIELDS, ...fields };
+  const tpl = TEMPLATES.find((t) => t.id === templateId) || TEMPLATES[0];
+  const p = PRESETS[tpl.preset];
+  const logos = images.filter((i) => i.kind === 'logo');
+  const avatars = images.filter((i) => i.kind === 'avatar');
+  const els = [];
+  const logoRow = (x, y, h, white) => logos.slice(0, 5).forEach((l, i) => els.push({ id: uid(), type: 'image', role: 'logo', src: l.src, x: x + i * (h * 3 + 20), y, w: h * 2.6, h, white }));
+  const avatarRow = (x, y, d) => avatars.slice(0, 5).forEach((a, i) => els.push({ id: uid(), type: 'image', role: 'avatar', src: a.src, x: x + i * d * 0.68, y, w: d, h: d, round: true, ring: '#FFFFFF' }));
+  const onDark = p.dark ? '#FFFFFF' : p.text;
+  if (tpl.id === 'promesse') {
+    avatarRow(58, 40, 46);
+    els.push(T({ role: 'proof', text: f.proof, x: avatars.length ? 58 + avatars.length * 32 + 30 : 58, y: 44, size: 22, color: p.accent, bg: '#FFFFFF', padX: 14, padY: 7 }));
+    logoRow(60, 104, 36, p.dark);
+    els.push(T({ role: 'cta', text: `${f.cta}  ↓`, x: 58, y: 168, size: 21, weight: 600, color: onDark, bg: p.dark ? 'rgba(0,0,0,.55)' : 'rgba(255,255,255,.85)', rot: -3 }));
+    els.push(T({ role: 'headline', text: f.headline, x: 610, y: 60, size: 58, weight: 800, maxW: 760, color: p.text }));
+    els.push(T({ role: 'steps', text: `✦  ${steps(f.steps).join('  ➜  ')}`, x: 612, y: 210, size: 22, color: p.text }));
+    els.push(T({ role: 'follow', text: `${f.followText}  ↓`, x: 660, y: 262, size: 24, weight: 500, color: onDark, bg: p.dark ? 'rgba(0,0,0,.6)' : 'rgba(255,255,255,.85)', radius: 10, border: p.accent, padX: 22, padY: 8 }));
+    els.push({ id: uid(), type: 'shape', kind: 'line', x: 560, y: 46, w: 140, h: 8, fill: p.dark ? 'rgba(255,255,255,.55)' : 'rgba(0,0,0,.25)', stroke: 2 });
+  } else if (tpl.id === 'metier') {
+    logoRow(44, 40, 32, false);
+    els.push(T({ role: 'bubble', text: f.bubble, x: 110, y: 112, size: 24, color: p.accent, bg: '#FFFFFF', radius: 34, rot: -4, maxW: 260, align: 'center' }));
+    els.push(T({ role: 'title', text: f.title, x: 600, y: 112, size: 92, weight: 800, color: '#FFFFFF', bg: p.accent, radius: 18, padX: 40, padY: 14 }));
+    els.push(T({ role: 'proof', text: f.proof, x: 1120, y: 40, size: 24, color: p.accent, bg: '#FFFFFF', radius: 34 }));
+    steps(f.pills).slice(0, 4).forEach((s, i) => els.push(T({ role: `pill-${i}`, text: s, x: 560 + i * 200, y: 258, size: 26, weight: 500, color: p.text, bg: '#FFFFFF', padX: 24, padY: 8 })));
+    els.push(T({ role: 'follow', text: `🔔 ${f.followText}`, x: 980, y: 326, size: 22, weight: 600, color: p.accent }));
+    els.push({ id: uid(), type: 'arrow', kind: 'curve', x: 1440, y: 318, w: 50, h: 52, color: p.accent, width: 2.5 });
+  } else if (tpl.id === 'logos') {
+    els.push(T({ role: 'brand', text: f.brand, x: 48, y: 30, size: 30, weight: 800, color: p.text }));
+    els.push(T({ role: 'proof', text: `▶ ${f.proof}`, x: 48, y: 82, size: 20, weight: 500, color: p.sub, maxW: 290 }));
+    avatarRow(50, 130, 42);
+    els.push(T({ role: 'headline', text: f.headline, x: 362, y: 44, size: 44, weight: 800, maxW: 930, color: p.text, ulColor: p.accent }));
+    els.push(T({ role: 'subline', text: `▶ ${f.subline}`, x: 364, y: 168, size: 22, weight: 500, color: p.sub, maxW: 900 }));
+    els.push({ id: uid(), type: 'shape', role: 'bar', x: 362, y: 232, w: 940, h: 78, fill: p.bar, radius: 22 });
+    els.push(T({ role: 'logosTitle', text: f.logosTitle, x: 398, y: 254, size: 22, weight: 600, color: '#FFFFFF' }));
+    logoRow(640, 252, 38, true);
+    els.push({ id: uid(), type: 'arrow', kind: 'down', x: 1365, y: 228, w: 50, h: 64, color: p.accent });
+  } else if (tpl.id === 'marqueur') {
+    els.push(T({ role: 'logosTitle', text: f.logosTitle, x: 40, y: 40, size: 24, color: '#FFFFFF' }));
+    logoRow(40, 86, 40, true);
+    els.push(T({ role: 'headline', text: /\[\[/.test(f.headline) ? f.headline : String(f.headline).replace(/\*([^*]+)\*/g, '[[$1]]'), x: 580, y: 54, size: 50, weight: 800, maxW: 860, lh: 1.32, color: '#FFFFFF', hlBg: '#0B0B0B', hlColor: p.accent }));
+    els.push(T({ role: 'follow', text: `${f.followText}  ↓`, x: 1060, y: 316, size: 22, color: '#111111' }));
+  } else {
+    els.push(T({ role: 'proof', text: f.proof, x: 56, y: 48, size: 24, color: p.sub, maxW: 470 }));
+    els.push({ id: uid(), type: 'arrow', kind: 'curve', x: 66, y: 126, w: 46, h: 44, color: p.text, width: 2.5 });
+    els.push(T({ role: 'cta', text: f.cta, x: 124, y: 150, size: 21, color: '#FFFFFF', bg: '#E53935', radius: 2, rot: -3, padX: 10, padY: 4 }));
+    logoRow(60, 206, 34, false);
+    els.push(T({ role: 'headline', text: f.headline, x: 660, y: 44, size: 54, weight: 800, maxW: 840, upper: true, color: p.text, ulColor: '#E53935' }));
+    els.push(T({ role: 'subline', text: f.subline, x: 664, y: 186, size: 22, weight: 800, color: '#B71C1C', bg: p.accent, radius: 2, padX: 8, padY: 3 }));
+    els.push(T({ role: 'follow', text: `${f.followText}  ↓`, x: 600, y: 250, size: 26, weight: 800, color: '#FFFFFF', bg: p.bar, radius: 2, padX: 22, padY: 8 }));
+  }
+  return els;
+}
+
+// Applique des textes (proposition de l'IA) aux calques qui ont un rôle, sans toucher à leur position.
+export function applyTextsToElements(elements, v) {
+  const map = { proof: v.proof, headline: v.headline, subline: v.subline ? (/^▶/.test(v.subline) ? v.subline : v.subline) : undefined, cta: v.cta, follow: v.followText, bubble: v.bubble, title: v.title, brand: v.brand };
+  for (const el of elements) {
+    if (el.type !== 'text' || !el.role) continue;
+    if (el.role === 'steps' && v.steps?.length) el.text = `✦  ${v.steps.join('  ➜  ')}`;
+    else if (el.role.startsWith('pill-') && v.pills?.length) { const i = Number(el.role.slice(5)); if (v.pills[i]) el.text = v.pills[i]; }
+    else if (map[el.role] != null && map[el.role] !== '') {
+      const keepArrow = /\s↓$/.test(el.text) ? '  ↓' : '';
+      const keepBullet = /^▶ /.test(el.text) ? '▶ ' : '';
+      const keepBell = /^🔔 /.test(el.text) ? '🔔 ' : '';
+      el.text = `${keepBullet}${keepBell}${map[el.role]}${keepArrow}`;
+    }
+  }
+  return elements;
 }

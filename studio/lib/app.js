@@ -5,7 +5,7 @@ import {
   pickClientFields, pickPostFields, loadSettings, saveSettings, publicSettings,
 } from './store.js';
 import * as linkedin from './linkedin.js';
-import { writePost, analyzeNiche, testKey, hookPass, extractPosts, studyFeedback, balancedTop, extractStructures, describeImage, chooseImage, imagePrompt, generateImage, listImageModels, listTextModels } from './ai.js';
+import { writePost, analyzeNiche, testKey, hookPass, extractPosts, studyFeedback, balancedTop, extractStructures, describeImage, describeInspiration, chooseImage, imagePrompt, generateImage, listImageModels, listTextModels } from './ai.js';
 import { engagement, statsText } from './stats.js';
 import * as apify from './apify.js';
 import { chat } from './ai.js';
@@ -230,6 +230,19 @@ route('DELETE', '/api/posts/:id', async ({ db, post }) => {
   await dropPostImage(post);
   db.posts = db.posts.filter((p) => p.id !== post.id);
   return json({ ok: true });
+});
+
+// Suppression en lot (sélection ou tout un filtre). Les photos de la photothèque ne sont jamais supprimées.
+route('POST', '/api/posts/bulk-delete', async ({ db, body }) => {
+  const ids = new Set(Array.isArray(body.ids) ? body.ids : []);
+  const doomed = db.posts.filter((p) => ids.has(p.id));
+  for (const p of doomed) {
+    await dropPostImage(p);
+    if (p.document) await uploads().delete(p.document).catch(() => {});
+  }
+  for (const v of db.visuals || []) if (ids.has(v.postId)) v.postId = null;
+  db.posts = db.posts.filter((p) => !ids.has(p.id));
+  return json({ deleted: doomed.length });
 });
 
 route('POST', '/api/posts/:id/status', async ({ post, body }) => {
@@ -559,15 +572,24 @@ route('POST', '/api/images', async ({ db, settings, body }) => {
   const kind = body.kind === 'inspiration' ? 'inspiration' : 'mine';
   const client = db.clients.find((c) => c.id === body.clientId);
   if (kind === 'mine' && !client) throw new HttpError(404, 'Client introuvable');
-  const img = decodeDataUrl(body.dataUrl);
-  const key = `lib-${crypto.randomBytes(10).toString('hex')}.${img.ext}`;
-  await uploads().set(key, img.buffer, { metadata: { type: img.type } });
+  // category (inspirations) : 'visual' (visuels et carrousels), 'banner' (bannières) ou 'image' (style des images générées)
+  const category = kind === 'inspiration' ? (['visual', 'banner'].includes(body.category) ? body.category : 'image') : '';
+  const pagesIn = (Array.isArray(body.pages) && body.pages.length ? body.pages : [body.dataUrl]).slice(0, 10);
+  const pageKeys = [];
+  for (const d of pagesIn) {
+    const img = decodeDataUrl(d);
+    const k = `lib-${crypto.randomBytes(10).toString('hex')}.${img.ext}`;
+    await uploads().set(k, img.buffer, { metadata: { type: img.type } });
+    pageKeys.push(k);
+  }
   let description = '';
-  if (settings.openaiKey) description = await describeImage(settings, body.dataUrl, kind).catch(() => '');
+  if (settings.openaiKey) description = await (kind === 'inspiration' ? describeInspiration(settings, pagesIn, category) : describeImage(settings, pagesIn[0], kind)).catch(() => '');
   const item = {
-    id: newId('img'), kind, key, description, uses: 0, createdAt: now(),
+    id: newId('img'), kind, key: pageKeys[0], description, uses: 0, createdAt: now(),
     clientId: kind === 'mine' ? client.id : null,
     niche: kind === 'inspiration' ? String(body.niche || '').trim() : client.niche || '',
+    ...(category ? { category } : {}),
+    ...(pageKeys.length > 1 ? { pages: pageKeys, fileName: String(body.fileName || '').slice(0, 120) } : {}),
   };
   db.images.unshift(item);
   return json(item);
@@ -583,7 +605,7 @@ route('PUT', '/api/images/:id', async ({ db, params, body }) => {
 route('DELETE', '/api/images/:id', async ({ db, params }) => {
   const im = db.images.find((x) => x.id === params.id);
   if (!im) return json({ ok: true });
-  await uploads().delete(im.key);
+  for (const k of im.pages || [im.key]) await uploads().delete(k).catch(() => {});
   for (const p of db.posts.filter((x) => x.imageId === im.id)) { p.image = null; p.imageId = null; }
   db.images = db.images.filter((x) => x.id !== im.id);
   return json({ ok: true });
@@ -617,7 +639,7 @@ route('POST', '/api/posts/:id/image/auto', async ({ db, settings, post }) => {
 // Étape 1 : la consigne de l'image (inspirée des visuels concurrents de la niche).
 route('POST', '/api/posts/:id/image/prompt', async ({ db, settings, post }) => {
   const client = db.clients.find((c) => c.id === post.clientId);
-  const styles = db.images.filter((x) => x.kind === 'inspiration' && x.description && (!client.niche || (x.niche || '').toLowerCase() === client.niche.toLowerCase()))
+  const styles = db.images.filter((x) => x.kind === 'inspiration' && (!x.category || x.category === 'image') && x.description && (!client.niche || (x.niche || '').toLowerCase() === client.niche.toLowerCase()))
     .slice(0, 8).map((x) => x.description);
   post.imagePrompt = await imagePrompt(settings, { text: post.text, client, styles });
   return json(post);
@@ -843,27 +865,59 @@ route('POST', '/api/hooks/optimize', async ({ db, settings, body }) => {
 });
 
 
+// Inspirations concurrentes d'une catégorie : celles de la niche du client d'abord, puis les autres.
+const inspirationsFor = (db, client, category) => {
+  const list = db.images.filter((x) => x.kind === 'inspiration' && x.category === category && x.description);
+  const mine = list.filter((x) => client.niche && (x.niche || '').toLowerCase() === client.niche.toLowerCase());
+  return [...mine, ...list.filter((x) => !mine.includes(x))].slice(0, 8).map((x) => x.description);
+};
+
 // =================== PROFILS & BANNIÈRES ===================
 route('POST', '/api/banners/suggest', async ({ db, settings, body }) => {
   const client = clientOf(db, body.clientId);
-  const r = await askJson(settings, bannerCopyPrompt({ client, templateName: body.templateName || '' }), { timeout: 50_000 });
+  const r = await askJson(settings, bannerCopyPrompt({ client, templateName: body.templateName || '', inspirations: inspirationsFor(db, client, 'banner') }), { timeout: 50_000 });
   return json({ variants: (r.variants || []).slice(0, 3) });
 });
 
 // Une bannière = un modèle + des textes + des couleurs + des petites images (logos, avatars) déjà réduites.
+// Les images collées dans l'éditeur (data:) sont rangées dans le stockage de fichiers ; la bannière ne garde que leur adresse.
+async function storeBannerImage(src) {
+  const m = typeof src === 'string' && src.match(/^data:(image\/(png|jpe?g|webp|gif|svg\+xml));base64,(.+)$/);
+  if (!m) return src;
+  const bytes = Buffer.from(m[3], 'base64');
+  if (bytes.length > 4_000_000) throw new HttpError(400, 'Image trop lourde (4 Mo max).');
+  const ext = m[2].replace('jpeg', 'jpg').replace('svg+xml', 'svg');
+  const key = `ban-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  await uploads().set(key, bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.length), { metadata: { type: m[1] } });
+  return `/uploads/${key}`;
+}
+const bannerKeys = (b) => JSON.stringify(b || {}).match(/\/uploads\/(ban-[\w.]+)/g)?.map((x) => x.slice(9)) || [];
+
+// Une bannière = des calques (textes, images, formes) + un fond + des couleurs.
 route('POST', '/api/banners', async ({ db, body }) => {
   db.banners ||= [];
   if (!db.clients.some((c) => c.id === body.clientId)) throw new HttpError(404, 'Client introuvable');
-  const data = { clientId: body.clientId, name: String(body.name || 'Bannière').slice(0, 80), templateId: String(body.templateId || ''), fields: body.fields || {}, style: body.style || {}, images: Array.isArray(body.images) ? body.images.slice(0, 10) : [] };
-  if (JSON.stringify(data).length > 1_500_000) throw new HttpError(400, 'Trop d\'images ou images trop lourdes.');
+  const elements = Array.isArray(body.elements) ? body.elements.slice(0, 80) : [];
+  for (const el of elements) if (el && el.src) el.src = await storeBannerImage(el.src);
+  const style = body.style && typeof body.style === 'object' ? body.style : {};
+  if (style.bgImage) style.bgImage = await storeBannerImage(style.bgImage);
+  const images = [];
+  for (const im of Array.isArray(body.images) ? body.images.slice(0, 10) : []) images.push(typeof im === 'string' ? await storeBannerImage(im) : im);
+  const data = { clientId: body.clientId, name: String(body.name || 'Bannière').slice(0, 80), templateId: String(body.templateId || ''), fields: body.fields || {}, style, images, elements };
+  if (JSON.stringify(data).length > 1_500_000) throw new HttpError(400, 'Bannière trop lourde.');
   let b = db.banners.find((x) => x.id === body.id);
+  const before = b ? bannerKeys(b) : [];
   if (b) Object.assign(b, data, { updatedAt: now() });
   else { b = { id: newId('ban'), ...data, createdAt: now() }; db.banners.unshift(b); }
+  const kept = new Set(bannerKeys(b));
+  for (const k of before) if (!kept.has(k)) await uploads().delete(k).catch(() => {});
   return json(b);
 });
 
 route('DELETE', '/api/banners/:id', async ({ db, params }) => {
-  db.banners = (db.banners || []).filter((b) => b.id !== params.id);
+  const b = (db.banners || []).find((x) => x.id === params.id);
+  db.banners = (db.banners || []).filter((x) => x.id !== params.id);
+  for (const k of bannerKeys(b)) await uploads().delete(k).catch(() => {});
   return json({ ok: true });
 });
 
@@ -881,7 +935,7 @@ route('POST', '/api/visuals/plan', async ({ db, settings, body }) => {
   const client = clientOf(db, body.clientId);
   const persona = (client.adn?.personas || []).find((p) => p.id === body.personaId);
   const kind = body.kind === 'carousel' ? 'carousel' : 'image';
-  const r = await askJson(settings, visualPlanPrompt({ client, topic: String(body.topic || '').trim(), count: Math.max(1, Math.min(3, Number(body.count) || 3)), kind, personaText: persona ? ed.personaText(persona) : '' }), { timeout: 40_000 });
+  const r = await askJson(settings, visualPlanPrompt({ client, topic: String(body.topic || '').trim(), count: Math.max(1, Math.min(3, Number(body.count) || 3)), kind, personaText: persona ? ed.personaText(persona) : '', inspirations: inspirationsFor(db, client, 'visual') }), { timeout: 40_000 });
   const items = (r.items || []).slice(0, kind === 'carousel' ? 1 : 3).map((i) => ({ ...i, type: kind === 'carousel' ? 'carousel' : (i.type in { liste: 1, comparaison: 1, process: 1, matrice: 1, chiffre: 1, citation: 1 } ? i.type : 'liste') }));
   return json({ subject: r.subject || body.topic || '', items });
 });
@@ -891,7 +945,7 @@ route('POST', '/api/visuals/item', async ({ db, settings, body }) => {
   const client = clientOf(db, body.clientId);
   const persona = (client.adn?.personas || []).find((p) => p.id === body.personaId);
   const kind = body.kind === 'carousel' ? 'carousel' : 'image';
-  const r = await askJson(settings, visualItemPrompt({ client, subject: body.subject, subtopic: body.subtopic, type: body.type, kind, personaText: persona ? ed.personaText(persona) : '' }), { timeout: 52_000 });
+  const r = await askJson(settings, visualItemPrompt({ client, subject: body.subject, subtopic: body.subtopic, type: body.type, kind, personaText: persona ? ed.personaText(persona) : '', inspirations: inspirationsFor(db, client, 'visual') }), { timeout: 52_000 });
   if (!r.spec) throw new HttpError(502, "L'IA n'a pas renvoyé de visuel : réessaie.");
   const [post] = importPosts(db, client.id, [{ text: String(r.post || '').replace(/\*\*|__/g, '').trim() || 'Post à rédiger', theme: String(body.subtopic || body.subject || '').slice(0, 60), format: kind === 'carousel' ? 'Carrousel' : 'Image', scheduledAt: nextFreeSlot(db, client.id) }]);
   post.history = [{ at: now(), action: `Écrit avec un visuel « ${kind === 'carousel' ? 'carrousel' : body.type} »` }];
