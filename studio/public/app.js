@@ -29,7 +29,11 @@ const ui = {
   draftText: {},
   manual: {},
   advanced: false,
-  tools: 'hooks',
+  tools: 'chat',
+  chatDraft: {},
+  chatPending: null,
+  memoryOpen: false,
+  postVisType: 'auto',
   calCursor: new Date(),
   calMode: 'month',
   pendingJob: store.get('studio.pendingJob', null),
@@ -167,6 +171,7 @@ function render() {
 }
 
 // ================= CRÉER =================
+const STUDIO_TOOLS = [['chat', 'Améliorer', 'Critique, discute : l’IA corrige et retient.', 'pen'], ['visual', 'Visuel', 'Ajoute un visuel, une image ou un carrousel.', 'image'], ['hooks', 'Hooks', 'Compare les accroches et leurs notes.', 'hook'], ['quality', 'Qualité', 'Repère les points à retravailler.', 'search'], ['retouch', 'Retouches', 'Ajuste le rythme, le ton ou la longueur.', 'spark']];
 function renderCreate() {
   const c = client();
   const content = moduleByRole('content');
@@ -249,8 +254,9 @@ function renderCreate() {
         <div class="panel-body stack">
           ${ui.relay ? renderRelay() : `
           ${created.length ? `<label class="f draft-select">Brouillon<select id="studioDraft"><option value="">Nouveau brouillon</option>${created.map((p) => `<option value="${esc(p.id)}" ${p === active ? 'selected' : ''}>${esc(p.theme || p.text.split('\n')[0].slice(0, 68))}</option>`).join('')}</select></label>` : ''}
-          ${active ? `<div class="row between"><span class="badge s-${active.status}">${STATUS[active.status]}</span><button class="btn ghost sm" data-action="post-detail" data-id="${active.id}">Aperçu et publication →</button></div>
+          ${active ? `<div class="row between"><span class="row" style="gap:8px"><span class="badge s-${active.status}">${STATUS[active.status]}</span><span class="small">${active.scheduledAt ? '📅 ' + fmtDate(active.scheduledAt) : 'Sans date'}</span></span><button class="btn ghost sm" data-action="post-detail" data-id="${active.id}">Aperçu et publication →</button></div>
             ${postEditor(active)}
+            ${postMediaPreview(active)}
             ${active.plan ? strategyPanel(active) : ''}
             ${PLACEHOLDER.test(active.text) ? '<div class="alert warn">Complète les passages signalés avant de valider.</div>' : ''}`
             : `<div class="editor-empty"><span class="editor-icon">${ICONS.pen}</span><div><strong>À toi d’écrire</strong><p>Pars du brief à gauche ou rédige directement ici.</p></div></div>
@@ -262,15 +268,16 @@ function renderCreate() {
       <aside class="work-panel tools-panel">
         <header class="panel-heading"><span class="step-number">03</span><div><h2>Contrôle éditorial</h2><p>Affine avant de valider</p></div></header>
         <div class="panel-body stack">
-          ${[['hooks','Hooks','Compare les accroches et leurs notes.','hook'],['quality','Qualité','Repère les points à retravailler.','search'],['retouch','Retouches','Ajuste le rythme, le ton ou la longueur.','spark']].map(([key, label, hint, glyph]) => `
-            <button class="tool-option ${active && ui.tools === key ? 'selected' : ''}" data-action="studio-tool" data-id="${key}" ${active ? 'aria-pressed="' + (ui.tools === key) + '"' : 'disabled'}><span class="tool-icon">${ICONS[glyph]}</span><span><strong>${label}</strong><small>${hint}</small></span><span aria-hidden="true">›</span></button>`).join('')}
-          ${active ? (ui.tools ? { hooks: hooksPanel, quality: qualityPanel, retouch: retouchPanel }[ui.tools](active) : '<div class="tool-note">Choisis un outil pour travailler sur le brouillon enregistré.</div>')
-            : '<div class="tool-note">Les outils s’activent dès que tu ouvres un brouillon enregistré.</div>'}
+          ${active ? `<div class="tool-tabs" role="tablist">${STUDIO_TOOLS.map(([key, label, , glyph]) => `<button class="tool-tab ${(ui.tools || 'chat') === key ? 'on' : ''}" role="tab" aria-selected="${(ui.tools || 'chat') === key}" data-action="studio-tool" data-id="${key}">${ICONS[glyph]}<span>${label}</span></button>`).join('')}</div>
+            ${({ chat: chatPanel, visual: visualPanel, hooks: hooksPanel, quality: qualityPanel, retouch: retouchPanel }[ui.tools] || chatPanel)(active)}`
+            : STUDIO_TOOLS.map(([key, label, hint, glyph]) => `<button class="tool-option" disabled><span class="tool-icon">${ICONS[glyph]}</span><span><strong>${label}</strong><small>${hint}</small></span><span aria-hidden="true">›</span></button>`).join('') + '<div class="tool-note">Les outils s’activent dès que tu ouvres un brouillon enregistré.</div>'}
         </div>
       </aside>
     </div>
   </div>`;
   $('.brief-options').addEventListener('toggle', (event) => { ui.advanced = event.currentTarget.open; });
+  $('.chat-box .memory')?.addEventListener('toggle', (event) => { ui.memoryOpen = event.currentTarget.open; });
+  scrollChat();
 }
 
 // ---------- Mode « mes GPTs » : 2 copier-coller guidés ----------
@@ -763,6 +770,67 @@ function imagePanel(p) {
   </div>`;
 }
 
+// ---------- Studio : visuel du post ----------
+function postMediaPreview(p) {
+  if (!p.image && !p.document) return `<button class="media-empty" data-action="studio-tool" data-id="visual">${ICONS.image}<span><b>Ajouter un visuel</b> · schéma, image ou carrousel</span></button>`;
+  return `<div class="media-preview">
+    ${p.image ? `<img src="/uploads/${esc(p.image)}" alt="${esc(p.altText || '')}">` : ''}
+    <div class="row between"><span class="small">${p.document ? `📎 Carrousel PDF attaché (${esc(p.documentTitle || 'document')}) : publié en document` : '🖼 Image attachée : publiée avec le post'}</span>
+      <span class="row"><button class="btn ghost sm" data-action="studio-tool" data-id="visual">Changer</button><button class="btn ghost sm danger" data-action="remove-image" data-id="${p.id}">Retirer</button></span></div>
+  </div>`;
+}
+
+const VIS_FOR_POST = [['auto', '✨ Auto'], ['liste', 'Liste'], ['process', 'Étapes'], ['comparaison', 'Avant / après'], ['matrice', 'Matrice'], ['citation', 'Citation'], ['carousel', 'Carrousel PDF']];
+function visualPanel(p) {
+  const photos = myPhotos();
+  const others = visualsOf().filter((v) => v.postId !== p.id).slice(0, 12);
+  const mine = visualsOf().find((v) => v.postId === p.id);
+  const busy = ui.job?.kind === 'post-visual' && ui.job.id === p.id;
+  return `<div class="inline-box stack">
+    <b>🎨 Visuel à valeur tiré du post</b>
+    <p class="small" style="margin:0">L'IA lit le post et en fait un schéma (liste, étapes, comparatif…) aux couleurs choisies dans Visuels. Il est attaché au post et publié avec lui.</p>
+    <div class="chips">${VIS_FOR_POST.map(([k, l]) => `<button class="chip ${(ui.postVisType || 'auto') === k ? 'on' : ''}" data-action="post-vis-type" data-id="${k}">${l}</button>`).join('')}</div>
+    <button class="btn primary sm" data-action="post-visual" data-id="${p.id}" ${busy || !ui.data.settings.hasOpenaiKey ? 'disabled' : ''}>${busy ? esc(ui.job.step) : p.image || p.document ? '↻ Créer un nouveau visuel' : '✨ Créer le visuel'}</button>
+    ${mine ? `<button class="btn ghost sm" data-action="post-vis-edit" data-id="${mine.id}">✎ Modifier les textes du visuel (onglet Visuels)</button>` : ''}
+    <hr class="sep">
+    <b>📸 Photo ou image</b>
+    <div class="row">
+      ${photos.length ? `<button class="btn soft sm" data-action="img-auto" data-id="${p.id}">📸 Meilleure photo</button>` : ''}
+      <button class="btn soft sm" data-action="img-ai" data-id="${p.id}">✨ Image IA</button>
+      <label class="btn sm">⬆ Importer une image<input type="file" accept="image/*" data-upload="${p.id}" hidden></label>
+    </div>
+    ${photos.length ? `<div class="thumbs">${photos.map((im) => `<button class="thumb ${p.imageId === im.id ? 'on' : ''}" data-action="img-pick" data-id="${p.id}" data-img="${im.id}" title="${esc(im.description)}"><img src="/uploads/${esc(im.key)}" alt=""></button>`).join('')}</div>` : ''}
+    ${others.length ? `<hr class="sep"><b>📎 Rattacher un visuel déjà créé</b>
+      <div class="stack" style="gap:6px">${others.map((v) => `<button class="vis-pick" data-action="post-link-visual" data-id="${p.id}" data-vis="${v.id}"><span class="tag">${v.kind === 'carousel' ? 'Carrousel' : esc(v.spec?.type || 'visuel')}</span> ${esc(v.subtopic || v.subject || 'Visuel')}${v.postId ? ' <span class="small">(lié à un autre post)</span>' : ''}</button>`).join('')}</div>` : ''}
+  </div>`;
+}
+
+// ---------- Studio : améliorer le post en discutant avec l'IA ----------
+function chatPanel(p) {
+  const c = client();
+  const lessons = c.adn?.lessons || [];
+  const msgs = p.chat || [];
+  const pending = ui.chatPending?.id === p.id ? ui.chatPending : null;
+  const bubble = (m) => m.role === 'user'
+    ? `<div class="msg me">${esc(m.text)}</div>`
+    : `<div class="msg ai">${esc(m.text)}${m.changed ? '<div class="msg-tag">✎ Post modifié</div>' : ''}${(m.learned || []).map((l) => `<div class="msg-learn">🧠 Retenu : ${esc(l)}</div>`).join('')}</div>`;
+  return `<div class="inline-box chat-box">
+    <div class="row between"><b>💬 Améliorer avec l'IA</b>${p.versions?.length ? `<button class="btn ghost sm" data-action="undo" data-id="${p.id}" title="Revenir à la version précédente">↶ Version précédente</button>` : ''}</div>
+    <div class="chat-log" id="chatLog">
+      ${msgs.length || pending ? msgs.map(bubble).join('') : `<div class="small chat-hint">Dis ce qui ne va pas, comme à un rédacteur : « le hook est trop long », « je ne dis jamais “game changer” », « trop de questions », « raconte plutôt mon exemple client »… L'IA corrige le post et <b>retient</b> les leçons générales pour tous les prochains posts de ${esc(c.name)}.</div>`}
+      ${pending ? `<div class="msg me">${esc(pending.text)}</div><div class="msg ai typing">L'IA retravaille le post…</div>` : ''}
+    </div>
+    <textarea id="chatMsg" rows="3" placeholder="Ta critique ou ta consigne… (Entrée pour envoyer, Maj+Entrée pour aller à la ligne)" ${pending ? 'disabled' : ''}>${esc(ui.chatDraft[p.id] || '')}</textarea>
+    <div class="row between"><button class="btn primary sm" data-action="chat-send" data-id="${p.id}" ${pending ? 'disabled' : ''}>Envoyer</button>
+      <span class="small">${lessons.length} leçon${lessons.length > 1 ? 's' : ''} en mémoire</span></div>
+    <details class="memory" ${ui.memoryOpen ? 'open' : ''}><summary class="small">🧠 Ce que l'IA a retenu pour ${esc(c.name)} (${lessons.length})</summary>
+      ${lessons.length ? `<div class="stack" style="gap:4px;margin-top:6px">${lessons.slice().reverse().map((l) => `<div class="row between vitem"><span class="small">${esc(l.text)}</span><span class="row" style="gap:2px"><button class="btn ghost sm" data-action="lesson-rule" data-id="${l.id}" title="En faire une règle permanente">📌</button><button class="btn ghost sm danger" data-action="lesson-del" data-id="${l.id}" title="Oublier">✕</button></span></div>`).join('')}</div>`
+        : '<p class="small" style="margin:6px 0 0">Rien pour l\'instant : chaque critique générale sera mémorisée ici.</p>'}
+      <p class="small" style="margin:6px 0 0">Ces leçons sont appliquées à chaque nouveau post de ${esc(c.name)} (création, retouches, hooks). Tu peux les retirer à tout moment.</p>
+    </details>
+  </div>`;
+}
+
 // ---------- Panneaux d'un post : stratégie, hooks notés, qualité, retouches ----------
 const personas = () => client()?.adn?.personas || [];
 const ideas = () => client()?.adn?.ideas || [];
@@ -1209,6 +1277,7 @@ async function visualFiles(v) {
   return { pdf: Vis.jpegsToPdf(jpegs, f.w, f.h) };
 }
 
+const scrollChat = () => { const l = $('#chatLog'); if (l) l.scrollTop = l.scrollHeight; };
 async function attachVisual(v) {
   const files = await visualFiles(v);
   if (files.png) await api('POST', `/api/posts/${v.postId}/image`, { dataUrl: files.png });
@@ -1875,7 +1944,14 @@ const actions = {
     goto(id);
     toast('Post refait. Ton retour est mémorisé pour les prochains.');
   },
-  async approve(id) { await api('POST', `/api/posts/${id}/status`, { status: 'approved' }); await refresh(); toast('Programmé ✓'); },
+  async approve(id) {
+    const p = await api('POST', `/api/posts/${id}/status`, { status: 'approved' });
+    await refresh();
+    const at = p.scheduledAt ? new Date(p.scheduledAt) : null;
+    const when = !at ? 'sans date : choisis-en une' : at <= Date.now() ? 'date passée : publication dans les 15 prochaines minutes'
+      : at.toLocaleString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Paris' });
+    toast(`Programmé ✓ ${at && at > Date.now() ? 'le ' : ''}${when}`);
+  },
   async unapprove(id) { await api('POST', `/api/posts/${id}/status`, { status: 'review' }); await refresh(); },
   async 'approve-all'() {
     const list = clientPosts().filter((p) => ['review', 'draft', 'rejected'].includes(p.status));
@@ -1885,6 +1961,51 @@ const actions = {
     toast(`${r.approved} programmé(s)${r.skipped.length ? ` · ${r.skipped.length} à compléter d'abord` : ''}`);
   },
   async delete(id) { await api('DELETE', `/api/posts/${id}`); ui.lastCreated = ui.lastCreated.filter((x) => x !== id); await refresh(); },
+  async 'chat-send'(id) {
+    const box = $('#chatMsg');
+    const message = (box?.value || '').trim();
+    if (!message) throw new Error('Écris ou dicte ta critique.');
+    const text = $(`[data-editor="${id}"] textarea[name="text"]`)?.value;
+    ui.chatPending = { id, text: message };
+    ui.chatDraft[id] = '';
+    render(); scrollChat();
+    try {
+      const r = await api('POST', `/api/posts/${id}/chat`, { message, text });
+      delete ui.draftText[id];
+      if (r.learned?.length) toast(`🧠 Retenu pour les prochains posts : ${r.learned.join(' · ')}`);
+    } catch (e) { ui.chatDraft[id] = message; throw e; } finally { ui.chatPending = null; await refresh(); scrollChat(); $('#chatMsg')?.focus(); }
+  },
+  async 'lesson-del'(lid) { await api('DELETE', `/api/clients/${ui.clientId}/lessons/${lid}`); ui.memoryOpen = true; await refresh(); },
+  async 'lesson-rule'(lid) {
+    const l = (client().adn?.lessons || []).find((x) => x.id === lid); if (!l) return;
+    await saveAdn({ rules: [...(client().adn?.rules || []), l.text] });
+    await api('DELETE', `/api/clients/${ui.clientId}/lessons/${lid}`);
+    ui.memoryOpen = true; await refresh(); toast('Devenu une règle permanente (ADN › Voix)');
+  },
+  'post-vis-type'(t) { ui.postVisType = t; render(); },
+  async 'post-visual'(id) {
+    if (ui.job && !ui.job.finished) throw new Error('Un traitement est déjà en cours.');
+    const t = ui.postVisType || 'auto';
+    const kind = t === 'carousel' ? 'carousel' : 'image';
+    ui.job = { kind: 'post-visual', id, step: "L'IA prépare le visuel…" };
+    render();
+    try {
+      const r = await api('POST', `/api/posts/${id}/visual`, { kind, type: kind === 'carousel' ? '' : t, format: ui.vis.format, style: { preset: ui.vis.preset, accent: ui.vis.accent } });
+      ui.job.step = 'On dessine et on attache…'; render();
+      await refresh();
+      await attachVisual(r.visual);
+      toast('Visuel créé et attaché au post');
+    } finally { ui.job = null; await refresh(); }
+  },
+  async 'post-link-visual'(id, btn) {
+    btn.disabled = true;
+    const v = await api('POST', `/api/visuals/${btn.dataset.vis}/link`, { postId: id });
+    await refresh();
+    await attachVisual(visualsOf().find((x) => x.id === v.id) || v);
+    await refresh();
+    toast('Visuel rattaché au post');
+  },
+  'post-vis-edit'(vid) { ui.visTab = 'create'; actions.go('visuals'); setTimeout(() => document.querySelector(`[data-vid="${vid}"]`)?.closest('.vis-card')?.scrollIntoView({ block: 'center' }), 200); },
   async 'remove-image'(id) { await api('DELETE', `/api/posts/${id}/image`); await refresh(); },
   async 'publish-now'(id) {
     if (!confirm('Publier ce post sur LinkedIn maintenant ?')) return;
@@ -2000,6 +2121,7 @@ document.addEventListener('input', (e) => {
     $('#manualSave').disabled = !e.target.value.trim();
   }
   if (e.target.id === 'instruction') ui.instruction = e.target.value;
+  if (e.target.id === 'chatMsg' && ui.studioPost) ui.chatDraft[ui.studioPost] = e.target.value;
   if (e.target.dataset.vpath) {
     const t = e.target;
     const v = visualsOf().find((x) => x.id === t.dataset.vid);
@@ -2205,6 +2327,12 @@ $('#postDrawer').addEventListener('close', () => {
   ui.editing.delete(id);
 });
 
+// Discussion avec l'IA : Entrée envoie, Maj+Entrée va à la ligne.
+document.addEventListener('keydown', (event) => {
+  if (event.target.id !== 'chatMsg' || event.key !== 'Enter' || event.shiftKey || event.isComposing) return;
+  event.preventDefault();
+  view.querySelector('[data-action="chat-send"]')?.click();
+});
 document.addEventListener('keydown', (event) => {
   if (!ui.data || document.body.classList.contains('locked')) return;
   if (event.key === 'Escape' && document.body.classList.contains('menu-open')) setMobileMenu(false, true);

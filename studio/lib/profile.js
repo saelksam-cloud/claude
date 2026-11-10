@@ -69,3 +69,18 @@ ${inspirations.length ? `\nVisuels concurrents qui marchent (reprends leur densi
   const user = `Sujet : ${subject}\nSous-sujet : ${subtopic}\n${kind === 'carousel' ? '' : `Type de visuel : ${type}`}`;
   return { system, user };
 }
+
+// Un visuel à valeur tiré d'un post déjà écrit (le post n'est pas réécrit).
+export function visualForPostPrompt({ client, postText, type, kind, inspirations = [] }) {
+  const system = `Tu crées le visuel LinkedIn à valeur qui accompagne un post déjà écrit de ${client.name}. Le visuel résume ou prolonge l'idée centrale du post (sans le recopier), apporte une vraie réponse au lecteur et reprend les mêmes faits : rien d'inventé.
+${adnText(client, { includeProofs: true })}
+${kind === 'carousel' ? `Carrousel (document PDF) : 6 à 9 diapositives.
+- Couverture : { "kind": "cover", "title": "≤ 12 mots avec *mot clé*", "subtitle": "≤ 14 mots" }
+- Contenu : { "kind": "content", "title": "≤ 6 mots", "text": "≤ 20 mots", "items": ["optionnel, ≤ 8 mots", "…"] }
+- Dernière : { "kind": "end", "title": "récap ≤ 8 mots", "text": "≤ 25 mots" }
+Réponds en JSON : { "spec": { "type": "carousel", "slides": [ … ] }, "subtopic": "titre court du visuel" }` : `${VISUAL_SPECS}
+${type && type !== 'auto' ? `Type imposé : ${type}.` : 'Choisis le type le plus adapté au post (évite « chiffre » sans preuve vérifiée).'}
+Réponds en JSON : { "spec": { … }, "subtopic": "titre court du visuel" }`}
+${inspirations.length ? `\nVisuels concurrents qui marchent (reprends leur densité de texte et leur structure, sans copier) :\n${inspirations.map((d) => `- ${d}`).join('\n')}` : ''}`;
+  return { system, user: `Post :\n${String(postText).slice(0, 3000)}` };
+}

@@ -121,6 +121,8 @@ export async function writePost(settings, { client, module, subject, format, vei
     module?.examples ? `# Posts écrits par « ${module.name} » (c'est LE style à reproduire : ton, rythme, structure, longueur, mise en forme)\n${module.examples.slice(0, 12000)}` : '',
     `# Brief client\n${clientBrief(client)}`,
     analysis ? `# Ce qui marche dans la niche (étude de marché)\n${analysis.slice(0, 4000)}` : '',
+    client.adn?.rules?.length ? `# Règles permanentes de l'auteur\n${client.adn.rules.map((r) => `- ${r}`).join('\n')}` : '',
+    client.adn?.lessons?.length ? `# Ce que l'auteur t'a appris sur ses posts (À RESPECTER À CHAQUE POST)\n${client.adn.lessons.map((x) => `- ${x.text}`).join('\n')}` : '',
     client.feedbackLog?.length ? `# Retours précédents de l'auteur (à respecter absolument)\n${client.feedbackLog.slice(-15).map((f) => `- ${f.text}`).join('\n')}` : '',
     forms.length ? `# LA FORME QUI MARCHE (toutes niches confondues) : choisis UNE de ces structures et applique-la au sujet de l'auteur\n${fmtForms(forms)}` : '',
     mine.length ? `# LE FOND : posts qui marchent le mieux chez ${author ? `le concurrent ${author}` : `les concurrents de la niche ${client.niche || ''}`} (sujets, angles, vocabulaire de la cible ; forme ET fond utiles, ne jamais copier)\n${fmtExamples(mine)}` : '',

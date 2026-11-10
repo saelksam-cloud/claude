@@ -3,7 +3,24 @@
 const API = 'https://api.linkedin.com';
 const SCOPES = ['openid', 'profile', 'w_member_social'];
 
-const version = () => process.env.LINKEDIN_VERSION || '202510';
+// LinkedIn désactive chaque version de son API environ un an après sa sortie (erreur 426 NONEXISTENT_VERSION).
+// On part du mois précédent et on recule mois par mois si besoin ; la version qui marche est retenue.
+const monthsBack = (n) => { const d = new Date(); d.setUTCDate(1); d.setUTCMonth(d.getUTCMonth() - n); return `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, '0')}`; };
+let goodVersion = null;
+const versionCandidates = () => [...new Set([goodVersion, process.env.LINKEDIN_VERSION, ...[1, 2, 3, 4, 5, 6, 8, 10].map(monthsBack)].filter(Boolean))];
+const version = () => goodVersion || process.env.LINKEDIN_VERSION || monthsBack(1);
+
+// Appel à l'API « rest » de LinkedIn qui change de version tout seul si la version demandée n'existe pas / plus.
+async function restFetch(url, init, token) {
+  let last;
+  for (const v of versionCandidates()) {
+    const res = await fetch(url, { ...init, headers: { ...restHeaders(token), 'LinkedIn-Version': v } });
+    if (res.status === 426 || (res.status === 400 && /VERSION/i.test(await res.clone().text().catch(() => '')))) { last = res; continue; }
+    if (res.ok) goodVersion = v;
+    return res;
+  }
+  return last;
+}
 // cfg = { clientId, clientSecret } : saisis dans l'onglet Réglages (ou variables d'environnement).
 export const isConfigured = (cfg) => Boolean(cfg?.clientId && cfg?.clientSecret);
 export const publicUrl = () => (process.env.PUBLIC_URL || process.env.URL || 'http://localhost:8888').replace(/\/$/, '');
@@ -67,11 +84,10 @@ export function toLittleText(text) {
 }
 
 async function uploadImage(token, owner, imageData) {
-  const init = await fetch(`${API}/rest/images?action=initializeUpload`, {
+  const init = await restFetch(`${API}/rest/images?action=initializeUpload`, {
     method: 'POST',
-    headers: restHeaders(token),
     body: JSON.stringify({ initializeUploadRequest: { owner } }),
-  });
+  }, token);
   await check(init, "Initialisation de l'upload d'image");
   const { value } = await init.json();
   const put = await fetch(value.uploadUrl, {
@@ -84,11 +100,10 @@ async function uploadImage(token, owner, imageData) {
 }
 
 async function uploadDocument(token, owner, data) {
-  const init = await fetch(`${API}/rest/documents?action=initializeUpload`, {
+  const init = await restFetch(`${API}/rest/documents?action=initializeUpload`, {
     method: 'POST',
-    headers: restHeaders(token),
     body: JSON.stringify({ initializeUploadRequest: { owner } }),
-  });
+  }, token);
   await check(init, "Initialisation de l'envoi du document");
   const { value } = await init.json();
   const put = await fetch(value.uploadUrl, { method: 'PUT', headers: { Authorization: `Bearer ${token}` }, body: data });
@@ -113,7 +128,7 @@ export async function publish({ accessToken, personUrn }, { text, imageData, alt
     const imageUrn = await uploadImage(accessToken, personUrn, imageData);
     body.content = { media: { id: imageUrn, altText: altText || '' } };
   }
-  const res = await fetch(`${API}/rest/posts`, { method: 'POST', headers: restHeaders(accessToken), body: JSON.stringify(body) });
+  const res = await restFetch(`${API}/rest/posts`, { method: 'POST', body: JSON.stringify(body) }, accessToken);
   await check(res, 'Publication du post');
   return res.headers.get('x-restli-id') || res.headers.get('x-linkedin-id') || 'publié';
 }

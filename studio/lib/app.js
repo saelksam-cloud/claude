@@ -10,7 +10,7 @@ import { engagement, statsText } from './stats.js';
 import * as apify from './apify.js';
 import { chat } from './ai.js';
 import * as ed from './editorial.js';
-import { bannerCopyPrompt, profileAuditPrompt, visualPlanPrompt, visualItemPrompt } from './profile.js';
+import { bannerCopyPrompt, profileAuditPrompt, visualPlanPrompt, visualItemPrompt, visualForPostPrompt } from './profile.js';
 
 const liCfg = (settings) => ({ clientId: settings.linkedinClientId, clientSecret: settings.linkedinClientSecret });
 
@@ -265,6 +265,7 @@ route('POST', '/api/posts/:id/image', async ({ post, body }) => {
   const ext = match && IMAGE_TYPES[match[1]];
   if (!ext) throw new HttpError(400, 'Image PNG, JPG, GIF ou WEBP attendue');
   await dropPostImage(post);
+  await dropPostDocument(post); // une seule pièce jointe : la nouvelle image remplace un éventuel carrousel
   post.image = `${post.id}-${crypto.randomBytes(8).toString('hex')}.${ext}`;
   const bytes = Buffer.from(match[2], 'base64');
   await uploads().set(post.image, bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.length), { metadata: { type: match[1] } });
@@ -272,9 +273,11 @@ route('POST', '/api/posts/:id/image', async ({ post, body }) => {
   return json(post);
 });
 
+const dropPostDocument = async (post) => { if (post.document) await uploads().delete(post.document).catch(() => {}); post.document = null; post.documentTitle = ''; };
 route('DELETE', '/api/posts/:id/image', async ({ post }) => {
   await dropPostImage(post);
-  log(post, 'Image retirée');
+  await dropPostDocument(post);
+  log(post, 'Visuel retiré');
   return json(post);
 });
 
@@ -824,6 +827,52 @@ route('POST', '/api/posts/:id/action', async ({ db, settings, post, body }) => {
   return json(post);
 });
 
+// « Améliorer avec l'IA » : discussion sur un post. L'IA réécrit si besoin et retient les leçons générales
+// (client.adn.lessons), injectées ensuite dans tous les prompts d'écriture du client.
+route('POST', '/api/posts/:id/chat', async ({ db, settings, post, body }) => {
+  const message = String(body.message || '').trim().slice(0, 3000);
+  if (!message) throw new HttpError(400, 'Écris ou dicte ton message.');
+  if (post.status === 'published') throw new HttpError(400, 'Post déjà publié');
+  const client = clientOf(db, post.clientId);
+  // texte modifié à la main mais pas encore enregistré : on part de celui-là
+  if (typeof body.text === 'string' && body.text.trim() && body.text !== post.text) {
+    (post.versions ||= []).push({ at: now(), text: post.text, action: 'modif. manuelle' });
+    post.text = body.text.slice(0, 3000);
+  }
+  post.chat ||= [];
+  const r = await askJson(settings, ed.improveChatPrompt({ client, personaId: post.personaId, text: post.text, plan: post.plan, history: post.chat.slice(-12), message }), { timeout: 52_000 });
+  const newText = String(r.text || '').replace(/\*\*|__/g, '').trim();
+  const changed = newText && newText !== post.text;
+  if (changed) {
+    (post.versions ||= []).push({ at: now(), text: post.text, action: 'discussion' });
+    post.versions = post.versions.slice(-10);
+    post.text = newText;
+    post.quality = null;
+    if (post.status !== 'review') post.status = 'review';
+    log(post, `Amélioré en discutant : « ${message.slice(0, 80)} »`);
+  }
+  client.adn ||= {};
+  const known = new Set((client.adn.lessons || []).map((l) => l.text.toLowerCase()));
+  const learned = (Array.isArray(r.lessons) ? r.lessons : []).map((x) => String(x || '').trim().slice(0, 240)).filter((x) => x && !known.has(x.toLowerCase())).slice(0, 4);
+  if (learned.length) client.adn.lessons = [...(client.adn.lessons || []), ...learned.map((text) => ({ id: newId('les'), text, at: now(), postId: post.id }))].slice(-80);
+  post.chat.push({ role: 'user', text: message, at: now() }, { role: 'ai', text: String(r.reply || (changed ? 'Voilà la nouvelle version.' : 'Compris.')).slice(0, 1200), changed: Boolean(changed), learned, at: now() });
+  post.chat = post.chat.slice(-40);
+  return json({ post, client: publicClient(client), learned, changed: Boolean(changed) });
+});
+
+// Mémoire de l'IA : supprimer ou corriger une leçon.
+route('DELETE', '/api/clients/:id/lessons/:lid', async ({ client, params }) => {
+  client.adn ||= {};
+  client.adn.lessons = (client.adn.lessons || []).filter((l) => l.id !== params.lid);
+  return json(publicClient(client));
+});
+route('PUT', '/api/clients/:id/lessons/:lid', async ({ client, params, body }) => {
+  const l = (client.adn?.lessons || []).find((x) => x.id === params.lid);
+  if (!l) throw new HttpError(404, 'Leçon introuvable');
+  l.text = String(body.text || '').trim().slice(0, 240) || l.text;
+  return json(publicClient(client));
+});
+
 route('POST', '/api/posts/:id/undo', async ({ post }) => {
   const v = post.versions?.pop();
   if (!v) throw new HttpError(400, 'Aucune version précédente');
@@ -955,6 +1004,35 @@ route('POST', '/api/visuals/item', async ({ db, settings, body }) => {
   post.visualId = visual.id;
   db.visuals.unshift(visual);
   return json({ visual, post });
+});
+
+// Studio : créer un visuel à valeur à partir d'un post existant (le navigateur le dessine puis l'attache au post).
+route('POST', '/api/posts/:id/visual', async ({ db, settings, post, body }) => {
+  if (post.status === 'published') throw new HttpError(400, 'Post déjà publié');
+  const client = clientOf(db, post.clientId);
+  const kind = body.kind === 'carousel' ? 'carousel' : 'image';
+  const type = ['liste', 'comparaison', 'process', 'matrice', 'chiffre', 'citation'].includes(body.type) ? body.type : 'auto';
+  const r = await askJson(settings, visualForPostPrompt({ client, postText: post.text, type, kind, inspirations: inspirationsFor(db, client, 'visual') }), { timeout: 52_000 });
+  if (!r.spec) throw new HttpError(502, "L'IA n'a pas renvoyé de visuel : réessaie.");
+  if (kind === 'carousel') r.spec.type = 'carousel';
+  db.visuals ||= [];
+  for (const v of db.visuals) if (v.postId === post.id) v.postId = null;
+  const visual = { id: newId('vis'), clientId: client.id, kind, format: body.format === 'square' ? 'square' : 'portrait', style: body.style || {}, spec: r.spec, subject: post.theme || '', subtopic: String(r.subtopic || post.theme || 'Visuel').slice(0, 80), postId: post.id, createdAt: now() };
+  db.visuals.unshift(visual);
+  post.visualId = visual.id;
+  log(post, `Visuel « ${kind === 'carousel' ? 'carrousel' : r.spec.type || type} » créé à partir du post`);
+  return json({ visual, post });
+});
+
+// Rattacher un visuel déjà créé (onglet Visuels) à un post.
+route('POST', '/api/visuals/:id/link', async ({ db, params, body }) => {
+  const v = (db.visuals || []).find((x) => x.id === params.id);
+  const post = db.posts.find((p) => p.id === body.postId);
+  if (!v || !post) throw new HttpError(404, 'Visuel ou post introuvable');
+  for (const x of db.visuals) if (x.postId === post.id && x !== v) x.postId = null;
+  v.postId = post.id;
+  post.visualId = v.id;
+  return json(v);
 });
 
 route('PUT', '/api/visuals/:id', async ({ db, params, body }) => {

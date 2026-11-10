@@ -68,6 +68,7 @@ export function adnText(client, { personaId, includeProofs = true } = {}) {
     ]),
     v.samples ? `## Textes réellement écrits par le client (imiter cette voix)\n${String(v.samples).slice(0, 5000)}` : '',
     (a.rules || []).length ? `## Règles permanentes validées par le client\n${a.rules.map((r) => `- ${r}`).join('\n')}` : '',
+    lessonsText(client),
     (client.feedbackLog || []).length ? `## Retours récents du client (ponctuels, à prendre en compte si pertinent)\n${client.feedbackLog.slice(-8).map((f) => `- ${f.text}`).join('\n')}` : '',
     includeProofs ? (proofs.length ? `## Preuves vérifiées utilisables (les SEULES autorisées)\n${proofs.map((p) => `- [${p.id}] (${p.type}) ${p.text}${p.source ? ` — source : ${p.source}` : ''}`).join('\n')}` : "## Preuves\nAucune preuve vérifiée : n'utilise aucun chiffre ni résultat client ; écris [À COMPLÉTER : …] si le post en a besoin.") : '',
   ].filter(Boolean).join('\n\n');
@@ -198,6 +199,32 @@ export const REWRITE_ACTIONS = {
   voice: 'Réécris strictement avec la voix du client (vocabulaire, longueur de phrases, ton, adresse).',
   other: 'Propose une autre version complète, différente, du même post.',
 };
+
+// Ce que le client a appris à l'IA en discutant de ses posts (mémoire durable, appliquée à tous les posts).
+export function lessonsText(client) {
+  const l = client.adn?.lessons || [];
+  return l.length ? `## Ce que le client t'a appris sur ses posts (À RESPECTER À CHAQUE POST)\n${l.map((x) => `- ${x.text}`).join('\n')}` : '';
+}
+
+// Discussion « Améliorer avec l'IA » sur un post : l'IA répond, propose une nouvelle version si besoin
+// et extrait les leçons générales à retenir pour les prochains posts.
+export function improveChatPrompt({ client, personaId, text, plan, history = [], message }) {
+  const st = plan?.structureId ? findStructure(plan.structureId) : null;
+  const system = [
+    `Tu es le meilleur ghostwriter LinkedIn francophone, tu écris pour ${client.name}. Tu travailles en binôme avec ${client.name === 'Moi' ? "l'auteur" : 'le ghostwriter de ce client'} qui critique le post pour que tu l'améliores et que tu apprennes ses exigences.`,
+    GLOBAL_RULES,
+    adnText(client, { personaId }),
+    st ? `# Structure actuelle : ${st.name}\n${st.schema}` : '',
+    `# Ta façon de répondre
+- Si le message demande un changement (critique, consigne, « refais », « plus court »…), réécris le post COMPLET en appliquant la demande, sans rien changer d'autre que nécessaire. Sinon (question, discussion), laisse "text" vide.
+- "reply" : 1 à 3 phrases simples qui disent ce que tu as changé et pourquoi (ou la réponse à la question). Tutoie.
+- "lessons" : les leçons GÉNÉRALES à retenir pour TOUS les prochains posts (goût, style, interdits, manière d'écrire), formulées comme une règle courte et précise (« Jamais de question rhétorique en hook », « Phrases de 12 mots maximum »). Une correction qui ne concerne que ce post précis (un fait, un mot de ce sujet) n'est PAS une leçon. Ne répète pas une leçon déjà connue. Liste vide si rien de général.
+- Aucun chiffre, anecdote ou preuve inventés : [À COMPLÉTER : …] si une info manque. Pas de markdown dans le post.
+Réponds en JSON : { "reply": "", "text": "", "lessons": [""] }`,
+  ].filter(Boolean).join('\n\n');
+  const convo = history.map((m) => `${m.role === 'user' ? 'MOI' : 'TOI'} : ${m.text}`).join('\n');
+  return { system, user: `${convo ? `Échanges précédents sur ce post :\n${convo}\n\n` : ''}Post actuel :\n${text}\n\nMon message : ${message}` };
+}
 
 export function rewritePrompt({ client, personaId, text, instruction, plan }) {
   const st = plan?.structureId ? findStructure(plan.structureId) : null;
