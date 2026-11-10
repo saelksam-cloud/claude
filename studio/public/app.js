@@ -109,7 +109,27 @@ function toast(msg, isError = false) {
 }
 
 class AuthError extends Error {}
+// Les appels IA longs passent par une tâche d'arrière-plan (Netlify coupe les requêtes normales à 30 s).
+const LONG_API = /^\/api\/(jobs-test|plan|write|hooks\/ideas|hooks\/generate|hooks\/optimize|study|veille\/paste|veille\/structures|banners\/suggest|profile\/audit|visuals\/plan|visuals\/item|images|posts\/[^/]+\/(hooks|chat|visual|quality|action|feedback|rewrite|image\/generate|image\/auto))$/;
 async function api(method, url, body) {
+  if (method === 'POST' && LONG_API.test(url)) return apiLong(method, url, body);
+  return apiDirect(method, url, body);
+}
+async function apiLong(method, url, body) {
+  const { id } = await apiDirect('POST', '/api/jobs', { method, path: url, body: body || {} });
+  const started = Date.now();
+  let wait = 1200;
+  while (Date.now() - started < 6 * 60_000) {
+    await new Promise((r) => setTimeout(r, wait));
+    wait = Math.min(2500, wait + 300);
+    const j = await apiDirect('GET', `/api/jobs/${id}`).catch((e) => (e instanceof AuthError ? Promise.reject(e) : null));
+    if (!j || j.status === 'pending' || j.status === 'running') continue;
+    if (j.status === 'done') return j.result;
+    throw new Error(j.error || `Erreur ${j.httpStatus || ''}`.trim());
+  }
+  throw new Error("L'IA met trop de temps à répondre : réessaie dans un instant.");
+}
+async function apiDirect(method, url, body) {
   const headers = { 'x-studio-password': store.get('password', '') };
   if (body) headers['Content-Type'] = 'application/json';
   const res = await fetch(url, { method, headers, body: body ? JSON.stringify(body) : undefined });

@@ -95,7 +95,7 @@ export async function chat(settings, system, user, { json: asJson = false, timeo
       method: 'POST',
       headers: { Authorization: `Bearer ${settings.openaiKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ model, messages: [{ role: 'system', content: system }, { role: 'user', content: user }], ...(asJson ? { response_format: { type: 'json_object' } } : {}) }),
-      signal: AbortSignal.timeout(timeout),
+      signal: AbortSignal.timeout(globalThis.__LONG_JOB ? Math.max(timeout, 150_000) : timeout),
     }).catch((e) => { throw new Error(e.name === 'TimeoutError' ? "OpenAI a mis trop de temps à répondre : réessaie (ou choisis le modèle gpt-4.1 dans Réglages, plus rapide)." : `OpenAI injoignable : ${e.message}`); });
     const json = await res.json().catch(() => ({}));
     if (res.ok) {

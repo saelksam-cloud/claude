@@ -1,5 +1,6 @@
 // Toute la logique HTTP du studio, sous forme de handler web standard (Request -> Response).
 import crypto from 'node:crypto';
+import { getStore } from '@netlify/blobs';
 import {
   loadDb, saveDb, uploads, newId, now, createClient, importPosts, publicClient,
   pickClientFields, pickPostFields, loadSettings, saveSettings, publicSettings,
@@ -1144,6 +1145,75 @@ route('GET', '/auth/linkedin/callback', async ({ db, url, settings }) => {
   }
 }, { auth: false });
 
+// Enregistre seulement ce que la requête a changé, par-dessus la version la plus récente de la base :
+// une tâche longue (IA en arrière-plan) n'écrase pas les modifications faites entre-temps.
+async function mergeSave(beforeJson, db) {
+  const prev = JSON.parse(beforeJson);
+  const fresh = await loadDb();
+  for (const key of Object.keys(db)) {
+    const a = prev[key]; const b = db[key];
+    if (JSON.stringify(a) === JSON.stringify(b)) continue;
+    if (Array.isArray(a) && Array.isArray(b) && b.every((x) => x && x.id) && a.every((x) => x && x.id) && Array.isArray(fresh[key])) {
+      const was = new Map(a.map((x) => [x.id, JSON.stringify(x)]));
+      const now_ = new Set(b.map((x) => x.id));
+      let f = fresh[key].filter((x) => !(was.has(x.id) && !now_.has(x.id))); // supprimés par cette requête
+      b.forEach((x, i) => {
+        if (was.get(x.id) === JSON.stringify(x)) return; // inchangé ici : on garde la version fraîche
+        const j = f.findIndex((y) => y.id === x.id);
+        if (j >= 0) f[j] = x; else f.splice(Math.min(i, f.length), 0, x);
+      });
+      fresh[key] = f;
+    } else fresh[key] = b;
+  }
+  await saveDb(fresh);
+}
+
+// ---------- Tâches longues : exécutées par une fonction d'arrière-plan (15 min max au lieu de 30 s) ----------
+const jobs = () => getStore({ name: 'jobs', consistency: 'strong' });
+const LONG_ROUTE = /^\/api\/(jobs-test|plan|write|hooks\/ideas|hooks\/generate|hooks\/optimize|study|veille\/paste|veille\/structures|banners\/suggest|profile\/audit|visuals\/plan|visuals\/item|images|posts\/[^/]+\/(hooks|chat|visual|quality|action|feedback|rewrite|image\/generate|image\/auto))$/;
+route('POST', '/api/jobs', async ({ body }) => {
+  const path = String(body.path || '');
+  const method = body.method === 'PUT' ? 'PUT' : 'POST';
+  if (!LONG_ROUTE.test(path)) throw new HttpError(400, 'Tâche inconnue');
+  const id = `job_${Date.now().toString(36)}${crypto.randomBytes(6).toString('hex')}`;
+  const token = crypto.randomBytes(16).toString('hex');
+  await jobs().setJSON(id, { id, token, method, path, body: body.body ?? {}, status: 'pending', createdAt: now() });
+  const res = await fetch(`${linkedin.publicUrl()}/.netlify/functions/worker-background`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id, token }) }).catch((e) => ({ ok: false, status: 0, statusText: e.message }));
+  if (!res.ok && res.status !== 202) {
+    await jobs().delete(id).catch(() => {});
+    throw new HttpError(502, `Impossible de lancer la tâche en arrière-plan (${res.status || res.statusText}).`);
+  }
+  return json({ id });
+});
+// Diagnostic : une tâche qui dure plus de 30 s, pour vérifier que l'arrière-plan fonctionne.
+route('POST', '/api/jobs-test', async ({ body }) => {
+  const seconds = Math.max(1, Math.min(60, Number(body.seconds) || 35));
+  await new Promise((r) => setTimeout(r, seconds * 1000));
+  return json({ ok: true, slept: seconds, background: Boolean(globalThis.__LONG_JOB) });
+});
+route('GET', '/api/jobs/:jid', async ({ params }) => {
+  const j = await jobs().get(params.jid, { type: 'json' });
+  if (!j) throw new HttpError(404, 'Tâche introuvable');
+  return json({ id: j.id, status: j.status, httpStatus: j.httpStatus, result: j.result, error: j.error });
+});
+
+// Appelé par netlify/functions/worker-background.mjs : rejoue la requête en interne, sans limite de 30 s.
+export async function runJob({ id, token }) {
+  const j = id && (await jobs().get(id, { type: 'json' }));
+  if (!j || !token || j.token !== token || j.status !== 'pending') return;
+  await jobs().setJSON(id, { ...j, status: 'running', startedAt: now() });
+  globalThis.__LONG_JOB = true;
+  let out;
+  try {
+    const res = await handle(new Request(`${linkedin.publicUrl()}${j.path}`, { method: j.method, headers: { 'content-type': 'application/json', 'x-studio-password': process.env.APP_PASSWORD || '' }, body: JSON.stringify(j.body || {}) }));
+    const result = await res.json().catch(() => ({}));
+    out = { status: res.ok ? 'done' : 'error', httpStatus: res.status, result: res.ok ? result : null, error: res.ok ? '' : result.error || `Erreur ${res.status}` };
+  } catch (e) {
+    out = { status: 'error', httpStatus: 500, result: null, error: e.message };
+  }
+  await jobs().setJSON(id, { ...j, ...out, token: '', finishedAt: now() });
+}
+
 export async function handle(req) {
   const url = new URL(req.url);
   try {
@@ -1165,7 +1235,7 @@ export async function handle(req) {
     }
     const before = JSON.stringify(db);
     const res = await r.fn(ctx);
-    if (JSON.stringify(db) !== before) await saveDb(db);
+    if (JSON.stringify(db) !== before) await mergeSave(before, db);
     return res;
   } catch (e) {
     if (!(e instanceof HttpError)) console.error(e);
