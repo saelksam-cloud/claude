@@ -93,6 +93,14 @@ export async function publishDuePosts() {
   const due = db.posts.filter((p) => p.status === 'approved' && p.scheduledAt && Date.parse(p.scheduledAt) <= Date.now());
   let changed = false;
   for (const post of due) {
+    // Sécurité : un post en retard de plus de 12 h (date ET validation) ne part pas tout seul, on demande une nouvelle date.
+    const approvedAt = [...(post.history || [])].reverse().find((h) => /^Validé|^Programmé/.test(h.action))?.at;
+    const ref = Math.max(Date.parse(post.scheduledAt), Date.parse(approvedAt || 0) || 0);
+    if (Date.now() - ref > 12 * 3_600_000) {
+      const msg = 'Date de publication dépassée de plus de 12 h : choisis une nouvelle date (ou « Publier maintenant »).';
+      if (post.error !== msg) { post.error = msg; log(post, 'Non publié : date dépassée'); changed = true; }
+      continue;
+    }
     const lastFail = [...post.history].reverse().find((h) => h.action.startsWith('Échec'));
     if (post.error && lastFail && Date.now() - Date.parse(lastFail.at) < 3_600_000) continue; // 1 essai / heure
     await publishPost(db, post, settings);
@@ -210,6 +218,7 @@ route('PUT', '/api/posts/:id', async ({ db, post, body }) => {
     client.adn ||= {};
     client.adn.memory = [...(client.adn.memory || []), { at: now(), postId: post.id, type: 'correction', before: post.text.slice(0, 3000), after: body.text.slice(0, 3000), by: 'ghostwriter' }].slice(-60);
   }
+  if (body.scheduledAt && body.scheduledAt !== post.scheduledAt) post.error = '';
   Object.assign(post, pickPostFields(body));
   if (post.status === 'approved') {
     const problem = validateForApproval(post);

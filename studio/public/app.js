@@ -602,7 +602,7 @@ function renderPosts() {
         <button class="btn danger sm" data-action="bulk-delete">🗑 Supprimer la sélection</button>
         <button class="btn ghost sm" data-action="bulk-clear">Annuler</button>` : '<span class="small">Coche des posts pour les supprimer en une fois.</span>'}
     </div>` : ''}
-    ${shown.length ? shown.map((post) => postCard(post)).join('') : '<div class="card empty">Aucun post ici. <a href="#" data-action="go" data-id="create">Créer des posts</a></div>'}`;
+    ${shown.length ? shown.map((post) => postCard(post)).join('') : '<div class="card empty">Aucun post ici. <a href="#" data-action="go" data-id="atelier">Créer un post</a></div>'}`;
 }
 
 function postEditor(p) {
@@ -2460,8 +2460,8 @@ document.addEventListener('keydown', (event) => {
   if (event.key.toLowerCase() === 'n') {
     event.preventDefault();
     ui.studioPost = null;
-    actions.go('create');
-    $('#manualDraft')?.focus();
+    actions.go('atelier');
+    $('#instruction')?.focus();
   }
   if (event.key === '/') { event.preventDefault(); actions['quick-search'](); }
 });
