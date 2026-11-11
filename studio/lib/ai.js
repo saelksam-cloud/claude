@@ -123,6 +123,7 @@ export async function writePost(settings, { client, module, subject, format, vei
     `# Brief client\n${clientBrief(client)}`,
     analysis ? `# Ce qui marche dans la niche (étude de marché)\n${analysis.slice(0, 4000)}` : '',
     client.adn?.rules?.length ? `# Règles permanentes de l'auteur\n${client.adn.rules.map((r) => `- ${r}`).join('\n')}` : '',
+    client.adn?.likedPosts?.length ? `# Posts que l'auteur aime (style et niveau à viser, ne pas recopier le sujet)\n${client.adn.likedPosts.slice(-4).map((p) => `---\n${p.text.slice(0, 1200)}`).join('\n')}` : '',
     client.adn?.lessons?.length ? `# Ce que l'auteur t'a appris sur ses posts (À RESPECTER À CHAQUE POST)\n${client.adn.lessons.map((x) => `- ${x.text}`).join('\n')}` : '',
     client.feedbackLog?.length ? `# Retours précédents de l'auteur (à respecter absolument)\n${client.feedbackLog.slice(-15).map((f) => `- ${f.text}`).join('\n')}` : '',
     forms.length ? `# LA FORME QUI MARCHE (toutes niches confondues) : choisis UNE de ces structures et applique-la au sujet de l'auteur\n${fmtForms(forms)}` : '',

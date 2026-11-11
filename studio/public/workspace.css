@@ -443,3 +443,7 @@ details.more summary { cursor: pointer; }
 .ban-before img { width: 100%; max-width: 640px; aspect-ratio: 4 / 1; object-fit: cover; border-radius: 8px; }
 .ban-chat .chat-log { max-height: 280px; }
 .ban-chat textarea { resize: vertical; }
+.teach summary { cursor: pointer; display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; }
+.teach textarea { resize: vertical; }
+.teach summary { cursor: pointer; display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; }
+.teach textarea { resize: vertical; }

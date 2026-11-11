@@ -705,7 +705,12 @@ const askJson = async (settings, prompt, opts = {}) => {
   try { return JSON.parse(out); } catch { throw new HttpError(502, "L'IA a renvoyé une réponse illisible : réessaie."); }
 };
 const clientOf = (db, id) => { const c = db.clients.find((x) => x.id === id); if (!c) throw new HttpError(404, 'Client introuvable'); return c; };
-const moduleText = (m, label) => (m && (m.instructions || m.examples) ? `# ${label} « ${m.name} »\n${(m.instructions || '').slice(0, 6000)}\n${m.examples ? `Exemples :\n${m.examples.slice(0, 6000)}` : ''}` : '');
+// Méthode d'un GPT Linka (instructions copiées dans Réglages), en entier : c'est la référence d'écriture.
+const moduleText = (m, label) => {
+  if (!m || !(m.instructions || m.examples)) return '';
+  const ex = m.examples && m.examples.trim() !== (m.instructions || '').trim() ? m.examples : '';
+  return `# ${label} « ${m.name} » — MÉTHODE À SUIVRE EN PRIORITÉ\n${(m.instructions || '').slice(0, 14000)}${m.knowledge ? `\nConnaissances :\n${m.knowledge.slice(0, 8000)}` : ''}${ex ? `\nExemples :\n${ex.slice(0, 8000)}` : ''}`;
+};
 
 // ---- Fiche ADN éditoriale ----
 const ADN_KEYS = ['profile', 'voice', 'objectives', 'personas', 'proofs', 'forbiddenTopics', 'rules', 'onboarding', 'interview', 'ideas', 'analysis', 'memory'];
@@ -928,7 +933,7 @@ route('POST', '/api/hooks/generate', async ({ db, settings, body }) => {
 route('POST', '/api/hooks/ideas', async ({ db, settings, body }) => {
   const client = clientOf(db, body.clientId);
   const bank = client.adn?.hookBank || [];
-  const r = await askJson(settings, ed.hookIdeasPrompt({ client, pillar: body.pillar, topic: String(body.topic || '').trim(), count: Math.max(5, Math.min(30, Number(body.count) || 20)), liked: bank.filter((h) => h.status !== 'rejected').map((h) => h.text), rejected: bank.filter((h) => h.status === 'rejected').map((h) => h.text) }), { timeout: 55_000 });
+  const r = await askJson(settings, ed.hookIdeasPrompt({ client, pillar: body.pillar, topic: String(body.topic || '').trim(), count: Math.max(5, Math.min(30, Number(body.count) || 20)), liked: bank.filter((h) => h.status !== 'rejected').map((h) => h.text), rejected: bank.filter((h) => h.status === 'rejected').map((h) => h.text), module: moduleText(moduleByRole(settings, 'hooker'), 'GPT Linka hooks'), templates: ed.pickHookTemplates({ prefs: db.hookPrefs, seed: String(body.topic || Date.now()), n: 16 }), veilleHooks: topHooks(db, client.niche).slice(0, 12) }), { timeout: 55_000 });
   const hooks = (r.hooks || []).filter((h) => h?.text).map((h) => ({ text: String(h.text).replace(/\*\*/g, '').trim().slice(0, 300), pillar: ed.PILLARS[h.pillar] ? h.pillar : (ed.PILLARS[body.pillar] ? body.pillar : ''), idea: String(h.idea || '').slice(0, 300) }));
   return json({ hooks });
 });
@@ -947,6 +952,26 @@ route('DELETE', '/api/clients/:id/hooks/:hid', async ({ client, params }) => {
   client.adn.hookBank = (client.adn.hookBank || []).filter((h) => h.id !== params.hid);
   return json(publicClient(client));
 });
+// Apprendre à l'IA : hooks aimés (collés en masse), posts aimés, critiques générales.
+route('POST', '/api/clients/:id/teach', async ({ client, body }) => {
+  client.adn ||= {};
+  const lines = (t) => String(t || '').split(/\n+/).map((x) => x.replace(/^[-•*\d.)\s]+/, '').trim()).filter((x) => x.length > 3);
+  const hooks = lines(body.hooks).slice(0, 100);
+  if (hooks.length) {
+    const bank = (client.adn.hookBank || []).filter((h) => !hooks.includes(h.text));
+    client.adn.hookBank = [...bank, ...hooks.map((text) => ({ id: newId('hk'), text: text.slice(0, 300), pillar: '', idea: '', status: 'liked', source: 'collé', at: now() }))].slice(-300);
+  }
+  const posts = String(body.posts || '').split(/\n\s*-{3,}\s*\n|\n{3,}/).map((x) => x.trim()).filter((x) => x.length > 40).slice(0, 20);
+  if (posts.length) client.adn.likedPosts = [...(client.adn.likedPosts || []), ...posts.map((text) => ({ id: newId('lp'), text: text.slice(0, 3000), at: now() }))].slice(-30);
+  const critiques = lines(body.critiques).slice(0, 30);
+  if (critiques.length) {
+    const known = new Set((client.adn.lessons || []).map((l) => l.text.toLowerCase()));
+    client.adn.lessons = [...(client.adn.lessons || []), ...critiques.filter((c) => !known.has(c.toLowerCase())).map((text) => ({ id: newId('les'), text: text.slice(0, 240), at: now(), source: 'critique' }))].slice(-80);
+  }
+  return json({ client: publicClient(client), added: { hooks: hooks.length, posts: posts.length, critiques: critiques.length } });
+});
+route('DELETE', '/api/clients/:id/liked-posts/:pid', async ({ client, params }) => { client.adn ||= {}; client.adn.likedPosts = (client.adn.likedPosts || []).filter((x) => x.id !== params.pid); return json(publicClient(client)); });
+
 // Direction artistique du client : 2 ou 3 couleurs et les fonds utilisés à tour de rôle.
 route('PUT', '/api/clients/:id/da', async ({ client, body }) => {
   client.adn ||= {};

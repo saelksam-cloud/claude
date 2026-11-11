@@ -24,6 +24,19 @@ export function redo() { if (!history.future.length) return; history.past.push(s
 export function resetHistory() { history.past = []; history.future = []; }
 
 let raf = 0;
+// Couleur moyenne du fond juste autour d'un élément (lue sur la bannière dessinée), pour cacher un ancien texte.
+function sampleAround(el) {
+  const canvas = state.root.querySelector('#bannerCanvas');
+  const ctx = canvas?.getContext('2d', { willReadFrequently: true });
+  if (!ctx) return '';
+  const w = el.w || 200; const h = el.h || 80; const m = 6;
+  const pts = [[el.x - m, el.y + h / 2], [el.x + w + m, el.y + h / 2], [el.x + w / 2, el.y - m], [el.x + w / 2, el.y + h + m], [el.x - m, el.y - m], [el.x + w + m, el.y + h + m]]
+    .filter(([x, y]) => x >= 0 && y >= 0 && x < canvas.width && y < canvas.height);
+  if (!pts.length) return '';
+  const acc = [0, 0, 0];
+  for (const [x, y] of pts) { const d = ctx.getImageData(Math.round(x), Math.round(y), 1, 1).data; acc[0] += d[0]; acc[1] += d[1]; acc[2] += d[2]; }
+  return '#' + acc.map((v) => Math.round(v / pts.length).toString(16).padStart(2, '0')).join('');
+}
 export function redraw(withPanel = false) {
   if (!state) return;
   cancelAnimationFrame(raf);
@@ -103,7 +116,8 @@ function renderPanel() {
       <label class="f">Hauteur <input type="range" min="2" max="396" data-be-prop="h" value="${Math.round(el.h || 80)}"></label></div>
       <label class="f">Arrondi <input type="range" min="0" max="80" data-be-prop="radius" value="${el.radius ?? 16}"></label>
       <label class="f">Opacité <input type="range" min="0.1" max="1" step="0.05" data-be-prop="opacity" value="${el.opacity ?? 1}"></label>
-      <div class="f">Couleur ${swatches('fill', el.fill)}</div>${common}`;
+      <div class="f">Couleur ${swatches('fill', el.fill)}</div>
+      <button type="button" class="btn sm" data-be="pick" title="Prend la couleur du fond autour de la forme : pratique pour cacher un ancien texte">🎯 Couleur du fond autour (cache)</button>${common}`;
   }
 }
 
@@ -222,8 +236,10 @@ export function mountEditor(root, banner, { onChange, overlay = true } = {}) {
     if (a === 'pill') return addElement({ id: B.uid(), type: 'text', text: 'Pastille', x: 640, y: 160, size: 24, weight: 700, color: p.accent, bg: '#FFFFFF' });
     if (a === 'arrow') return addElement({ id: B.uid(), type: 'arrow', kind: 'curve', x: 700, y: 150, w: 70, h: 64, color: p.accent, width: 3 });
     if (a === 'shape') return addElement({ id: B.uid(), type: 'shape', kind: 'rect', x: 600, y: 140, w: 300, h: 90, fill: p.accent, radius: 16 });
+    if (a === 'cover') { const c = { id: B.uid(), type: 'shape', kind: 'rect', role: 'cover', x: 560, y: 130, w: 360, h: 90, fill: '#FFFFFF', radius: 4 }; addElement(c); c.fill = sampleAround(c) || c.fill; redraw(true); return; }
     if (a === 'emoji') return addElement({ id: B.uid(), type: 'text', text: t.dataset.val || '🔔', x: 760, y: 160, size: 40, weight: 400, color: p.text });
     if (!el) return;
+    if (a === 'pick') { const col = sampleAround(el); if (col) { begin(); el.fill = col; commit(); redraw(true); } return; }
     if (a === 'del') { begin(); state.banner.elements = state.banner.elements.filter((e) => e.id !== el.id); state.sel = null; commit(); redraw(true); }
     if (a === 'dup') { const c = { ...JSON.parse(JSON.stringify(el)), id: B.uid(), x: el.x + 24, y: el.y + 24, role: undefined }; addElement(c); }
     if (a === 'front' || a === 'back') { begin(); const arr = state.banner.elements.filter((e) => e.id !== el.id); if (a === 'front') arr.push(el); else arr.unshift(el); state.banner.elements = arr; commit(); redraw(true); }

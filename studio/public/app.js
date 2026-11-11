@@ -877,6 +877,23 @@ function visualPanel(p) {
   </div>`;
 }
 
+// ---------- Apprendre à l'IA : hooks aimés, posts aimés, critiques ----------
+function teachCard(c, { open = true } = {}) {
+  const liked = (c.adn?.hookBank || []).filter((h) => h.status === 'liked').length;
+  const posts = c.adn?.likedPosts || [];
+  const lessons = c.adn?.lessons || [];
+  return `<details class="card teach" ${open ? 'open' : ''}><summary><b>🎓 Apprendre à l'IA</b> <span class="small">${liked} hooks aimés · ${posts.length} posts aimés · ${lessons.length} critiques retenues</span></summary>
+    <div class="stack" style="margin-top:10px">
+      <p class="small" style="margin:0">Colle ici ce que ChatGPT (tes GPT Linka) ou d'autres te donnent de bien, et ce qui ne te plaît pas. C'est le levier le plus fort : l'IA s'en sert à chaque hook et à chaque post de ${esc(c.name)}.</p>
+      <label class="f">👍 Hooks qui me plaisent <span class="small">(un par ligne)</span><textarea id="teachHooks" rows="5" placeholder="Un hook par ligne"></textarea></label>
+      <label class="f">📄 Posts qui me plaisent <span class="small">(sépare les posts par une ligne --- )</span><textarea id="teachPosts" rows="5"></textarea></label>
+      <label class="f">✍️ Mes critiques <span class="small">(une par ligne : ce qui ne va pas dans les hooks ou les posts)</span><textarea id="teachCritiques" rows="4" placeholder="Ex. trop de questions rhétoriques"></textarea></label>
+      <div class="row between"><span class="small">Les critiques rejoignent la mémoire (post-it jaune de l'Atelier).</span><button class="btn primary" data-action="teach-save">Enregistrer</button></div>
+      ${posts.length ? `<details><summary class="small" style="cursor:pointer">Posts aimés enregistrés (${posts.length})</summary><div class="stack" style="gap:6px;margin-top:6px">${posts.slice().reverse().map((x) => `<div class="row between vitem"><span class="small">${esc(x.text.split('\n')[0].slice(0, 110))}</span><button class="btn ghost sm danger" data-action="liked-post-del" data-id="${x.id}">🗑</button></div>`).join('')}</div></details>` : ''}
+      ${lessons.length ? `<details><summary class="small" style="cursor:pointer">Critiques retenues (${lessons.length})</summary><div class="stack" style="gap:4px;margin-top:6px">${lessons.slice().reverse().map((l) => `<div class="row between vitem"><span class="small">${esc(l.text)}</span><button class="btn ghost sm danger" data-action="lesson-del" data-id="${l.id}">✕</button></div>`).join('')}</div></details>` : ''}
+    </div></details>`;
+}
+
 // ================= HOOKS : l'IA propose, tu gardes, on développe =================
 function renderHookBank() {
   const c = client();
@@ -888,6 +905,7 @@ function renderHookBank() {
   const creating = ui.job?.kind === 'create' ? ui.job : null;
   view.innerHTML = `
   <header class="page-heading"><div><div class="eyebrow">HOOKS</div><h1>Banque de hooks</h1><p>L'IA propose plein de lignes de hook. Tu gardes celles qui te plaisent (👍) et tu écartes les autres (✕). Elle apprend ton goût. Ensuite, un clic pour développer un post.</p></div></header>
+  ${teachCard(c)}
   <section class="card stack">
     <div class="chips">${[['', 'Les 3 catégories'], ...Object.entries(PILLAR_NAMES)].map(([k, l]) => `<button class="chip ${(ui.hookPillar || '') === k ? 'on' : ''}" data-action="hook-pillar" data-id="${k}">${l}</button>`).join('')}</div>
     <p class="small" style="margin:0"><b>Authenticité</b> : coulisses, vécu, erreurs, convictions. <b>Valeur</b> : conseil actionnable, méthode. <b>Routine</b> : ton quotidien, tes habitudes de travail. Jamais de post de vente.</p>
@@ -974,7 +992,8 @@ function atHookStep(p, c) {
       <div class="row between"><span class="small" id="manualCount">${manual.length} / 3 000</span>
         <span class="row"><button class="btn sm ghost" data-action="manual-use" data-id="post" ${manual.trim() ? '' : 'disabled'}>Le retravailler d'abord</button><button class="btn primary sm" id="manualSave" data-action="manual-use" data-id="visual" ${manual.trim() ? '' : 'disabled'}>Faire le visuel →</button></span></div>
     </section>
-  </div>`;
+  </div>
+  <div style="margin-top:14px">${teachCard(c, { open: false })}</div>`;
 }
 
 // Étape 2 : le post + la critique.
@@ -997,6 +1016,7 @@ function atPostStep(p, c) {
       <aside class="at-sticky"><b>🧠 Ce que l'IA retient pour ${esc(c.name)}</b>
         ${lessons.length ? `<ul>${lessons.slice().reverse().map((l) => `<li><span>${esc(l.text)}</span><span class="row" style="gap:0"><button class="at-x" data-action="lesson-rule" data-id="${l.id}" title="En faire une règle permanente">📌</button><button class="at-x" data-action="lesson-del" data-id="${l.id}" aria-label="Oublier">✕</button></span></li>`).join('')}</ul>` : '<p class="small">Chaque critique générale sera notée ici et appliquée aux prochains posts.</p>'}
       </aside>
+      ${teachCard(c, { open: false })}
     </div>
   </div>`;
 }
@@ -1416,7 +1436,9 @@ function renderBannerView() {
         <button type="button" class="btn sm ghost" data-be="redo" title="Rétablir (Ctrl+Y)">↷</button>
       </div>
       <div class="row ban-actions">
-        <label class="btn soft sm">📥 Importer une bannière à améliorer<input type="file" accept="image/*" data-banner-import hidden></label>
+        <label class="btn primary sm">📥 Importer une bannière et la modifier<input type="file" accept="image/*" data-banner-import="raw" hidden></label>
+        <label class="btn soft sm">✨ Importer et améliorer avec l'IA<input type="file" accept="image/*" data-banner-import="ai" hidden></label>
+        <button type="button" class="btn sm" data-be-add="cover" title="Rectangle de la couleur du fond : pour cacher un texte de l'image importée">▭ Cacher une zone</button>
         <button class="btn soft sm" data-action="banner-random" title="Une charte tirée des bannières concurrentes">🎲 Charte au hasard</button>
         ${ui.bannerPal ? `<span class="row pal-chip" title="${esc(ui.bannerPal.from || '')}"><span class="small"><b>${esc(ui.bannerPal.name || 'Charte')}</b></span>${['bg', 'bg2', 'text', 'accent'].map((k) => `<i style="background:${esc(ui.bannerPal[k] || '#ccc')}"></i>`).join('')}<button class="btn ghost sm" data-action="banner-pal-da" title="Utiliser ces couleurs pour les visuels de ce client">Garder comme DA</button></span>` : ''}
         ${ui.bannerJob ? `<span class="small"><b>${esc(ui.bannerJob)}</b></span>` : ''}
@@ -2075,6 +2097,14 @@ const actions = {
   async 'vis-pdf'(id) { const v = visualsOf().find((x) => x.id === id); const f = await visualFiles(v); download(f.pdf, `${v.subtopic || v.subject || 'carrousel'}.pdf`); },
   async 'vis-del'(id) { await api('DELETE', `/api/visuals/${id}`); await refresh(); },
   'vis-goto-post'(id) { ui.view = 'posts'; ui.filter = 'all'; store.set('view', 'posts'); render(); goto(id); },
+  async 'teach-save'() {
+    const body = { hooks: $('#teachHooks')?.value || '', posts: $('#teachPosts')?.value || '', critiques: $('#teachCritiques')?.value || '' };
+    if (!body.hooks.trim() && !body.posts.trim() && !body.critiques.trim()) throw new Error('Colle au moins un hook, un post ou une critique.');
+    const r = await api('POST', `/api/clients/${ui.clientId}/teach`, body);
+    await refresh();
+    toast(`Retenu : ${r.added.hooks} hook(s), ${r.added.posts} post(s), ${r.added.critiques} critique(s). L'IA s'en sert dès maintenant.`);
+  },
+  async 'liked-post-del'(pid) { await api('DELETE', `/api/clients/${ui.clientId}/liked-posts/${pid}`); await refresh(); },
   async 'banner-chat'() {
     const msg = ($('#banMsg')?.value || '').trim(); if (!msg) throw new Error('Écris ou dicte ta demande.');
     const els = ui.banner.elements || [];
@@ -2732,6 +2762,12 @@ document.addEventListener('change', run(async (e) => {
   if (t.hasAttribute('data-banner-import') && t.files[0]) {
     const file = t.files[0]; t.value = '';
     const dataUrl = await resizeImage(file, 1584);
+    if (t.dataset.bannerImport === 'raw') {
+      ui.banner = { ...newBanner(), name: `Bannière importée ${client().name}`, style: { bgImage: dataUrl }, elements: [] };
+      ui.bannerOriginal = ''; BE.resetHistory(); render();
+      toast("Bannière importée : ajoute des textes, et cache les anciens avec « Cacher une zone » (puis 🎯 pour prendre la couleur du fond).");
+      return;
+    }
     ui.bannerOriginal = dataUrl; ui.bannerJob = "L'IA analyse ta bannière et prépare une version améliorée…"; render();
     try {
       const r = await api('POST', '/api/banners/analyze', { clientId: ui.clientId, image: dataUrl });

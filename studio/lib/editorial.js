@@ -70,6 +70,7 @@ export function adnText(client, { personaId, includeProofs = true } = {}) {
     v.samples ? `## Textes réellement écrits par le client (imiter cette voix)\n${String(v.samples).slice(0, 5000)}` : '',
     (a.rules || []).length ? `## Règles permanentes validées par le client\n${a.rules.map((r) => `- ${r}`).join('\n')}` : '',
     lessonsText(client),
+    (a.likedPosts || []).length ? `## Posts que l'auteur aime (style, rythme et niveau à viser ; ne pas recopier le sujet)\n${a.likedPosts.slice(-6).map((p) => `---\n${p.text.slice(0, 1200)}`).join('\n')}` : '',
     (client.feedbackLog || []).length ? `## Retours récents du client (ponctuels, à prendre en compte si pertinent)\n${client.feedbackLog.slice(-8).map((f) => `- ${f.text}`).join('\n')}` : '',
     includeProofs ? (proofs.length ? `## Preuves vérifiées utilisables (les SEULES autorisées)\n${proofs.map((p) => `- [${p.id}] (${p.type}) ${p.text}${p.source ? ` — source : ${p.source}` : ''}`).join('\n')}` : "## Preuves\nAucune preuve vérifiée : n'utilise aucun chiffre ni résultat client ; écris [À COMPLÉTER : …] si le post en a besoin.") : '',
   ].filter(Boolean).join('\n\n');
@@ -294,9 +295,13 @@ Réponds en JSON : { "hooks": [ { "text": "", "family": "" } ] }`;
 }
 
 // Banque de hooks : beaucoup de lignes de hook, chacune avec l'idée du post qu'elle annonce, par catégorie.
-export function hookIdeasPrompt({ client, pillar, topic, count = 20, liked = [], rejected = [] }) {
+export function hookIdeasPrompt({ client, pillar, topic, count = 20, liked = [], rejected = [], module = '', templates = [], veilleHooks = [] }) {
   const cats = PILLARS[pillar] ? [pillar] : Object.keys(PILLARS);
-  const system = `Tu écris des hooks LinkedIn en français pour ${client.name}. Chaque hook ouvre un futur post.
+  const system = `Tu es le GPT Linka des hooks : tu écris des hooks LinkedIn en français pour ${client.name}. Chaque hook ouvre un futur post.
+${module || ''}
+${liked.length ? `# HOOKS QUE L'AUTEUR ADORE (c'est LE niveau et LE style attendus : même mécanique, même ton, sujets différents)\n${liked.slice(-40).map((h) => `- ${h}`).join('\n')}` : ''}
+${templates.length ? `# Modèles de la bibliothèque Linka (structures à adapter, jamais à recopier)\n${templates.map((h) => `- [${h.family}] ${h.template}`).join('\n')}` : ''}
+${veilleHooks.length ? `# Hooks qui performent chez les concurrents (mécaniques à reprendre)\n${veilleHooks.map((h) => `- ${h}`).join('\n')}` : ''}
 ${adnText(client, { includeProofs: true })}
 # Catégories
 ${cats.map((k) => `- ${k} = ${PILLARS[k].name} : ${PILLARS[k].text}`).join('\n')}
@@ -305,7 +310,6 @@ ${cats.map((k) => `- ${k} = ${PILLARS[k].name} : ${PILLARS[k].text}`).join('\n')
 - Variés : affirmation, chiffre (uniquement s'il est prouvé), aveu, contre-pied, question rare, liste, scène du quotidien.
 - AUCUN hook de vente : pas de nom d'entreprise, pas d'offre, pas de promesse commerciale.
 - Rien d'inventé : un hook qui suppose un fait personnel non fourni reste général ou contient [À COMPLÉTER].
-${liked.length ? `- Hooks que l'auteur a aimés (même goût, sans répéter) :\n${liked.slice(-15).map((h) => `  • ${h}`).join('\n')}` : ''}
 ${rejected.length ? `- Hooks qu'il a écartés (évite ce style) :\n${rejected.slice(-15).map((h) => `  • ${h}`).join('\n')}` : ''}
 Réponds en JSON : { "hooks": [ { "text": "", "pillar": "${cats.join('|')}", "idea": "en 1 phrase, ce que dira le post" } ] }`;
   return { system, user: `${topic ? `Sujet : ${topic}\n` : 'Sujets libres, tirés de l\'ADN, des problèmes de la cible et du quotidien de l\'auteur.\n'}Écris ${count} hooks${cats.length > 1 ? ', répartis entre les 3 catégories' : ''}.` };
