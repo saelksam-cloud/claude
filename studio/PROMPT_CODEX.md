@@ -1,4 +1,4 @@
-# Prompt pour ChatGPT Codex — Link Motion Studio (état au 11 novembre 2026)
+# Prompt pour ChatGPT Codex — Link Motion Studio (état au 11 novembre 2026, soir)
 
 Tu es un développeur full-stack senior et un designer produit. Tu travailles sur **Link Motion Studio**, l'application interne de l'agence de ghostwriting LinkedIn **Link Motion**. Le code complet est dans le dossier `studio/`.
 
@@ -36,6 +36,14 @@ Quelle que soit la mission :
 | IA images | OpenAI Images. `designImage()` (`lib/ai.js`) appelle `/v1/images/edits` avec le visuel concurrent en référence (modèles `gpt-image-*` détectés automatiquement, actuellement `gpt-image-2.6`). Format portrait 1024×1536, qualité haute, environ 0,20 € par image. |
 | LinkedIn | OAuth 2.0 (`openid profile w_member_social`), Posts API, Images API, Documents API (carrousels PDF). La version d'API n'est plus figée : `restFetch()` (`lib/linkedin.js`) recule mois par mois si LinkedIn répond 426. |
 | Front | JavaScript natif en modules ES, sans build :<br>• `public/index.html`, `style.css`, `workspace.css` ;<br>• `app.js` : état, rendu par template strings, délégation `data-action` ;<br>• `banner.js` + `banner-editor.js` : éditeur de bannière façon Canva ;<br>• `visuals.js` : schémas sur canvas, DA, assemblage PDF ;<br>• `calendar.js` ;<br>• `vendor/pdf.min.mjs` : pdf.js, pour lire les PDF déposés. |
+
+## Ajouts récents (dernier déploiement)
+
+- **Agent de veille** (onglet Veille) : concurrents suivis par client (`db.profiles` avec `clientId`, `auto`), récupération par Apify (`lib/apify.js`, robot `harvestapi~linkedin-profile-posts`, images et carrousels inclus), relance automatique chaque semaine par `scheduler.mjs`, puis tâche d'arrière-plan `POST /api/agent/digest` : les 5 meilleurs visuels ou carrousels deviennent des inspirations (`source: 'agent'`), la forme des posts est analysée et l'étude de la niche mise à jour. Routes : `POST|PUT|DELETE /api/profiles[/:id]`, `POST /api/agent/run`. La clé Apify se saisit dans Réglages.
+- **Écriture** : `/api/write` donne en entier les 3 posts concurrents les plus performants de la niche (`extra.top`) et la méthode complète du GPT Linka content. La banque de hooks (`/api/hooks/ideas`) utilise la méthode complète du GPT Linka hooks, les hooks aimés, la bibliothèque Linka et les hooks de la veille.
+- **Apprendre à l'IA** : `POST /api/clients/:id/teach` (hooks aimés en masse, posts aimés dans `adn.likedPosts`, critiques dans `adn.lessons`), injectés dans tous les prompts.
+- **Agent visuels** : `POST /api/posts/:id/design` avec `inspirationId: 'auto'` (choix du modèle par l'IA), bouton « Visuels auto » dans le Calendrier, éditeur façon Canva sur un visuel généré (`banner-editor.js` réutilisé en 1024 × 1536 via `Banner.setSize()`, enregistrement par `POST /api/visuals/:id/replace`).
+- **Bannière** : import « telle quelle » ou « améliorée par l'IA » (`/api/banners/analyze`), discussion avec mémoire (`/api/banners/chat`, `adn.bannerChat`), charte au hasard tirée des bannières de la veille (`/api/banners/palettes`), outil « Cacher une zone » avec pipette.
 
 ## Lancer en local
 
