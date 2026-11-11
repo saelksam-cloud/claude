@@ -1,117 +1,103 @@
-# Prompt pour ChatGPT Codex — LinkedMotion Studio (refonte de l'ergonomie)
+# Prompt pour ChatGPT Codex — Link Motion Studio (état au 11 novembre 2026)
 
-Tu es un développeur front-end senior et un designer produit (UX/UI). Tu travailles sur **LinkedMotion Studio**, l'application interne de l'agence de ghostwriting LinkedIn **Link Motion**. Le code complet est fourni (dossier `studio/`).
+Tu es un développeur full-stack senior et un designer produit. Tu travailles sur **Link Motion Studio**, l'application interne de l'agence de ghostwriting LinkedIn **Link Motion**. Le code complet est dans le dossier `studio/`.
 
 ## Ta mission
 
-**Rendre l'interface beaucoup plus ergonomique et agréable, sans casser aucune fonctionnalité.**
-Commence par lire le code et utiliser l'app. Ensuite, propose un plan court (avec une maquette en texte ou en HTML statique si utile), puis implémente-le.
+> **À compléter par Sami avant d'envoyer** (ex. « rends l'Atelier plus beau et plus fluide », « améliore la qualité des visuels designés », « refais la page Bannière »).
 
-Règles impératives :
-- **Ne change pas le contrat de l'API** : routes, formats JSON et noms de champs sont listés plus bas. Le back-end (`lib/`, `netlify/functions/`) ne doit être modifié que si c'est indispensable, et sans migration destructive des données.
-- **Conserve toutes les fonctionnalités** listées plus bas.
-- **Pas de framework lourd imposé.** Le front est aujourd'hui en JavaScript natif (modules ES), sans étape de build. Tu peux rester en natif (recommandé) ou proposer un outil léger (Vite, Preact, Lit…) si le gain est clair. Dans ce cas, le résultat doit rester déployable sur Netlify avec `public/` comme dossier publié, et tu dois documenter la commande de build.
-- **Garde le français partout**, le ton tutoiement de l'interface, les modes jour et nuit (variables CSS sous `:root`, `prefers-color-scheme` et `[data-theme]`), et le micro de dictée vocale sur les champs de texte.
-- **Authenticité** : l'IA ne doit jamais inventer de chiffres, de preuves ni d'anecdotes. Les placeholders `[À COMPLÉTER : …]` sont voulus : ils doivent rester visibles et bloquer la validation d'un post.
+Quelle que soit la mission :
+1. Lis le code et lance l'app en local avant de toucher à quoi que ce soit.
+2. Propose un plan court, puis implémente-le étape par étape, en gardant l'app fonctionnelle à chaque étape.
+3. Termine par une checklist de tests manuels et la liste des limites.
 
-## Contexte technique
+## Règles impératives
+
+- **Ne casse aucun flux existant** (liste plus bas) et **ne change pas le contrat de l'API** (routes, formats JSON, noms de champs). Les nouvelles routes sont permises.
+- **Données réelles** : ne réinitialise, n'importe et n'écrase aucune base. Pas de migration destructive. Ne remplace aucun secret et ne déclenche aucune reconnexion LinkedIn. Les clés restent dans leur stockage actuel : ne les copie ni dans le code, ni dans un fichier.
+- **Tests** : en local uniquement (voir « Lancer en local »). **Aucune publication LinkedIn et aucune écriture sur la base de production pendant tes tests.**
+- **Déploiement** : jamais sans l'accord explicite de Sami.
+- **`lib/knowledge.js`** (base de connaissances Linka) est un contenu tiers. Ne le publie dans aucun dépôt public (il est exclu de git).
+- **Français partout**, tutoiement dans l'interface, modes jour et nuit (variables CSS `:root`, `prefers-color-scheme`, `[data-theme]`), micro de dictée vocale sur les champs de texte.
+- **Authenticité** : l'IA n'invente jamais de chiffres, de preuves ni d'anecdotes. Les marqueurs `[À COMPLÉTER : …]` sont voulus : ils restent visibles et bloquent la validation d'un post.
+- **Pas de post de vente** : l'IA ne cite ni le nom de l'entreprise du client ni son offre, et n'appelle jamais à acheter ou à prendre rendez-vous. Cette règle est appliquée dans les prompts (`lib/editorial.js`, `lib/ai.js`).
+
+## Architecture
 
 | Élément | Détail |
 |---|---|
-| Hébergement | Netlify (site statique `public/` + 2 fonctions) |
-| API | `netlify/functions/api.mjs` → `lib/app.js` (routeur maison, handler web standard `Request` → `Response`) |
-| Tâche programmée | `netlify/functions/scheduler.mjs`, toutes les 15 min : publie sur LinkedIn les posts validés dont l'heure est passée |
-| Stockage | Netlify Blobs : un document JSON `db` (clients, posts, veille, analyses, images, visuels, bannières…), un document `settings` (clés, modules), et les fichiers (images, PDF) dans le store `uploads` |
-| IA | API OpenAI (Chat Completions, mode JSON pour les sorties structurées, Images API pour la génération). Modèle par défaut `gpt-6.1-sol`, modèle rapide `gpt-4.1` pour l'extraction de veille. **Chaque appel de fonction Netlify est limité à 60 s** : les traitements longs sont découpés en plusieurs appels successifs, pilotés par le navigateur. Ne les regroupe pas. |
-| LinkedIn | OAuth 2.0 (`openid profile w_member_social`), Posts API, Images API, Documents API (pour les carrousels PDF). Les posts programmés restent dans l'app jusqu'à l'heure prévue. |
-| Auth du tableau de bord | En-tête `x-studio-password`, comparé à la variable d'environnement `APP_PASSWORD`. Le mot de passe est saisi sur un écran de connexion et conservé dans `localStorage`. |
-| Base de connaissances | `lib/knowledge.js` est généré par `tools/build-knowledge.mjs` à partir de l'export Linka : 640 hooks, 50 structures, 62 templates, 164 posts de référence, règles de copywriting. Il contient du contenu tiers : **ne le publie pas dans un dépôt public**. |
-| Front | `public/index.html`, `public/style.css`, `public/app.js` (tout l'état de l'interface + rendu par template strings + délégation d'événements `data-action`), `public/banner.js` (moteur canvas des bannières 1584×396), `public/visuals.js` (moteur canvas des visuels 1080×1350 et 1080×1080, et assemblage PDF sans dépendance externe) |
+| Hébergement | Netlify, compte gratuit (site statique `public/` + fonctions). **Chaque requête normale est coupée à 30 s.** |
+| API | `netlify/functions/api.mjs` → `lib/app.js` (routeur maison, `Request` → `Response`, auth par l'en-tête `x-studio-password` comparé à `APP_PASSWORD`). |
+| Tâches IA longues | Le front envoie `POST /api/jobs {method, path, body}` puis interroge `GET /api/jobs/:id` toutes les 1 à 2,5 s. `netlify/functions/worker-background.mjs` (fonction d'arrière-plan, 15 min max) rejoue la requête en interne avec `runJob()`. La liste des routes concernées est dans `LONG_ROUTE` (`lib/app.js`) et `LONG_API` (`public/app.js`) : **garde les deux synchronisées.** |
+| Enregistrement | `handle()` → `mergeSave()` : seules les entrées modifiées par la requête sont réécrites, par-dessus la version la plus récente de la base. Une tâche longue n'écrase donc pas les modifications faites entre-temps. |
+| Programmation | `netlify/functions/scheduler.mjs`, toutes les 15 min : publie les posts validés dont l'heure est passée, avec 1 essai par heure en cas d'échec. Un post en retard de plus de 12 h (par rapport à sa date ET à sa validation) ne part pas tout seul : il affiche « choisis une nouvelle date ». |
+| Stockage | Netlify Blobs : document `db` (store `studio`), `settings` (store `settings`), fichiers dans `uploads` (servis par `GET /uploads/:key`, sans mot de passe, avec des clés aléatoires), tâches dans `jobs`. |
+| IA texte | OpenAI Chat Completions (mode JSON pour les sorties structurées, vision pour analyser les visuels concurrents). Modèle par défaut `gpt-6.1-sol`, avec repli automatique sur d'autres modèles. |
+| IA images | OpenAI Images. `designImage()` (`lib/ai.js`) appelle `/v1/images/edits` avec le visuel concurrent en référence (modèles `gpt-image-*` détectés automatiquement, actuellement `gpt-image-2.6`). Format portrait 1024×1536, qualité haute, environ 0,20 € par image. |
+| LinkedIn | OAuth 2.0 (`openid profile w_member_social`), Posts API, Images API, Documents API (carrousels PDF). La version d'API n'est plus figée : `restFetch()` (`lib/linkedin.js`) recule mois par mois si LinkedIn répond 426. |
+| Front | JavaScript natif en modules ES, sans build :<br>• `public/index.html`, `style.css`, `workspace.css` ;<br>• `app.js` : état, rendu par template strings, délégation `data-action` ;<br>• `banner.js` + `banner-editor.js` : éditeur de bannière façon Canva ;<br>• `visuals.js` : schémas sur canvas, DA, assemblage PDF ;<br>• `calendar.js` ;<br>• `vendor/pdf.min.mjs` : pdf.js, pour lire les PDF déposés. |
 
-Lancer en local : `npm install` puis `npx netlify dev` (variables : `APP_PASSWORD`, et en option `OPENAI_API_KEY`, `LINKEDIN_CLIENT_ID`, `LINKEDIN_CLIENT_SECRET`). Déployer : `npx netlify deploy --prod --no-build --dir public --functions netlify/functions`.
+## Lancer en local
 
-## Fonctionnalités existantes (toutes à conserver)
+1. `npm install`
+2. Puis au choix :
+   - `npx netlify dev`, avec les variables `APP_PASSWORD` et `STATE_SECRET`. La clé OpenAI se saisit dans Réglages. Utilise une base locale vide.
+   - le harnais de test : serveur Blobs local plus mocks d'OpenAI et de LinkedIn via `globalThis.fetch`, et Playwright pour les parcours.
 
-1. **Créer** : de 1 à 10 posts, avec cible (persona), objectif, niveau de conscience (1 à 5), idée de la banque, sujet ou consigne, image (aucune, photothèque, ou générée), inspiration d'un concurrent, et deux moteurs :
-   - **Automatique**, avec un pipeline par post : `POST /api/plan` (angle, type, structure Linka, familles de hooks, CTA, infos manquantes), puis `POST /api/write`, puis `POST /api/posts/:id/hooks` (10 hooks notés sur 100), puis l'image éventuelle ;
-   - **Mes GPTs** : 2 copier-coller guidés (Mode content, puis Mode hooker), avec lien qui préremplit le GPT et collage depuis le presse-papiers.
-2. **Posts** : filtres (à valider, programmés, publiés, tous) et aperçu façon LinkedIn. Pour chaque post :
-   - Valider / Retirer, 💬 Retour (refait le post et mémorise le retour), ✎ Modifier, 🖼 Image, 🗑 ;
-   - 🪝 Hooks : 10 hooks notés sur 100 sur 5 critères, comparer et appliquer ;
-   - ✅ Qualité : 10 critères avec corrections ;
-   - ✨ Retouches (9 actions) avec ↶ Annuler ;
-   - 🧭 Stratégie : le plan, affiché à part du texte ;
-   - date de publication modifiable, « Publier maintenant », saisie des performances réelles après publication ;
-   - « Tout valider ».
-3. **ADN client**, en sous-onglets :
-   - Profil, et objectifs classés par priorité ;
-   - Personas : psychologie de l'audience et niveau de conscience, statut « hypothèse IA » ou « confirmé » ;
-   - Voix : règles permanentes, et retours promouvables en règle ;
-   - Preuves : seules les vérifiées servent à l'IA ;
-   - Onboarding : 18 questions et une analyse IA à appliquer bloc par bloc ;
-   - Interview et banque d'idées ;
-   - Mémoire des corrections (avant / après).
-4. **Hooks** : bibliothèque de 640 modèles (recherche, familles, langue, favoris, désactivation), générateur (10 notés, ou 30, 50, 100), optimiseur (7 modes).
-5. **Visuels** : sujet ou sujet au hasard. L'IA le découpe en 1 à 3 sous-sujets, avec pour chacun un visuel à valeur (checklist, comparatif, process, matrice 2×2, chiffre sourcé, citation) et son post ; ou un carrousel (PDF) et son post. Textes modifiables avec aperçu en direct, PNG / PDF, rattachement automatique au post.
-6. **Profil & bannière** : 5 modèles de bannière, 9 fonds, accent, logos et avatars, texte riche (`*couleur*`, `[[surligné]]`, `__souligné__`), zone de la photo de profil, propositions de textes par l'IA, export PNG, bannières enregistrées. Audit de profil : score, 3 titres, section Infos, sélection, expériences.
-7. **Images** : photothèque par client (décrite par l'IA, choix automatique de la photo par post) et visuels concurrents par niche, qui servent de références de style.
-8. **Veille** : copier-coller libre analysé par l'IA (j'aime, commentaires, sujet, type de hook, format, forme réutilisable), niches, filtre par concurrent, analyse de la forme. Le fond sert à la niche, la forme à tous les clients.
-9. **Étude de marché** : KPI (médianes et moyennes), comparatif des concurrents, feedback IA, 4 graphiques en barres (par sujet, type de hook, format, longueur), structures qui marchent, top et flop des hooks, note de fiabilité des données.
-10. **Réglages** : connexion LinkedIn du client (vérifier, déplacer, déconnecter, lien d'invitation), les 2 GPTs (lien, méthode décrite par le GPT, exemples), clé OpenAI (avec test), app LinkedIn.
-11. **Transverse** : sélecteur de client en haut, mode jour / nuit, dictée vocale (Web Speech API, `fr-FR`), notifications (toasts), écran de connexion.
+Le déploiement (uniquement après accord de Sami) se fait avec cette commande :
 
-## Routes de l'API (à ne pas casser)
+```bash
+npx netlify deploy --prod --no-build --dir public --functions netlify/functions
+```
 
-`GET /api/state` (renvoie tout l'état : clients sans jetons, posts, veille, analyses, images, visuels, bannières, settings publics, référentiels éditoriaux) ·
-`POST /api/clients` · `PUT /api/clients/:id` · `PUT /api/clients/:id/adn` · `POST /api/clients/:id/onboarding/analyze` · `POST /api/clients/:id/onboarding/apply` · `POST /api/clients/:id/interview/analyze` · `POST /api/clients/:id/check-linkedin` · `POST /api/clients/:id/disconnect` · `POST /api/clients/:id/move-linkedin` · `POST /api/clients/:id/import` ·
-`POST /api/plan` · `POST /api/write` · `POST /api/generate` ·
-`POST /api/posts` · `PUT /api/posts/:id` · `DELETE /api/posts/:id` · `POST /api/posts/:id/status` · `POST /api/posts/bulk-approve` · `POST /api/posts/:id/hooks` · `POST /api/posts/:id/apply-hook` · `POST /api/posts/:id/quality` · `POST /api/posts/:id/action` · `POST /api/posts/:id/undo` · `POST /api/posts/:id/feedback` · `POST /api/posts/:id/rewrite` · `POST /api/posts/:id/publish-now` · `POST|DELETE /api/posts/:id/image` · `POST /api/posts/:id/image/{library,auto,prompt,generate}` · `POST /api/posts/:id/document` ·
-`GET /api/knowledge` · `PUT /api/hooks/prefs` · `POST /api/hooks/generate` · `POST /api/hooks/optimize` ·
-`POST /api/visuals/plan` · `POST /api/visuals/item` · `PUT|DELETE /api/visuals/:id` ·
-`POST /api/banners/suggest` · `POST /api/banners` · `DELETE /api/banners/:id` · `POST /api/profile/audit` ·
-`POST /api/images` · `PUT|DELETE /api/images/:id` ·
-`POST /api/veille` · `POST /api/veille/paste` · `POST /api/veille/structures` · `DELETE /api/veille/:id` · `POST /api/study` · `POST /api/analyze` · `POST|DELETE /api/analyses…` ·
-`PUT /api/settings` · `POST /api/settings/test-openai` ·
-`GET /uploads/:key` · `GET /connect/:id/:token` · `GET /auth/linkedin/callback`
+## Les écrans (menu actuel)
 
-## Problèmes d'ergonomie constatés (à résoudre)
+**Création**
+1. **Atelier** (page d'accueil) : un post suit 4 étapes affichées en haut, une seule à la fois (`atelierStage()`, champ `post.stage`).
+   1. **Hook** : propositions de l'IA (`POST /api/hooks/ideas`), puis « Choisir ce hook », qui écrit le post en gardant le hook mot pour mot (`/api/plan` puis `/api/write` avec `hook`, `hookId`, `pillar`). Ou bien « J'ai déjà mon post » : coller, puis passer directement au visuel.
+   2. **Post** : éditeur, catégorie (Authenticité / Valeur / Routine), chat de critique (`POST /api/posts/:id/chat`). L'IA réécrit et retient des leçons générales (`client.adn.lessons`), appliquées à tous les prompts d'écriture. Ces leçons sont affichées sur un post-it ; on peut les supprimer ou les passer en règles permanentes. Le post se termine par « Valider le post ».
+   3. **Visuel** : visuel, carrousel ou rien. À droite, la galerie des visuels concurrents de la base ; un clic lance `POST /api/posts/:id/design`.
+      - L'IA (vision) prépare un brief : titre-hook, mots surlignés, 3 points, appel à réagir, description du style.
+      - Puis `gpt-image` crée le visuel dans le style du modèle. Un carrousel fait 5 pages : `POST /api/visuals/:id/design-page`.
+      - Retouches : chat (`/redesign` avec `message`), couleurs (`colors`), textes (`brief`), `design-undo`.
+      - Validation : `POST /api/visuals/:id/attach` (image) ou PDF assemblé dans le navigateur, puis `POST /api/posts/:id/document`.
+   4. **Publication** : aperçu LinkedIn, date en toutes lettres, « Programmer » / « Publier maintenant ».
+2. **Hooks** : banque de hooks par client (`client.adn.hookBank`, statuts `liked` / `rejected` / `used`), propositions de l'IA, 👍 / ✕ (l'IA apprend le goût de l'auteur), « Développer en post ».
+3. **Calendrier** : liste de tous les posts à gauche (filtres, cases à cocher, suppression groupée `POST /api/posts/bulk-delete`, ✎ pour ouvrir dans l'Atelier), calendrier mois / semaine à droite (glisser-déposer = changer `scheduledAt`). Un clic ouvre la fiche complète du post.
 
-- **Trop d'onglets à plat (10).** La navigation n'est pas hiérarchisée.
-- **Les cartes de post sont surchargées** : jusqu'à 10 boutons, plus des panneaux empilés.
-- **La création n'est pas guidée** : beaucoup d'options au même niveau, peu de valeurs par défaut intelligentes.
-- **Pas de vue calendrier** des publications.
-- **Les longues opérations (IA) sont visibles seulement par une barre de progression** : il n'y a ni file d'attente ni reprise après un rechargement de la page.
-- **L'ADN client est long à remplir** : on ne voit pas où on en est.
-- **Sur mobile, l'interface est utilisable mais pas optimisée.**
+**Client**
+4. **ADN client** : profil, personas, voix et règles permanentes, preuves vérifiées, onboarding, interview, mémoire des corrections.
+5. **Visuels** :
+   - **DA** du profil (`PUT /api/clients/:id/da`) : 2 ou 3 couleurs, fonds alternés (clair / foncé / couleur), aperçus en direct ;
+   - 2 colonnes à glisser-déposer : **Carrousels** (catégorie `carousel`) et **Visuels concurrents** (`visual`). Un PDF est découpé en pages dans le navigateur, et chaque fichier est décrit par l'IA.
+6. **Bannière** : éditeur à calques façon Canva, inspirations de bannières, propositions de textes par l'IA, audit du profil. Sami veut retravailler cet écran plus tard.
 
-## Pistes attendues (à arbitrer, puis implémenter)
+**Marché**
+7. **Veille** : copier-coller analysé par l'IA (auteur, réactions, type de hook, structure), par niche et par concurrent.
+8. **Étude de marché** : indicateurs clés, graphiques, retours de l'IA. Piste envisagée : 3 à 5 recommandations concrètes affichées directement dans l'Atelier et dans Hooks.
 
-1. **Navigation en barre latérale**, avec 4 groupes repliables :
-   - **Création** : Studio (Créer), Posts, Calendrier, Visuels ;
-   - **Client** : ADN, Profil & bannière, Images ;
-   - **Marché** : Veille, Étude de marché, Hooks ;
-   - **Réglages**.
+**Espace**
+9. **Réglages** : connexion LinkedIn par client, modules GPT, clé OpenAI (avec test), app LinkedIn.
 
-   Sur mobile : une barre d'onglets en bas et un menu.
-2. **Un Studio de création en 3 colonnes** :
-   - à gauche, le contexte client et le brief ;
-   - au centre, l'éditeur du post ;
-   - à droite, les hooks notés, le contrôle qualité et les retouches.
+Les anciennes pages Studio, Posts, Marché et Visuels (ancien) ne sont plus dans le menu, mais leur code est toujours là (`renderCreate`, `renderPosts`, `renderMarche`, `renderVisualsView`).
 
-   La stratégie reste séparée du texte prêt à copier.
-3. **Des cartes de post épurées** : 2 actions principales (Valider, Retour), le reste dans un menu « … » et un panneau latéral de détail.
-4. **Un calendrier** (mois et semaine) en glisser-déposer pour reprogrammer (via `PUT /api/posts/:id` avec `scheduledAt`).
-5. **Un assistant d'onboarding progressif** pour l'ADN, avec une jauge de complétude par section et des valeurs par défaut.
-6. **Une file de tâches IA** visible (centre de notifications), avec reprise si la page est rechargée.
-7. **Un design system cohérent** : tokens de couleurs et d'espacements, typographie, composants réutilisables (bouton, carte, chip, segment, modal, tiroir, toast, état vide, squelette de chargement).
-8. **Accessibilité** : focus visibles, labels, contrastes AA, navigation au clavier, `aria-live` pour les toasts. Raccourcis : `N` nouveau post, `/` recherche, `Échap` fermer.
-9. **Des états vides pédagogiques** sur chaque écran (« voici comment commencer »).
-10. **Une vraie expérience mobile** : priorité à la validation des posts et à la dictée.
+## Routes de l'API
 
-## Livrables attendus
+`GET /api/state` · clients : `POST /api/clients`, `PUT /api/clients/:id`, `PUT /api/clients/:id/adn`, `PUT /api/clients/:id/da`, `POST|DELETE /api/clients/:id/hooks[/:hid]`, `PUT|DELETE /api/clients/:id/lessons/:lid`, `POST /api/clients/:id/{disconnect,move-linkedin,check-linkedin,import,onboarding/analyze,onboarding/apply,interview/analyze}` ·
+posts : `POST /api/posts`, `PUT|DELETE /api/posts/:id`, `POST /api/posts/{bulk-approve,bulk-delete}`, `POST /api/posts/:id/{status,hooks,apply-hook,quality,action,chat,undo,feedback,rewrite,publish-now,document,visual,visual-from,design}`, `POST|DELETE /api/posts/:id/image`, `POST /api/posts/:id/image/{library,auto,prompt,generate}` ·
+création : `POST /api/plan`, `POST /api/write`, `POST /api/generate` ·
+hooks : `GET /api/knowledge`, `PUT /api/hooks/prefs`, `POST /api/hooks/{generate,ideas,optimize}` ·
+visuels : `POST /api/visuals/{plan,item}`, `PUT|DELETE /api/visuals/:id`, `POST /api/visuals/:id/{design-page,redesign,design-undo,attach,chat,link}` ·
+bannières : `POST /api/banners/suggest`, `POST /api/banners`, `DELETE /api/banners/:id`, `POST /api/profile/audit` ·
+images : `POST /api/images` (avec `category` : `visual` | `carousel` | `banner` | `image`, et `pages` pour un PDF), `PUT|DELETE /api/images/:id` ·
+veille : `POST /api/veille`, `POST /api/veille/{paste,structures}`, `DELETE /api/veille/:id`, `POST /api/study`, `POST /api/analyze`, analyses / profils ·
+tâches : `POST /api/jobs`, `GET /api/jobs/:jid`, `POST /api/jobs-test` (diagnostic) ·
+réglages : `PUT /api/settings`, `POST /api/settings/test-openai` ·
+`GET /uploads/:key`, `GET /connect/:id/:token`, `GET /auth/linkedin/callback`.
 
-1. Un audit UX court (problèmes classés par impact).
-2. Le plan de refonte et la maquette de la nouvelle navigation et du Studio.
-3. L'implémentation progressive, écran par écran, en gardant l'app fonctionnelle à chaque étape.
-4. Une checklist de tests manuels couvrant tous les flux listés plus haut (création auto et GPT, hooks, qualité, retouches, validation, programmation, publication, visuels et PDF, bannière et PNG, veille, étude, ADN, onboarding, réglages, modes jour et nuit, mobile).
-5. Les limites éventuelles et ce qui nécessiterait une évolution du back-end.
+## Points d'attention
+
+- Un appel IA de plus de quelques secondes doit passer par les tâches d'arrière-plan : ajoute sa route dans `LONG_ROUTE` et dans `LONG_API`.
+- Les visuels designés coûtent de l'argent à chaque génération : ne lance jamais de génération en boucle ou automatique sans clic de l'utilisateur.
+- `GET /api/state` renvoie tout l'état : ne rajoute pas de gros champs (images en base64, etc.) dans `db`. Les fichiers vont dans le store `uploads`.
+- Mobile : aucune page ne doit défiler horizontalement (testé à 390 px de large).
