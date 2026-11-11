@@ -11,7 +11,7 @@ import { engagement, statsText } from './stats.js';
 import * as apify from './apify.js';
 import { chat } from './ai.js';
 import * as ed from './editorial.js';
-import { bannerCopyPrompt, profileAuditPrompt, visualPlanPrompt, visualItemPrompt, visualForPostPrompt } from './profile.js';
+import { bannerCopyPrompt, profileAuditPrompt, visualPlanPrompt, visualItemPrompt, visualForPostPrompt, visualFromReferencePrompt, visualChatPrompt } from './profile.js';
 
 const liCfg = (settings) => ({ clientId: settings.linkedinClientId, clientSecret: settings.linkedinClientSecret });
 
@@ -1075,6 +1075,55 @@ route('POST', '/api/posts/:id/visual', async ({ db, settings, post, body }) => {
   return json({ visual, post });
 });
 
+const hexOk = (c) => /^#[0-9a-f]{6}$/i.test(c || '');
+const bufToDataUrl = (buf, type) => `data:${type || 'image/jpeg'};base64,${Buffer.from(buf).toString('base64')}`;
+// Visuel inspiré d'un visuel concurrent précis (cliqué par l'auteur) + contenu du post.
+route('POST', '/api/posts/:id/visual-from', async ({ db, settings, post, body }) => {
+  if (post.status === 'published') throw new HttpError(400, 'Post déjà publié');
+  const client = clientOf(db, post.clientId);
+  const ref = db.images.find((x) => x.id === body.inspirationId && x.kind === 'inspiration');
+  if (!ref) throw new HttpError(404, 'Visuel de référence introuvable');
+  const kind = body.kind === 'carousel' ? 'carousel' : 'image';
+  const keys = (ref.pages?.length ? ref.pages : [ref.key]).slice(0, kind === 'carousel' ? 3 : 1);
+  const pics = [];
+  for (const k of keys) { const e = await uploads().getWithMetadata(k, { type: 'arrayBuffer' }); if (e) pics.push(bufToDataUrl(e.data, e.metadata?.type)); }
+  if (!pics.length) throw new HttpError(404, 'Image de référence illisible');
+  const da = client.adn?.da;
+  const prompt = visualFromReferencePrompt({ client, postText: post.text, kind, da });
+  const { text } = await chat(settings, prompt.system, [{ type: 'text', text: prompt.user }, ...pics.map((url) => ({ type: 'image_url', image_url: { url, detail: 'high' } }))], { json: true, timeout: 55_000 });
+  let r; try { r = JSON.parse(text); } catch { throw new HttpError(502, "L'IA a renvoyé une réponse illisible : réessaie."); }
+  if (!r.spec) throw new HttpError(502, "L'IA n'a pas renvoyé de visuel : réessaie.");
+  if (kind === 'carousel') r.spec.type = 'carousel';
+  const colors = da?.colors?.length ? da.colors : (r.palette || []).filter(hexOk).slice(0, 3);
+  db.visuals ||= [];
+  for (const v of db.visuals) if (v.postId === post.id) v.postId = null;
+  const visual = { id: newId('vis'), clientId: client.id, kind, format: 'portrait', style: { da: { colors: colors.length >= 2 ? colors : ['#0E6B4A', '#14231C'] }, variant: ['clair', 'fonce', 'couleur'].includes(r.variant) ? r.variant : 'clair' }, spec: r.spec, subject: post.theme || '', subtopic: String(r.subtopic || 'Visuel').slice(0, 80), postId: post.id, refId: ref.id, refPalette: (r.palette || []).filter(hexOk).slice(0, 3), why: String(r.why || '').slice(0, 300), chat: [], createdAt: now() };
+  db.visuals.unshift(visual);
+  post.visualId = visual.id;
+  log(post, `Visuel créé sur le modèle d'un visuel concurrent`);
+  return json({ visual, post });
+});
+
+// Retoucher un visuel en discutant (« mets du bleu », « fais-en une comparaison »…).
+route('POST', '/api/visuals/:id/chat', async ({ db, settings, params, body }) => {
+  const v = (db.visuals || []).find((x) => x.id === params.id);
+  if (!v) throw new HttpError(404, 'Visuel introuvable');
+  const message = String(body.message || '').trim().slice(0, 1000);
+  if (!message) throw new HttpError(400, 'Écris ta demande.');
+  const client = clientOf(db, v.clientId);
+  const post = db.posts.find((p) => p.id === v.postId);
+  if (body.spec) v.spec = body.spec; // modifications à la main pas encore enregistrées
+  v.chat ||= [];
+  const r = await askJson(settings, visualChatPrompt({ client, visual: v, postText: post?.text, message, history: v.chat.slice(-8) }), { timeout: 52_000 });
+  if (r.spec && typeof r.spec === 'object') { v.spec = r.spec; if (v.kind === 'carousel') v.spec.type = 'carousel'; }
+  const colors = (r.style?.colors || []).filter(hexOk).slice(0, 3);
+  v.style = { ...v.style, ...(colors.length >= 2 ? { da: { ...(v.style?.da || {}), colors } } : {}), ...(['clair', 'fonce', 'couleur'].includes(r.style?.variant) ? { variant: r.style.variant } : {}) };
+  v.chat.push({ role: 'user', text: message, at: now() }, { role: 'ai', text: String(r.reply || 'Modifié.').slice(0, 400), at: now() });
+  v.chat = v.chat.slice(-30);
+  v.updatedAt = now();
+  return json(v);
+});
+
 // Rattacher un visuel déjà créé (onglet Visuels) à un post.
 route('POST', '/api/visuals/:id/link', async ({ db, params, body }) => {
   const v = (db.visuals || []).find((x) => x.id === params.id);
@@ -1170,7 +1219,7 @@ async function mergeSave(beforeJson, db) {
 
 // ---------- Tâches longues : exécutées par une fonction d'arrière-plan (15 min max au lieu de 30 s) ----------
 const jobs = () => getStore({ name: 'jobs', consistency: 'strong' });
-const LONG_ROUTE = /^\/api\/(jobs-test|plan|write|hooks\/ideas|hooks\/generate|hooks\/optimize|study|veille\/paste|veille\/structures|banners\/suggest|profile\/audit|visuals\/plan|visuals\/item|images|posts\/[^/]+\/(hooks|chat|visual|quality|action|feedback|rewrite|image\/generate|image\/auto))$/;
+const LONG_ROUTE = /^\/api\/(jobs-test|plan|write|hooks\/ideas|hooks\/generate|hooks\/optimize|study|veille\/paste|veille\/structures|banners\/suggest|profile\/audit|visuals\/plan|visuals\/item|visuals\/[^/]+\/chat|images|posts\/[^/]+\/(hooks|chat|visual|visual-from|quality|action|feedback|rewrite|image\/generate|image\/auto))$/;
 route('POST', '/api/jobs', async ({ body }) => {
   const path = String(body.path || '');
   const method = body.method === 'PUT' ? 'PUT' : 'POST';

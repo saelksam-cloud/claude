@@ -54,7 +54,7 @@ export function pickClientFields(data = {}) {
   return out;
 }
 
-export const POST_FIELDS = ['pillar', 'text', 'theme', 'format', 'visualIdea', 'altText', 'scheduledAt'];
+export const POST_FIELDS = ['stage', 'pillar', 'text', 'theme', 'format', 'visualIdea', 'altText', 'scheduledAt'];
 export function pickPostFields(data = {}) {
   const out = {};
   for (const k of POST_FIELDS) if (typeof data[k] === 'string') out[k] = data[k];

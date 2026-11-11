@@ -84,3 +84,30 @@ Réponds en JSON : { "spec": { … }, "subtopic": "titre court du visuel" }`}
 ${inspirations.length ? `\nVisuels concurrents qui marchent (reprends leur densité de texte et leur structure, sans copier) :\n${inspirations.map((d) => `- ${d}`).join('\n')}` : ''}`;
   return { system, user: `Post :\n${String(postText).slice(0, 3000)}` };
 }
+
+// Visuel « qui ressemble » à un visuel concurrent choisi par l'auteur, avec le contenu du post.
+export function visualFromReferencePrompt({ client, postText, kind, da }) {
+  const system = `Tu es directeur artistique LinkedIn. On te montre UN visuel concurrent que l'auteur aime. Tu crées pour ${client.name} un visuel qui lui RESSEMBLE (même construction : disposition, hiérarchie, densité de texte, ton du titre) mais avec le contenu de SON post. Rien d'inventé : seulement les idées du post.
+${adnText(client, { includeProofs: true })}
+${kind === 'carousel' ? `Carrousel (document PDF) : 6 à 9 diapositives, en reprenant le rythme du carrousel de référence.
+- Couverture : { "kind": "cover", "title": "hook du carrousel ≤ 10 mots avec *mot clé*", "subtitle": "≤ 14 mots" }
+- Contenu : { "kind": "content", "title": "≤ 6 mots", "text": "≤ 20 mots", "items": ["optionnel, ≤ 8 mots"] }
+- Dernière : { "kind": "end", "title": "récap ≤ 8 mots", "text": "≤ 25 mots, pas de vente" }
+"spec" = { "type": "carousel", "slides": [ … ] }` : `${VISUAL_SPECS}
+Choisis le type le plus proche de la construction du visuel de référence. Par défaut 3 points (3 items, 3 étapes…). Le "title" est un HOOK de visuel qui accroche (≤ 10 mots, *mot clé* en couleur), différent de la 1re ligne du post.`}
+Couleurs : ${da?.colors?.length ? `l'auteur a une DA (${da.colors.join(', ')}) : garde-la, mais choisis le fond le plus proche de la référence.` : 'reprends 2 ou 3 couleurs dominantes de la référence.'}
+Réponds en JSON : { "spec": { … }, "palette": ["#hex", "#hex"], "variant": "clair|fonce|couleur", "subtopic": "titre court", "why": "en 1 phrase, ce que tu as repris de la référence" }`;
+  return { system, user: `Post de l'auteur :\n${String(postText).slice(0, 3000)}` };
+}
+
+// Retouche d'un visuel en discutant (couleurs, textes, type).
+export function visualChatPrompt({ client, visual, postText, message, history = [] }) {
+  const system = `Tu modifies un visuel LinkedIn de ${client.name} selon la demande de l'auteur. Tu renvoies le visuel COMPLET modifié.
+${VISUAL_SPECS}
+Format du visuel actuel : ${visual.kind === 'carousel' ? 'carrousel (spec.type = "carousel", spec.slides)' : 'image (un des types ci-dessus)'}.
+Couleurs : "style.colors" = 2 ou 3 couleurs hex (la 1re = principale), "style.variant" = fond "clair" | "fonce" | "couleur".
+Tu peux changer le type (ex. liste → comparaison) si on te le demande. Rien d'inventé : reste sur les idées du post.
+Réponds en JSON : { "spec": { … }, "style": { "colors": ["#hex", "#hex"], "variant": "clair" }, "reply": "1 phrase : ce que tu as changé" }`;
+  const convo = history.map((m) => `${m.role === 'user' ? 'MOI' : 'TOI'} : ${m.text}`).join('\n');
+  return { system, user: `Post :\n${String(postText || '').slice(0, 2000)}\n\nVisuel actuel :\n${JSON.stringify({ spec: visual.spec, style: { colors: visual.style?.da?.colors, variant: visual.style?.variant } })}\n\n${convo ? `Échanges précédents :\n${convo}\n\n` : ''}Demande : ${message}` };
+}

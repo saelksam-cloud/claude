@@ -33,6 +33,10 @@ const ui = {
   chatDraft: {},
   chatPending: null,
   memoryOpen: false,
+  atStep: {},
+  visKind: {},
+  visStyle: {},
+  visChatPending: null,
   pillar: '',
   hookPillar: '',
   hookIdeas: [],
@@ -110,7 +114,7 @@ function toast(msg, isError = false) {
 
 class AuthError extends Error {}
 // Les appels IA longs passent par une tâche d'arrière-plan (Netlify coupe les requêtes normales à 30 s).
-const LONG_API = /^\/api\/(jobs-test|plan|write|hooks\/ideas|hooks\/generate|hooks\/optimize|study|veille\/paste|veille\/structures|banners\/suggest|profile\/audit|visuals\/plan|visuals\/item|images|posts\/[^/]+\/(hooks|chat|visual|quality|action|feedback|rewrite|image\/generate|image\/auto))$/;
+const LONG_API = /^\/api\/(jobs-test|plan|write|hooks\/ideas|hooks\/generate|hooks\/optimize|study|veille\/paste|veille\/structures|banners\/suggest|profile\/audit|visuals\/plan|visuals\/item|visuals\/[^/]+\/chat|images|posts\/[^/]+\/(hooks|chat|visual|visual-from|quality|action|feedback|rewrite|image\/generate|image\/auto))$/;
 async function api(method, url, body) {
   if (method === 'POST' && LONG_API.test(url)) return apiLong(method, url, body);
   return apiDirect(method, url, body);
@@ -914,79 +918,154 @@ const whenLetters = (iso) => {
 function atelierPosts() {
   return clientPosts().filter((p) => p.status !== 'published').sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
 }
+const STEPS = [['hook', 'Hook'], ['post', 'Post'], ['visual', 'Visuel'], ['publish', 'Publication']];
+function atelierStage(p) {
+  if (!p) return 'hook';
+  if (ui.atStep?.[p.id]) return ui.atStep[p.id];
+  if (p.status === 'approved' || p.status === 'published') return 'publish';
+  return STEPS.some(([k]) => k === p.stage) ? p.stage : 'post';
+}
 function renderAtelier() {
   const c = client();
   const list = atelierPosts();
   const p = list.find((x) => x.id === ui.studioPost) || null;
-  const j = ui.job?.kind === 'create' ? ui.job : null;
-  const busy = Boolean(ui.job && !ui.job.finished);
-  const manual = ui.manual[c.id] || '';
-  const picker = `<select id="studioDraft" aria-label="Choisir un post"><option value="">➕ Nouveau post</option>${list.map((x) => `<option value="${esc(x.id)}" ${x === p ? 'selected' : ''}>${x.status === 'approved' ? '📅 ' : ''}${esc((x.theme || x.text.split('\n')[0]).slice(0, 60))}</option>`).join('')}</select>`;
-  const empty = (msg) => `<div class="at-empty small">${msg}</div>`;
+  const stage = atelierStage(p);
+  const idx = STEPS.findIndex(([k]) => k === stage);
+  const stepper = `<ol class="at-steps">${STEPS.map(([k, l], i) => `<li class="${i < idx ? 'done' : i === idx ? 'on' : ''}"><button ${p || k === 'hook' ? '' : 'disabled'} data-action="at-step" data-id="${k}"><span class="at-step">${i < idx ? '✓' : i + 1}</span>${l}</button></li>${i < STEPS.length - 1 ? '<li class="at-sep" aria-hidden="true">→</li>' : ''}`).join('')}</ol>`;
+  const picker = `<label class="row small at-picker">Post en cours <select id="studioDraft" aria-label="Choisir un post"><option value="">➕ Nouveau post</option>${list.map((x) => `<option value="${esc(x.id)}" ${x === p ? 'selected' : ''}>${x.status === 'approved' ? '📅 ' : ''}${esc((x.text.split('\n')[0] || x.theme || '').slice(0, 60))}</option>`).join('')}</select></label>`;
+  const body = { hook: atHookStep, post: atPostStep, visual: atVisualStep, publish: atPublishStep }[stage](p, c);
+  view.innerHTML = `
+  <header class="page-heading"><div><div class="eyebrow">ATELIER</div><h1>${p ? esc((p.text.split('\n')[0] || 'Post').slice(0, 70)) : 'Nouveau post'}</h1><p>Un hook, puis le post, puis le visuel, puis la date. Une étape à la fois.</p></div>
+    <div class="row heading-actions">${picker}</div></header>
+  ${stepper}
+  <div class="at-board at-stage">${body}</div>`;
+  const v = p && visualsOf().find((x) => x.id === p.visualId && x.postId === p.id);
+  const cv = view.querySelector('canvas[data-vis]');
+  if (cv && v) Vis.renderVisual(cv, visCurrent(v), ui.visSlide[v.id] || 0);
+  scrollChat();
+  const vl = $('#visChatLog'); if (vl) vl.scrollTop = vl.scrollHeight;
+}
 
-  const card1 = p ? `
-      <header class="at-head"><span class="at-step">1</span><h3>Le post</h3><span class="row" style="gap:4px">${pillarTag(p.pillar)}<span class="badge s-${p.status}">${STATUS[p.status]}</span></span></header>
+// Étape 1 : choisir (ou trouver) un hook — ou partir d'un post déjà écrit.
+function atHookStep(p, c) {
+  if (p) return `<div class="at-node at-wide stack"><h3 style="margin:0">Le hook de ce post</h3>${hooksPanel(p)}<div class="row"><button class="btn primary" data-action="at-step" data-id="post">Continuer vers le post →</button></div></div>`;
+  const bank = c.adn?.hookBank || [];
+  const kept = bank.filter((h) => h.status === 'liked');
+  const ideas = (ui.hookIdeas || []).filter((h) => !bank.some((b) => b.text === h.text));
+  const busy = ui.job && !ui.job.finished;
+  const creating = ui.job?.kind === 'create' ? ui.job : null;
+  const manual = ui.manual[c.id] || '';
+  const row = (h, act, id) => `<div class="hk-row"><div><div class="hk-text">${esc(h.text)}</div><div class="small">${pillarTag(h.pillar)} ${esc(h.idea || '')}</div></div>
+    <span class="row" style="gap:4px;flex:none"><button class="btn primary sm" data-action="${act}" data-id="${id}" ${busy ? 'disabled' : ''}>Choisir ce hook →</button>${act === 'hook-choose' ? `<button class="btn ghost sm" data-action="hook-reject" data-id="${id}" title="Écarter">✕</button>` : ''}</span></div>`;
+  return `<div class="at-two">
+    <section class="at-node stack">
+      <header class="at-head"><span class="at-step">1</span><h3>Choisis ton hook</h3></header>
+      ${creating ? `<div class="job-inline small"><div class="progress"><span style="width:${Math.round((100 * creating.done) / creating.total)}%"></span></div><span>${esc(creating.step)}</span></div>` : ''}
+      <div class="chips">${[['', 'Les 3 catégories'], ...Object.entries(PILLAR_NAMES)].map(([k, l]) => `<button class="chip ${(ui.hookPillar || '') === k ? 'on' : ''}" data-action="hook-pillar" data-id="${k}">${l}</button>`).join('')}</div>
+      <div class="row"><input id="hookTopic" placeholder="Sujet (facultatif)" value="${esc(ui.hookTopic || '')}" style="flex:1;min-width:180px"><button class="btn soft" data-action="hook-ideas" ${busy || !ui.data.settings.hasOpenaiKey ? 'disabled' : ''}>${ui.job?.kind === 'hooks' ? 'Écriture…' : '✨ Proposer des hooks'}</button></div>
+      ${ideas.length ? `<div class="hk-list">${ideas.map((h, i) => row(h, 'hook-choose', i)).join('')}</div>` : ''}
+      ${kept.length ? `<h4 style="margin:6px 0 0">👍 Mes hooks gardés</h4><div class="hk-list">${kept.slice().reverse().slice(0, 12).map((h) => row(h, 'hook-develop', h.id)).join('')}</div>` : ''}
+      ${!ideas.length && !kept.length ? '<p class="small">Clique sur « Proposer des hooks » : l\'IA t\'en écrit une vingtaine, tu choisis celui qui te plaît, et le post s\'écrit à partir de lui.</p>' : ''}
+    </section>
+    <section class="at-node stack">
+      <header class="at-head"><span class="at-step">✎</span><h3>J'ai déjà mon post</h3></header>
+      <p class="small" style="margin:0">Colle-le ici : on passe directement au visuel.</p>
+      <textarea id="manualDraft" rows="12" maxlength="3000" placeholder="Colle ton post…">${esc(manual)}</textarea>
+      <div class="row between"><span class="small" id="manualCount">${manual.length} / 3 000</span>
+        <span class="row"><button class="btn sm ghost" data-action="manual-use" data-id="post" ${manual.trim() ? '' : 'disabled'}>Le retravailler d'abord</button><button class="btn primary sm" id="manualSave" data-action="manual-use" data-id="visual" ${manual.trim() ? '' : 'disabled'}>Faire le visuel →</button></span></div>
+    </section>
+  </div>`;
+}
+
+// Étape 2 : le post + la critique.
+function atPostStep(p, c) {
+  const lessons = c.adn?.lessons || [];
+  return `<div class="at-two">
+    <section class="at-node stack">
+      <header class="at-head"><span class="at-step">2</span><h3>Le post</h3><span class="row" style="gap:4px">${pillarTag(p.pillar)}<span class="badge s-${p.status}">${STATUS[p.status]}</span></span></header>
       <div class="chips">${Object.entries(PILLAR_NAMES).map(([k, l]) => `<button class="chip sm ${p.pillar === k ? 'on' : ''}" data-action="set-pillar" data-id="${p.id}" data-pillar="${k}">${l}</button>`).join('')}</div>
-      ${picker}
       ${postEditor(p)}
       ${PLACEHOLDER.test(p.text) ? '<div class="alert warn">Complète les [À COMPLÉTER] avant de valider.</div>' : ''}
-      ${p.versions?.length ? `<button class="btn ghost sm" data-action="undo" data-id="${p.id}">↶ Version précédente</button>` : ''}`
-    : `
-      <header class="at-head"><span class="at-step">1</span><h3>Le post</h3></header>
-      ${picker}
-      <div class="f">Catégorie<div class="chips">${[['', 'Auto'], ...Object.entries(PILLAR_NAMES)].map(([k, l]) => `<button class="chip ${(ui.pillar || '') === k ? 'on' : ''}" data-action="pillar" data-id="${k}">${l}</button>`).join('')}</div></div>
-      <label class="f">Sujet ou idée<textarea id="instruction" rows="3" placeholder="Ex. le coût caché de la double saisie… (vide = l'IA choisit)">${esc(ui.instruction)}</textarea></label>
-      <p class="small" style="margin:0">Astuce : choisis d'abord un hook dans <a href="#" data-action="go" data-id="hooks">Hooks</a>, puis « Développer en post ».</p>
-      ${j ? `<div class="job-inline small"><div class="progress"><span style="width:${Math.round((100 * j.done) / j.total)}%"></span></div><span>${esc(j.step)}</span></div>` : ''}
-      <button class="btn primary" data-action="atelier-create" ${busy || !ui.data.settings.hasOpenaiKey ? 'disabled' : ''}>${ICONS.spark} Écrire le post avec l'IA</button>
-      <details ${manual ? 'open' : ''}><summary class="small" style="cursor:pointer">… ou l'écrire moi-même</summary>
-        <textarea id="manualDraft" rows="8" maxlength="3000" placeholder="Écris ton post ici…" style="margin-top:6px">${esc(manual)}</textarea>
-        <div class="row between" style="margin-top:6px"><span class="small" id="manualCount">${manual.length} / 3 000</span><button class="btn sm" id="manualSave" data-action="manual-save" ${manual.trim() ? '' : 'disabled'}>Enregistrer</button></div></details>`;
+      <div class="row between">${p.versions?.length ? `<button class="btn ghost sm" data-action="undo" data-id="${p.id}">↶ Version précédente</button>` : '<span></span>'}
+        <button class="btn primary" data-action="at-validate-post" data-id="${p.id}" ${PLACEHOLDER.test(p.text) ? 'disabled' : ''}>✓ Valider le post →</button></div>
+    </section>
+    <div class="stack">
+      <section class="at-node stack">
+        <header class="at-head"><span class="at-step">💬</span><h3>Ta critique</h3><span class="small">l'IA corrige et retient</span></header>
+        ${chatPanel(p, { sticky: true })}
+      </section>
+      <aside class="at-sticky"><b>🧠 Ce que l'IA retient pour ${esc(c.name)}</b>
+        ${lessons.length ? `<ul>${lessons.slice().reverse().map((l) => `<li><span>${esc(l.text)}</span><span class="row" style="gap:0"><button class="at-x" data-action="lesson-rule" data-id="${l.id}" title="En faire une règle permanente">📌</button><button class="at-x" data-action="lesson-del" data-id="${l.id}" aria-label="Oublier">✕</button></span></li>`).join('')}</ul>` : '<p class="small">Chaque critique générale sera notée ici et appliquée aux prochains posts.</p>'}
+      </aside>
+    </div>
+  </div>`;
+}
 
-  const tool = ['chat', 'hooks', 'quality', 'retouch'].includes(ui.tools) ? ui.tools : 'chat';
-  const card2 = `
-      <header class="at-head"><span class="at-step">2</span><h3>Ta critique</h3><span class="small">l'IA retient</span></header>
-      ${p ? `<div class="tool-tabs">${STUDIO_TOOLS.filter(([k]) => k !== 'visual').map(([key, label, , glyph]) => `<button class="tool-tab ${tool === key ? 'on' : ''}" data-action="studio-tool" data-id="${key}">${ICONS[glyph]}<span>${key === 'chat' ? 'Critique' : label}</span></button>`).join('')}</div>
-        ${tool === 'chat' ? chatPanel(p, { sticky: true }) : { hooks: hooksPanel, quality: qualityPanel, retouch: retouchPanel }[tool](p)}` : empty('Crée ou ouvre un post à gauche, puis dis ici ce qui ne va pas.')}`;
-  const lessons = c.adn?.lessons || [];
-  const sticky = `<aside class="at-sticky" aria-label="Mémoire de l'IA">
-      <b>🧠 Ce que l'IA retient pour ${esc(c.name)}</b>
-      ${lessons.length ? `<ul>${lessons.slice().reverse().map((l) => `<li><span>${esc(l.text)}</span><span class="row" style="gap:0"><button class="at-x" data-action="lesson-rule" data-id="${l.id}" title="En faire une règle permanente">📌</button><button class="at-x" data-action="lesson-del" data-id="${l.id}" title="Oublier" aria-label="Oublier">✕</button></span></li>`).join('')}</ul>` : '<p class="small">Rien pour l\'instant : chaque critique générale sera notée ici.</p>'}
-      <span class="small">Appliqué à chaque nouveau post. ✕ pour oublier, 📌 pour en faire une règle permanente.</span>
-    </aside>`;
+// Étape 3 : visuel ou carrousel, sur le modèle d'un visuel concurrent choisi à droite.
+function atVisualStep(p, c) {
+  const kind = ui.visKind[p.id] || (p.document ? 'carousel' : null);
+  if (!kind) return `<div class="at-node at-wide stack at-ask">
+    <h3 style="margin:0">Tu veux un visuel avec ce post ?</h3>
+    <p class="small" style="margin:0">Tu choisis ensuite un modèle parmi les visuels concurrents de ta base, et je te fais le même avec le contenu de ton post.</p>
+    <div class="row at-choices"><button class="at-choice" data-action="vis-kind" data-id="image">🖼<b>Un visuel</b><span>3 points, schéma, comparatif…</span></button>
+      <button class="at-choice" data-action="vis-kind" data-id="carousel">📑<b>Un carrousel</b><span>6 à 9 pages en PDF</span></button>
+      <button class="at-choice" data-action="vis-skip" data-id="${p.id}">✕<b>Pas de visuel</b><span>Texte seul</span></button></div></div>`;
+  const v = visualsOf().find((x) => x.id === p.visualId && x.postId === p.id && x.kind === kind);
+  const refs = inspirationImages(currentNiche(), kind === 'carousel' ? 'carousel' : 'visual');
+  const allRefs = refs.length ? refs : ui.data.images.filter((im) => im.kind === 'inspiration' && im.category === (kind === 'carousel' ? 'carousel' : 'visual'));
+  const busy = ui.job?.kind === 'post-visual' && ui.job.id === p.id;
+  const cur = v && visCurrent(v);
+  const colors = cur?.style?.da?.colors || [];
+  const daColors = daOf(c).colors;
+  const n = v ? Vis.slideCount(cur) : 0;
+  const work = busy ? `<div class="at-empty"><b>${esc(ui.job.step)}</b><br><span class="small">Environ 30 secondes.</span></div>`
+    : !v ? `<div class="at-empty"><b>👉 Clique sur un modèle à droite</b><br><span class="small">Je fais un ${kind === 'carousel' ? 'carrousel' : 'visuel'} qui lui ressemble, avec le contenu de ton post et un titre qui accroche.</span><br><button class="btn ghost sm" style="margin-top:10px" data-action="post-visual-auto" data-id="${p.id}">…ou laisse-moi choisir la forme</button></div>`
+    : `<div class="at-canvas-wrap"><canvas data-vis="${v.id}" class="at-canvas" aria-label="Aperçu du visuel"></canvas>
+        ${n > 1 ? `<div class="row" style="justify-content:center"><button class="btn sm" data-action="vis-slide" data-id="${v.id}" data-d="-1">‹</button><span class="small">Page ${(ui.visSlide[v.id] || 0) + 1} / ${n}</span><button class="btn sm" data-action="vis-slide" data-id="${v.id}" data-d="1">›</button></div>` : ''}</div>
+      ${v.why ? `<p class="small" style="margin:0">Repris du modèle : ${esc(v.why)}</p>` : ''}
+      <div class="row small at-colors">Couleurs :
+        <button class="chip sm" data-action="vis-colors" data-id="${v.id}" data-set="da">Ma DA</button>
+        ${v.refPalette?.length >= 2 ? `<button class="chip sm" data-action="vis-colors" data-id="${v.id}" data-set="ref">Celles du modèle</button>` : ''}
+        ${[0, 1, 2].map((i) => `<input type="color" data-vcolor="${i}" data-vid="${v.id}" value="${colors[i] || daColors[i] || '#cccccc'}" aria-label="Couleur ${i + 1}">`).join('')}
+        <span class="sep-dot">·</span> Fond : ${Object.entries(Vis.DA_BACKGROUNDS).map(([k, l]) => `<button class="chip sm ${cur.style?.variant === k ? 'on' : ''}" data-action="vis-variant" data-id="${v.id}" data-variant="${k}">${l.replace('Fond ', '')}</button>`).join('')}</div>
+      <div class="vis-chat">
+        <div class="chat-log" id="visChatLog">${(v.chat || []).map((m) => `<div class="msg ${m.role === 'user' ? 'me' : 'ai'}">${esc(m.text)}</div>`).join('') || '<div class="small chat-hint">Dis-moi quoi changer : « mets du bleu », « titre plus court », « fais-en une comparaison », « 4 points au lieu de 3 »…</div>'}
+          ${ui.visChatPending === v.id ? '<div class="msg ai typing">Je modifie le visuel…</div>' : ''}</div>
+        <div class="row"><input id="visMsg" placeholder="Ta demande pour le visuel… (Entrée pour envoyer)" style="flex:1;min-width:0" ${ui.visChatPending ? 'disabled' : ''}><button class="btn sm" data-action="vis-chat" data-id="${v.id}" ${ui.visChatPending ? 'disabled' : ''}>Envoyer</button></div>
+      </div>
+      <details class="more"><summary class="small"><b>✎ Modifier les textes moi-même</b></summary><div class="stack" style="margin-top:8px">${visFields(v)}</div></details>
+      <div class="row between"><button class="btn ghost sm" data-action="vis-kind" data-id="">← Changer (visuel / carrousel)</button><button class="btn primary" data-action="at-validate-visual" data-id="${p.id}">✓ Valider le visuel →</button></div>`;
+  return `<div class="at-two at-vis">
+    <section class="at-node stack"><header class="at-head"><span class="at-step">3</span><h3>${kind === 'carousel' ? 'Le carrousel' : 'Le visuel'}</h3><span class="small">${v ? 'modifie-le en bas' : ''}</span></header>${work}</section>
+    <aside class="at-node stack"><header class="at-head"><h3>Choisis un modèle</h3><span class="small">${allRefs.length} dans ta base</span></header>
+      ${allRefs.length ? `<div class="ref-grid">${allRefs.map((im) => `<button class="ref ${v?.refId === im.id ? 'on' : ''}" data-action="visual-from" data-id="${p.id}" data-ref="${im.id}" data-kind="${kind}" ${busy ? 'disabled' : ''} title="${esc((im.description || '').slice(0, 200))}"><img src="/uploads/${esc(im.key)}" alt="" loading="lazy">${im.pages?.length > 1 ? `<span class="insp-pages">${im.pages.length} p.</span>` : ''}</button>`).join('')}</div>`
+        : `<p class="small">Aucun ${kind === 'carousel' ? 'carrousel' : 'visuel'} concurrent dans ta base. <a href="#" data-action="go" data-id="images">Ajoute-en dans Visuels</a> (glisser-déposer).</p>`}
+    </aside>
+  </div>`;
+}
 
-  const card3 = `
-      <header class="at-head"><span class="at-step">3</span><h3>Le visuel</h3><span class="small">tiré du post</span></header>
-      ${p ? `${p.image || p.document ? `<div class="media-preview">${p.image ? `<img src="/uploads/${esc(p.image)}" alt="">` : ''}<div class="row between"><span class="small">${p.document ? '📎 Carrousel PDF attaché' : '🖼 Attaché au post'}</span><button class="btn ghost sm danger" data-action="remove-image" data-id="${p.id}">Retirer</button></div></div>` : ''}
-        ${visualPanel(p)}` : empty('Le visuel se crée à partir du texte du post.')}`;
-
-  const w = p ? whenLetters(p.scheduledAt) : null;
-  const card4 = `
-      <header class="at-head"><span class="at-step">4</span><h3>Publication</h3><span class="small">aperçu LinkedIn</span></header>
-      ${p ? `<div class="li at-li">
-          <div class="li-head"><div class="avatar">${initials(c.name)}</div><div><div class="li-name">${esc(c.linkedin?.name || c.name)}</div><div class="li-sub">${esc(c.company || c.niche || '')}</div></div></div>
-          <div class="li-text">${esc(p.text.split('\n').slice(0, 4).join('\n'))}${p.text.split('\n').length > 4 ? ' <span class="small"><b>… voir plus</b></span>' : ''}</div>
-          ${p.image ? `<img class="li-img" src="/uploads/${esc(p.image)}" alt="">` : ''}
-        </div>
-        <label class="f">Date et heure<input type="datetime-local" data-date="${p.id}" value="${toLocalInput(p.scheduledAt)}"></label>
-        <div class="at-when ${w.warn ? 'warn' : ''}">${esc(w.text)}</div>
-        ${p.error ? `<div class="alert err">${esc(p.error)}</div>` : ''}
-        ${!c.linkedin ? '<div class="alert warn">LinkedIn non connecté pour ce client : le post sera prêt mais pas publié.</div>' : ''}
-        ${p.status === 'approved'
-          ? `<div class="row"><button class="btn sm" data-action="unapprove" data-id="${p.id}">↩ Retirer de la programmation</button>${c.linkedin ? `<button class="btn soft sm" data-action="publish-now" data-id="${p.id}">Publier maintenant</button>` : ''}</div>`
-          : `<button class="btn primary" data-action="approve" data-id="${p.id}" ${PLACEHOLDER.test(p.text) ? 'disabled' : ''}>✓ Valider et programmer</button>`}
-        <button class="btn ghost sm" data-action="delete" data-id="${p.id}">🗑 Supprimer ce post</button>` : empty('L\'aperçu et la date apparaissent ici.')}`;
-
-  view.innerHTML = `
-  <header class="page-heading"><div><div class="eyebrow">ATELIER</div><h1>Un post, de gauche à droite</h1><p>Tu écris, tu critiques, l'IA corrige et retient, puis on fait le visuel et on programme.</p></div>
-    <div class="row heading-actions"><button class="btn" data-action="go" data-id="veille">${ICONS.radar} Veille concurrentielle</button></div></header>
-  <div class="at-board"><div class="at-flow">
-    <article class="at-node">${card1}</article>${ARROW}
-    <div class="at-col"><article class="at-node">${card2}</article>${sticky}</div>${ARROW}
-    <article class="at-node">${card3}</article>${ARROW}
-    <article class="at-node">${card4}</article>
-  </div></div>`;
-  scrollChat();
+// Étape 4 : aperçu et date.
+function atPublishStep(p, c) {
+  const w = whenLetters(p.scheduledAt);
+  return `<div class="at-two">
+    <section class="at-node stack"><header class="at-head"><span class="at-step">4</span><h3>Aperçu LinkedIn</h3></header>
+      <div class="li at-li">
+        <div class="li-head"><div class="avatar">${initials(c.name)}</div><div><div class="li-name">${esc(c.linkedin?.name || c.name)}</div><div class="li-sub">${esc(c.company || c.niche || '')}</div></div></div>
+        <div class="li-text">${esc(p.text)}</div>
+        ${p.image ? `<img class="li-img" src="/uploads/${esc(p.image)}" alt="">` : ''}
+        ${p.document ? `<div class="small">📎 Carrousel PDF : ${esc(p.documentTitle || '')}</div>` : ''}
+      </div></section>
+    <section class="at-node stack"><header class="at-head"><h3>Quand ?</h3></header>
+      <label class="f">Date et heure<input type="datetime-local" data-date="${p.id}" value="${toLocalInput(p.scheduledAt)}"></label>
+      <div class="at-when ${w.warn ? 'warn' : ''}">${esc(w.text)}</div>
+      ${p.error ? `<div class="alert err">${esc(p.error)}</div>` : ''}
+      ${!c.linkedin ? '<div class="alert warn">LinkedIn non connecté pour ce client : le post sera prêt mais pas publié.</div>' : ''}
+      ${p.status === 'published' ? `<div class="alert">Publié ${fmtDate(p.publishedAt)}</div>` : p.status === 'approved'
+        ? `<div class="alert">✓ Programmé. Il partira tout seul à la date indiquée.</div><div class="row"><button class="btn sm" data-action="unapprove" data-id="${p.id}">↩ Retirer de la programmation</button>${c.linkedin ? `<button class="btn soft sm" data-action="publish-now" data-id="${p.id}">Publier maintenant</button>` : ''}</div>`
+        : `<button class="btn primary" data-action="approve" data-id="${p.id}" ${PLACEHOLDER.test(p.text) ? 'disabled' : ''}>✓ Programmer</button>`}
+      <div class="row between"><button class="btn ghost sm" data-action="at-step" data-id="visual">← Revenir au visuel</button><button class="btn ghost sm" data-action="at-new">➕ Nouveau post</button></div>
+    </section>
+  </div>`;
 }
 
 // ================= MARCHÉ : tout ce que font les concurrents =================
@@ -1395,7 +1474,7 @@ const imgToDataUrl = (file, max, type) => new Promise((resolve, reject) => {
 
 // ================= VISUELS À VALEUR =================
 const visualsOf = () => (ui.data.visuals || []).filter((v) => v.clientId === ui.clientId);
-const visCurrent = (v) => ({ ...v, spec: ui.visEdit[v.id] || v.spec, author: client()?.name || '' });
+const visCurrent = (v) => ({ ...v, spec: ui.visEdit[v.id] || v.spec, style: ui.visStyle?.[v.id] || v.style, author: client()?.name || '' });
 const TD = (arr) => (arr || []).map((x) => (typeof x === 'string' ? x : `${x.t || ''}${x.d ? ` — ${x.d}` : ''}`)).join('\n');
 const parseTD = (txt) => String(txt).split('\n').map((l) => l.trim()).filter(Boolean).map((l) => { const [t, ...d] = l.split(/\s+[—–-]\s+/); return { t: t.trim(), d: d.join(' — ').trim() }; });
 const getPath = (o, path) => path.split('.').reduce((a, k) => (a == null ? a : a[k]), o);
@@ -2193,11 +2272,80 @@ const actions = {
     ui.count = 1; ui.imageMode = 'none'; ui.instruction = h.idea || '';
     ui.hookDev = { hook: h.text, hookId: h.id, pillar: h.pillar };
     try { await createAuto(); } finally { Object.assign(ui, keep); ui.hookDev = null; }
-    if (ui.studioPost) actions.go('atelier');
+    if (ui.studioPost) { ui.atStep[ui.studioPost] = 'post'; actions.go('atelier'); }
   },
   'da-bg'(k) { const da = ui.daDraft || { ...daOf() }; const set = new Set(da.backgrounds); if (set.has(k)) { if (set.size > 1) set.delete(k); } else set.add(k); ui.daDraft = { ...da, backgrounds: Object.keys(Vis.DA_BACKGROUNDS).filter((x) => set.has(x)) }; render(); },
   'da-drop3'() { const da = ui.daDraft || { ...daOf() }; ui.daDraft = { ...da, colors: da.colors.slice(0, 2) }; render(); },
   async 'da-save'() { await api('PUT', `/api/clients/${ui.clientId}/da`, ui.daDraft); ui.daDraft = null; await refresh(); toast('Direction artistique enregistrée'); },
+  async 'at-step'(k) {
+    const p = atelierPosts().find((x) => x.id === ui.studioPost);
+    if (!p) { ui.studioPost = null; render(); return; }
+    ui.atStep[p.id] = k;
+    if (k !== 'hook' && p.status !== 'approved' && p.status !== 'published') api('PUT', `/api/posts/${p.id}`, { stage: k }).catch(() => {});
+    render(); window.scrollTo(0, 0);
+  },
+  'at-new'() { ui.studioPost = null; render(); window.scrollTo(0, 0); },
+  async 'at-validate-post'(id) {
+    const txt = $(`[data-editor="${id}"] textarea[name="text"]`)?.value;
+    const p = ui.data.posts.find((x) => x.id === id);
+    await api('PUT', `/api/posts/${id}`, { ...(txt && txt !== p.text ? { text: txt } : {}), stage: 'visual' });
+    delete ui.draftText[id]; ui.atStep[id] = 'visual';
+    await refresh(); window.scrollTo(0, 0);
+  },
+  'vis-kind'(k) { const id = ui.studioPost; if (k) ui.visKind[id] = k; else delete ui.visKind[id]; render(); },
+  async 'vis-skip'(id) { await api('PUT', `/api/posts/${id}`, { stage: 'publish' }); ui.atStep[id] = 'publish'; await refresh(); },
+  async 'visual-from'(id, btn) {
+    if (ui.job && !ui.job.finished) throw new Error('Un traitement est déjà en cours.');
+    ui.job = { kind: 'post-visual', id, step: 'Je regarde le modèle et je prépare ton visuel…' }; render();
+    try {
+      const r = await api('POST', `/api/posts/${id}/visual-from`, { inspirationId: btn.dataset.ref, kind: btn.dataset.kind });
+      delete ui.visEdit[r.visual.id]; delete ui.visStyle[r.visual.id]; ui.visSlide[r.visual.id] = 0;
+    } finally { ui.job = null; await refresh(); }
+  },
+  async 'post-visual-auto'(id) { ui.postVisType = ui.visKind[id] === 'carousel' ? 'carousel' : 'auto'; await actions['post-visual'](id, null, { attach: false }); },
+  async 'vis-chat'(vid) {
+    const msg = ($('#visMsg')?.value || '').trim(); if (!msg) throw new Error('Écris ta demande.');
+    ui.visChatPending = vid; render();
+    try { await api('POST', `/api/visuals/${vid}/chat`, { message: msg, spec: ui.visEdit[vid] }); delete ui.visEdit[vid]; delete ui.visStyle[vid]; }
+    finally { ui.visChatPending = null; await refresh(); $('#visMsg')?.focus(); }
+  },
+  async 'vis-colors'(vid, btn) {
+    const v = visualsOf().find((x) => x.id === vid); if (!v) return;
+    const colors = btn.dataset.set === 'ref' ? v.refPalette : daOf().colors;
+    const style = { ...(visCurrent(v).style || {}), da: { colors } };
+    await api('PUT', `/api/visuals/${vid}`, { style }); delete ui.visStyle[vid]; await refresh();
+  },
+  async 'vis-variant'(vid, btn) {
+    const v = visualsOf().find((x) => x.id === vid); if (!v) return;
+    await api('PUT', `/api/visuals/${vid}`, { style: { ...(visCurrent(v).style || {}), variant: btn.dataset.variant } }); delete ui.visStyle[vid]; await refresh();
+  },
+  async 'at-validate-visual'(id, btn) {
+    const p = ui.data.posts.find((x) => x.id === id);
+    const v = visualsOf().find((x) => x.id === p.visualId && x.postId === id); if (!v) return;
+    btn.disabled = true; btn.textContent = 'On attache le visuel…';
+    try {
+      if (ui.visEdit[v.id] || ui.visStyle[v.id]) await api('PUT', `/api/visuals/${v.id}`, { spec: visCurrent(v).spec, style: visCurrent(v).style });
+      await attachVisual(visCurrent(v));
+      delete ui.visEdit[v.id]; delete ui.visStyle[v.id];
+      await api('PUT', `/api/posts/${id}`, { stage: 'publish' }); ui.atStep[id] = 'publish';
+      toast('Visuel attaché au post');
+    } finally { await refresh(); window.scrollTo(0, 0); }
+  },
+  async 'manual-use'(next) {
+    const text = (ui.manual[ui.clientId] || '').trim(); if (!text) return;
+    const post = await api('POST', '/api/posts', { clientId: ui.clientId, text, pillar: ui.pillar || '' });
+    await api('PUT', `/api/posts/${post.id}`, { stage: next });
+    ui.manual[ui.clientId] = ''; ui.studioPost = post.id; ui.atStep[post.id] = next;
+    await refresh(); window.scrollTo(0, 0);
+  },
+  async 'hook-choose'(i) {
+    const h = ui.hookIdeas[Number(i)]; if (!h) return;
+    await api('POST', `/api/clients/${ui.clientId}/hooks`, { ...h, status: 'liked' });
+    await refresh();
+    const saved = (client().adn?.hookBank || []).find((x) => x.text === h.text);
+    ui.hookIdeas = ui.hookIdeas.filter((x) => x !== h);
+    if (saved) await actions['hook-develop'](saved.id);
+  },
   async 'atelier-create'() {
     const keep = { count: ui.count, imageMode: ui.imageMode };
     ui.count = 1; ui.imageMode = 'none';
@@ -2225,7 +2373,7 @@ const actions = {
     ui.memoryOpen = true; await refresh(); toast('Devenu une règle permanente (ADN › Voix)');
   },
   'post-vis-type'(t) { ui.postVisType = t; render(); },
-  async 'post-visual'(id) {
+  async 'post-visual'(id, _btn, opts = {}) {
     if (ui.job && !ui.job.finished) throw new Error('Un traitement est déjà en cours.');
     const t = ui.postVisType || 'auto';
     const kind = t === 'carousel' ? 'carousel' : 'image';
@@ -2236,10 +2384,8 @@ const actions = {
       const n = visualsOf().length;
       const variant = ui.postVisBg || da.backgrounds[n % da.backgrounds.length] || 'clair';
       const r = await api('POST', `/api/posts/${id}/visual`, { kind, type: kind === 'carousel' ? '' : t, format: ui.vis.format, style: { da: { colors: da.colors, backgrounds: da.backgrounds }, variant } });
-      ui.job.step = 'On dessine et on attache…'; render();
       await refresh();
-      await attachVisual(r.visual);
-      toast('Visuel créé et attaché au post');
+      if (opts.attach !== false) { ui.job.step = 'On dessine et on attache…'; render(); await attachVisual(r.visual); toast('Visuel créé et attaché au post'); }
     } finally { ui.job = null; await refresh(); }
   },
   async 'post-link-visual'(id, btn) {
@@ -2364,9 +2510,21 @@ document.addEventListener('input', (e) => {
     ui.manual[ui.clientId] = e.target.value;
     $('#manualCount').textContent = e.target.value.length + ' / 3 000';
     $('#manualSave').disabled = !e.target.value.trim();
+    view.querySelectorAll('[data-action="manual-use"]').forEach((b) => { b.disabled = !e.target.value.trim(); });
   }
   if (e.target.id === 'instruction') ui.instruction = e.target.value;
   if (e.target.id === 'chatMsg' && ui.studioPost) ui.chatDraft[ui.studioPost] = e.target.value;
+  if (e.target.dataset.vcolor !== undefined) {
+    const v = visualsOf().find((x) => x.id === e.target.dataset.vid);
+    if (v) {
+      const st = { ...(visCurrent(v).style || {}) };
+      const colors = [...(st.da?.colors || daOf().colors)];
+      colors[Number(e.target.dataset.vcolor)] = e.target.value;
+      ui.visStyle[v.id] = { ...st, da: { colors: colors.filter(Boolean) } };
+      clearTimeout(ui.visT);
+      ui.visT = setTimeout(() => { const cv = view.querySelector(`[data-vis="${v.id}"]`); if (cv) Vis.renderVisual(cv, visCurrent(v), ui.visSlide[v.id] || 0); }, 80);
+    }
+  }
   if (e.target.dataset.daColor !== undefined) {
     const da = ui.daDraft || { ...daOf() };
     const colors = [...da.colors];
@@ -2594,9 +2752,9 @@ $('#postDrawer').addEventListener('close', () => {
 document.addEventListener('toggle', (e) => { if (e.target.matches?.('details.more')) ui.visMoreOpen = e.target.open; }, true);
 // Discussion avec l'IA : Entrée envoie, Maj+Entrée va à la ligne.
 document.addEventListener('keydown', (event) => {
-  if (event.target.id !== 'chatMsg' || event.key !== 'Enter' || event.shiftKey || event.isComposing) return;
+  if (!['chatMsg', 'visMsg'].includes(event.target.id) || event.key !== 'Enter' || event.shiftKey || event.isComposing) return;
   event.preventDefault();
-  view.querySelector('[data-action="chat-send"]')?.click();
+  view.querySelector(event.target.id === 'visMsg' ? '[data-action="vis-chat"]' : '[data-action="chat-send"]')?.click();
 });
 document.addEventListener('keydown', (event) => {
   if (!ui.data || document.body.classList.contains('locked')) return;
