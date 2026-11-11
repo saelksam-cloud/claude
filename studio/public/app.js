@@ -114,7 +114,7 @@ function toast(msg, isError = false) {
 
 class AuthError extends Error {}
 // Les appels IA longs passent par une tâche d'arrière-plan (Netlify coupe les requêtes normales à 30 s).
-const LONG_API = /^\/api\/(jobs-test|plan|write|hooks\/ideas|hooks\/generate|hooks\/optimize|study|veille\/paste|veille\/structures|banners\/suggest|profile\/audit|visuals\/plan|visuals\/item|visuals\/[^/]+\/(chat|design-page|redesign)|images|posts\/[^/]+\/(design|hooks|chat|visual|visual-from|quality|action|feedback|rewrite|image\/generate|image\/auto))$/;
+const LONG_API = /^\/api\/(jobs-test|plan|write|hooks\/ideas|hooks\/generate|hooks\/optimize|study|veille\/paste|veille\/structures|banners\/(suggest|analyze|chat|palettes)|profile\/audit|visuals\/plan|visuals\/item|visuals\/[^/]+\/(chat|design-page|redesign)|images|posts\/[^/]+\/(design|hooks|chat|visual|visual-from|quality|action|feedback|rewrite|image\/generate|image\/auto))$/;
 async function api(method, url, body) {
   if (method === 'POST' && LONG_API.test(url)) return apiLong(method, url, body);
   return apiDirect(method, url, body);
@@ -1367,7 +1367,7 @@ function renderHooks() {
 const newBanner = () => ({ name: `Bannière ${client().name}`, templateId: 'promesse', fields: { ...Banner.DEFAULT_FIELDS, brand: client().company || client().name }, style: {}, images: [] });
 // Bannière éditable façon Canva : calques déplaçables, panneau de propriétés, textes de l'IA, export PNG.
 function ensureBannerElements(b) {
-  if (!Array.isArray(b.elements) || !b.elements.length) b.elements = Banner.templateElements(b.templateId || 'promesse', b.fields || {}, b.images || []);
+  if (!Array.isArray(b.elements) || (!b.elements.length && !b.style?.bgImage)) b.elements = Banner.templateElements(b.templateId || 'promesse', b.fields || {}, b.images || []);
   b.style ||= {};
   if (!b.style.preset) b.style.preset = Banner.TEMPLATES.find((t) => t.id === b.templateId)?.preset || 'mint';
   return b;
@@ -1415,6 +1415,13 @@ function renderBannerView() {
         <button type="button" class="btn sm ghost" data-be="undo" title="Annuler (Ctrl+Z)">↶</button>
         <button type="button" class="btn sm ghost" data-be="redo" title="Rétablir (Ctrl+Y)">↷</button>
       </div>
+      <div class="row ban-actions">
+        <label class="btn soft sm">📥 Importer une bannière à améliorer<input type="file" accept="image/*" data-banner-import hidden></label>
+        <button class="btn soft sm" data-action="banner-random" title="Une charte tirée des bannières concurrentes">🎲 Charte au hasard</button>
+        ${ui.bannerPal ? `<span class="row pal-chip" title="${esc(ui.bannerPal.from || '')}"><span class="small"><b>${esc(ui.bannerPal.name || 'Charte')}</b></span>${['bg', 'bg2', 'text', 'accent'].map((k) => `<i style="background:${esc(ui.bannerPal[k] || '#ccc')}"></i>`).join('')}<button class="btn ghost sm" data-action="banner-pal-da" title="Utiliser ces couleurs pour les visuels de ce client">Garder comme DA</button></span>` : ''}
+        ${ui.bannerJob ? `<span class="small"><b>${esc(ui.bannerJob)}</b></span>` : ''}
+      </div>
+      ${ui.bannerOriginal ? `<div class="ban-before"><span class="small"><b>Avant</b> (bannière importée)</span><img src="${ui.bannerOriginal}" alt="Bannière d'origine"><span class="row"><button class="btn ghost sm" data-action="banner-orig-bg">Repartir de l'image d'origine</button><button class="btn ghost sm" data-action="banner-orig-hide">Masquer</button></span></div><span class="small"><b>Après</b> (version modifiable)</span>` : ''}
       <div class="be-stage"><canvas id="bannerCanvas" class="banner-canvas" width="1584" height="396"></canvas><div class="be-overlay"></div></div>
       <div class="row between">
         <div class="row">
@@ -1429,6 +1436,12 @@ function renderBannerView() {
           <button class="btn" data-action="banner-save">💾 Enregistrer</button>
           <button class="btn primary" data-action="banner-download">⬇ PNG</button>
         </div>
+      </div>
+      <div class="card stack ban-chat" style="margin:0">
+        <div class="row between"><h3 style="margin:0">💬 Améliorer avec l'IA</h3>${(c.adn?.bannerChat || []).length ? '<button class="btn ghost sm" data-action="banner-chat-clear">Effacer la discussion</button>' : ''}</div>
+        <div class="chat-log" id="banChatLog">${(c.adn?.bannerChat || []).map((m) => `<div class="msg ${m.role === 'user' ? 'me' : 'ai'}">${esc(m.text)}</div>`).join('') || `<div class="small chat-hint">Explique ce que fait ${esc(c.name)} et à qui il apporte quoi. Exemple : « je fais du ghostwriting et des tunnels d'acquisition, je ramène des clients aux dirigeants : on vend le bénéfice, pas le voyage ». L'IA retient tout, s'appuie sur les bannières de ta veille et modifie la bannière en direct.</div>`}
+          ${ui.bannerJob === 'chat' ? '<div class="msg ai typing">Je réfléchis à ta bannière…</div>' : ''}</div>
+        <div class="row"><textarea id="banMsg" rows="2" placeholder="Ta demande… (Entrée pour envoyer)" style="flex:1;min-width:0"></textarea><button class="btn primary sm" data-action="banner-chat" ${ui.bannerJob ? 'disabled' : ''}>Envoyer</button></div>
       </div>
       <div class="row"><span class="small">Mise en page de départ :</span>${Banner.TEMPLATES.map((t) => `<button class="chip ${t.id === b.templateId ? 'on' : ''}" data-action="banner-template" data-id="${t.id}" title="${esc(t.hint)}">${esc(t.name)}</button>`).join('')}</div>
       <div class="banner-cols two-col">
@@ -2062,6 +2075,41 @@ const actions = {
   async 'vis-pdf'(id) { const v = visualsOf().find((x) => x.id === id); const f = await visualFiles(v); download(f.pdf, `${v.subtopic || v.subject || 'carrousel'}.pdf`); },
   async 'vis-del'(id) { await api('DELETE', `/api/visuals/${id}`); await refresh(); },
   'vis-goto-post'(id) { ui.view = 'posts'; ui.filter = 'all'; store.set('view', 'posts'); render(); goto(id); },
+  async 'banner-chat'() {
+    const msg = ($('#banMsg')?.value || '').trim(); if (!msg) throw new Error('Écris ou dicte ta demande.');
+    const els = ui.banner.elements || [];
+    ui.bannerJob = 'chat'; ui.bannerChatDraft = msg; render();
+    try {
+      const cv = $('#bannerCanvas');
+      const r = await api('POST', '/api/banners/chat', { clientId: ui.clientId, message: msg, fields: fieldsFromElements(els), image: cv ? cv.toDataURL('image/jpeg', 0.75) : '' });
+      if (r.fields) BE.mutate((b) => { Banner.applyTextsToElements(b.elements, r.fields); b.fields = { ...(b.fields || {}), ...r.fields }; });
+      if (r.palette) { ui.bannerPal = Banner.cleanPalette(r.palette); BE.mutate((b) => Banner.applyPalette(b, ui.bannerPal)); }
+      ui.bannerChatDraft = '';
+      if (r.fields || r.palette) toast('Bannière modifiée (Ctrl+Z pour annuler)');
+    } finally { ui.bannerJob = ''; await refresh(); const l = $('#banChatLog'); if (l) l.scrollTop = l.scrollHeight; }
+  },
+  async 'banner-chat-clear'() { await api('DELETE', `/api/clients/${ui.clientId}/banner-chat`); await refresh(); },
+  async 'banner-random'() {
+    if (!ui.bannerPalettes) {
+      ui.bannerJob = 'Je relève les chartes de tes bannières concurrentes…'; render();
+      try { ui.bannerPalettes = (await api('POST', '/api/banners/palettes', {})).list || []; } finally { ui.bannerJob = ''; }
+    }
+    const pool = ui.bannerPalettes.length ? ui.bannerPalettes : Object.values(Banner.PRESETS).map((p) => ({ name: p.name, bg: p.bg[0], bg2: p.bg.at(-1), text: p.text, accent: p.accent, pattern: p.pattern }));
+    if (!ui.bannerPalettes.length) toast('Ajoute des bannières dans « Inspirations » pour des chartes tirées de ta veille. En attendant : chartes de base.');
+    const others = pool.filter((x) => x.name !== ui.bannerPal?.name);
+    ui.bannerPal = { ...Banner.cleanPalette(others[Math.floor(Math.random() * others.length)] || pool[0]), from: '' };
+    const src = pool.find((x) => x.name === ui.bannerPal.name); if (src?.from) ui.bannerPal.from = src.from;
+    BE.mutate((b) => Banner.applyPalette(b, ui.bannerPal));
+    render();
+  },
+  async 'banner-pal-da'() {
+    const p = ui.bannerPal; if (!p) return;
+    const lum = (h) => parseInt(h.slice(1), 16);
+    await api('PUT', `/api/clients/${ui.clientId}/da`, { colors: [p.accent, p.text === '#FFFFFF' || p.text === '#111111' ? p.bg : p.text, p.bg2 !== p.bg ? p.bg2 : undefined].filter(Boolean), backgrounds: daOf().backgrounds });
+    await refresh(); toast('Couleurs gardées comme DA : elles serviront aux visuels de ce client');
+  },
+  'banner-orig-bg'() { if (!ui.bannerOriginal) return; BE.mutate((b) => { b.style = { ...b.style, bgImage: ui.bannerOriginal }; b.elements = []; }); render(); toast("Image d'origine en fond : ajoute tes textes et formes par-dessus"); },
+  'banner-orig-hide'() { ui.bannerOriginal = ''; render(); },
   'banner-tab'(t) { ui.bannerTab = t; store.set('bannerTab', t); render(); },
   'banner-template'(id) {
     const b = ui.banner;
@@ -2681,6 +2729,20 @@ document.addEventListener('change', run(async (e) => {
     await refresh();
     return;
   }
+  if (t.hasAttribute('data-banner-import') && t.files[0]) {
+    const file = t.files[0]; t.value = '';
+    const dataUrl = await resizeImage(file, 1584);
+    ui.bannerOriginal = dataUrl; ui.bannerJob = "L'IA analyse ta bannière et prépare une version améliorée…"; render();
+    try {
+      const r = await api('POST', '/api/banners/analyze', { clientId: ui.clientId, image: dataUrl });
+      const b = ensureBannerElements({ ...newBanner(), name: `Bannière améliorée ${client().name}`, templateId: Banner.TEMPLATES.some((x) => x.id === r.templateId) ? r.templateId : 'promesse', fields: { ...Banner.DEFAULT_FIELDS, ...(r.fields || {}) } });
+      Banner.applyTextsToElements(b.elements, r.fields || {});
+      if (r.palette) { ui.bannerPal = Banner.cleanPalette(r.palette); Banner.applyPalette(b, ui.bannerPal); }
+      ui.banner = b; BE.resetHistory();
+      toast(`Analyse faite${r.score != null ? ` : ${r.score}/100` : ''}. Version améliorée prête, modifiable.`);
+    } finally { ui.bannerJob = ''; await refresh(); const l = $('#banChatLog'); if (l) l.scrollTop = l.scrollHeight; }
+    return;
+  }
   if (t.dataset.library && t.files.length) {
     await uploadLibrary([...t.files], t.dataset.library, t.dataset.category || '');
     t.value = '';
@@ -2811,8 +2873,9 @@ $('#postDrawer').addEventListener('close', () => {
 document.addEventListener('toggle', (e) => { if (e.target.matches?.('details.more')) ui.visMoreOpen = e.target.open; }, true);
 // Discussion avec l'IA : Entrée envoie, Maj+Entrée va à la ligne.
 document.addEventListener('keydown', (event) => {
-  if (!['chatMsg', 'visMsg'].includes(event.target.id) || event.key !== 'Enter' || event.shiftKey || event.isComposing) return;
+  if (!['chatMsg', 'visMsg', 'banMsg'].includes(event.target.id) || event.key !== 'Enter' || event.shiftKey || event.isComposing) return;
   event.preventDefault();
+  if (event.target.id === 'banMsg') { view.querySelector('[data-action="banner-chat"]')?.click(); return; }
   view.querySelector(event.target.id === 'visMsg' ? '[data-action="design-chat"], [data-action="vis-chat"]' : '[data-action="chat-send"]')?.click();
 });
 document.addEventListener('keydown', (event) => {

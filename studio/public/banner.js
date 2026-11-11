@@ -509,7 +509,7 @@ function drawShapeEl(ctx, el) {
 export async function renderElements(canvas, banner, { overlay = false } = {}) {
   await Promise.all(['800 40px Poppins', '700 40px Poppins', '600 40px Poppins', '500 40px Poppins', '700 30px Caveat'].map((f) => document.fonts?.load(f).catch(() => {})));
   const style = banner.style || {};
-  const base = PRESETS[style.preset] || PRESETS.mint;
+  const base = style.custom ? paletteStyle(style.custom) : PRESETS[style.preset] || PRESETS.mint;
   const p = { ...base, accent: style.accent || base.accent };
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext('2d');
@@ -618,4 +618,36 @@ export function applyTextsToElements(elements, v) {
     }
   }
   return elements;
+}
+
+// ---------- Chartes graphiques (duos / trios de couleurs tirés des bannières concurrentes) ----------
+const lumHex = (hex) => { const n = parseInt(String(hex || '#888888').slice(1), 16); const c = [n >> 16, (n >> 8) & 255, n & 255].map((x) => { x /= 255; return x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4; }); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; };
+export const inkOn = (hex) => (lumHex(hex) > 0.42 ? '#111111' : '#FFFFFF');
+const okHex = (c) => /^#[0-9a-f]{6}$/i.test(c || '');
+export function cleanPalette(pal = {}) {
+  const bg = okHex(pal.bg) ? pal.bg : '#F4FAF6';
+  const bg2 = okHex(pal.bg2) ? pal.bg2 : bg;
+  const accent = okHex(pal.accent) ? pal.accent : '#2FBF71';
+  const text = okHex(pal.text) && Math.abs(lumHex(pal.text) - lumHex(bg)) > 0.25 ? pal.text : inkOn(bg);
+  return { name: String(pal.name || 'Charte').slice(0, 40), bg, bg2, text, accent, pattern: ['none', 'hex', 'waves', 'dots', 'diag', 'circles'].includes(pal.pattern) ? pal.pattern : 'none' };
+}
+export function paletteStyle(pal) {
+  const c = cleanPalette(pal);
+  const dark = lumHex(c.bg) < 0.3;
+  return { name: c.name, bg: [c.bg, c.bg2], text: c.text, sub: c.text, dark, pattern: c.pattern, accent: c.accent, bar: c.text };
+}
+// Applique une charte à une bannière : fond, couleur du texte, mots clés, pastilles, formes et flèches.
+export function applyPalette(banner, pal) {
+  const c = cleanPalette(pal);
+  banner.style = { ...(banner.style || {}), custom: c, accent: '', bgImage: undefined };
+  for (const el of banner.elements || []) {
+    if (el.type === 'text') {
+      if (el.bg) {
+        if (el.role === 'cta' || el.role === 'title' || lumHex(el.bg) < 0.6) { el.bg = el.role === 'title' ? c.text : c.accent; el.color = inkOn(el.bg); el.accent = el.role === 'title' ? c.accent : inkOn(el.bg); }
+        else { el.bg = '#FFFFFF'; el.color = '#111111'; el.accent = c.accent; }
+      } else { el.color = c.text; el.accent = c.accent; }
+    } else if (el.type === 'shape') el.fill = el.role === 'bar' ? c.text : c.accent;
+    else if (el.type === 'arrow') el.color = c.accent;
+  }
+  return banner;
 }

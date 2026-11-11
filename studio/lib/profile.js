@@ -145,3 +145,44 @@ ${textBlock}
 ${colors?.length ? `Color palette: ${colors.join(', ')} (main color first), applied the way the reference uses its colors.` : 'Keep the color palette of the reference.'}
 Rules: do NOT copy the reference's words, logos, brand names or people; no real brand logos; replace any logo area with simple abstract icons. Crisp, legible typography, generous spacing, eye-catching, professional, modern 2026 LinkedIn design. Text must be perfectly spelled in French.`;
 }
+
+// ---------- Bannière : analyse d'une bannière importée, discussion, chartes graphiques ----------
+const BANNER_FIELDS_JSON = `"fields": { "proof": "preuve sociale courte", "headline": "ligne 1\\nligne 2 avec *mots clés*", "subline": "", "steps": ["", "", ""], "pills": ["", "", ""], "cta": "", "followText": "", "bubble": "", "title": "métier en 1 à 2 mots", "brand": "" }`;
+const BENEFIT = `Philosophie de l'agence : on vend le BÉNÉFICE, pas le voyage. La promesse dit ce que le client GAGNE (des clients, du temps, de la crédibilité…), pas le métier ni la méthode.`;
+export function bannerAnalyzePrompt({ client, inspirations = [], history = [] }) {
+  const system = `Tu es directeur artistique et copywriter expert des bannières LinkedIn (1584 × 396). On te montre la bannière ACTUELLE d'un profil : analyse-la et propose une version améliorée.
+${adnText(client, { includeProofs: true })}
+${BENEFIT}
+${BANNER_RULES}
+${inspirations.length ? `Veille concurrentielle (bannières qui marchent) :\n${inspirations.map((d) => `- ${d}`).join('\n')}` : ''}
+${history.length ? `Ce que l'auteur t'a déjà dit sur son activité :\n${history.filter((m) => m.role === 'user').slice(-8).map((m) => `- ${m.text}`).join('\n')}` : ''}
+Réponds en JSON : {
+ "score": 0-100, "reply": "3 à 5 phrases simples, en tutoyant : ce qui va, ce qui ne va pas, ce que tu changes",
+ "improvements": ["5 améliorations concrètes maximum"],
+ "current": { "proof": "", "headline": "", "subline": "", "cta": "" },
+ ${BANNER_FIELDS_JSON},
+ "templateId": "promesse|metier|logos|marqueur|impact (la mise en page la plus proche de la bannière actuelle)",
+ "palette": { "name": "", "bg": "#hex", "bg2": "#hex", "text": "#hex", "accent": "#hex" } }
+"current" = les textes lus sur la bannière actuelle. "fields" = ta version améliorée (rien d'inventé : [À COMPLÉTER : preuve chiffrée] si une preuve manque). "palette" = les couleurs actuelles de la bannière.`;
+  return { system, user: 'Voici la bannière actuelle.' };
+}
+
+export function bannerChatPrompt({ client, inspirations = [], history = [], fields, message }) {
+  const system = `Tu es directeur artistique et copywriter expert des bannières LinkedIn. Tu aides l'auteur à améliorer la bannière de ${client.name} en discutant. Tu RETIENS tout ce qu'il te dit sur son activité.
+${adnText(client, { includeProofs: true })}
+${BENEFIT}
+${BANNER_RULES}
+${inspirations.length ? `Veille concurrentielle (bannières qui marchent) :\n${inspirations.map((d) => `- ${d}`).join('\n')}` : ''}
+Si le message appelle un changement de textes, renvoie "fields" complet (sinon null). Si on te demande d'autres couleurs, renvoie "palette" (sinon null).
+Réponds en JSON : { "reply": "2 à 4 phrases, en tutoyant", ${BANNER_FIELDS_JSON} ou null, "palette": { "name": "", "bg": "#hex", "bg2": "#hex", "text": "#hex", "accent": "#hex" } ou null }`;
+  const convo = history.slice(-14).map((m) => `${m.role === 'user' ? 'MOI' : 'TOI'} : ${m.text}`).join('\n');
+  return { system, user: `${convo ? `Échanges précédents :\n${convo}\n\n` : ''}Textes actuels de la bannière : ${JSON.stringify(fields || {})}\n\nMon message : ${message}` };
+}
+
+export function bannerPalettesPrompt() {
+  return {
+    system: `Tu es directeur artistique. On te montre des bannières LinkedIn concurrentes. Relève les chartes graphiques qui marchent : pour chaque bannière (ou famille de bannières), le duo ou trio de couleurs (fond, éventuel 2e ton du fond pour un dégradé, couleur du texte, couleur d'accent pour les mots clés et boutons). Ajoute 2 ou 3 variantes harmonieuses inspirées de ces duos. Contraste du texte sur le fond : lisible.
+Réponds en JSON : { "palettes": [ { "name": "nom court évocateur", "bg": "#hex", "bg2": "#hex", "text": "#hex", "accent": "#hex", "pattern": "none|hex|waves|dots|diag|circles", "from": "d'où elle vient (1 phrase)" } ] } (6 à 12 chartes)`,
+    user: 'Voici les bannières concurrentes.',
+  };
+}

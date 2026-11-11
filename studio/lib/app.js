@@ -11,7 +11,7 @@ import { engagement, statsText } from './stats.js';
 import * as apify from './apify.js';
 import { chat } from './ai.js';
 import * as ed from './editorial.js';
-import { bannerCopyPrompt, profileAuditPrompt, visualPlanPrompt, visualItemPrompt, visualForPostPrompt, visualFromReferencePrompt, visualChatPrompt, designBriefPrompt, designImagePrompt } from './profile.js';
+import { bannerCopyPrompt, profileAuditPrompt, visualPlanPrompt, visualItemPrompt, visualForPostPrompt, visualFromReferencePrompt, visualChatPrompt, designBriefPrompt, designImagePrompt, bannerAnalyzePrompt, bannerChatPrompt, bannerPalettesPrompt } from './profile.js';
 
 const liCfg = (settings) => ({ clientId: settings.linkedinClientId, clientSecret: settings.linkedinClientSecret });
 
@@ -993,6 +993,47 @@ async function storeBannerImage(src) {
 }
 const bannerKeys = (b) => JSON.stringify(b || {}).match(/\/uploads\/(ban-[\w.]+)/g)?.map((x) => x.slice(9)) || [];
 
+// ---- Bannière : analyse d'une bannière importée, discussion avec mémoire, chartes tirées de la veille ----
+const visionJson = async (settings, prompt, images, timeout = 60_000) => {
+  const { text } = await chat(settings, prompt.system, [{ type: 'text', text: prompt.user }, ...images.map((url) => ({ type: 'image_url', image_url: { url, detail: 'high' } }))], { json: true, timeout });
+  try { return JSON.parse(text); } catch { throw new HttpError(502, "L'IA a renvoyé une réponse illisible : réessaie."); }
+};
+const bannerChatOf = (client) => (client.adn ||= {}, client.adn.bannerChat ||= []);
+route('POST', '/api/banners/analyze', async ({ db, settings, body }) => {
+  const client = clientOf(db, body.clientId);
+  if (!/^data:image\//.test(body.image || '')) throw new HttpError(400, 'Image de bannière attendue');
+  const hist = bannerChatOf(client);
+  const r = await visionJson(settings, bannerAnalyzePrompt({ client, inspirations: inspirationsFor(db, client, 'banner'), history: hist }), [body.image]);
+  hist.push({ role: 'user', text: '📥 Bannière actuelle importée : analyse-la et améliore-la.', at: now() }, { role: 'ai', text: `${r.score != null ? `Note actuelle : ${r.score}/100. ` : ''}${r.reply || ''}${r.improvements?.length ? `\n• ${r.improvements.join('\n• ')}` : ''}`.slice(0, 1500), at: now() });
+  client.adn.bannerChat = hist.slice(-40);
+  return json(r);
+});
+route('POST', '/api/banners/chat', async ({ db, settings, body }) => {
+  const client = clientOf(db, body.clientId);
+  const message = String(body.message || '').trim().slice(0, 1500);
+  if (!message) throw new HttpError(400, 'Écris ou dicte ton message.');
+  const hist = bannerChatOf(client);
+  const prompt = bannerChatPrompt({ client, inspirations: inspirationsFor(db, client, 'banner'), history: hist, fields: body.fields, message });
+  const r = /^data:image\//.test(body.image || '') ? await visionJson(settings, { ...prompt, user: `${prompt.user}\n\n(L'image jointe est la bannière actuelle.)` }, [body.image], 55_000) : await askJson(settings, prompt, { timeout: 55_000 });
+  hist.push({ role: 'user', text: message, at: now() }, { role: 'ai', text: String(r.reply || 'Compris.').slice(0, 1200), at: now() });
+  client.adn.bannerChat = hist.slice(-40);
+  return json({ reply: r.reply, fields: r.fields || null, palette: r.palette || null });
+});
+route('DELETE', '/api/clients/:id/banner-chat', async ({ client }) => { client.adn ||= {}; client.adn.bannerChat = []; return json(publicClient(client)); });
+// Chartes graphiques relevées sur les bannières concurrentes (mises en cache, recalculées quand la veille change).
+route('POST', '/api/banners/palettes', async ({ db, settings, body }) => {
+  const refs = db.images.filter((x) => x.kind === 'inspiration' && x.category === 'banner');
+  const cache = db.bannerPalettes;
+  if (!body.refresh && cache?.list?.length && cache.count === refs.length) return json(cache);
+  if (!refs.length) return json({ list: [], count: 0 });
+  const pics = [];
+  for (const r of refs.slice(0, 10)) { const b = await readBlob(r.key); if (b) pics.push(`data:${b.type};base64,${b.data.toString('base64')}`); }
+  const out = await visionJson(settings, bannerPalettesPrompt(), pics, 70_000);
+  const ok = (c) => /^#[0-9a-f]{6}$/i.test(c || '');
+  db.bannerPalettes = { at: now(), count: refs.length, list: (out.palettes || []).filter((p) => ok(p.bg) && ok(p.accent)).slice(0, 12) };
+  return json(db.bannerPalettes);
+});
+
 // Une bannière = des calques (textes, images, formes) + un fond + des couleurs.
 route('POST', '/api/banners', async ({ db, body }) => {
   db.banners ||= [];
@@ -1321,7 +1362,7 @@ async function mergeSave(beforeJson, db) {
 
 // ---------- Tâches longues : exécutées par une fonction d'arrière-plan (15 min max au lieu de 30 s) ----------
 const jobs = () => getStore({ name: 'jobs', consistency: 'strong' });
-const LONG_ROUTE = /^\/api\/(jobs-test|plan|write|hooks\/ideas|hooks\/generate|hooks\/optimize|study|veille\/paste|veille\/structures|banners\/suggest|profile\/audit|visuals\/plan|visuals\/item|visuals\/[^/]+\/(chat|design-page|redesign)|images|posts\/[^/]+\/(design|hooks|chat|visual|visual-from|quality|action|feedback|rewrite|image\/generate|image\/auto))$/;
+const LONG_ROUTE = /^\/api\/(jobs-test|plan|write|hooks\/ideas|hooks\/generate|hooks\/optimize|study|veille\/paste|veille\/structures|banners\/(suggest|analyze|chat|palettes)|profile\/audit|visuals\/plan|visuals\/item|visuals\/[^/]+\/(chat|design-page|redesign)|images|posts\/[^/]+\/(design|hooks|chat|visual|visual-from|quality|action|feedback|rewrite|image\/generate|image\/auto))$/;
 route('POST', '/api/jobs', async ({ body }) => {
   const path = String(body.path || '');
   const method = body.method === 'PUT' ? 'PUT' : 'POST';

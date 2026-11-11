@@ -434,3 +434,12 @@ details.more summary { cursor: pointer; }
 .ref .insp-pages { position: absolute; right: 4px; bottom: 4px; }
 .ref:disabled { opacity: .5; cursor: wait; }
 @media (max-width: 900px) { .at-two, .at-vis { grid-template-columns: minmax(0, 1fr); } .at-choice { width: 100%; } }
+
+/* Bannière : import, charte, discussion */
+.ban-actions { gap: 8px; align-items: center; }
+.pal-chip { gap: 4px; align-items: center; padding: 3px 4px 3px 10px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); }
+.pal-chip i { width: 18px; height: 18px; border-radius: 50%; border: 1px solid rgba(0,0,0,.12); display: inline-block; }
+.ban-before { display: grid; gap: 6px; padding: 8px; border: 1px dashed var(--border); border-radius: 10px; }
+.ban-before img { width: 100%; max-width: 640px; aspect-ratio: 4 / 1; object-fit: cover; border-radius: 8px; }
+.ban-chat .chat-log { max-height: 280px; }
+.ban-chat textarea { resize: vertical; }
