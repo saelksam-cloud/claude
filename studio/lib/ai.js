@@ -329,6 +329,31 @@ export async function generateImage(settings, prompt) {
   return { buffer: Buffer.from(b64, 'base64'), model };
 }
 
+// Visuel « designé » : modèle gpt-image avec une ou plusieurs images de référence (endpoint /images/edits).
+export async function designImage(settings, { prompt, refs = [], quality = 'high', size = '1024x1536' }) {
+  if (!settings.openaiKey) throw new Error("Ajoute ta clé API OpenAI dans l'onglet Réglages.");
+  const all = await listImageModels(settings);
+  const models = [settings.imageModel, ...all].filter((m, i, a) => m && /^(gpt-image|chatgpt-image)/.test(m) && a.indexOf(m) === i);
+  if (!models.length) throw new Error("Ta clé OpenAI n'a accès à aucun modèle gpt-image (nécessaire pour les visuels designés).");
+  let lastErr = '';
+  for (const model of models.slice(0, 3)) {
+    const form = new FormData();
+    form.append('model', model);
+    form.append('prompt', prompt.slice(0, 31000));
+    form.append('size', size);
+    form.append('quality', quality);
+    form.append('n', '1');
+    refs.slice(0, 4).forEach((r, i) => form.append('image[]', new Blob([r.data], { type: r.type || 'image/jpeg' }), `ref${i}.${/png/.test(r.type) ? 'png' : 'jpg'}`));
+    const res = await fetch('https://api.openai.com/v1/images/edits', { method: 'POST', headers: { Authorization: `Bearer ${settings.openaiKey}` }, body: form, signal: AbortSignal.timeout(280_000) })
+      .catch((e) => { throw new Error(e.name === 'TimeoutError' ? "La création du visuel a pris trop de temps : réessaie." : `OpenAI injoignable : ${e.message}`); });
+    const json = await res.json().catch(() => ({}));
+    if (res.ok && json.data?.[0]?.b64_json) return { buffer: Buffer.from(json.data[0].b64_json, 'base64'), model };
+    lastErr = explain(res.status, json.error);
+    if (!(res.status === 404 || res.status === 400 && /model|not supported|unsupported|does not exist/i.test(json.error?.message || ''))) break;
+  }
+  throw new Error(lastErr || "OpenAI n'a renvoyé aucune image.");
+}
+
 export async function listTextModels(settings) {
   const res = await fetch('https://api.openai.com/v1/models', { headers: { Authorization: `Bearer ${settings.openaiKey}` }, signal: AbortSignal.timeout(15_000) });
   const json = await res.json().catch(() => ({}));

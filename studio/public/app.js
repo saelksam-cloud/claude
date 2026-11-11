@@ -114,7 +114,7 @@ function toast(msg, isError = false) {
 
 class AuthError extends Error {}
 // Les appels IA longs passent par une tâche d'arrière-plan (Netlify coupe les requêtes normales à 30 s).
-const LONG_API = /^\/api\/(jobs-test|plan|write|hooks\/ideas|hooks\/generate|hooks\/optimize|study|veille\/paste|veille\/structures|banners\/suggest|profile\/audit|visuals\/plan|visuals\/item|visuals\/[^/]+\/chat|images|posts\/[^/]+\/(hooks|chat|visual|visual-from|quality|action|feedback|rewrite|image\/generate|image\/auto))$/;
+const LONG_API = /^\/api\/(jobs-test|plan|write|hooks\/ideas|hooks\/generate|hooks\/optimize|study|veille\/paste|veille\/structures|banners\/suggest|profile\/audit|visuals\/plan|visuals\/item|visuals\/[^/]+\/(chat|design-page|redesign)|images|posts\/[^/]+\/(design|hooks|chat|visual|visual-from|quality|action|feedback|rewrite|image\/generate|image\/auto))$/;
 async function api(method, url, body) {
   if (method === 'POST' && LONG_API.test(url)) return apiLong(method, url, body);
   return apiDirect(method, url, body);
@@ -1001,45 +1001,52 @@ function atPostStep(p, c) {
   </div>`;
 }
 
-// Étape 3 : visuel ou carrousel, sur le modèle d'un visuel concurrent choisi à droite.
+// Étape 3 : visuel ou carrousel DESIGNÉ par l'IA d'images, dans le style d'un visuel concurrent choisi à droite.
 function atVisualStep(p, c) {
   const kind = ui.visKind[p.id] || (p.document ? 'carousel' : null);
   if (!kind) return `<div class="at-node at-wide stack at-ask">
     <h3 style="margin:0">Tu veux un visuel avec ce post ?</h3>
-    <p class="small" style="margin:0">Tu choisis ensuite un modèle parmi les visuels concurrents de ta base, et je te fais le même avec le contenu de ton post.</p>
-    <div class="row at-choices"><button class="at-choice" data-action="vis-kind" data-id="image">🖼<b>Un visuel</b><span>3 points, schéma, comparatif…</span></button>
-      <button class="at-choice" data-action="vis-kind" data-id="carousel">📑<b>Un carrousel</b><span>6 à 9 pages en PDF</span></button>
+    <p class="small" style="margin:0">Tu choisis ensuite un modèle parmi les visuels concurrents de ta base, et l'IA d'images te fait un vrai visuel dans le même style, avec le contenu de ton post.</p>
+    <div class="row at-choices"><button class="at-choice" data-action="vis-kind" data-id="image">🖼<b>Un visuel</b><span>1 image qui accroche</span></button>
+      <button class="at-choice" data-action="vis-kind" data-id="carousel">📑<b>Un carrousel</b><span>5 pages en PDF</span></button>
       <button class="at-choice" data-action="vis-skip" data-id="${p.id}">✕<b>Pas de visuel</b><span>Texte seul</span></button></div></div>`;
-  const v = visualsOf().find((x) => x.id === p.visualId && x.postId === p.id && x.kind === kind);
-  const refs = inspirationImages(currentNiche(), kind === 'carousel' ? 'carousel' : 'visual');
-  const allRefs = refs.length ? refs : ui.data.images.filter((im) => im.kind === 'inspiration' && im.category === (kind === 'carousel' ? 'carousel' : 'visual'));
+  const dk = kind === 'carousel' ? 'design-carousel' : 'design';
+  const v = visualsOf().find((x) => x.id === p.visualId && x.postId === p.id && x.kind === dk);
+  const cat = kind === 'carousel' ? 'carousel' : 'visual';
+  const refs = inspirationImages(currentNiche(), cat);
+  const allRefs = refs.length ? refs : ui.data.images.filter((im) => im.kind === 'inspiration' && im.category === cat);
   const busy = ui.job?.kind === 'post-visual' && ui.job.id === p.id;
-  const cur = v && visCurrent(v);
-  const colors = cur?.style?.da?.colors || [];
-  const daColors = daOf(c).colors;
-  const n = v ? Vis.slideCount(cur) : 0;
-  const work = busy ? `<div class="at-empty"><b>${esc(ui.job.step)}</b><br><span class="small">Environ 30 secondes.</span></div>`
-    : !v ? `<div class="at-empty"><b>👉 Clique sur un modèle à droite</b><br><span class="small">Je fais un ${kind === 'carousel' ? 'carrousel' : 'visuel'} qui lui ressemble, avec le contenu de ton post et un titre qui accroche.</span><br><button class="btn ghost sm" style="margin-top:10px" data-action="post-visual-auto" data-id="${p.id}">…ou laisse-moi choisir la forme</button></div>`
-    : `<div class="at-canvas-wrap"><canvas data-vis="${v.id}" class="at-canvas" aria-label="Aperçu du visuel"></canvas>
-        ${n > 1 ? `<div class="row" style="justify-content:center"><button class="btn sm" data-action="vis-slide" data-id="${v.id}" data-d="-1">‹</button><span class="small">Page ${(ui.visSlide[v.id] || 0) + 1} / ${n}</span><button class="btn sm" data-action="vis-slide" data-id="${v.id}" data-d="1">›</button></div>` : ''}</div>
-      ${v.why ? `<p class="small" style="margin:0">Repris du modèle : ${esc(v.why)}</p>` : ''}
-      <div class="row small at-colors">Couleurs :
-        <button class="chip sm" data-action="vis-colors" data-id="${v.id}" data-set="da">Ma DA</button>
-        ${v.refPalette?.length >= 2 ? `<button class="chip sm" data-action="vis-colors" data-id="${v.id}" data-set="ref">Celles du modèle</button>` : ''}
-        ${[0, 1, 2].map((i) => `<input type="color" data-vcolor="${i}" data-vid="${v.id}" value="${colors[i] || daColors[i] || '#cccccc'}" aria-label="Couleur ${i + 1}">`).join('')}
-        <span class="sep-dot">·</span> Fond : ${Object.entries(Vis.DA_BACKGROUNDS).map(([k, l]) => `<button class="chip sm ${cur.style?.variant === k ? 'on' : ''}" data-action="vis-variant" data-id="${v.id}" data-variant="${k}">${l.replace('Fond ', '')}</button>`).join('')}</div>
+  const total = v ? (kind === 'carousel' ? (v.brief?.slides || []).length || v.images.length : 1) : 0;
+  const page = v ? Math.min(ui.visSlide[v.id] || 0, total - 1) : 0;
+  const key = v?.images?.[page];
+  const br = v?.brief || {};
+  const colors = v?.colors?.length ? v.colors : daOf(c).colors;
+  const fields = !v ? '' : kind === 'carousel'
+    ? `${(br.slides || []).map((sl, i) => i === page ? `<label class="f">Titre de la page ${i + 1}<input data-brief="slides.${i}.title" value="${esc(sl.title || '')}"></label><label class="f">Texte<input data-brief="slides.${i}.text" value="${esc(sl.text || '')}"></label>` : '').join('')}`
+    : `<label class="f">Titre (hook du visuel)<input data-brief="title" value="${esc(br.title || '')}"></label>
+       <label class="f">Mots surlignés (séparés par des virgules)<input data-brief="highlight" value="${esc((br.highlight || []).join(', '))}"></label>
+       <label class="f">Sous-titre<input data-brief="subtitle" value="${esc(br.subtitle || '')}"></label>
+       ${(br.points || []).map((pt, i) => `<div class="grid2"><label class="f">Point ${i + 1}<input data-brief="points.${i}.t" value="${esc(pt.t || '')}"></label><label class="f">Détail<input data-brief="points.${i}.d" value="${esc(pt.d || '')}"></label></div>`).join('')}
+       <label class="f">Appel à réagir<input data-brief="cta" value="${esc(br.cta || '')}"></label>`;
+  const work = busy ? `<div class="at-empty"><b>${esc(ui.job.step)}</b><br><span class="small">L'IA d'images dessine ton visuel : compte 1 à 2 minutes${kind === 'carousel' ? ' par page' : ''}.</span></div>`
+    : !v ? `<div class="at-empty"><b>👉 Clique sur un modèle à droite</b><br><span class="small">L'IA reprend son style (fond, typo, surlignage, icônes) et y met le contenu de ton post, avec un titre qui accroche.</span></div>`
+    : `<div class="at-canvas-wrap">${key ? `<img class="at-design" src="/uploads/${esc(key)}" alt="Visuel généré">` : `<div class="at-empty">Page ${page + 1} en cours de création…</div>`}
+        ${total > 1 ? `<div class="row" style="justify-content:center"><button class="btn sm" data-action="design-slide" data-id="${v.id}" data-d="-1">‹</button><span class="small">Page ${page + 1} / ${total}</span><button class="btn sm" data-action="design-slide" data-id="${v.id}" data-d="1">›</button></div>` : ''}
+        ${v.history?.some((h) => h.page === page) ? `<button class="btn ghost sm" data-action="design-undo" data-id="${v.id}">↶ Version précédente</button>` : ''}</div>
       <div class="vis-chat">
-        <div class="chat-log" id="visChatLog">${(v.chat || []).map((m) => `<div class="msg ${m.role === 'user' ? 'me' : 'ai'}">${esc(m.text)}</div>`).join('') || '<div class="small chat-hint">Dis-moi quoi changer : « mets du bleu », « titre plus court », « fais-en une comparaison », « 4 points au lieu de 3 »…</div>'}
-          ${ui.visChatPending === v.id ? '<div class="msg ai typing">Je modifie le visuel…</div>' : ''}</div>
-        <div class="row"><input id="visMsg" placeholder="Ta demande pour le visuel… (Entrée pour envoyer)" style="flex:1;min-width:0" ${ui.visChatPending ? 'disabled' : ''}><button class="btn sm" data-action="vis-chat" data-id="${v.id}" ${ui.visChatPending ? 'disabled' : ''}>Envoyer</button></div>
+        <div class="chat-log" id="visChatLog">${(v.chat || []).map((m) => `<div class="msg ${m.role === 'user' ? 'me' : 'ai'}">${esc(m.text)}</div>`).join('') || `<div class="small chat-hint">Dis-moi quoi changer${total > 1 ? ' sur cette page' : ''} : « fond plus clair », « surligne en jaune », « ajoute une flèche », « le titre est mal écrit »…</div>`}</div>
+        <div class="row"><input id="visMsg" placeholder="Ta demande… (Entrée pour envoyer)" style="flex:1;min-width:0"><button class="btn sm" data-action="design-chat" data-id="${v.id}">Envoyer</button></div>
       </div>
-      <details class="more"><summary class="small"><b>✎ Modifier les textes moi-même</b></summary><div class="stack" style="margin-top:8px">${visFields(v)}</div></details>
-      <div class="row between"><button class="btn ghost sm" data-action="vis-kind" data-id="">← Changer (visuel / carrousel)</button><button class="btn primary" data-action="at-validate-visual" data-id="${p.id}">✓ Valider le visuel →</button></div>`;
+      <div class="row small at-colors">Couleurs : ${[0, 1, 2].map((i) => `<input type="color" data-dcolor="${i}" value="${colors[i] || '#cccccc'}" aria-label="Couleur ${i + 1}">`).join('')}
+        <button class="chip sm" data-action="design-da" data-id="${v.id}">Ma DA</button><button class="btn sm" data-action="design-colors" data-id="${v.id}">Appliquer ces couleurs</button></div>
+      <details class="more"><summary class="small"><b>✎ Modifier les textes</b></summary><div class="stack" style="margin-top:8px">${fields}<button class="btn sm" data-action="design-texts" data-id="${v.id}">↻ Refaire avec ces textes</button></div></details>
+      <div class="row between"><button class="btn ghost sm" data-action="vis-kind" data-id="">← Changer (visuel / carrousel)</button><button class="btn primary" data-action="at-validate-design" data-id="${p.id}" ${v.images.filter(Boolean).length < total ? 'disabled' : ''}>✓ Valider le visuel →</button></div>`;
   return `<div class="at-two at-vis">
-    <section class="at-node stack"><header class="at-head"><span class="at-step">3</span><h3>${kind === 'carousel' ? 'Le carrousel' : 'Le visuel'}</h3><span class="small">${v ? 'modifie-le en bas' : ''}</span></header>${work}</section>
+    <section class="at-node stack"><header class="at-head"><span class="at-step">3</span><h3>${kind === 'carousel' ? 'Le carrousel' : 'Le visuel'}</h3>${v ? '<span class="small">modifie-le en bas</span>' : ''}</header>${work}</section>
     <aside class="at-node stack"><header class="at-head"><h3>Choisis un modèle</h3><span class="small">${allRefs.length} dans ta base</span></header>
-      ${allRefs.length ? `<div class="ref-grid">${allRefs.map((im) => `<button class="ref ${v?.refId === im.id ? 'on' : ''}" data-action="visual-from" data-id="${p.id}" data-ref="${im.id}" data-kind="${kind}" ${busy ? 'disabled' : ''} title="${esc((im.description || '').slice(0, 200))}"><img src="/uploads/${esc(im.key)}" alt="" loading="lazy">${im.pages?.length > 1 ? `<span class="insp-pages">${im.pages.length} p.</span>` : ''}</button>`).join('')}</div>`
+      ${allRefs.length ? `<div class="ref-grid">${allRefs.map((im) => `<button class="ref ${v?.refId === im.id ? 'on' : ''}" data-action="design-from" data-id="${p.id}" data-ref="${im.id}" data-kind="${kind}" ${busy || (ui.job && !ui.job.finished) ? 'disabled' : ''} title="${esc((im.description || '').slice(0, 200))}"><img src="/uploads/${esc(im.key)}" alt="" loading="lazy">${im.pages?.length > 1 ? `<span class="insp-pages">${im.pages.length} p.</span>` : ''}</button>`).join('')}</div>`
         : `<p class="small">Aucun ${kind === 'carousel' ? 'carrousel' : 'visuel'} concurrent dans ta base. <a href="#" data-action="go" data-id="images">Ajoute-en dans Visuels</a> (glisser-déposer).</p>`}
+      <p class="small" style="margin:0">Chaque création coûte quelques centimes sur ton compte OpenAI.</p>
     </aside>
   </div>`;
 }
@@ -1503,7 +1510,7 @@ function renderVisualsView() {
   const c = client();
   const o = ui.vis;
   const j = ui.job?.kind === 'visuals' ? ui.job : null;
-  const list = visualsOf().slice(0, 12);
+  const list = visualsOf().filter((v) => !String(v.kind).startsWith('design')).slice(0, 12);
   const nInsp = inspirationImages(currentNiche(), 'visual').length;
   const tabs = `<div class="chips" style="margin-bottom:16px"><button class="chip ${ui.visTab !== 'insp' ? 'on' : ''}" data-action="vis-tab" data-id="create">Créer</button><button class="chip ${ui.visTab === 'insp' ? 'on' : ''}" data-action="vis-tab" data-id="insp">Inspirations<b>${nInsp}</b></button></div>`;
   if (ui.visTab === 'insp') { view.innerHTML = `<h2>Visuels à valeur</h2><p class="sub">Les visuels et carrousels concurrents qui servent de référence.</p>${tabs}${inspirationsCard('visual')}`; return; }
@@ -2319,6 +2326,58 @@ const actions = {
     const v = visualsOf().find((x) => x.id === vid); if (!v) return;
     await api('PUT', `/api/visuals/${vid}`, { style: { ...(visCurrent(v).style || {}), variant: btn.dataset.variant } }); delete ui.visStyle[vid]; await refresh();
   },
+  async 'design-from'(id, btn) {
+    if (ui.job && !ui.job.finished) throw new Error('Un traitement est déjà en cours.');
+    const kind = btn.dataset.kind;
+    ui.job = { kind: 'post-visual', id, step: kind === 'carousel' ? 'Couverture du carrousel…' : 'Création du visuel…' }; render();
+    try {
+      const r = await api('POST', `/api/posts/${id}/design`, { inspirationId: btn.dataset.ref, kind });
+      ui.visSlide[r.visual.id] = 0;
+      await refresh();
+      const n = (r.visual.brief?.slides || []).length;
+      for (let i = 1; kind === 'carousel' && i < n; i++) {
+        ui.job.step = `Page ${i + 1} / ${n}…`; render();
+        await api('POST', `/api/visuals/${r.visual.id}/design-page`, { index: i }).catch((e) => toast(`Page ${i + 1} : ${e.message}`, true));
+        await refresh();
+      }
+    } finally { ui.job = null; await refresh(); }
+  },
+  'design-slide'(vid, btn) { const v = visualsOf().find((x) => x.id === vid); const n = Math.max(1, (v.brief?.slides || []).length || v.images.length); ui.visSlide[vid] = ((ui.visSlide[vid] || 0) + Number(btn.dataset.d) + n) % n; render(); },
+  async redesign(vid, payload, label) {
+    if (ui.job && !ui.job.finished) throw new Error('Un traitement est déjà en cours.');
+    ui.job = { kind: 'post-visual', id: ui.studioPost, step: label }; render();
+    try { await api('POST', `/api/visuals/${vid}/redesign`, { ...payload, page: ui.visSlide[vid] || 0 }); } finally { ui.job = null; await refresh(); }
+  },
+  async 'design-chat'(vid) { const m = ($('#visMsg')?.value || '').trim(); if (!m) throw new Error('Écris ta demande.'); await actions.redesign(vid, { message: m }, 'Je modifie le visuel…'); },
+  async 'design-colors'(vid) { const cols = [...view.querySelectorAll('[data-dcolor]')].map((x) => x.value); await actions.redesign(vid, { colors: cols }, 'Nouvelles couleurs…'); },
+  async 'design-da'(vid) { await actions.redesign(vid, { colors: daOf().colors }, 'Couleurs de ta DA…'); },
+  async 'design-texts'(vid) {
+    const v = visualsOf().find((x) => x.id === vid); const brief = JSON.parse(JSON.stringify(v.brief || {}));
+    for (const inp of view.querySelectorAll('[data-brief]')) setPath(brief, inp.dataset.brief, inp.dataset.brief === 'highlight' ? inp.value.split(',').map((x) => x.trim()).filter(Boolean) : inp.value);
+    await actions.redesign(vid, { brief }, 'Je refais le visuel avec tes textes…');
+  },
+  async 'design-undo'(vid) { await api('POST', `/api/visuals/${vid}/design-undo`); await refresh(); },
+  async 'at-validate-design'(id, btn) {
+    const p = ui.data.posts.find((x) => x.id === id);
+    const v = visualsOf().find((x) => x.id === p.visualId && x.postId === id); if (!v) return;
+    btn.disabled = true; btn.textContent = 'On attache le visuel…';
+    try {
+      if (v.kind === 'design') await api('POST', `/api/visuals/${v.id}/attach`);
+      else {
+        const jpegs = [];
+        for (const key of v.images) {
+          const img = await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = `/uploads/${key}`; });
+          const cv = document.createElement('canvas'); cv.width = 1080; cv.height = 1350;
+          const ctx = cv.getContext('2d'); const sc = Math.max(1080 / img.width, 1350 / img.height);
+          ctx.drawImage(img, (1080 - img.width * sc) / 2, (1350 - img.height * sc) / 2, img.width * sc, img.height * sc);
+          jpegs.push(cv.toDataURL('image/jpeg', 0.9));
+        }
+        await api('POST', `/api/posts/${id}/document`, { dataUrl: Vis.jpegsToPdf(jpegs, 1080, 1350), title: String(v.brief?.title || 'Carrousel').replace(/[*_]/g, '') });
+      }
+      await api('PUT', `/api/posts/${id}`, { stage: 'publish' }); ui.atStep[id] = 'publish';
+      toast('Visuel attaché au post');
+    } finally { await refresh(); window.scrollTo(0, 0); }
+  },
   async 'at-validate-visual'(id, btn) {
     const p = ui.data.posts.find((x) => x.id === id);
     const v = visualsOf().find((x) => x.id === p.visualId && x.postId === id); if (!v) return;
@@ -2754,7 +2813,7 @@ document.addEventListener('toggle', (e) => { if (e.target.matches?.('details.mor
 document.addEventListener('keydown', (event) => {
   if (!['chatMsg', 'visMsg'].includes(event.target.id) || event.key !== 'Enter' || event.shiftKey || event.isComposing) return;
   event.preventDefault();
-  view.querySelector(event.target.id === 'visMsg' ? '[data-action="vis-chat"]' : '[data-action="chat-send"]')?.click();
+  view.querySelector(event.target.id === 'visMsg' ? '[data-action="design-chat"], [data-action="vis-chat"]' : '[data-action="chat-send"]')?.click();
 });
 document.addEventListener('keydown', (event) => {
   if (!ui.data || document.body.classList.contains('locked')) return;

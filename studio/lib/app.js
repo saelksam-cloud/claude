@@ -6,12 +6,12 @@ import {
   pickClientFields, pickPostFields, loadSettings, saveSettings, publicSettings,
 } from './store.js';
 import * as linkedin from './linkedin.js';
-import { writePost, analyzeNiche, testKey, hookPass, extractPosts, studyFeedback, balancedTop, extractStructures, describeImage, describeInspiration, chooseImage, imagePrompt, generateImage, listImageModels, listTextModels } from './ai.js';
+import { writePost, analyzeNiche, testKey, hookPass, extractPosts, studyFeedback, balancedTop, extractStructures, describeImage, describeInspiration, designImage, chooseImage, imagePrompt, generateImage, listImageModels, listTextModels } from './ai.js';
 import { engagement, statsText } from './stats.js';
 import * as apify from './apify.js';
 import { chat } from './ai.js';
 import * as ed from './editorial.js';
-import { bannerCopyPrompt, profileAuditPrompt, visualPlanPrompt, visualItemPrompt, visualForPostPrompt, visualFromReferencePrompt, visualChatPrompt } from './profile.js';
+import { bannerCopyPrompt, profileAuditPrompt, visualPlanPrompt, visualItemPrompt, visualForPostPrompt, visualFromReferencePrompt, visualChatPrompt, designBriefPrompt, designImagePrompt } from './profile.js';
 
 const liCfg = (settings) => ({ clientId: settings.linkedinClientId, clientSecret: settings.linkedinClientSecret });
 
@@ -1104,6 +1104,108 @@ route('POST', '/api/posts/:id/visual-from', async ({ db, settings, post, body })
   return json({ visual, post });
 });
 
+// ---------- Visuels designés (image générée dans le style d'un visuel concurrent) ----------
+const readBlob = async (key) => { const e = await uploads().getWithMetadata(key, { type: 'arrayBuffer' }); return e ? { data: Buffer.from(e.data), type: e.metadata?.type || 'image/jpeg' } : null; };
+const refImages = async (ref, n = 1) => (await Promise.all((ref?.pages?.length ? ref.pages : [ref?.key]).filter(Boolean).slice(0, n).map(readBlob))).filter(Boolean);
+async function saveDesign(buffer) {
+  const key = `des-${crypto.randomBytes(10).toString('hex')}.png`;
+  await uploads().set(key, buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.length), { metadata: { type: 'image/png' } });
+  return key;
+}
+const designColors = (client, v) => v?.colors?.length ? v.colors : client.adn?.da?.colors || [];
+const authorName = (client) => client.linkedin?.name || client.name;
+
+route('POST', '/api/posts/:id/design', async ({ db, settings, post, body }) => {
+  if (post.status === 'published') throw new HttpError(400, 'Post déjà publié');
+  const client = clientOf(db, post.clientId);
+  const ref = db.images.find((x) => x.id === body.inspirationId && x.kind === 'inspiration');
+  if (!ref) throw new HttpError(404, 'Visuel de référence introuvable');
+  const carousel = body.kind === 'carousel';
+  const refs = await refImages(ref, carousel ? 3 : 1);
+  if (!refs.length) throw new HttpError(404, 'Image de référence illisible');
+  const bp = designBriefPrompt({ client, postText: post.text, kind: carousel ? 'carousel' : 'image', da: client.adn?.da });
+  const { text } = await chat(settings, bp.system, [{ type: 'text', text: bp.user }, ...refs.map((r) => ({ type: 'image_url', image_url: { url: `data:${r.type};base64,${r.data.toString('base64')}`, detail: 'high' } }))], { json: true, timeout: 60_000 });
+  let brief; try { brief = JSON.parse(text); } catch { throw new HttpError(502, "L'IA a renvoyé une réponse illisible : réessaie."); }
+  const colors = client.adn?.da?.colors || [];
+  const pages = carousel ? (brief.slides || []).slice(0, 6) : null;
+  const prompt = designImagePrompt({ brief, author: authorName(client), colors, page: carousel ? { ...pages[0], index: 0, total: pages.length } : null });
+  const { buffer } = await designImage(settings, { prompt, refs: refs.slice(0, 1) });
+  const key = await saveDesign(buffer);
+  db.visuals ||= [];
+  for (const v of db.visuals) if (v.postId === post.id) v.postId = null;
+  const visual = { id: newId('vis'), clientId: client.id, kind: carousel ? 'design-carousel' : 'design', images: [key], pending: carousel ? pages.length - 1 : 0, history: [], brief, colors, refId: ref.id, postId: post.id, subtopic: String(brief.title || 'Visuel').slice(0, 80), chat: [], createdAt: now() };
+  db.visuals.unshift(visual);
+  post.visualId = visual.id;
+  log(post, `Visuel designé dans le style d'un visuel concurrent`);
+  return json({ visual, post });
+});
+
+// Pages suivantes d'un carrousel designé (une par appel), dans le style de la couverture.
+route('POST', '/api/visuals/:id/design-page', async ({ db, settings, params, body }) => {
+  const v = (db.visuals || []).find((x) => x.id === params.id && x.kind === 'design-carousel');
+  if (!v) throw new HttpError(404, 'Carrousel introuvable');
+  const client = clientOf(db, v.clientId);
+  const pages = v.brief.slides || [];
+  const i = Number(body.index);
+  if (!(i > 0 && i < pages.length)) throw new HttpError(400, 'Page inconnue');
+  const ref = db.images.find((x) => x.id === v.refId);
+  const refs = [await readBlob(v.images[0]), ...(await refImages(ref, Math.min(3, i + 1))).slice(-1)].filter(Boolean);
+  const prompt = designImagePrompt({ brief: v.brief, author: authorName(client), colors: designColors(client, v), page: { ...pages[i], index: i, total: pages.length } }) + '\nMatch the cover slide (first reference image) exactly: same background, fonts, colors and decorations.';
+  const { buffer } = await designImage(settings, { prompt, refs });
+  v.images[i] = await saveDesign(buffer);
+  v.pending = pages.length - v.images.filter(Boolean).length;
+  return json(v);
+});
+
+// Retouche d'un visuel designé : demande libre, nouveaux textes ou nouvelles couleurs. L'ancienne version est gardée.
+route('POST', '/api/visuals/:id/redesign', async ({ db, settings, params, body }) => {
+  const v = (db.visuals || []).find((x) => x.id === params.id && String(x.kind).startsWith('design'));
+  if (!v) throw new HttpError(404, 'Visuel introuvable');
+  const client = clientOf(db, v.clientId);
+  const page = Math.max(0, Math.min((v.images || []).length - 1, Number(body.page) || 0));
+  const message = String(body.message || '').trim().slice(0, 800);
+  if (body.brief && typeof body.brief === 'object') v.brief = { ...v.brief, ...body.brief };
+  if (Array.isArray(body.colors)) v.colors = body.colors.filter((c) => /^#[0-9a-f]{6}$/i.test(c)).slice(0, 3);
+  const current = await readBlob(v.images[page]);
+  const ref = db.images.find((x) => x.id === v.refId);
+  let prompt;
+  if (message) prompt = `Edit this LinkedIn visual (first image). Change ONLY this, keep everything else identical (layout, style, other texts): ${message}\nAll text stays in perfectly spelled French.`;
+  else {
+    const pages = v.brief.slides || [];
+    prompt = designImagePrompt({ brief: v.brief, author: authorName(client), colors: designColors(client, v), page: v.kind === 'design-carousel' ? { ...pages[page], index: page, total: pages.length } : null }) + '\nKeep the exact layout and style of the first image; update its texts and colors as specified.';
+  }
+  const refs = [current, ...(message ? [] : await refImages(ref, 1))].filter(Boolean);
+  const { buffer } = await designImage(settings, { prompt, refs });
+  (v.history ||= []).push({ page, key: v.images[page], at: now() });
+  v.history = v.history.slice(-12);
+  v.images[page] = await saveDesign(buffer);
+  if (message) { v.chat ||= []; v.chat.push({ role: 'user', text: message, at: now() }, { role: 'ai', text: 'Modifié. Dis-moi si autre chose ne va pas.', at: now() }); v.chat = v.chat.slice(-30); }
+  v.updatedAt = now();
+  return json(v);
+});
+
+route('POST', '/api/visuals/:id/design-undo', async ({ db, params }) => {
+  const v = (db.visuals || []).find((x) => x.id === params.id);
+  const h = v?.history?.pop();
+  if (!h) throw new HttpError(400, 'Aucune version précédente');
+  v.images[h.page] = h.key;
+  return json(v);
+});
+
+// Visuel designé (image) → image du post. Le carrousel, lui, est assemblé en PDF par le navigateur.
+route('POST', '/api/visuals/:id/attach', async ({ db, params }) => {
+  const v = (db.visuals || []).find((x) => x.id === params.id && x.kind === 'design');
+  const post = v && db.posts.find((p) => p.id === v.postId);
+  if (!post) throw new HttpError(404, 'Visuel ou post introuvable');
+  const img = await readBlob(v.images[0]);
+  await dropPostImage(post);
+  await dropPostDocument(post);
+  post.image = `${post.id}-${crypto.randomBytes(8).toString('hex')}.png`;
+  await uploads().set(post.image, img.data.buffer.slice(img.data.byteOffset, img.data.byteOffset + img.data.length), { metadata: { type: img.type } });
+  log(post, 'Visuel designé attaché');
+  return json(post);
+});
+
 // Retoucher un visuel en discutant (« mets du bleu », « fais-en une comparaison »…).
 route('POST', '/api/visuals/:id/chat', async ({ db, settings, params, body }) => {
   const v = (db.visuals || []).find((x) => x.id === params.id);
@@ -1219,7 +1321,7 @@ async function mergeSave(beforeJson, db) {
 
 // ---------- Tâches longues : exécutées par une fonction d'arrière-plan (15 min max au lieu de 30 s) ----------
 const jobs = () => getStore({ name: 'jobs', consistency: 'strong' });
-const LONG_ROUTE = /^\/api\/(jobs-test|plan|write|hooks\/ideas|hooks\/generate|hooks\/optimize|study|veille\/paste|veille\/structures|banners\/suggest|profile\/audit|visuals\/plan|visuals\/item|visuals\/[^/]+\/chat|images|posts\/[^/]+\/(hooks|chat|visual|visual-from|quality|action|feedback|rewrite|image\/generate|image\/auto))$/;
+const LONG_ROUTE = /^\/api\/(jobs-test|plan|write|hooks\/ideas|hooks\/generate|hooks\/optimize|study|veille\/paste|veille\/structures|banners\/suggest|profile\/audit|visuals\/plan|visuals\/item|visuals\/[^/]+\/(chat|design-page|redesign)|images|posts\/[^/]+\/(design|hooks|chat|visual|visual-from|quality|action|feedback|rewrite|image\/generate|image\/auto))$/;
 route('POST', '/api/jobs', async ({ body }) => {
   const path = String(body.path || '');
   const method = body.method === 'PUT' ? 'PUT' : 'POST';

@@ -111,3 +111,37 @@ Réponds en JSON : { "spec": { … }, "style": { "colors": ["#hex", "#hex"], "va
   const convo = history.map((m) => `${m.role === 'user' ? 'MOI' : 'TOI'} : ${m.text}`).join('\n');
   return { system, user: `Post :\n${String(postText || '').slice(0, 2000)}\n\nVisuel actuel :\n${JSON.stringify({ spec: visual.spec, style: { colors: visual.style?.da?.colors, variant: visual.style?.variant } })}\n\n${convo ? `Échanges précédents :\n${convo}\n\n` : ''}Demande : ${message}` };
 }
+
+// ---------- Visuels « designés » : générés par le modèle d'images d'OpenAI à partir d'un visuel concurrent ----------
+// 1) L'IA texte lit le modèle + le post et prépare les textes exacts et la description du style.
+export function designBriefPrompt({ client, postText, kind, da }) {
+  const system = `Tu es directeur artistique LinkedIn. On te montre un visuel concurrent que l'auteur adore. Tu prépares un visuel dans LE MÊME STYLE pour ${client.name}, avec le contenu de SON post (rien d'inventé, pas de vente, pas de nom d'entreprise ni d'offre).
+${adnText(client, { includeProofs: true })}
+Écris en français des textes COURTS, percutants, lisibles sur mobile :
+- "title" : le hook du visuel, 4 à 9 mots, qui accroche (différent de la 1re ligne du post si possible).
+- "highlight" : 1 à 3 mots du titre à surligner (le bénéfice).
+- "subtitle" : ≤ 12 mots.
+${kind === 'carousel' ? '- "slides" : 5 pages : [ { "title": "≤ 6 mots", "text": "≤ 18 mots" } ] — page 1 = couverture (reprend title/subtitle), pages 2 à 4 = les 3 idées clés, page 5 = récap + question.' : '- "points" : EXACTEMENT 3 idées clés du post : [ { "t": "≤ 5 mots", "d": "≤ 10 mots" } ].'}
+- "cta" : ≤ 8 mots, une invitation à réagir ou commenter (pas de vente).
+- "style" : en ANGLAIS, description précise du style graphique du modèle pour un designer : fond (couleur, texture, dégradé, image), typographie du titre (serif/sans, graisse, taille), traitement du surlignage (marqueur, pastille, couleur), éléments graphiques (icônes, cartes, maquettes d'interface, emojis, flèches), disposition, bandeau d'appel à l'action, pied de page avec auteur. ≤ 90 mots.
+Couleurs : ${da?.colors?.length ? `DA de l'auteur : ${da.colors.join(', ')} (à utiliser à la place des couleurs du modèle)` : 'reprends les couleurs du modèle'}.
+Réponds en JSON : { "title": "", "highlight": [""], "subtitle": "", ${kind === 'carousel' ? '"slides": [ { "title": "", "text": "" } ],' : '"points": [ { "t": "", "d": "" } ],'} "cta": "", "style": "" }`;
+  return { system, user: `Post de l'auteur :\n${String(postText).slice(0, 3000)}` };
+}
+
+// 2) Consigne envoyée au modèle d'images (en anglais, textes français entre guillemets).
+export function designImagePrompt({ brief, author, colors, page }) {
+  const q = (t) => `“${String(t || '').replace(/["“”]/g, "'")}”`;
+  const textBlock = page
+    ? `Text on this slide (French, exact spelling, nothing else): title ${q(page.title)}${page.text ? `, body ${q(page.text)}` : ''}${page.index === 0 ? `, subtitle ${q(brief.subtitle)}` : ''}. Slide ${page.index + 1} of ${page.total}.`
+    : `Exact French text to render (correct spelling and accents, nothing else, no extra words):
+- Headline: ${q(brief.title)} — highlight the words ${(brief.highlight || []).map(q).join(', ')} with the same highlight treatment as the reference.
+- Subtitle: ${q(brief.subtitle)}
+- Three numbered key points: ${(brief.points || []).map((p, i) => `${i + 1}. ${q(p.t)} — ${q(p.d)}`).join(' ; ')}
+- Call to action band: ${q(brief.cta)}
+- Footer: author name ${q(author)}`;
+  return `Design a premium LinkedIn ${page ? 'carousel slide' : 'post visual'}, portrait 4:5, in the SAME graphic style as the reference image: ${brief.style || 'same background, typography, highlight treatment, icons and layout as the reference'}.
+${textBlock}
+${colors?.length ? `Color palette: ${colors.join(', ')} (main color first), applied the way the reference uses its colors.` : 'Keep the color palette of the reference.'}
+Rules: do NOT copy the reference's words, logos, brand names or people; no real brand logos; replace any logo area with simple abstract icons. Crisp, legible typography, generous spacing, eye-catching, professional, modern 2026 LinkedIn design. Text must be perfectly spelled in French.`;
+}
