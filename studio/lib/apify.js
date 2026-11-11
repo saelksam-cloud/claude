@@ -39,6 +39,15 @@ const num = (...vals) => {
   return 0;
 };
 
+// Toutes les URL d'images d'un post (photos, pages de carrousel), quel que soit le robot Apify.
+function imageUrls(it) {
+  const out = [];
+  const add = (v) => { if (!v) return; if (typeof v === 'string') { if (/^https?:\/\//.test(v)) out.push(v); return; } if (Array.isArray(v)) return v.forEach(add); if (typeof v === 'object') add(v.url || v.src || v.imageUrl || v.image_url || v.link); };
+  add(it.postImages); add(it.images); add(it.image); add(it.imageUrl); add(it.media?.images); add(it.media?.url && it.media?.type === 'image' ? it.media.url : '');
+  add(it.document?.coverPages); add(it.document?.pages); add(it.document?.thumbnail); add(it.documentImages);
+  return [...new Set(out)].slice(0, 10);
+}
+
 // Normalise les différents formats de sortie des robots Apify.
 export function normalizePost(it) {
   const text = it.content || it.text || it.commentary || it.postText || it.post_text || it.description || '';
@@ -51,6 +60,8 @@ export function normalizePost(it) {
     comments: num(it.engagement?.comments, it.stats?.comments, it.commentsCount, it.numComments, it.comments),
     postedAt: it.postedAt?.date || it.postedAt || it.posted_at?.date || it.date || it.publishedAt || '',
     hasImage: Boolean(it.postImages?.length || it.images?.length || it.image || it.media?.type === 'image'),
+    images: imageUrls(it),
+    isDocument: Boolean(it.document || it.documentUrl || it.media?.type === 'document' || /document|carousel/i.test(it.type || it.postType || '')),
   };
 }
 

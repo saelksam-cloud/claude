@@ -155,6 +155,7 @@ export function writePrompt({ client, personaId, plan, extra = {} }) {
     examples.length ? `# Posts de référence (créateurs analysés par Linka) : reprends la qualité du rythme et de la mise en page, JAMAIS le contenu\n${examples.map((p) => `--- ${p.author}\n${p.text.slice(0, 1400)}`).join('\n')}` : '',
     extra.forms ? `# Formes qui marchent dans la veille\n${extra.forms}` : '',
     extra.niche ? `# Fond : posts qui marchent dans la niche du client (sujets, vocabulaire de la cible)\n${extra.niche}` : '',
+    extra.top ? `# LES POSTS DES CONCURRENTS QUI PERFORMENT LE PLUS (c'est le niveau à égaler : même qualité d'accroche, de rythme, de concret et de mise en page ; sujet et mots différents, ne jamais copier)\n${extra.top}` : '',
     extra.module ? extra.module : '',
   ].filter(Boolean).join('\n\n');
   const user = `Plan validé :\n${JSON.stringify(plan, null, 1)}\n\n${pillarLine(plan.pillar)}\n${plan.hook ? `Le post commence EXACTEMENT par ce hook (mot pour mot, en première ligne) : ${plan.hook}\n` : 'Le hook sera optimisé ensuite : écris une première version correcte.\n'}Rédige le post complet en suivant le plan et la structure.\nRéponds uniquement avec le texte du post.`;

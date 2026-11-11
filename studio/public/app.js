@@ -114,7 +114,7 @@ function toast(msg, isError = false) {
 
 class AuthError extends Error {}
 // Les appels IA longs passent par une tâche d'arrière-plan (Netlify coupe les requêtes normales à 30 s).
-const LONG_API = /^\/api\/(jobs-test|plan|write|hooks\/ideas|hooks\/generate|hooks\/optimize|study|veille\/paste|veille\/structures|banners\/(suggest|analyze|chat|palettes)|profile\/audit|visuals\/plan|visuals\/item|visuals\/[^/]+\/(chat|design-page|redesign)|images|posts\/[^/]+\/(design|hooks|chat|visual|visual-from|quality|action|feedback|rewrite|image\/generate|image\/auto))$/;
+const LONG_API = /^\/api\/(jobs-test|agent\/run|plan|write|hooks\/ideas|hooks\/generate|hooks\/optimize|study|veille\/paste|veille\/structures|banners\/(suggest|analyze|chat|palettes)|profile\/audit|visuals\/plan|visuals\/item|visuals\/[^/]+\/(chat|design-page|redesign)|images|posts\/[^/]+\/(design|hooks|chat|visual|visual-from|quality|action|feedback|rewrite|image\/generate|image\/auto))$/;
 async function api(method, url, body) {
   if (method === 'POST' && LONG_API.test(url)) return apiLong(method, url, body);
   return apiDirect(method, url, body);
@@ -729,7 +729,8 @@ function renderCalendar() {
   const sel = ui.selected.size;
   const counts = Object.fromEntries(Object.keys(PILLAR_NAMES).map((k) => [k, posts.filter((p) => p.pillar === k && p.status !== 'published').length]));
   view.innerHTML = `<header class="page-heading"><div><div class="eyebrow">SUIVI ÉDITORIAL</div><h1>Calendrier</h1><p>Tous les posts à gauche, le calendrier à droite. Clique sur un post pour le modifier, glisse-le dans le calendrier pour changer sa date.</p></div>
-    <div class="row heading-actions"><span class="small">À venir : ${Object.entries(counts).map(([k, n]) => `${pillarTag(k)} ${n}`).join(' · ')}</span></div></header>
+    <div class="row heading-actions"><span class="small">À venir : ${Object.entries(counts).map(([k, n]) => `${pillarTag(k)} ${n}`).join(' · ')}</span>
+      ${(() => { const n = posts.filter((p) => ['review', 'approved', 'draft'].includes(p.status) && !p.image && !p.document).length; const j = ui.job?.kind === 'visuals-auto' ? ui.job : null; return j ? `<span class="small"><b>${esc(j.step)}</b></span>` : n ? `<button class="btn soft sm" data-action="visuals-auto" title="L'agent choisit un modèle et crée le visuel de chaque post qui n'en a pas (environ 0,20 € par visuel)">🤖 Visuels auto pour ${n} post${n > 1 ? 's' : ''}</button>` : ''; })()}</div></header>
   <div class="cal-split">
     <aside class="cal-list card">
       <div class="chips">${filters.map(([k, l]) => `<button class="chip ${f === k ? 'on' : ''}" data-action="filter" data-id="${k}">${l}</button>`).join('')}</div>
@@ -960,6 +961,7 @@ function renderAtelier() {
   const v = p && visualsOf().find((x) => x.id === p.visualId && x.postId === p.id);
   const cv = view.querySelector('canvas[data-vis]');
   if (cv && v) Vis.renderVisual(cv, visCurrent(v), ui.visSlide[v.id] || 0);
+  if (ui.canva && $('#canvaEditor')) BE.mountEditor($('#canvaEditor'), ui.canva.doc, { overlay: false, onChange: () => {} });
   scrollChat();
   const vl = $('#visChatLog'); if (vl) vl.scrollTop = vl.scrollHeight;
 }
@@ -1048,11 +1050,12 @@ function atVisualStep(p, c) {
        <label class="f">Sous-titre<input data-brief="subtitle" value="${esc(br.subtitle || '')}"></label>
        ${(br.points || []).map((pt, i) => `<div class="grid2"><label class="f">Point ${i + 1}<input data-brief="points.${i}.t" value="${esc(pt.t || '')}"></label><label class="f">Détail<input data-brief="points.${i}.d" value="${esc(pt.d || '')}"></label></div>`).join('')}
        <label class="f">Appel à réagir<input data-brief="cta" value="${esc(br.cta || '')}"></label>`;
+  if (v && ui.canva?.vid === v.id) return canvaEditor(v);
   const work = busy ? `<div class="at-empty"><b>${esc(ui.job.step)}</b><br><span class="small">L'IA d'images dessine ton visuel : compte 1 à 2 minutes${kind === 'carousel' ? ' par page' : ''}.</span></div>`
     : !v ? `<div class="at-empty"><b>👉 Clique sur un modèle à droite</b><br><span class="small">L'IA reprend son style (fond, typo, surlignage, icônes) et y met le contenu de ton post, avec un titre qui accroche.</span></div>`
     : `<div class="at-canvas-wrap">${key ? `<img class="at-design" src="/uploads/${esc(key)}" alt="Visuel généré">` : `<div class="at-empty">Page ${page + 1} en cours de création…</div>`}
         ${total > 1 ? `<div class="row" style="justify-content:center"><button class="btn sm" data-action="design-slide" data-id="${v.id}" data-d="-1">‹</button><span class="small">Page ${page + 1} / ${total}</span><button class="btn sm" data-action="design-slide" data-id="${v.id}" data-d="1">›</button></div>` : ''}
-        ${v.history?.some((h) => h.page === page) ? `<button class="btn ghost sm" data-action="design-undo" data-id="${v.id}">↶ Version précédente</button>` : ''}</div>
+        <span class="row">${key ? `<button class="btn soft sm" data-action="canva-open" data-id="${v.id}">✏️ Modifier comme Canva</button>` : ''}${v.history?.some((h) => h.page === page) ? `<button class="btn ghost sm" data-action="design-undo" data-id="${v.id}">↶ Version précédente</button>` : ''}</span></div>
       <div class="vis-chat">
         <div class="chat-log" id="visChatLog">${(v.chat || []).map((m) => `<div class="msg ${m.role === 'user' ? 'me' : 'ai'}">${esc(m.text)}</div>`).join('') || `<div class="small chat-hint">Dis-moi quoi changer${total > 1 ? ' sur cette page' : ''} : « fond plus clair », « surligne en jaune », « ajoute une flèche », « le titre est mal écrit »…</div>`}</div>
         <div class="row"><input id="visMsg" placeholder="Ta demande… (Entrée pour envoyer)" style="flex:1;min-width:0"><button class="btn sm" data-action="design-chat" data-id="${v.id}">Envoyer</button></div>
@@ -1064,10 +1067,33 @@ function atVisualStep(p, c) {
   return `<div class="at-two at-vis">
     <section class="at-node stack"><header class="at-head"><span class="at-step">3</span><h3>${kind === 'carousel' ? 'Le carrousel' : 'Le visuel'}</h3>${v ? '<span class="small">modifie-le en bas</span>' : ''}</header>${work}</section>
     <aside class="at-node stack"><header class="at-head"><h3>Choisis un modèle</h3><span class="small">${allRefs.length} dans ta base</span></header>
+      ${allRefs.length ? `<button class="btn primary sm" data-action="design-from" data-id="${p.id}" data-ref="auto" data-kind="${kind}" ${busy || (ui.job && !ui.job.finished) ? 'disabled' : ''}>🤖 Laisse l'agent choisir et créer</button>` : ''}
       ${allRefs.length ? `<div class="ref-grid">${allRefs.map((im) => `<button class="ref ${v?.refId === im.id ? 'on' : ''}" data-action="design-from" data-id="${p.id}" data-ref="${im.id}" data-kind="${kind}" ${busy || (ui.job && !ui.job.finished) ? 'disabled' : ''} title="${esc((im.description || '').slice(0, 200))}"><img src="/uploads/${esc(im.key)}" alt="" loading="lazy">${im.pages?.length > 1 ? `<span class="insp-pages">${im.pages.length} p.</span>` : ''}</button>`).join('')}</div>`
         : `<p class="small">Aucun ${kind === 'carousel' ? 'carrousel' : 'visuel'} concurrent dans ta base. <a href="#" data-action="go" data-id="images">Ajoute-en dans Visuels</a> (glisser-déposer).</p>`}
       <p class="small" style="margin:0">Chaque création coûte quelques centimes sur ton compte OpenAI.</p>
     </aside>
+  </div>`;
+}
+
+// Éditeur façon Canva sur un visuel généré : l'image en fond, des calques par-dessus (textes, formes, logos, zones cachées).
+function canvaEditor(v) {
+  return `<div class="at-node stack" id="canvaEditor">
+    <header class="at-head"><span class="at-step">✏️</span><h3>Modifier comme Canva</h3><span class="small">page ${(ui.canva.page || 0) + 1}</span></header>
+    <p class="small" style="margin:0">Clique sur un élément pour le modifier, glisse pour le déplacer. Pour changer un texte de l'image : « Cacher une zone » par-dessus (🎯 prend la couleur du fond), puis « Texte ».</p>
+    <div class="be-toolbar">
+      <button type="button" class="btn sm" data-be-add="text"><b>T</b> Texte</button>
+      <button type="button" class="btn sm" data-be-add="pill">◯ Pastille</button>
+      <button type="button" class="btn sm" data-be-add="cover">▭ Cacher une zone</button>
+      <label class="btn sm">🏷 Logo<input type="file" accept="image/*" data-be-file="logo" hidden></label>
+      <label class="btn sm">🖼 Image<input type="file" accept="image/*" data-be-file="image" hidden></label>
+      <button type="button" class="btn sm" data-be-add="shape">▭ Forme</button>
+      <button type="button" class="btn sm" data-be-add="arrow">⤵ Flèche</button>
+      ${['✦', '➜', '✓', '⭐', '🔥', '👉'].map((e) => `<button type="button" class="btn sm ghost" data-be-add="emoji" data-val="${e}">${e}</button>`).join('')}
+      <button type="button" class="btn sm ghost" data-be="undo" title="Annuler (Ctrl+Z)">↶</button><button type="button" class="btn sm ghost" data-be="redo">↷</button>
+    </div>
+    <div class="canva-wrap"><div class="be-stage be-portrait"><canvas id="bannerCanvas" class="banner-canvas" width="1024" height="1536"></canvas><div class="be-overlay"></div></div>
+      <div class="be-panel card" style="margin:0"></div></div>
+    <div class="row between"><button class="btn ghost" data-action="canva-close">Annuler</button><button class="btn primary" data-action="canva-save" data-id="${v.id}">💾 Enregistrer la modification</button></div>
   </div>`;
 }
 
@@ -1643,13 +1669,32 @@ function nicheChips(items = ui.data.veille) {
   return `<div class="chips">${allNiches().map((x) => `<button class="chip ${sameNiche(x, n) ? 'on' : ''}" data-action="niche" data-id="${esc(x)}">${esc(x)}<b>${items.filter((v) => sameNiche(v.niche, x)).length}</b></button>`).join('')}</div>`;
 }
 
+// ---------- Agent de veille : suit les concurrents du client chaque semaine (via Apify) ----------
+function agentCard() {
+  const c = client();
+  const list = (ui.data.profiles || []).filter((p) => p.clientId === c.id);
+  const hasKey = ui.data.settings.hasApifyToken;
+  const running = list.filter((p) => p.status === 'running').length;
+  const st = (p) => p.status === 'running' ? '⏳ en cours' : p.status === 'error' ? `⚠️ ${esc(p.error || 'erreur')}` : p.updatedAt ? `✓ ${fmtDate(p.updatedAt)}${p.lastDigest ? ` · ${p.postCount || 0} posts · ${p.lastDigest.visuals || 0} visuels récupérés` : ''}` : 'jamais lancé';
+  return `<section class="card stack agent-card">
+    <div class="row between"><h3 style="margin:0">🤖 Agent de veille · ${esc(c.name)}</h3>
+      ${list.length && hasKey ? `<button class="btn primary sm" data-action="agent-run" ${running ? 'disabled' : ''}>${running ? `${running} en cours…` : '▶ Lancer maintenant'}</button>` : ''}</div>
+    <p class="small" style="margin:0">Ajoute les profils LinkedIn des meilleurs concurrents de ${esc(c.name)}. Chaque semaine, l'agent récupère leurs derniers posts, leurs visuels et leurs carrousels, garde ce qui marche le mieux et l'IA s'en sert pour écrire les posts, les hooks et les visuels. Ton compte LinkedIn n'est jamais utilisé.</p>
+    ${hasKey ? '' : '<div class="alert warn">Il faut une clé <b>Apify</b> (le service qui lit les posts publics, environ 2 $ pour 1 000 posts, 5 $ offerts chaque mois). Crée un compte sur apify.com, copie ta clé API (Settings › API & Integrations), puis colle-la dans <a href="#" data-action="go" data-id="settings">Réglages</a>.</div>'}
+    ${list.length ? `<div class="stack" style="gap:6px">${list.map((p) => `<div class="row between vitem"><span><b>${esc(p.name || p.url.replace(/^https?:\/\/(www\.)?linkedin\.com\/in\//, '').replace(/\/$/, ''))}</b> <span class="small">${st(p)}</span></span>
+      <span class="row" style="gap:6px"><label class="small"><input type="checkbox" data-agent-auto="${p.id}" ${p.auto !== false ? 'checked' : ''}> chaque semaine</label><button class="btn ghost sm danger" data-action="agent-del" data-id="${p.id}" title="Ne plus suivre">🗑</button></span></div>`).join('')}</div>` : ''}
+    <div class="row"><input id="agentUrl" placeholder="https://www.linkedin.com/in/concurrent" style="flex:2;min-width:220px"><input id="agentName" placeholder="Nom (facultatif)" style="flex:1;min-width:120px"><button class="btn sm" data-action="agent-add">+ Suivre ce concurrent</button></div>
+  </section>`;
+}
+
 function renderVeille() {
   const niche = currentNiche();
   const items = byAuthor(ui.data.veille.filter((v) => sameNiche(v.niche, niche)), ui.author).sort((a, b) => engagement(b) - engagement(a));
   const j = ui.job?.kind === 'paste' ? ui.job : null;
   view.innerHTML = `
     <h2>Veille</h2>
-    <p class="sub">Copie-colle tout ce que tu veux : l'IA retrouve chaque post, ses j'aime, ses commentaires, son sujet et son type de hook.</p>
+    ${agentCard()}
+    <p class="sub">Tu peux aussi copier-coller à la main : l'IA retrouve chaque post, ses j'aime, ses commentaires, son sujet et son type de hook.</p>
     <div class="two-col">
       <div class="card stack">
         <label class="f">Niche<input id="pasteNiche" list="nicheList" value="${esc(niche)}" data-novoice></label>
@@ -2097,6 +2142,49 @@ const actions = {
   async 'vis-pdf'(id) { const v = visualsOf().find((x) => x.id === id); const f = await visualFiles(v); download(f.pdf, `${v.subtopic || v.subject || 'carrousel'}.pdf`); },
   async 'vis-del'(id) { await api('DELETE', `/api/visuals/${id}`); await refresh(); },
   'vis-goto-post'(id) { ui.view = 'posts'; ui.filter = 'all'; store.set('view', 'posts'); render(); goto(id); },
+  'canva-open'(vid) {
+    const v = visualsOf().find((x) => x.id === vid); if (!v) return;
+    const page = ui.visSlide[vid] || 0;
+    ui.canva = { vid, page, doc: { size: { w: 1024, h: 1536 }, style: { bgImage: `/uploads/${v.images[page]}` }, elements: [] } };
+    BE.resetHistory(); render();
+  },
+  'canva-close'() { ui.canva = null; Banner.setSize(); render(); },
+  async 'canva-save'(vid, btn) {
+    btn.disabled = true; btn.textContent = 'Enregistrement…';
+    try {
+      const cv = document.createElement('canvas');
+      await Banner.renderElements(cv, ui.canva.doc, { overlay: false });
+      await api('POST', `/api/visuals/${vid}/replace`, { page: ui.canva.page, dataUrl: cv.toDataURL('image/png') });
+      ui.canva = null; Banner.setSize();
+      toast('Visuel modifié (la version précédente reste disponible)');
+    } finally { await refresh(); }
+  },
+  async 'agent-add'() {
+    const url = ($('#agentUrl')?.value || '').trim(); if (!url) throw new Error('Colle le lien du profil LinkedIn du concurrent.');
+    await api('POST', '/api/profiles', { url, name: $('#agentName')?.value || '', clientId: ui.clientId }).catch(async (e) => {
+      if (/Apify/.test(e.message)) { toast('Concurrent noté : il sera suivi dès que ta clé Apify sera dans Réglages.', true); throw e; } throw e;
+    });
+    await refresh(); toast("Concurrent ajouté : l'agent récupère ses posts (quelques minutes).");
+  },
+  async 'agent-del'(id) { await api('DELETE', `/api/profiles/${id}`); await refresh(); },
+  async 'agent-run'() { const r = await api('POST', '/api/agent/run', { clientId: ui.clientId }); await refresh(); toast(`Agent lancé sur ${r.started} concurrent(s) : résultats dans quelques minutes.`); },
+  async 'visuals-auto'(_id, btn) {
+    if (ui.job && !ui.job.finished) throw new Error('Un traitement est déjà en cours.');
+    const todo = clientPosts().filter((p) => ['review', 'approved', 'draft'].includes(p.status) && !p.image && !p.document);
+    if (!todo.length) { toast('Tous les posts ont déjà un visuel.'); return; }
+    ui.job = { kind: 'visuals-auto', total: todo.length, done: 0, step: '' };
+    try {
+      for (const [i, p] of todo.entries()) {
+        ui.job.step = `Visuel ${i + 1} / ${todo.length} : ${(p.text.split('\n')[0] || '').slice(0, 50)}…`; render();
+        try {
+          const r = await api('POST', `/api/posts/${p.id}/design`, { inspirationId: 'auto', kind: 'image' });
+          await api('POST', `/api/visuals/${r.visual.id}/attach`);
+        } catch (e) { toast(`Post ${i + 1} : ${e.message}`, true); }
+        ui.job.done = i + 1;
+      }
+      toast('Visuels créés et attachés : vérifie-les dans l’Atelier (étape 3) ou le Calendrier.');
+    } finally { ui.job = null; await refresh(); }
+  },
   async 'teach-save'() {
     const body = { hooks: $('#teachHooks')?.value || '', posts: $('#teachPosts')?.value || '', critiques: $('#teachCritiques')?.value || '' };
     if (!body.hooks.trim() && !body.posts.trim() && !body.critiques.trim()) throw new Error('Colle au moins un hook, un post ou une critique.');
@@ -2759,6 +2847,7 @@ document.addEventListener('change', run(async (e) => {
     await refresh();
     return;
   }
+  if (t.dataset.agentAuto) { await api('PUT', `/api/profiles/${t.dataset.agentAuto}`, { auto: t.checked }); await refresh(); return; }
   if (t.hasAttribute('data-banner-import') && t.files[0]) {
     const file = t.files[0]; t.value = '';
     const dataUrl = await resizeImage(file, 1584);

@@ -1,6 +1,8 @@
 // Moteur de bannières LinkedIn (1584 × 396) dessinées sur canvas : textes exacts, calques modifiables, export PNG.
-export const W = 1584;
-export const H = 396;
+// Taille du dessin : 1584 × 396 pour une bannière, ou une autre taille (visuel 1024 × 1536) quand l'éditeur sert aux visuels.
+export let W = 1584;
+export let H = 396;
+export function setSize(w = 1584, h = 396) { W = w; H = h; }
 
 // ---------- Fonds (couleurs + motif) ----------
 export const PRESETS = {
@@ -507,6 +509,7 @@ function drawShapeEl(ctx, el) {
 
 // Rendu complet d'une bannière à calques. Renvoie les boîtes de chaque élément (pour l'éditeur).
 export async function renderElements(canvas, banner, { overlay = false } = {}) {
+  setSize(banner.size?.w || 1584, banner.size?.h || 396);
   await Promise.all(['800 40px Poppins', '700 40px Poppins', '600 40px Poppins', '500 40px Poppins', '700 30px Caveat'].map((f) => document.fonts?.load(f).catch(() => {})));
   const style = banner.style || {};
   const base = style.custom ? paletteStyle(style.custom) : PRESETS[style.preset] || PRESETS.mint;

@@ -107,6 +107,13 @@ export async function publishDuePosts() {
     await publishPost(db, post, settings);
     changed = true;
   }
+  // Agent de veille : relance chaque semaine les concurrents suivis (si une clé Apify est configurée).
+  if (settings.apifyToken) {
+    for (const profile of db.profiles.filter((x) => x.auto !== false && x.status !== 'running' && Date.now() - Date.parse(x.updatedAt || x.createdAt || 0) > 7 * 86400_000).slice(0, 5)) {
+      await startProfile(settings, profile).catch((e) => { profile.status = 'error'; profile.error = e.message; });
+      changed = true;
+    }
+  }
   // Récupère aussi les analyses de profils terminées.
   for (const profile of db.profiles.filter((x) => x.status === 'running')) {
     await refreshProfile(db, settings, profile);
@@ -342,10 +349,12 @@ async function refreshProfile(db, settings, profile) {
     const known = new Set(db.veille.filter((v) => v.url).map((v) => v.url));
     const fresh = posts.filter((p) => !p.url || !known.has(p.url));
     db.veille.unshift(...fresh.map((p) => ({
-      id: newId('vei'), source: 'profile', profileId: profile.id, niche: profile.niche,
-      author: p.author || profile.name, url: p.url, text: p.text, likes: String(p.likes || ''), comments: String(p.comments || ''),
-      notes: p.hasImage ? 'Post avec image' : '', postedAt: p.postedAt, createdAt: now(),
+      id: newId('vei'), source: 'agent', profileId: profile.id, clientId: profile.clientId || '', niche: profile.niche,
+      author: p.author || profile.name, url: p.url, text: p.text.slice(0, 3000), hook: p.text.split('\n').map((l) => l.trim()).find(Boolean)?.slice(0, 300) || '',
+      likes: p.likes || 0, comments: p.comments || 0, images: p.images || [], isDocument: !!p.isDocument,
+      notes: p.images?.length ? (p.isDocument ? 'Carrousel' : 'Post avec image') : '', postedAt: p.postedAt, createdAt: now(),
     })));
+    if (fresh.length) await startJob('/api/agent/digest', { profileId: profile.id }).catch((e) => console.error('digest', e.message));
     if (!profile.name) profile.name = posts.find((p) => p.author)?.author || '';
     profile.status = 'done';
     profile.postCount = db.veille.filter((v) => v.profileId === profile.id).length;
@@ -366,8 +375,9 @@ async function startProfile(settings, profile) {
 route('POST', '/api/profiles', async ({ db, settings, body }) => {
   const url = String(body.url || '').trim().split('?')[0];
   if (!LI_PROFILE.test(url)) throw new HttpError(400, 'Colle le lien d\'un profil LinkedIn (https://www.linkedin.com/in/…).');
-  if (db.profiles.some((p) => p.url.toLowerCase() === url.toLowerCase())) throw new HttpError(400, 'Ce profil est déjà suivi : clique « Relancer ».');
-  const profile = { id: newId('pro'), url, niche: String(body.niche || '').trim(), name: '', status: 'new', createdAt: now() };
+  if (db.profiles.some((p) => p.url.toLowerCase() === url.toLowerCase() && (p.clientId || '') === (body.clientId || ''))) throw new HttpError(400, 'Ce profil est déjà suivi : clique « Relancer ».');
+  const owner = db.clients.find((c) => c.id === body.clientId);
+  const profile = { id: newId('pro'), url, clientId: owner?.id || '', niche: String(body.niche || owner?.niche || '').trim(), name: String(body.name || '').trim().slice(0, 80), status: 'new', auto: true, createdAt: now() };
   await startProfile(settings, profile);
   db.profiles.unshift(profile);
   return json(profile);
@@ -792,7 +802,7 @@ route('POST', '/api/write', async ({ db, settings, body }) => {
   const fmt = (l) => l.map((v) => `- [${v.likes || 0} 👍] ${(v.structure || v.hook || '').slice(0, 220)}`).join('\n');
   const text = (await ask(settings, ed.writePrompt({
     client, personaId: plan.personaId, plan,
-    extra: { forms: forms.length ? fmt(forms) : '', niche: mine.length ? mine.slice(0, 6).map((v) => `- ${v.hook || v.text.slice(0, 160)}`).join('\n') : '', module: moduleText(moduleByRole(settings, 'content'), 'Méthode') },
+    extra: { forms: forms.length ? fmt(forms) : '', niche: mine.length ? mine.slice(0, 6).map((v) => `- ${v.hook || v.text.slice(0, 160)}`).join('\n') : '', top: [...mine].sort((a, b) => engagement(b) - engagement(a)).slice(0, 3).map((v) => `--- ${v.author || 'Concurrent'} (${Number(v.likes) || 0} réactions)\n${String(v.text || '').slice(0, 1500)}`).join('\n'), module: moduleText(moduleByRole(settings, 'content'), 'GPT Linka content') },
   }), { timeout: 50_000 })).replace(/\*\*|__/g, '').trim();
   const [post] = importPosts(db, client.id, [{ text, theme: (plan.topic || plan.angle?.idea || '').slice(0, 60), format: plan.postType || 'Texte', scheduledAt: body.scheduledAt || nextFreeSlot(db, client.id) }]);
   post.plan = plan;
@@ -997,6 +1007,67 @@ const inspirationsFor = (db, client, category) => {
   return [...mine, ...list.filter((x) => !mine.includes(x))].slice(0, 8).map((x) => x.description);
 };
 
+// =================== AGENT DE VEILLE ===================
+// Après chaque récupération : les meilleurs visuels et carrousels deviennent des inspirations (décrites par l'IA),
+// la forme des nouveaux posts est analysée, et l'étude « ce qui marche » de la niche est mise à jour.
+route('POST', '/api/agent/digest', async ({ db, settings, body }) => {
+  const profile = db.profiles.find((p) => p.id === body.profileId);
+  if (!profile) throw new HttpError(404, 'Concurrent introuvable');
+  const items = db.veille.filter((v) => v.profileId === profile.id);
+  const withImg = items.filter((v) => v.images?.length && !v.imported).sort((a, b) => engagement(b) - engagement(a)).slice(0, 5);
+  let visuals = 0;
+  for (const v of withImg) {
+    try {
+      const pages = [];
+      for (const url of v.images.slice(0, v.isDocument ? 6 : 1)) {
+        const r = await fetch(url, { signal: AbortSignal.timeout(20_000) });
+        if (!r.ok) continue;
+        const type = (r.headers.get('content-type') || 'image/jpeg').split(';')[0];
+        if (!IMAGE_TYPES[type]) continue;
+        const buf = Buffer.from(await r.arrayBuffer());
+        const key = `lib-${crypto.randomBytes(10).toString('hex')}.${IMAGE_TYPES[type]}`;
+        await uploads().set(key, buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.length), { metadata: { type } });
+        pages.push({ key, url: `data:${type};base64,${buf.toString('base64')}` });
+      }
+      v.imported = true;
+      if (!pages.length) continue;
+      const category = v.isDocument || pages.length > 1 ? 'carousel' : 'visual';
+      const description = settings.openaiKey ? await describeInspiration(settings, pages.slice(0, 4).map((x) => x.url), 'visual').catch(() => '') : '';
+      db.images.unshift({ id: newId('img'), kind: 'inspiration', category, key: pages[0].key, ...(pages.length > 1 ? { pages: pages.map((x) => x.key) } : {}), description, niche: profile.niche, clientId: null, source: 'agent', sourceUrl: v.url, author: v.author, likes: v.likes, uses: 0, createdAt: now() });
+      visuals++;
+    } catch (e) { v.imported = true; }
+  }
+  const todo = db.veille.filter((v) => v.profileId === profile.id && !v.structure && v.text).slice(0, 15);
+  if (todo.length && settings.openaiKey) {
+    const out = await extractStructures(settings, todo).catch(() => []);
+    for (const o of out) { const v = db.veille.find((x) => x.id === o.id); if (v && o.structure) v.structure = String(o.structure).slice(0, 260); }
+  }
+  const niche = profile.niche;
+  const nicheList = nicheItems(db, niche);
+  if (nicheList.length >= 8 && settings.openaiKey) {
+    const sorted = [...nicheList].sort((a, b) => engagement(b) - engagement(a));
+    const pick = (v) => ({ ...v, hook: v.hook || v.text.split('\n')[0] });
+    const content = await studyFeedback(settings, { niche, stats: statsText(nicheList), top: sorted.slice(0, 10).map(pick), flop: sorted.slice(-6).map(pick) }).catch(() => '');
+    if (content) db.analyses.unshift({ id: newId('ana'), niche, author: '', content, kind: 'study', count: nicheList.length, source: 'agent', createdAt: now() });
+  }
+  profile.lastDigest = { at: now(), posts: items.length, visuals };
+  return json({ ok: true, visuals });
+});
+
+// Lance l'agent tout de suite pour les concurrents d'un client.
+route('POST', '/api/agent/run', async ({ db, settings, body }) => {
+  const list = db.profiles.filter((p) => (p.clientId || '') === (body.clientId || '') && p.status !== 'running');
+  for (const p of list) await startProfile(settings, p);
+  return json({ started: list.length });
+});
+route('PUT', '/api/profiles/:id', async ({ db, params, body }) => {
+  const p = db.profiles.find((x) => x.id === params.id);
+  if (!p) throw new HttpError(404, 'Concurrent introuvable');
+  if (body.auto !== undefined) p.auto = !!body.auto;
+  if (body.name !== undefined) p.name = String(body.name).slice(0, 80);
+  return json(p);
+});
+
 // =================== PROFILS & BANNIÈRES ===================
 route('POST', '/api/banners/suggest', async ({ db, settings, body }) => {
   const client = clientOf(db, body.clientId);
@@ -1184,9 +1255,9 @@ const authorName = (client) => client.linkedin?.name || client.name;
 route('POST', '/api/posts/:id/design', async ({ db, settings, post, body }) => {
   if (post.status === 'published') throw new HttpError(400, 'Post déjà publié');
   const client = clientOf(db, post.clientId);
-  const ref = db.images.find((x) => x.id === body.inspirationId && x.kind === 'inspiration');
-  if (!ref) throw new HttpError(404, 'Visuel de référence introuvable');
   const carousel = body.kind === 'carousel';
+  const ref = body.inspirationId === 'auto' ? await chooseReference(db, settings, client, post, carousel) : db.images.find((x) => x.id === body.inspirationId && x.kind === 'inspiration');
+  if (!ref) throw new HttpError(404, carousel ? 'Aucun carrousel concurrent dans ta base (rubrique Visuels).' : 'Aucun visuel concurrent dans ta base (rubrique Visuels).');
   const refs = await refImages(ref, carousel ? 3 : 1);
   if (!refs.length) throw new HttpError(404, 'Image de référence illisible');
   const bp = designBriefPrompt({ client, postText: post.text, kind: carousel ? 'carousel' : 'image', da: client.adn?.da });
@@ -1204,6 +1275,37 @@ route('POST', '/api/posts/:id/design', async ({ db, settings, post, body }) => {
   post.visualId = visual.id;
   log(post, `Visuel designé dans le style d'un visuel concurrent`);
   return json({ visual, post });
+});
+
+// Agent visuels : choisit lui-même le visuel concurrent le plus adapté au post (niche du client et visuels qui performent d'abord).
+async function chooseReference(db, settings, client, post, carousel) {
+  const cats = carousel ? ['carousel'] : ['visual'];
+  const all = db.images.filter((x) => x.kind === 'inspiration' && cats.includes(x.category));
+  if (all.length <= 1) return all[0];
+  const mine = all.filter((x) => client.niche && (x.niche || '').toLowerCase() === client.niche.toLowerCase());
+  const pool = [...mine, ...all.filter((x) => !mine.includes(x))].slice(0, 24);
+  try {
+    const { text } = await chat(settings, 'Tu es directeur artistique LinkedIn. Choisis le visuel de référence dont le style et la construction serviront le mieux ce post (lisibilité, accroche, adapté au contenu). Réponds en JSON : { "n": numéro }.',
+      `Post :\n${post.text.slice(0, 1500)}\n\nVisuels de référence :\n${pool.map((x, i) => `${i + 1}. ${(x.description || 'sans description').slice(0, 300)}${x.likes ? ` (${x.likes} réactions)` : ''}`).join('\n')}`, { json: true, timeout: 30_000 });
+    return pool[Number(JSON.parse(text).n) - 1] || pool[0];
+  } catch { return pool[0]; }
+}
+
+// Image retouchée dans l'éditeur façon Canva : nouvelle version de la page (l'ancienne reste dans l'historique).
+route('POST', '/api/visuals/:id/replace', async ({ db, params, body }) => {
+  const v = (db.visuals || []).find((x) => x.id === params.id && String(x.kind).startsWith('design'));
+  if (!v) throw new HttpError(404, 'Visuel introuvable');
+  const m = /^data:(image\/(png|jpeg));base64,(.+)$/s.exec(body.dataUrl || '');
+  if (!m) throw new HttpError(400, 'Image attendue');
+  const page = Math.max(0, Math.min((v.images || []).length - 1, Number(body.page) || 0));
+  const buf = Buffer.from(m[3], 'base64');
+  const key = `des-${crypto.randomBytes(10).toString('hex')}.${m[2] === 'png' ? 'png' : 'jpg'}`;
+  await uploads().set(key, buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.length), { metadata: { type: m[1] } });
+  (v.history ||= []).push({ page, key: v.images[page], at: now() });
+  v.history = v.history.slice(-12);
+  v.images[page] = key;
+  v.updatedAt = now();
+  return json(v);
 });
 
 // Pages suivantes d'un carrousel designé (une par appel), dans le style de la couverture.
@@ -1387,20 +1489,22 @@ async function mergeSave(beforeJson, db) {
 
 // ---------- Tâches longues : exécutées par une fonction d'arrière-plan (15 min max au lieu de 30 s) ----------
 const jobs = () => getStore({ name: 'jobs', consistency: 'strong' });
-const LONG_ROUTE = /^\/api\/(jobs-test|plan|write|hooks\/ideas|hooks\/generate|hooks\/optimize|study|veille\/paste|veille\/structures|banners\/(suggest|analyze|chat|palettes)|profile\/audit|visuals\/plan|visuals\/item|visuals\/[^/]+\/(chat|design-page|redesign)|images|posts\/[^/]+\/(design|hooks|chat|visual|visual-from|quality|action|feedback|rewrite|image\/generate|image\/auto))$/;
-route('POST', '/api/jobs', async ({ body }) => {
-  const path = String(body.path || '');
-  const method = body.method === 'PUT' ? 'PUT' : 'POST';
-  if (!LONG_ROUTE.test(path)) throw new HttpError(400, 'Tâche inconnue');
+const LONG_ROUTE = /^\/api\/(jobs-test|agent\/(digest|run)|plan|write|hooks\/ideas|hooks\/generate|hooks\/optimize|study|veille\/paste|veille\/structures|banners\/(suggest|analyze|chat|palettes)|profile\/audit|visuals\/plan|visuals\/item|visuals\/[^/]+\/(chat|design-page|redesign)|images|posts\/[^/]+\/(design|hooks|chat|visual|visual-from|quality|action|feedback|rewrite|image\/generate|image\/auto))$/;
+async function startJob(path, body = {}, method = 'POST') {
   const id = `job_${Date.now().toString(36)}${crypto.randomBytes(6).toString('hex')}`;
   const token = crypto.randomBytes(16).toString('hex');
-  await jobs().setJSON(id, { id, token, method, path, body: body.body ?? {}, status: 'pending', createdAt: now() });
+  await jobs().setJSON(id, { id, token, method, path, body, status: 'pending', createdAt: now() });
   const res = await fetch(`${linkedin.publicUrl()}/.netlify/functions/worker-background`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id, token }) }).catch((e) => ({ ok: false, status: 0, statusText: e.message }));
   if (!res.ok && res.status !== 202) {
     await jobs().delete(id).catch(() => {});
     throw new HttpError(502, `Impossible de lancer la tâche en arrière-plan (${res.status || res.statusText}).`);
   }
-  return json({ id });
+  return id;
+}
+route('POST', '/api/jobs', async ({ body }) => {
+  const path = String(body.path || '');
+  if (!LONG_ROUTE.test(path)) throw new HttpError(400, 'Tâche inconnue');
+  return json({ id: await startJob(path, body.body ?? {}, body.method === 'PUT' ? 'PUT' : 'POST') });
 });
 // Diagnostic : une tâche qui dure plus de 30 s, pour vérifier que l'arrière-plan fonctionne.
 route('POST', '/api/jobs-test', async ({ body }) => {
