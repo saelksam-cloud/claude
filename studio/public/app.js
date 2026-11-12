@@ -9,7 +9,7 @@ import { calendarMarkup, calendarDate } from '/calendar.js';
 const $ = (sel, el = document) => el.querySelector(sel);
 const view = $('#view');
 
-const PAGE_NAMES = {"inspiration":"Posts de veille","audit":"Audit","marketmap":"Carte du marché","writing":"Mes préférences","atelier":"Atelier","marche":"Marché","create":"Studio","posts":"Posts","calendar":"Calendrier","visuals":"Visuels (ancien)","adn":"ADN client","refine":"Affiner","banner":"Bannière","images":"Visuels","veille":"Veille","study":"Étude de marché","hooks":"Hooks","settings":"Réglages"};
+const PAGE_NAMES = {"studyFull":"Étude de marché","client":"Fiche client","inspiration":"Veille","audit":"Audit","marketmap":"Carte du marché","writing":"Mes préférences","atelier":"Atelier","marche":"Marché","create":"Studio","posts":"Posts","calendar":"Calendrier","visuals":"Visuels (ancien)","adn":"ADN client","refine":"Affiner","banner":"Bannières","images":"Visuels","veille":"Veille","study":"Étude de marché","hooks":"Hooks","settings":"Réglages"};
 const ICONS = {"pen":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m13 6 5 5M4 20l4.5-1 11-11a2.1 2.1 0 0 0-3-3l-11 11L4 20Z\"/></svg>","files":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"6\" y=\"3\" width=\"13\" height=\"17\" rx=\"2\"/><path d=\"M9 8h7m-7 4h7m-7 4h4M3 7v12a4 4 0 0 0 4 4\"/></svg>","calendar":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"5\" width=\"18\" height=\"16\" rx=\"2\"/><path d=\"M7 3v4m10-4v4M3 10h18m-14 4h2m3 0h2m3 0h1m-11 3h2m3 0h2\"/></svg>","image":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"3\" width=\"18\" height=\"18\" rx=\"3\"/><circle cx=\"8.5\" cy=\"8.5\" r=\"1.5\"/><path d=\"m3 17 5-5 4 4 4-6 5 7\"/></svg>","person":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1\"/></svg>","layout":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"16\" rx=\"2\"/><path d=\"M3 9h18m-12 0v11\"/></svg>","photos":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"7\" y=\"3\" width=\"14\" height=\"14\" rx=\"2\"/><path d=\"M3 8v11a2 2 0 0 0 2 2h11m-9-7 4-4 3 3 3-5 4 5\"/></svg>","radar":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 7a5 5 0 1 0 5 5m-5 0 7-7\"/><circle cx=\"12\" cy=\"12\" r=\"1\"/></svg>","chart":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 4v16h16M8 16v-4m5 4V8m5 8V5\"/></svg>","hook":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M13 7v10a4 4 0 0 1-8 0v-3l3 2m5-9a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z\"/></svg>","settings":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"3\"/><path d=\"m9 3-1 3-3 1-2 4 2 2v4l3 2 3-1 3 2 4-2v-3l3-3-2-4-3-1-1-3Z\"/></svg>","menu":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 6h16M4 12h16M4 18h16\"/></svg>","activity":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 12h4l3-7 4 14 3-7h4\"/></svg>","search":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"10\" cy=\"10\" r=\"6\"/><path d=\"m14.5 14.5 5 5\"/></svg>","arrow":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 12h15m-6-6 6 6-6 6\"/></svg>","spark":"<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 2c0 6 4 10 10 10-6 0-10 4-10 10 0-6-4-10-10-10 6 0 10-4 10-10Z\"/></svg>"};
 const STATUS = { review: 'À valider', approved: 'Programmé', published: 'Publié', draft: 'Brouillon', rejected: 'À refaire' };
 const PLACEHOLDER = /\[À COMPLÉTER/i;
@@ -25,7 +25,10 @@ const store = {
 const ui = {
   data: null,
   clientId: store.get('clientId', null),
-  view: new URLSearchParams(location.search).get('view') === 'inspiration' ? 'inspiration' : store.get('view', 'atelier'),
+  view: new URLSearchParams(location.search).get('view') === 'inspiration' ? 'veille' : store.get('view', 'atelier'),
+  veilleTab: store.get('veilleTab', 'posts'),
+  clientTab: 'audit',
+  watch: { filter: 'todo', author: '', q: '', sort: 'top', page: 1, open: new Set(), detail: new Set() },
   filter: 'review',
   detailId: null,
   studioPost: null,
@@ -117,7 +120,7 @@ function toast(msg, isError = false) {
 
 class AuthError extends Error {}
 // Les appels IA longs passent par une tâche d'arrière-plan (Netlify coupe les requêtes normales à 30 s).
-const LONG_API = /^\/api\/(jobs-test|generate|agent\/run|plan|write|hooks\/ideas|hooks\/generate|hooks\/optimize|study|veille\/paste|veille\/structures|banners\/(suggest|analyze|chat|palettes)|profile\/audit|visuals\/plan|visuals\/item|visuals\/[^/]+\/(chat|design-page|redesign)|images|posts\/[^/]+\/(design|hooks|chat|visual|visual-from|quality|action|feedback|rewrite|image\/generate|image\/auto))$/;
+const LONG_API = /^\/api\/(clients\/[^/]+\/decline|jobs-test|generate|agent\/run|plan|write|hooks\/ideas|hooks\/generate|hooks\/optimize|study|veille\/paste|veille\/structures|banners\/(suggest|analyze|chat|palettes)|profile\/audit|visuals\/plan|visuals\/item|visuals\/[^/]+\/(chat|design-page|redesign)|images|posts\/[^/]+\/(design|hooks|chat|visual|visual-from|quality|action|feedback|rewrite|image\/generate|image\/auto))$/;
 async function api(method, url, body) {
   if (method === 'POST' && LONG_API.test(url)) return apiLong(method, url, body);
   return apiDirect(method, url, body);
@@ -183,8 +186,12 @@ function render() {
     + '<option value="__new">+ Nouveau client…</option>';
   if (!client()) ui.view = 'settings';
   $('#location').textContent = PAGE_NAMES[ui.view] || PAGE_NAMES.create;
+  // Anciennes pages : elles vivent maintenant dans l'un des 5 espaces ou dans la fiche client.
+  const ALIAS = { inspiration: ['veille', 'posts'], marketmap: ['veille', 'carte'], study: ['veille', 'carte'], marche: ['veille', 'posts'], audit: ['client', 'audit'], writing: ['client', 'prefs'], refine: ['client', 'prefs'], adn: ['client', 'adn'], posts: ['calendar'], create: ['atelier'], visuals: ['images'] };
+  if (ALIAS[ui.view]) { const [v, tab] = ALIAS[ui.view]; ui.view = v; if (v === 'veille' && tab) ui.veilleTab = tab; if (v === 'client' && tab) ui.clientTab = tab; }
+  const NAV_PARENT = { hooks: 'atelier', hooksLib: 'atelier', studyFull: 'veille' };
   document.querySelectorAll('[data-view]').forEach((button) => {
-    const active = button.dataset.view === ui.view;
+    const active = button.dataset.view === (NAV_PARENT[ui.view] || ui.view);
     button.classList.toggle('active', active);
     if (active) button.setAttribute('aria-current', 'page');
     else button.removeAttribute('aria-current');
@@ -198,7 +205,7 @@ function render() {
   const c = client();
   $('#banner').innerHTML = c && !c.linkedin.connected && ['create', 'posts'].includes(ui.view)
     ? `<div class="banner">Le LinkedIn de ${esc(c.name)} n'est pas connecté : les posts seront prêts mais pas publiés. <a href="#" data-action="go" data-id="settings">Le connecter</a></div>` : '';
-  ({ atelier: renderAtelier, marche: renderMarche, create: renderCreate, hooks: renderHookBank, posts: renderPosts, calendar: renderCalendar, adn: renderAdn, inspiration: renderInspiration, audit: () => showAudit(view, c, api, esc), marketmap: () => showMarketMap(view, c, ui.data, esc), writing: () => showWriting(view, c, api, esc), refine: renderRefine, hooksLib: renderHooks, banner: renderBannerView, visuals: renderVisualsView, images: renderImages, veille: renderVeille, study: renderStudy, settings: renderSettings }[ui.view] || renderCreate)();
+  ({ atelier: renderAtelier, marche: renderMarche, create: renderCreate, hooks: renderHookBank, posts: renderPosts, calendar: renderCalendar, adn: renderAdn, inspiration: renderInspiration, audit: () => showAudit(view, c, api, esc), marketmap: () => showMarketMap(view, c, ui.data, esc), writing: () => showWriting(view, c, api, esc), refine: renderRefine, hooksLib: renderHooks, banner: renderBannerView, visuals: renderVisualsView, images: renderImages, veille: renderVeilleHub, client: renderClientHub, studyFull: renderStudy, study: renderStudy, settings: renderSettings }[ui.view] || renderCreate)();
   enhanceVoice(view);
   renderDrawer();
 }
@@ -609,7 +616,7 @@ function renderImages() {
   view.innerHTML = `
   <header class="page-heading"><div><div class="eyebrow">VISUELS</div><h1>Visuels de ${esc(c.name)}</h1><p>Une direction artistique par profil : mêmes couleurs, même forme, et seul le fond change d'un visuel à l'autre. Les visuels concurrents servent d'inspiration pour la forme.</p></div></header>
   ${j ? `<div class="row" style="margin-bottom:12px"><div class="progress"><span style="width:${Math.round((100 * j.done) / j.total)}%"></span></div><span class="small">${esc(j.step)}</span></div>` : ''}
-  <section class="card stack">
+  <section class="card stack da-card">
     <div class="row between"><h3 style="margin:0">🎨 Direction artistique (DA)</h3><button class="btn primary sm" data-action="da-save" ${ui.daDraft ? '' : 'disabled'}>Enregistrer la DA</button></div>
     <p class="small" style="margin:0">2 couleurs, 3 au maximum. Elles servent à tous les visuels de ${esc(c.name)} créés dans l'Atelier.</p>
     <div class="row da-colors">${[0, 1, 2].map((i) => `<label class="da-color"><input type="color" data-da-color="${i}" value="${da.colors[i] || '#cccccc'}" ${i === 2 && !da.colors[2] ? 'data-empty="1"' : ''}><span>${['Couleur principale', 'Couleur 2', 'Couleur 3 (option)'][i]}</span>${i === 2 && da.colors[2] ? '<button class="btn ghost sm" data-action="da-drop3">✕</button>' : ''}</label>`).join('')}</div>
@@ -757,6 +764,16 @@ function renderInspiration() {
 }
 
 const watchChoices = new Map();
+// Enregistre un avis sur un post de veille pour le client affiché, sans recharger toute la base.
+async function saveRefVote(id, patch) {
+  const owner = client();
+  const r = await api('POST', `/api/clients/${owner.id}/watch-vote`, { refId: id, ...patch });
+  owner.adn ||= {}; const w = (owner.adn.writing ||= {}); w.refVotes ||= {}; w.votes ||= {};
+  const key = JSON.stringify(['ref-' + id, '', '']);
+  if (r.vote) { w.refVotes[id] = r.vote; w.votes[key] = { ...(w.votes[key] || {}), rating: r.vote.rating, dimension: 'Référence' }; }
+  else { delete w.refVotes[id]; delete w.votes[key]; }
+  if (ui.clientId === owner.id) render();
+}
 function watchChoiceCard() {
   const owner = client();
   const refs = ui.data.veille.filter(post => post.text && (post.clientId === owner.id || (!post.clientId && sameNiche(post.niche, owner.niche))));
@@ -777,6 +794,153 @@ function watchChoiceCard() {
       '" data-action="watch-vote" data-id="' + esc(ref.id) + '" data-rating="' + rating + '">' + label + '</button>').join('') +
     (vote > 0 ? '<button class="btn primary" data-action="write-from-watch" data-id="' + esc(ref.id) + '">Décliner pour mon activité →</button>' : '') +
     '</div><p class="small">La déclinaison utilisera ton activité, ta cible et tes préférences. Tu la retrouveras dans l’Atelier.</p></section>';
+}
+
+// ================= VEILLE : tout ce qui vient des concurrents, au même endroit =================
+// Posts de veille du client affiché, sans doublons (un même post collé à la main puis récupéré par la collecte n'apparaît qu'une fois ; la version la plus complète est gardée).
+const watchRefs = () => {
+  const o = client();
+  const seen = new Map();
+  for (const v of ui.data.veille) {
+    if (!v.text || !(v.clientId === o.id || (!v.clientId && (!v.niche || sameNiche(v.niche, o.niche))))) continue;
+    const key = v.text.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim().slice(0, 90);
+    const prev = seen.get(key);
+    const rich = (x) => (x.url ? 2 : 0) + (x.images?.length ? 2 : 0) + (x.text.length > (prev?.text.length || 0) ? 1 : 0) + (refVote(x.id) ? 8 : 0);
+    if (!prev || rich(v) > rich(prev)) seen.set(key, v);
+  }
+  return [...seen.values()];
+};
+const refVote = (id) => { const w = client().adn?.writing || {}; return w.refVotes?.[id] || (w.votes?.[JSON.stringify(['ref-' + id, '', ''])]?.rating ? { rating: w.votes[JSON.stringify(['ref-' + id, '', ''])].rating, liked: [], disliked: [] } : null); };
+const WATCH_ASPECTS = ['Hook', 'Ton', 'Longueur', 'Rythme', 'Structure', 'Histoire', 'Provocation', 'Valeur', 'Conclusion', 'CTA', 'Vocabulaire'];
+const refDate = (v) => { const d = new Date(v.postedAt || NaN); return Number.isNaN(+d) ? '' : d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }); };
+const VEILLE_TABS = [['posts', 'Posts'], ['hasard', '🎲 Au hasard'], ['visuels', 'Visuels & carrousels'], ['bannieres', 'Bannières'], ['carte', 'Carte du marché'], ['sources', 'Sources']];
+
+function hubTabs(list, current, action) {
+  return `<div class="chips hub-tabs" role="tablist">${list.map(([k, l]) => `<button class="chip ${current === k ? 'on' : ''}" role="tab" aria-selected="${current === k}" data-action="${action}" data-id="${k}">${l}</button>`).join('')}</div>`;
+}
+
+function watchCard(ref, { full = false } = {}) {
+  const v = refVote(ref.id);
+  const rating = v?.rating || 0;
+  const open = full || ui.watch.open.has(ref.id);
+  const long = ref.text.length > 520;
+  const pics = (ref.images || []).filter((u) => typeof u === 'string' && /^https:\/\//i.test(u));
+  const detail = ui.watch.detail.has(ref.id);
+  const busy = ui.job?.kind === 'decline' && ui.job.refId === ref.id;
+  const lines = v?.lines || [];
+  return `<article class="card watch-card ${rating > 0 ? 'liked' : rating < 0 ? 'rejected' : ''}" id="ref-${esc(ref.id)}">
+    <header class="watch-head"><div><strong>${esc(ref.author || 'Auteur non renseigné')}</strong>
+      <div class="small">${[refDate(ref), `${Number(ref.likes) || 0} réactions`, `${Number(ref.comments) || 0} commentaires`, ref.isDocument ? 'carrousel' : pics.length ? 'avec visuel' : ''].filter(Boolean).join(' · ')}</div></div>
+      ${ref.url && /^https:\/\//i.test(ref.url) ? `<a class="small" href="${esc(ref.url)}" target="_blank" rel="noopener noreferrer">Post d’origine ↗</a>` : ''}</header>
+    <div class="watch-text ${open || !long ? '' : 'folded'}">${detail
+      ? ref.text.split(/\n/).map((l) => { const t = l.trim(); if (!t) return '<br>'; const a = lines.find((x) => x.text === t); return `<button class="watch-line ${a ? (a.liked ? 'up' : 'down') : ''}" data-action="watch-line" data-id="${esc(ref.id)}" data-line="${esc(t)}" title="${a ? esc(a.reason || (a.liked ? 'aimée' : 'rejetée')) : 'Donner un avis sur cette phrase'}">${esc(l)}</button>`; }).join('')
+      : esc(ref.text)}</div>
+    ${long && !full ? `<button class="btn ghost sm" data-action="watch-open" data-id="${esc(ref.id)}">${open ? 'Replier' : 'Lire tout le post'}</button>` : ''}
+    ${pics.length ? `<div class="watch-media">${pics.slice(0, 6).map((u) => `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer"><img src="${esc(u)}" alt="Visuel du post" loading="lazy" referrerpolicy="no-referrer" onerror="this.closest('a').remove()"></a>`).join('')}</div>` : ''}
+    <div class="watch-votes">${[[-1, '👎 Je n’aime pas'], [1, '👍 J’aime'], [2, '❤️ J’adore']].map(([r, l]) => `<button class="btn sm ${rating === r ? 'primary' : 'soft'}" aria-pressed="${rating === r}" data-action="watch-vote" data-id="${esc(ref.id)}" data-rating="${r}">${l}</button>`).join('')}
+      ${rating ? `<button class="btn ghost sm" data-action="watch-detail" data-id="${esc(ref.id)}">${detail ? 'Fermer' : 'Préciser (facultatif)'}</button>` : ''}</div>
+    ${rating && detail ? `<div class="watch-detail stack">
+      <div class="small">Clique sur une dimension : une fois = j’aime, deux fois = je n’aime pas. Tu peux aussi cliquer une phrase du post.</div>
+      <div class="chips">${WATCH_ASPECTS.map((a) => `<button class="chip sm ${v.liked?.includes(a) ? 'on' : v.disliked?.includes(a) ? 'off' : ''}" data-action="watch-aspect" data-id="${esc(ref.id)}" data-aspect="${a}">${v.liked?.includes(a) ? '👍 ' : v.disliked?.includes(a) ? '👎 ' : ''}${a}</button>`).join('')}</div>
+      <input data-watch-note="${esc(ref.id)}" value="${esc(v.note || '')}" placeholder="Une remarque (facultatif) : ex. j’aime l’attaque sur l’argent, trop long à la fin">
+    </div>` : ''}
+    ${rating > 0 ? `<button class="btn primary" data-action="watch-decline" data-id="${esc(ref.id)}" ${ui.job && !ui.job.finished ? 'disabled' : ''}>${busy ? esc(ui.job.step) : 'Décliner pour mon activité →'}</button>` : ''}
+  </article>`;
+}
+
+function renderWatchPosts() {
+  const o = client();
+  const all = watchRefs();
+  const w = ui.watch;
+  const authors = [...new Set(all.map((r) => r.author).filter(Boolean))].sort();
+  const count = { todo: all.filter((r) => !refVote(r.id)).length, liked: all.filter((r) => refVote(r.id)?.rating > 0).length, rejected: all.filter((r) => refVote(r.id)?.rating < 0).length };
+  const q = w.q.trim().toLowerCase();
+  const list = all.filter((r) => (w.filter === 'all' || (w.filter === 'todo' ? !refVote(r.id) : w.filter === 'liked' ? refVote(r.id)?.rating > 0 : refVote(r.id)?.rating < 0))
+    && (!w.author || r.author === w.author) && (!q || r.text.toLowerCase().includes(q)))
+    .sort((a, b) => (w.sort === 'recent' ? String(b.postedAt || b.createdAt || '').localeCompare(String(a.postedAt || a.createdAt || '')) : engagement(b) - engagement(a)));
+  const per = 12;
+  const shown = list.slice(0, w.page * per);
+  return `<p class="sub">${all.length} vrais posts de la veille de ${esc(o.name)}. Dis simplement ce qui te plaît : chaque « J’aime » peut devenir un brouillon pour ton activité.</p>
+    <div class="row watch-filters">
+      <div class="chips">${[['todo', `À noter (${count.todo})`], ['liked', `Aimés (${count.liked})`], ['rejected', `Rejetés (${count.rejected})`], ['all', `Tous (${all.length})`]].map(([k, l]) => `<button class="chip ${w.filter === k ? 'on' : ''}" data-action="watch-filter" data-id="${k}">${l}</button>`).join('')}</div>
+      <select id="watchAuthor" aria-label="Auteur"><option value="">Tous les auteurs</option>${authors.map((a) => `<option ${a === w.author ? 'selected' : ''}>${esc(a)}</option>`).join('')}</select>
+      <select id="watchSort" aria-label="Tri"><option value="top" ${w.sort === 'top' ? 'selected' : ''}>Les plus commentés et aimés</option><option value="recent" ${w.sort === 'recent' ? 'selected' : ''}>Les plus récents</option></select>
+      <input id="watchSearch" type="search" placeholder="Chercher un mot…" value="${esc(w.q)}" style="max-width:200px">
+    </div>
+    ${shown.length ? `<div class="watch-feed">${shown.map((r) => watchCard(r)).join('')}</div>
+      ${list.length > shown.length ? `<div class="row" style="justify-content:center;margin-top:16px"><button class="btn" data-action="watch-more">Afficher 12 posts de plus (${list.length - shown.length} restants)</button></div>` : ''}`
+      : `<div class="card empty">${all.length ? 'Aucun post dans ce filtre.' : `Aucun post de veille pour ${esc(o.name)}. Va dans « Sources » : ajoute les profils LinkedIn de ses concurrents (collecte automatique) ou colle des posts à la main.`} ${all.length ? '' : '<br><button class="btn primary sm" style="margin-top:10px" data-action="veille-tab" data-id="sources">Ouvrir les sources</button>'}</div>`}`;
+}
+
+function renderWatchRandom() {
+  const all = watchRefs();
+  let ref = all.find((r) => r.id === watchChoices.get(client().id));
+  if (!ref) { ref = pickWatchReference(all, client().adn?.writing?.votes); if (ref) watchChoices.set(client().id, ref.id); }
+  if (!ref) return '<div class="card empty">Aucun post de veille à proposer. Alimente la veille dans « Sources ».</div>';
+  return `<p class="sub">Un post à la fois, en commençant par ceux que tu n’as pas encore notés.</p>
+    <div class="watch-one">${watchCard(ref, { full: true })}<div class="row" style="justify-content:flex-end"><button class="btn" data-action="watch-next">Autre post →</button></div></div>`;
+}
+
+function renderVeilleHub() {
+  const c = client();
+  const tab = VEILLE_TABS.some(([k]) => k === ui.veilleTab) ? ui.veilleTab : 'posts';
+  const head = `<header class="page-heading"><div><div class="eyebrow">VEILLE</div><h1>Ce que font les meilleurs</h1></div></header>${hubTabs(VEILLE_TABS, tab, 'veille-tab')}`;
+  if (tab === 'posts') { view.innerHTML = head + renderWatchPosts(); return; }
+  if (tab === 'hasard') { view.innerHTML = head + renderWatchRandom(); return; }
+  if (tab === 'bannieres') { view.innerHTML = head + '<p class="sub">Les bannières de référence. Un scraper de posts ne récupère pas les bannières : elles s’ajoutent ici par import (capture d’écran).</p>' + inspirationsCard('banner'); return; }
+  if (tab === 'visuels') { renderImages(); view.querySelector('.page-heading')?.remove(); view.querySelector('.da-card')?.remove(); view.insertAdjacentHTML('afterbegin', head + '<p class="sub">Les visuels et carrousels des concurrents : récupérés par la collecte ou déposés par toi. Ils servent de modèles dans l’Atelier.</p>'); return; }
+  if (tab === 'carte') { showMarketMap(view, c, ui.data, esc); view.insertAdjacentHTML('afterbegin', head); view.insertAdjacentHTML('beforeend', '<div class="row" style="margin-top:16px"><button class="btn ghost sm" data-action="go" data-id="studyFull">Voir l’étude chiffrée détaillée →</button></div>'); return; }
+  renderVeilleSources(); view.querySelector('h2')?.remove(); view.insertAdjacentHTML('afterbegin', head);
+}
+
+// ================= FICHE CLIENT : audit, préférences, profil, charte =================
+const CLIENT_TABS = [['audit', 'Audit'], ['prefs', 'Préférences'], ['adn', 'Profil détaillé'], ['charte', 'Charte graphique']];
+function prefsCard(c) {
+  const notes = c.adn?.writing?.notes || [];
+  const lessons = c.adn?.lessons || [];
+  const votes = Object.values(c.adn?.writing?.refVotes || {});
+  const agg = {};
+  for (const v of votes) { for (const a of v.liked || []) (agg[a] ||= [0, 0])[0]++; for (const a of v.disliked || []) (agg[a] ||= [0, 0])[1]++; }
+  return `<section class="card stack">
+    <h3 style="margin:0">Ce que ${esc(c.name)} a confirmé</h3>
+    <p class="small" style="margin:0">Ces phrases priment sur tout le reste. Écris-les comme tu les dirais : « J’aime les hooks qui parlent d’argent quand le sujet s’y prête », « Pas d’invitation commerciale à la fin ».</p>
+    ${notes.map((n) => `<div class="row between vitem"><span>${esc(n.text)}</span><button class="btn ghost sm danger" data-action="note-del" data-id="${n.id}" aria-label="Retirer">✕</button></div>`).join('') || '<p class="small" style="margin:0">Aucune préférence confirmée pour l’instant.</p>'}
+    <div class="row"><input id="noteText" placeholder="Une préférence, avec tes mots" style="flex:1;min-width:200px"><button class="btn sm" data-action="note-add">Ajouter</button></div>
+  </section>
+  <section class="card stack">
+    <h3 style="margin:0">Ce que les votes montrent <span class="small">(déductions, pas des règles)</span></h3>
+    <p class="small" style="margin:0">${votes.filter((v) => v.rating > 0).length} posts aimés, ${votes.filter((v) => v.rating < 0).length} rejetés. <a href="#" data-action="veille-liked">Revoir les posts aimés</a></p>
+    ${Object.keys(agg).length ? `<div class="chips">${Object.entries(agg).map(([a, [up, down]]) => `<span class="chip sm">${a} : 👍 ${up} · 👎 ${down} <i class="small">(${up + down >= 4 ? 'confiance élevée' : up + down >= 2 ? 'moyenne' : 'faible'})</i></span>`).join('')}</div>` : '<p class="small" style="margin:0">Précise ce que tu aimes dans quelques posts (bouton « Préciser ») pour voir apparaître des tendances.</p>'}
+  </section>
+  ${lessons.length ? `<section class="card stack"><h3 style="margin:0">Critiques faites sur les posts (${lessons.length})</h3>
+    <p class="small" style="margin:0">Les 12 plus récentes sont transmises à l’IA comme de simples remarques. Trie-les : 🪝 si c’est un hook que tu aimes, 📌 si c’est une vraie préférence, ✕ sinon.</p>
+    ${lessons.some((l) => !/\b(pas|jamais|toujours|trop|évite|plus de|moins de|ne |n’|n')/i.test(l.text)) ? `<button class="btn soft sm" data-action="lessons-to-hooks" style="align-self:flex-start">🪝 Ranger dans mes hooks toutes les phrases qui ne sont pas des consignes (${lessons.filter((l) => !/\b(pas|jamais|toujours|trop|évite|plus de|moins de|ne |n’|n')/i.test(l.text)).length})</button>` : ''}
+    ${lessons.slice().reverse().map((l) => `<div class="row between vitem"><span class="small">${esc(l.text)}</span><span class="row" style="gap:2px"><button class="btn ghost sm" data-action="lesson-hook" data-id="${l.id}" title="C’est un hook que j’aime, pas une règle : le ranger dans mes hooks">🪝</button><button class="btn ghost sm" data-action="lesson-confirm" data-id="${l.id}" title="Confirmer comme préférence">📌</button><button class="btn ghost sm danger" data-action="lesson-del" data-id="${l.id}" aria-label="Retirer">✕</button></span></div>`).join('')}</section>` : ''}`;
+}
+function renderClientHub() {
+  const c = client();
+  const tab = CLIENT_TABS.some(([k]) => k === ui.clientTab) ? ui.clientTab : 'audit';
+  const head = `<header class="page-heading"><div><div class="eyebrow">FICHE CLIENT</div><h1>${esc(c.name)}</h1><p>Ce que l’IA sait de ce client : son activité, ses goûts, son profil et sa charte.</p></div>
+    <div class="row heading-actions"><button class="btn ghost sm" data-action="go" data-id="settings">⚙ Réglages</button></div></header>${hubTabs(CLIENT_TABS, tab, 'client-tab')}`;
+  if (tab === 'audit') { showAudit(view, c, api, esc); view.insertAdjacentHTML('afterbegin', head); return; }
+  if (tab === 'adn') { renderAdn(); view.insertAdjacentHTML('afterbegin', head); return; }
+  if (tab === 'charte') { renderImages(); view.querySelector('.page-heading')?.remove(); view.querySelector('.vis-lanes')?.remove(); view.insertAdjacentHTML('afterbegin', head); return; }
+  view.innerHTML = head + prefsCard(c) + '<details class="card"><summary><b>Calibrage détaillé</b> <span class="small">(tutoiement, emojis, longueur, ton… étape par étape)</span></summary><div id="writingHost" style="margin-top:12px"></div></details>';
+  view.querySelector('details').addEventListener('toggle', (e) => { if (e.currentTarget.open && !e.currentTarget.dataset.loaded) { e.currentTarget.dataset.loaded = '1'; showWriting($('#writingHost'), c, api, esc); } });
+}
+
+// Provenance et contrôles d'un brouillon décliné (affichés dans l'Atelier).
+function provenanceCard(p) {
+  const i = p.inspiration; const qc = p.qc;
+  if (!i && !qc) return '';
+  const warn = qc && (qc.issues?.length || qc.numbers?.length);
+  return `${i ? `<div class="prov"><b>Décliné d’un post de ${esc(i.author || 'la veille')}</b>${i.likes ? ` <span class="small">(${i.likes} réactions)</span>` : ''}
+      ${i.borrowed ? `<div class="small">Repris de la référence : ${esc(i.borrowed)}</div>` : ''}
+      <div class="row"><button class="btn ghost sm" data-action="watch-show" data-id="${esc(i.id)}">Revoir la référence</button>${i.url ? `<a class="small" href="${esc(i.url)}" target="_blank" rel="noopener noreferrer">Post d’origine ↗</a>` : ''}</div></div>` : ''}
+    ${qc ? `<div class="alert ${warn ? 'warn' : 'ok'} qc"><b>${warn ? 'À vérifier avant de valider' : 'Contrôle : rien à signaler'}</b> <span class="small">(relecture par l’IA : une aide, pas une garantie)</span>
+      ${(qc.issues || []).map((x) => `<div class="small">• <b>${esc(x.type)}</b> : « ${esc(x.quote)} » ${esc(x.why)}</div>`).join('')}
+      ${qc.numbers?.length ? `<div class="small">• Chiffres absents de la fiche client, à confirmer : ${qc.numbers.map(esc).join(', ')}</div>` : ''}
+      ${qc.missing?.length ? `<div class="small">Pour un post plus fort, il manquait : ${qc.missing.map(esc).join(' · ')}</div>` : ''}</div>` : ''}`;
 }
 
 function renderCalendar() {
@@ -809,7 +973,7 @@ function renderCalendar() {
           ${p.status !== 'published' ? `<button class="btn ghost sm" data-action="open-atelier" data-id="${p.id}" title="Ouvrir dans l'Atelier">✎</button>` : ''}
         </div>`).join('') : '<p class="empty">Aucun post ici.</p>'}</div>
     </aside>
-    <div class="cal-main">${watchChoiceCard()}${calendarMarkup({ posts, cursor: ui.calCursor, mode: ui.calMode, statuses: STATUS, esc })}</div>
+    <div class="cal-main">${calendarMarkup({ posts, cursor: ui.calCursor, mode: ui.calMode, statuses: STATUS, esc })}</div>
   </div>`;
 }
 
@@ -878,9 +1042,9 @@ function renderSearch() {
 function setMobileMenu(open, restoreFocus = false) {
   document.body.classList.toggle('menu-open', open);
   const button = $('.mobile-nav [data-action="mobile-menu"]');
-  button.setAttribute('aria-expanded', String(open));
+  button?.setAttribute('aria-expanded', String(open));
   if (open) $('#tabs [aria-current="page"], #tabs button')?.focus();
-  if (restoreFocus) button.focus();
+  if (restoreFocus) button?.focus();
 }
 
 function imagePanel(p) {
@@ -1055,6 +1219,12 @@ function atHookStep(p, c) {
         <span class="row"><button class="btn sm ghost" data-action="manual-use" data-id="post" ${manual.trim() ? '' : 'disabled'}>Le retravailler d'abord</button><button class="btn primary sm" id="manualSave" data-action="manual-use" data-id="visual" ${manual.trim() ? '' : 'disabled'}>Faire le visuel →</button></span></div>
     </section>
   </div>
+  <section class="at-node stack" style="margin-top:14px">
+    <header class="at-head"><span class="at-step">♥</span><h3>Partir d’un post de veille que j’aime</h3><button class="btn ghost sm" data-action="veille-tab" data-id="posts">Ouvrir la veille →</button></header>
+    ${(() => { const liked = watchRefs().filter((r) => refVote(r.id)?.rating > 0).sort((a, b) => (refVote(b.id).rating - refVote(a.id).rating)).slice(0, 4);
+      return liked.length ? `<div class="hk-list">${liked.map((r) => `<div class="hk-row"><div><div class="hk-text">${esc(r.text.split('\n')[0].slice(0, 120))}</div><div class="small">${esc(r.author || '')} · ${Number(r.likes) || 0} réactions</div></div><button class="btn primary sm" style="flex:none" data-action="watch-decline" data-id="${esc(r.id)}" ${busy ? 'disabled' : ''}>Décliner →</button></div>`).join('')}</div>`
+        : '<p class="small" style="margin:0">Aucun post aimé pour l’instant. Va dans la Veille, dis ce qui te plaît, puis « Décliner pour mon activité ».</p>'; })()}
+  </section>
   <div style="margin-top:14px">${teachCard(c, { open: false })}</div>`;
 }
 
@@ -1065,6 +1235,7 @@ function atPostStep(p, c) {
     <section class="at-node stack">
       <header class="at-head"><span class="at-step">2</span><h3>Le post</h3><span class="row" style="gap:4px">${pillarTag(p.pillar)}<span class="badge s-${p.status}">${STATUS[p.status]}</span></span></header>
       <div class="chips">${Object.entries(PILLAR_NAMES).map(([k, l]) => `<button class="chip sm ${p.pillar === k ? 'on' : ''}" data-action="set-pillar" data-id="${p.id}" data-pillar="${k}">${l}</button>`).join('')}</div>
+      ${provenanceCard(p)}
       ${postEditor(p)}${writingPostRating(p)}
       ${PLACEHOLDER.test(p.text) ? '<div class="alert warn">Complète les [À COMPLÉTER] avant de valider.</div>' : ''}
       <div class="row between">${p.versions?.length ? `<button class="btn ghost sm" data-action="undo" data-id="${p.id}">↶ Version précédente</button>` : '<span></span>'}
@@ -1799,7 +1970,7 @@ function agentCard() {
   </section>`;
 }
 
-function renderVeille() {
+function renderVeilleSources() {
   const niche = currentNiche();
   const items = byAuthor(ui.data.veille.filter((v) => sameNiche(v.niche, niche)), ui.author).sort((a, b) => engagement(b) - engagement(a));
   const j = ui.job?.kind === 'paste' ? ui.job : null;
@@ -2133,6 +2304,59 @@ function chunkText(text, size = 6_000) {
 }
 
 const actions = {
+  'veille-tab'(t) { ui.veilleTab = t; store.set('veilleTab', t); ui.view = 'veille'; render(); window.scrollTo(0, 0); },
+  'client-tab'(t) { ui.clientTab = t; render(); },
+  'veille-liked'() { ui.watch.filter = 'liked'; ui.watch.page = 1; actions['veille-tab']('posts'); },
+  'watch-filter'(f) { ui.watch.filter = f; ui.watch.page = 1; render(); },
+  'watch-more'() { ui.watch.page++; render(); },
+  'watch-open'(id) { if (ui.watch.open.has(id)) ui.watch.open.delete(id); else ui.watch.open.add(id); render(); },
+  'watch-detail'(id) { if (ui.watch.detail.has(id)) ui.watch.detail.delete(id); else { ui.watch.detail.add(id); ui.watch.open.add(id); } render(); },
+  'watch-show'(id) { ui.watch.filter = 'all'; ui.watch.author = ''; ui.watch.q = ''; watchChoices.set(ui.clientId, id); actions['veille-tab']('hasard'); },
+  async 'watch-aspect'(id, btn) {
+    const v = refVote(id) || {}; const a = btn.dataset.aspect;
+    let liked = (v.liked || []).filter((x) => x !== a); let disliked = (v.disliked || []).filter((x) => x !== a);
+    if (!(v.liked || []).includes(a) && !(v.disliked || []).includes(a)) liked.push(a); else if ((v.liked || []).includes(a)) disliked.push(a);
+    await saveRefVote(id, { liked, disliked });
+  },
+  async 'watch-line'(id, btn) {
+    const text = btn.dataset.line;
+    const cur = (refVote(id)?.lines || []).find((l) => l.text === text);
+    const answer = await ask({ title: 'Ton avis sur cette phrase', submit: 'Enregistrer', fields: [
+      { name: 'liked', label: `« ${esc(text.slice(0, 140))} »`, options: [{ value: 'yes', label: '👍 J’aime cette phrase' }, { value: 'no', label: '👎 Je n’aime pas cette phrase' }, ...(cur ? [{ value: 'remove', label: 'Retirer mon avis' }] : [])] },
+      { name: 'reason', label: 'Pourquoi ? (facultatif)', value: cur?.reason || '' },
+    ] });
+    if (!answer) return;
+    await saveRefVote(id, { line: { text, liked: answer.liked !== 'no', reason: answer.reason, remove: answer.liked === 'remove' } });
+  },
+  async 'watch-decline'(id) {
+    if (ui.job && !ui.job.finished) throw new Error('Un traitement est déjà en cours.');
+    if (!ui.data.settings.hasOpenaiKey) throw new Error('Ajoute ta clé OpenAI dans Réglages.');
+    const clientId = ui.clientId;
+    const ref = ui.data.veille.find((v) => v.id === id);
+    const answer = await ask({ title: `Décliner le post de ${esc(ref?.author || 'la veille')}`, submit: 'Créer le brouillon', fields: [
+      { name: 'subject', label: 'Ton sujet (facultatif)', placeholder: 'Vide = choisi dans ta fiche client' },
+    ] });
+    if (!answer) return;
+    ui.job = { kind: 'decline', refId: id, total: 1, done: 0, step: 'Analyse du post, puis rédaction… (1 à 2 min)' };
+    render();
+    try {
+      const r = await api('POST', `/api/clients/${clientId}/decline`, { refId: id, subject: answer.subject });
+      ui.job = null;
+      await refresh();
+      if (ui.clientId === clientId) { ui.studioPost = r.post.id; ui.atStep[r.post.id] = 'post'; actions.go('atelier'); toast('Brouillon créé : relis-le et critique-le dans l’Atelier.'); }
+    } finally { ui.job = null; render(); }
+  },
+  async 'lesson-hook'(lid) { const l = (client().adn?.lessons || []).find((x) => x.id === lid); if (!l) return; await api('POST', `/api/clients/${ui.clientId}/teach`, { hooks: l.text }); await api('DELETE', `/api/clients/${ui.clientId}/lessons/${lid}`); await refresh(); toast('Rangé dans tes hooks aimés'); },
+  async 'lessons-to-hooks'() {
+    const list = (client().adn?.lessons || []).filter((l) => !/\b(pas|jamais|toujours|trop|évite|plus de|moins de|ne |n’|n')/i.test(l.text));
+    if (!list.length) return;
+    await api('POST', `/api/clients/${ui.clientId}/teach`, { hooks: list.map((l) => l.text).join('\n') });
+    for (const l of list) await api('DELETE', `/api/clients/${ui.clientId}/lessons/${l.id}`);
+    await refresh(); toast(`${list.length} phrases rangées dans tes hooks aimés`);
+  },
+  async 'note-add'() { const t = ($('#noteText')?.value || '').trim(); if (!t) return; await api('PUT', `/api/clients/${ui.clientId}/notes`, { add: t }); await refresh(); },
+  async 'note-del'(id) { await api('PUT', `/api/clients/${ui.clientId}/notes`, { remove: id }); await refresh(); },
+  async 'lesson-confirm'(lid) { const l = (client().adn?.lessons || []).find((x) => x.id === lid); if (!l) return; await api('PUT', `/api/clients/${ui.clientId}/notes`, { add: l.text }); await api('DELETE', `/api/clients/${ui.clientId}/lessons/${lid}`); await refresh(); toast('Confirmée comme préférence'); },
   async 'watch-refresh'(id, button) {
     button.disabled = true;
     button.textContent = 'Récupération…';
@@ -2150,17 +2374,13 @@ const actions = {
     render();
   },
   async 'watch-vote'(id, button) {
-    const owner = client();
-    button.disabled = true;
-    try {
-      const state = await sendWriting(api, owner.id, { action: 'vote', id: 'ref-' + id, rating: Number(button.dataset.rating) });
-      owner.adn ||= {};
-      owner.adn.writing = state.profile;
-      if (ui.clientId === owner.id) render();
-      toast('Préférence enregistrée pour ' + owner.name);
-    } finally { button.disabled = false; }
+    const rating = Number(button.dataset.rating);
+    const same = refVote(id)?.rating === rating;
+    await saveRefVote(id, same ? { remove: true } : { rating });
+    if (!same && ui.veilleTab === 'hasard' && rating < 0) actions['watch-next']();
   },
-  async 'write-from-watch'(id, button) {
+  async 'write-from-watch'(id) { return actions['watch-decline'](id); },
+  async 'write-from-watch-old'(id, button) {
     const clientId = ui.clientId;
     const answer = await ask({ title: 'Créer à partir de ce post', submit: 'Créer le brouillon', fields: [
       { name: 'subject', label: 'Ton sujet (facultatif)', placeholder: 'Sinon, Studio choisit dans ton profil' },

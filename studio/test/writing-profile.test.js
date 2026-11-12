@@ -20,7 +20,11 @@ test('calibration et rédaction par client avec stockage et IA simulés', async 
       let content;
       if (system.startsWith('Extrais')) content = JSON.stringify({ job: 'Architecte', offer: 'Rénovation', irrelevant: 'discard' });
       else if (system.startsWith('Rédige trois')) content = JSON.stringify({ posts: [{ text: 'Une rénovation commence par un relevé.\nChoisis les usages avant les matériaux.', style: 'Conseil' }] });
-      else if (system.startsWith('Contrôle le post')) {
+      else if (system.startsWith('Tu relis un brouillon')) {
+        reviewed = true;
+        const text = JSON.parse(messages[1].content).brouillon;
+        content = JSON.stringify({ issues: /guide inexistant/i.test(text) ? [{ type: 'invention', quote: 'Demande mon guide inexistant.', why: 'Ressource non documentée.' }] : [] });
+      } else if (system.startsWith('Contrôle le post')) {
         reviewed = true;
         const text = JSON.parse(messages[1].content).post;
         content = JSON.stringify({ valid: !/guide inexistant|hier, j’ai/i.test(text), reason: 'Ressource ou anecdote non documentée.' });
@@ -82,7 +86,9 @@ test('calibration et rédaction par client avec stockage et IA simulés', async 
     await edit({ action: 'vote', id: post.id, rating: 2 });
     await call('PUT', '/clients/' + b.id + '/writing', { action: 'vote', id: post.id, rating: 2 }, 400);
     await write({ topic: 'placeholder', status: 422 });
-    await write({ topic: 'invention', status: 422 });
+    // Une invention soupçonnée ne fait plus perdre le brouillon : elle est signalée sur le post, à vérifier par un humain.
+    const flagged = await write({ topic: 'invention' });
+    assert.equal(flagged.qc.issues[0].type, 'invention');
   } finally { globalThis.fetch = originalFetch; }
 });
 import { preferredReferences, writingContext } from '../lib/writing-profile.js';
