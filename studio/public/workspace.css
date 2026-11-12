@@ -453,3 +453,28 @@ details.more summary { cursor: pointer; }
 .canva-wrap { display: grid; grid-template-columns: minmax(0, 460px) minmax(0, 1fr); gap: 14px; align-items: start; }
 .be-portrait .banner-canvas, .be-portrait canvas { aspect-ratio: 1024 / 1536; max-width: 460px; }
 @media (max-width: 900px) { .canva-wrap { grid-template-columns: minmax(0, 1fr); } }
+.writing-profile{max-width:1100px;margin-inline:auto}
+.writing-profile progress{width:100%;height:10px}
+.writing-profile>.f{max-width:40rem}
+.writing-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,16rem),1fr));gap:14px;margin-block:14px}
+.writing-card{padding:16px;border:1px solid var(--line,#8885);border-radius:12px;overflow-wrap:anywhere}
+.writing-text{white-space:pre-wrap;line-height:1.6}
+.writing-actions{display:flex;flex-wrap:wrap;gap:6px;margin-block:12px}
+.writing-line{display:block;width:100%;background:transparent;color:inherit;border:0;text-align:left;padding:7px 0;font:inherit;cursor:pointer}
+.writing-line:hover,.writing-line[aria-expanded=true]{text-decoration:underline}
+.writing-profile summary{cursor:pointer}
+.writing-profile dd{margin:0 0 12px}
+.audit-workspace{max-width:1120px;margin:auto}
+.audit-workspace progress{width:100%;height:9px;margin:24px 0}
+.audit-columns{display:grid;grid-template-columns:1.2fr 1fr;gap:24px}
+.audit-columns .card{padding:28px;border-radius:22px}
+.audit-columns textarea{min-height:170px}
+.audit-outcome{padding:18px;border-radius:14px;background:var(--surface-2)}
+.market-map{display:grid;grid-template-columns:repeat(4,minmax(240px,1fr));gap:20px;overflow-x:auto;padding:16px 0}
+.market-reference{border-top:1px solid var(--border);margin-top:18px;padding-top:12px}
+@media(max-width:750px){.audit-columns{grid-template-columns:1fr}.audit-columns .card{padding:20px}}
+.watch-choice{margin-bottom:22px}
+.watch-choice .writing-text{max-width:720px;line-height:1.7;margin:20px 0}
+.watch-reference-image{max-width:min(100%,420px);max-height:400px;object-fit:contain;border-radius:12px}
+.inspiration-feed{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:20px;margin-top:24px;align-items:start}
+.inspiration-feed .writing-text{line-height:1.65;margin:18px 0;overflow-wrap:anywhere}

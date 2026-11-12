@@ -17,11 +17,11 @@ async function call(token, path, init = {}) {
 
 const actorPath = (actor) => encodeURIComponent((actor || DEFAULT_ACTOR).replace('/', '~'));
 
-export async function startProfileRun(token, actor, profileUrl, maxPosts = 50) {
+export async function startProfileRun(token, actor, profileUrl, maxPosts = 50, period = '3months') {
   const { data } = await call(token, `/acts/${actorPath(actor)}/runs`, {
     method: 'POST',
     // Plusieurs noms de champs pour rester compatible avec les principaux robots « profile posts ».
-    body: JSON.stringify({ targetUrls: [profileUrl], profileUrls: [profileUrl], profiles: [profileUrl], maxPosts }),
+    body: JSON.stringify({ targetUrls: [profileUrl], profileUrls: [profileUrl], profiles: [profileUrl], maxPosts, ...(actorPath(actor) === actorPath(DEFAULT_ACTOR) ? { postedLimit: period } : {}) }),
   });
   return { runId: data.id, datasetId: data.defaultDatasetId, status: data.status };
 }

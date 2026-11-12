@@ -1,5 +1,5 @@
 // Branche « Profils & bannières » : textes de bannière et optimisation de profil LinkedIn, à partir de l'ADN client.
-import { adnText } from './editorial.js';
+import { adnText, preferenceText } from './editorial.js';
 
 const BANNER_RULES = `Règles d'une bannière LinkedIn qui convertit (format 1584 × 396) :
 - Une PROMESSE en gros, orientée bénéfice client (pas le métier seul) : 4 à 10 mots, sur 2 lignes maximum. Entoure de *astérisques* les 1 à 3 mots clés à mettre en couleur.
@@ -10,7 +10,8 @@ const BANNER_RULES = `Règles d'une bannière LinkedIn qui convertit (format 158
 - Ton et adresse du client (tu / vous). Pas d'emoji dans les textes. Rien d'inventé.`;
 
 export function bannerCopyPrompt({ client, templateName, inspirations = [] }) {
-  const system = `Tu es directeur artistique et copywriter spécialisé dans les bannières LinkedIn.
+  const system = `${preferenceText(client, 'banner')}
+Tu es directeur artistique et copywriter spécialisé dans les bannières LinkedIn.
 ${adnText(client, { includeProofs: true })}
 
 ${BANNER_RULES}
@@ -72,7 +73,8 @@ ${inspirations.length ? `\nVisuels concurrents qui marchent (reprends leur densi
 
 // Un visuel à valeur tiré d'un post déjà écrit (le post n'est pas réécrit).
 export function visualForPostPrompt({ client, postText, type, kind, inspirations = [] }) {
-  const system = `Tu crées le visuel LinkedIn à valeur qui accompagne un post déjà écrit de ${client.name}. Le visuel résume ou prolonge l'idée centrale du post (sans le recopier), apporte une vraie réponse au lecteur et reprend les mêmes faits : rien d'inventé.
+  const system = `${preferenceText(client, 'visual')}
+Tu crées le visuel LinkedIn à valeur qui accompagne un post déjà écrit de ${client.name}. Le visuel résume ou prolonge l'idée centrale du post (sans le recopier), apporte une vraie réponse au lecteur et reprend les mêmes faits : rien d'inventé.
 ${adnText(client, { includeProofs: true })}
 ${kind === 'carousel' ? `Carrousel (document PDF) : 6 à 9 diapositives.
 - Couverture : { "kind": "cover", "title": "≤ 12 mots avec *mot clé*", "subtitle": "≤ 14 mots" }
@@ -87,7 +89,8 @@ ${inspirations.length ? `\nVisuels concurrents qui marchent (reprends leur densi
 
 // Visuel « qui ressemble » à un visuel concurrent choisi par l'auteur, avec le contenu du post.
 export function visualFromReferencePrompt({ client, postText, kind, da }) {
-  const system = `Tu es directeur artistique LinkedIn. On te montre UN visuel concurrent que l'auteur aime. Tu crées pour ${client.name} un visuel qui lui RESSEMBLE (même construction : disposition, hiérarchie, densité de texte, ton du titre) mais avec le contenu de SON post. Rien d'inventé : seulement les idées du post.
+  const system = `${preferenceText(client, 'visual')}
+Tu es directeur artistique LinkedIn. On te montre UN visuel concurrent que l'auteur aime. Tu crées pour ${client.name} un visuel qui lui RESSEMBLE (même construction : disposition, hiérarchie, densité de texte, ton du titre) mais avec le contenu de SON post. Rien d'inventé : seulement les idées du post.
 ${adnText(client, { includeProofs: true })}
 ${kind === 'carousel' ? `Carrousel (document PDF) : 6 à 9 diapositives, en reprenant le rythme du carrousel de référence.
 - Couverture : { "kind": "cover", "title": "hook du carrousel ≤ 10 mots avec *mot clé*", "subtitle": "≤ 14 mots" }
@@ -115,7 +118,8 @@ Réponds en JSON : { "spec": { … }, "style": { "colors": ["#hex", "#hex"], "va
 // ---------- Visuels « designés » : générés par le modèle d'images d'OpenAI à partir d'un visuel concurrent ----------
 // 1) L'IA texte lit le modèle + le post et prépare les textes exacts et la description du style.
 export function designBriefPrompt({ client, postText, kind, da }) {
-  const system = `Tu es directeur artistique LinkedIn. On te montre un visuel concurrent que l'auteur adore. Tu prépares un visuel dans LE MÊME STYLE pour ${client.name}, avec le contenu de SON post (rien d'inventé, pas de vente, pas de nom d'entreprise ni d'offre).
+  const system = `${preferenceText(client, 'visual')}
+Tu es directeur artistique LinkedIn. On te montre un visuel concurrent que l'auteur adore. Tu prépares un visuel dans une composition originale inspirée de ses principes pour ${client.name}, avec le contenu de SON post (rien d'inventé, pas de vente, pas de nom d'entreprise ni d'offre).
 ${adnText(client, { includeProofs: true })}
 Écris en français des textes COURTS, percutants, lisibles sur mobile :
 - "title" : le hook du visuel, 4 à 9 mots, qui accroche (différent de la 1re ligne du post si possible).
@@ -140,7 +144,7 @@ export function designImagePrompt({ brief, author, colors, page }) {
 - Three numbered key points: ${(brief.points || []).map((p, i) => `${i + 1}. ${q(p.t)} — ${q(p.d)}`).join(' ; ')}
 - Call to action band: ${q(brief.cta)}
 - Footer: author name ${q(author)}`;
-  return `Design a premium LinkedIn ${page ? 'carousel slide' : 'post visual'}, portrait 4:5, in the SAME graphic style as the reference image: ${brief.style || 'same background, typography, highlight treatment, icons and layout as the reference'}.
+  return `Design a premium LinkedIn ${page ? 'carousel slide' : 'post visual'}, portrait 4:5, with an original composition informed by these design principles: ${brief.style || 'use the reference for general hierarchy, contrast and rhythm; create a distinct layout'}.
 ${textBlock}
 ${colors?.length ? `Color palette: ${colors.join(', ')} (main color first), applied the way the reference uses its colors.` : 'Keep the color palette of the reference.'}
 Rules: do NOT copy the reference's words, logos, brand names or people; no real brand logos; replace any logo area with simple abstract icons. Crisp, legible typography, generous spacing, eye-catching, professional, modern 2026 LinkedIn design. Text must be perfectly spelled in French.`;
@@ -150,7 +154,8 @@ Rules: do NOT copy the reference's words, logos, brand names or people; no real 
 const BANNER_FIELDS_JSON = `"fields": { "proof": "preuve sociale courte", "headline": "ligne 1\\nligne 2 avec *mots clés*", "subline": "", "steps": ["", "", ""], "pills": ["", "", ""], "cta": "", "followText": "", "bubble": "", "title": "métier en 1 à 2 mots", "brand": "" }`;
 const BENEFIT = `Philosophie de l'agence : on vend le BÉNÉFICE, pas le voyage. La promesse dit ce que le client GAGNE (des clients, du temps, de la crédibilité…), pas le métier ni la méthode.`;
 export function bannerAnalyzePrompt({ client, inspirations = [], history = [] }) {
-  const system = `Tu es directeur artistique et copywriter expert des bannières LinkedIn (1584 × 396). On te montre la bannière ACTUELLE d'un profil : analyse-la et propose une version améliorée.
+  const system = `${preferenceText(client, 'banner')}
+Tu es directeur artistique et copywriter expert des bannières LinkedIn (1584 × 396). On te montre la bannière ACTUELLE d'un profil : analyse-la et propose une version améliorée.
 ${adnText(client, { includeProofs: true })}
 ${BENEFIT}
 ${BANNER_RULES}
@@ -168,7 +173,8 @@ Réponds en JSON : {
 }
 
 export function bannerChatPrompt({ client, inspirations = [], history = [], fields, message }) {
-  const system = `Tu es directeur artistique et copywriter expert des bannières LinkedIn. Tu aides l'auteur à améliorer la bannière de ${client.name} en discutant. Tu RETIENS tout ce qu'il te dit sur son activité.
+  const system = `${preferenceText(client, 'banner')}
+Tu es directeur artistique et copywriter expert des bannières LinkedIn. Tu aides l'auteur à améliorer la bannière de ${client.name} en discutant. Tu RETIENS tout ce qu'il te dit sur son activité.
 ${adnText(client, { includeProofs: true })}
 ${BENEFIT}
 ${BANNER_RULES}
