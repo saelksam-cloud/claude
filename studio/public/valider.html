@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Posts à valider</title>
+<style>
+  :root { --bg:#f6f5f2; --card:#fff; --ink:#1d1d1b; --muted:#6b6a66; --line:#e4e2dc; --ok:#1f7a4d; --warn:#a4561b; --accent:#2f4bd8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#151514; --card:#1f1f1d; --ink:#f1f0ec; --muted:#a3a29c; --line:#34332f; --ok:#4fbf86; --warn:#e39a5c; --accent:#8ea0ff; } }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width:680px; margin:0 auto; padding:28px 16px 64px; }
+  h1 { font-size:1.45rem; margin:0 0 4px; }
+  .sub { color:var(--muted); margin:0 0 24px; }
+  .post { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px; margin-bottom:18px; }
+  .meta { color:var(--muted); font-size:.85rem; margin-bottom:10px; }
+  .text { white-space:pre-wrap; word-wrap:break-word; }
+  .post img { max-width:100%; border-radius:10px; margin-top:12px; display:block; }
+  .row { display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
+  button { font:inherit; border-radius:10px; border:1px solid var(--line); background:var(--card); color:var(--ink); padding:10px 16px; cursor:pointer; }
+  button.ok { background:var(--ok); border-color:var(--ok); color:#fff; }
+  textarea { width:100%; min-height:90px; font:inherit; padding:10px; border-radius:10px; border:1px solid var(--line); background:var(--bg); color:var(--ink); margin-top:12px; }
+  .done { margin-top:14px; font-weight:600; }
+  .done.ok { color:var(--ok); } .done.changes { color:var(--warn); }
+  .empty { color:var(--muted); text-align:center; padding:40px 0; }
+</style>
+</head>
+<body>
+<main>
+  <h1 id="title">Posts à valider</h1>
+  <p class="sub">Valide chaque post ou dis ce que tu veux changer. Rien n'est publié sans ton accord.</p>
+  <div id="list"><p class="empty">Chargement…</p></div>
+</main>
+<script>
+  const q = new URLSearchParams(location.search);
+  const base = `/api/review/${encodeURIComponent(q.get('c') || '')}/${encodeURIComponent(q.get('t') || '')}`;
+  const esc = (s) => String(s || '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const when = (d) => d ? new Date(d).toLocaleString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) : 'Date à fixer';
+  const status = (r) => !r ? '' : r.decision === 'ok' ? '<p class="done ok">✓ Validé, merci.</p>' : `<p class="done changes">Modifications demandées : « ${esc(r.comment)} »</p>`;
+  function card(p) {
+    return `<article class="post" data-id="${p.id}">
+      <div class="meta">Prévu : ${esc(when(p.scheduledAt))}${p.hasDocument ? ' · avec un carrousel' : ''}</div>
+      <div class="text">${esc(p.text)}</div>
+      ${p.image ? `<img src="${esc(p.image)}" alt="Visuel du post">` : ''}
+      <div class="slot">${p.clientReview ? status(p.clientReview) : `<div class="row"><button class="ok" data-do="ok">Je valide</button><button data-do="edit">Je veux changer quelque chose</button></div>`}</div>
+    </article>`;
+  }
+  async function load() {
+    const res = await fetch(base);
+    const data = await res.json().catch(() => ({}));
+    const list = document.getElementById('list');
+    if (!res.ok) { list.innerHTML = `<p class="empty">${esc(data.error || 'Lien invalide.')}</p>`; return; }
+    document.getElementById('title').textContent = `Posts à valider — ${data.name}`;
+    list.innerHTML = data.posts.length ? data.posts.map(card).join('') : '<p class="empty">Aucun post à valider pour le moment.</p>';
+  }
+  document.addEventListener('click', async (e) => {
+    const b = e.target.closest('button[data-do]');
+    if (!b) return;
+    const art = b.closest('.post'), slot = art.querySelector('.slot');
+    if (b.dataset.do === 'edit') {
+      slot.innerHTML = `<textarea placeholder="Ce que tu veux changer (une phrase suffit)"></textarea><div class="row"><button class="ok" data-do="send">Envoyer</button><button data-do="cancel">Annuler</button></div>`;
+      slot.querySelector('textarea').focus();
+      return;
+    }
+    if (b.dataset.do === 'cancel') { load(); return; }
+    const body = b.dataset.do === 'ok' ? { decision: 'ok' } : { decision: 'changes', comment: slot.querySelector('textarea').value };
+    b.disabled = true;
+    const res = await fetch(`${base}/${art.dataset.id}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) { alert(data.error || 'Erreur'); b.disabled = false; return; }
+    slot.innerHTML = status(data.clientReview);
+  });
+  load();
+</script>
+</body>
+</html>

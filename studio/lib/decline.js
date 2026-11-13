@@ -61,8 +61,8 @@ export function matterText(client) {
   return [
     `Auteur : ${client.name}`,
     line('Métier', b.job || pr.job), line('Bénéfice apporté', b.offer || client.offer || pr.offers), line('Cible', b.audience || client.audience),
-    line('Problèmes de la cible (ses mots)', b.problems), line('Méthode / ce qui le distingue', b.expertise || pr.differentiation || pr.expertise),
-    line('Ce qu\'il ne fait pas', b.exclusions), line('Convictions', b.beliefs || pr.convictions), line('Sujets souhaités', b.topics || client.themes),
+    line('Problèmes de la cible (ses mots)', b.problems), line('Résultats recherchés par la cible', b.outcomes), line('Objections de la cible', b.objections), line('Méthode / ce qui le distingue', b.expertise || pr.differentiation || pr.expertise),
+    line('Ce qu\'il ne fait pas', b.exclusions), line('Convictions', b.beliefs || pr.convictions), line('Pratiques qu\'il critique', b.criticism), line('Objectif LinkedIn', b.goals), line('Sujets souhaités', b.topics || client.themes),
     line('Sujets et promesses INTERDITS', [b.forbidden, a.forbiddenTopics, client.donts].filter(Boolean).join(' ; ')),
     line('Expériences réellement vécues (les seules racontables à la première personne)', b.stories),
     line('Preuves et ressources réelles', b.evidence),

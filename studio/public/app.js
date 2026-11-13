@@ -802,7 +802,7 @@ const watchRefs = () => {
   const o = client();
   const seen = new Map();
   for (const v of ui.data.veille) {
-    if (!v.text || !(v.clientId === o.id || (!v.clientId && (!v.niche || sameNiche(v.niche, o.niche))))) continue;
+    if (!v.text || v.dupOf || !(v.clientId === o.id || (!v.clientId && (!v.niche || sameNiche(v.niche, o.niche))))) continue;
     const key = v.text.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim().slice(0, 90);
     const prev = seen.get(key);
     const rich = (x) => (x.url ? 2 : 0) + (x.images?.length ? 2 : 0) + (x.text.length > (prev?.text.length || 0) ? 1 : 0) + (refVote(x.id) ? 8 : 0);
@@ -894,7 +894,35 @@ function renderVeilleHub() {
 }
 
 // ================= FICHE CLIENT : audit, préférences, profil, charte =================
-const CLIENT_TABS = [['audit', 'Audit'], ['prefs', 'Préférences'], ['adn', 'Profil détaillé'], ['charte', 'Charte graphique']];
+const CLIENT_TABS = [['audit', 'Audit'], ['prefs', 'Préférences'], ['suivi', 'Suivi et validation'], ['adn', 'Profil détaillé'], ['charte', 'Charte graphique']];
+// Suivi : réécriture avant validation (indicateur principal), lien de validation client, stats des posts publiés.
+function suiviCard(c) {
+  const posts = ui.data.posts.filter((p) => p.clientId === c.id);
+  const done = posts.filter((p) => p.rewrite && typeof p.rewrite.ratio === 'number').sort((a, b) => String(b.rewrite.at).localeCompare(String(a.rewrite.at))).slice(0, 20);
+  const avg = done.length ? Math.round(done.reduce((n, p) => n + p.rewrite.ratio, 0) / done.length * 100) : 0;
+  const asIs = done.filter((p) => p.rewrite.ratio <= 0.15).length;
+  const pending = posts.filter((p) => p.status === 'review').length;
+  const link = c.reviewToken ? `${ui.data.publicUrl}/valider.html?c=${c.id}&t=${c.reviewToken}` : '';
+  const own = (ui.data.profiles || []).find((p) => p.own && p.clientId === c.id);
+  const measured = posts.filter((p) => p.status === 'published' && p.metrics && (p.metrics.reactions != null || p.metrics.comments != null)).sort((a, b) => String(b.publishedAt).localeCompare(String(a.publishedAt))).slice(0, 8);
+  const feedback = (c.adn?.memory || []).filter((m) => m.type === 'client-feedback').slice(-6).reverse();
+  return `<section class="card"><h3>Réécriture avant validation</h3>
+      <p class="small">Part du texte de l’IA que tu modifies avant de valider. C’est la vraie mesure de qualité : plus c’est bas, moins tu corriges.</p>
+      ${done.length ? `<div class="row"><div class="stat"><b>${avg} %</b><span class="small">réécrit en moyenne</span></div><div class="stat"><b>${asIs} / ${done.length}</b><span class="small">validés presque tels quels (≤ 15 %)</span></div></div>
+      <div class="small" style="margin-top:8px">${done.slice(0, 8).map((p) => `${esc((p.theme || p.text).slice(0, 50))} : <b>${Math.round(p.rewrite.ratio * 100)} %</b>`).join(' · ')}</div>`
+      : '<p class="small">Pas encore de mesure : elle démarre au prochain post écrit par l’IA puis validé.</p>'}</section>
+    <section class="card"><h3>Validation par le client</h3>
+      <p class="small">Un lien sans mot de passe, propre à ${esc(c.name)} : il y voit les posts « à valider », les valide ou demande une modification. Ses remarques sont gardées pour la suite.</p>
+      ${link ? `<div class="row"><input class="input" readonly data-novoice value="${esc(link)}" style="flex:1;min-width:220px"><button class="btn sm" data-action="copy" data-id="${esc(link)}">Copier</button><button class="btn ghost sm" data-action="review-link" data-id="rotate">Changer le lien</button></div>`
+        : '<button class="btn sm" data-action="review-link">Créer le lien de validation</button>'}
+      <p class="small">${pending} post${pending > 1 ? 's' : ''} actuellement « à valider ».</p>
+      ${feedback.length ? `<div class="small"><b>Dernières remarques du client :</b>${feedback.map((f) => `<div>• « ${esc(f.text)} » <span class="muted">(${new Date(f.at).toLocaleDateString('fr-FR')})</span></div>`).join('')}</div>` : ''}</section>
+    <section class="card"><h3>Résultats des posts publiés</h3>
+      <p class="small">Apify relit chaque semaine le profil LinkedIn du client et récupère réactions et commentaires des posts publiés par le studio. Les impressions ne sont pas accessibles par cette voie : tu peux toujours les saisir à la main sur le post.</p>
+      <div class="row"><input class="input" id="ownProfileUrl" data-novoice placeholder="https://www.linkedin.com/in/…" value="${esc(own?.url || c.linkedinProfileUrl || '')}" style="flex:1;min-width:220px"><button class="btn sm" data-action="own-profile">${own ? 'Relancer' : 'Suivre ce profil'}</button></div>
+      ${own ? `<p class="small">État : ${own.status === 'running' ? 'récupération en cours…' : own.status === 'error' ? `erreur — ${esc(own.error)}` : `à jour${own.updatedAt ? ` (${new Date(own.updatedAt).toLocaleDateString('fr-FR')})` : ''}`}${c.adn?.ownPosts?.length ? ` · ${c.adn.ownPosts.length} posts écrits hors du studio gardés comme exemples de sa voix` : ''}</p>` : ''}
+      ${measured.length ? measured.map((p) => `<div class="small">• ${esc((p.theme || p.text).slice(0, 60))} — ${p.metrics.reactions ?? '?'} réactions, ${p.metrics.comments ?? '?'} commentaires${p.metrics.impressions ? `, ${p.metrics.impressions} impressions` : ''}${p.rewrite ? ` · réécrit à ${Math.round(p.rewrite.ratio * 100)} %` : ''}</div>`).join('') : ''}</section>`;
+}
 function prefsCard(c) {
   const notes = c.adn?.writing?.notes || [];
   const lessons = c.adn?.lessons || [];
@@ -924,6 +952,7 @@ function renderClientHub() {
     <div class="row heading-actions"><button class="btn ghost sm" data-action="go" data-id="settings">⚙ Réglages</button></div></header>${hubTabs(CLIENT_TABS, tab, 'client-tab')}`;
   if (tab === 'audit') { showAudit(view, c, api, esc); view.insertAdjacentHTML('afterbegin', head); return; }
   if (tab === 'adn') { renderAdn(); view.insertAdjacentHTML('afterbegin', head); return; }
+  if (tab === 'suivi') { view.innerHTML = head + suiviCard(c); return; }
   if (tab === 'charte') { renderImages(); view.querySelector('.page-heading')?.remove(); view.querySelector('.vis-lanes')?.remove(); view.insertAdjacentHTML('afterbegin', head); return; }
   view.innerHTML = head + prefsCard(c) + '<details class="card"><summary><b>Calibrage détaillé</b> <span class="small">(tutoiement, emojis, longueur, ton… étape par étape)</span></summary><div id="writingHost" style="margin-top:12px"></div></details>';
   view.querySelector('details').addEventListener('toggle', (e) => { if (e.currentTarget.open && !e.currentTarget.dataset.loaded) { e.currentTarget.dataset.loaded = '1'; showWriting($('#writingHost'), c, api, esc); } });
@@ -2354,6 +2383,14 @@ const actions = {
     for (const l of list) await api('DELETE', `/api/clients/${ui.clientId}/lessons/${l.id}`);
     await refresh(); toast(`${list.length} phrases rangées dans tes hooks aimés`);
   },
+  async 'review-link'(id) {
+    if (id === 'rotate' && !confirm('Changer le lien ? L’ancien ne marchera plus.')) return;
+    await api('POST', `/api/clients/${ui.clientId}/review-link`, { rotate: id === 'rotate' }); await refresh(); toast('Lien prêt : copie-le et envoie-le au client');
+  },
+  async 'own-profile'() {
+    const url = ($('#ownProfileUrl')?.value || '').trim(); if (!url) return toast('Colle le lien du profil LinkedIn');
+    await api('POST', `/api/clients/${ui.clientId}/own-profile`, { url }); await refresh(); toast('Récupération lancée (quelques minutes)');
+  },
   async 'note-add'() { const t = ($('#noteText')?.value || '').trim(); if (!t) return; await api('PUT', `/api/clients/${ui.clientId}/notes`, { add: t }); await refresh(); },
   async 'note-del'(id) { await api('PUT', `/api/clients/${ui.clientId}/notes`, { remove: id }); await refresh(); },
   async 'lesson-confirm'(lid) { const l = (client().adn?.lessons || []).find((x) => x.id === lid); if (!l) return; await api('PUT', `/api/clients/${ui.clientId}/notes`, { add: l.text }); await api('DELETE', `/api/clients/${ui.clientId}/lessons/${lid}`); await refresh(); toast('Confirmée comme préférence'); },
@@ -3157,8 +3194,13 @@ document.addEventListener('click', run(async (e) => {
   await actions[el.dataset.action]?.(el.dataset.id, el);
 }));
 
+let watchSearchTimer;
 document.addEventListener('input', (e) => {
   if (e.target.id === 'quickQuery') renderSearch();
+  if (e.target.id === 'watchSearch') {
+    clearTimeout(watchSearchTimer);
+    watchSearchTimer = setTimeout(() => { ui.watch.q = e.target.value; ui.watch.page = 1; render(); const el = $('#watchSearch'); if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); } }, 350);
+  }
   if (e.target.id === 'manualDraft') {
     ui.manual[ui.clientId] = e.target.value;
     $('#manualCount').textContent = e.target.value.length + ' / 3 000';
@@ -3210,6 +3252,9 @@ document.addEventListener('input', (e) => {
 });
 
 document.addEventListener('change', run(async (e) => {
+  if (e.target.id === 'watchAuthor') { ui.watch.author = e.target.value; ui.watch.page = 1; render(); return; }
+  if (e.target.id === 'watchSort') { ui.watch.sort = e.target.value; ui.watch.page = 1; render(); return; }
+  if (e.target.dataset.watchNote !== undefined) { await saveRefVote(e.target.dataset.watchNote, { note: e.target.value.trim() }); toast('Remarque enregistrée'); return; }
   if (e.target.dataset.select) { if (e.target.checked) ui.selected.add(e.target.dataset.select); else ui.selected.delete(e.target.dataset.select); render(); return; }
   if (e.target.hasAttribute('data-select-all')) {
     const posts = clientPosts();

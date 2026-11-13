@@ -511,3 +511,7 @@ details.more summary { cursor: pointer; }
 .qc { display: grid; gap: 3px; }
 @media (max-width: 760px) { .top-right [data-view="client"] { padding: 6px 8px; font-size: 12px; } }
 .side-secondary + .side-footer { margin-top: 0; }
+
+/* Fiche client › Suivi */
+.stat { display:flex; flex-direction:column; gap:2px; padding:10px 14px; border:1px solid var(--line, #e4e2dc); border-radius:12px; min-width:150px; }
+.stat b { font-size:1.4rem; }

@@ -13,6 +13,8 @@ import { engagement, statsText } from './stats.js';
 import * as apify from './apify.js';
 import { chat } from './ai.js';
 import * as dec from './decline.js';
+import * as rw from './rewrite.js';
+import * as sami from './profile-sami.js';
 import * as ed from './editorial.js';
 import { bannerCopyPrompt, profileAuditPrompt, visualPlanPrompt, visualItemPrompt, visualForPostPrompt, visualFromReferencePrompt, visualChatPrompt, designBriefPrompt, designImagePrompt, bannerAnalyzePrompt, bannerChatPrompt, bannerPalettesPrompt } from './profile.js';
 
@@ -219,7 +221,7 @@ route('PUT', '/api/posts/:id', async ({ db, post, body }) => {
       const v = body.metrics[k];
       m[k] = v === '' || v === null || v === undefined ? null : Math.max(0, Number(String(v).replace(/[^\d]/g, '')) || 0);
     }
-    post.metrics = { ...m, updatedAt: now() };
+    post.metrics = { ...m, source: 'manuel', updatedAt: now() };
     return json(post);
   }
   if (post.status === 'published') throw new HttpError(400, 'Un post publié ne peut plus être modifié ici.');
@@ -340,6 +342,27 @@ route('POST', '/api/analyze', async ({ db, settings, body }) => {
 });
 
 // ---------- Profils LinkedIn analysés (via Apify) ----------
+const textKey = (t) => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim().slice(0, 90);
+
+// Profil LinkedIn du client lui-même : on rapproche ses posts publiés via le studio pour récupérer réactions et commentaires,
+// et on garde ses autres posts comme échantillons de sa vraie voix. Rien n'entre dans la veille.
+function matchOwnPosts(db, profile, posts) {
+  const client = db.clients.find((c) => c.id === profile.clientId);
+  if (!client) return;
+  const published = db.posts.filter((p) => p.clientId === client.id && p.status === 'published');
+  const unmatched = [];
+  for (const it of posts) {
+    const post = published.find((p) => rw.samePost(p.text, it.text));
+    if (!post) { unmatched.push(it); continue; }
+    const m = post.metrics || {};
+    if (m.source === 'manuel') continue; // une saisie à la main n'est jamais écrasée
+    post.metrics = { ...m, reactions: it.likes || 0, comments: it.comments || 0, source: 'apify', url: it.url || m.url || '', updatedAt: now() };
+  }
+  client.adn ||= {};
+  const known = new Set((client.adn.ownPosts || []).map((p) => textKey(p.text)));
+  const add = unmatched.filter((p) => p.text && !known.has(textKey(p.text))).map((p) => ({ id: newId('own'), text: p.text.slice(0, 3000), url: p.url, likes: p.likes || 0, comments: p.comments || 0, postedAt: p.postedAt || '', at: now() }));
+  client.adn.ownPosts = [...add, ...(client.adn.ownPosts || [])].slice(0, 60);
+}
 const LI_PROFILE = /^https:\/\/([a-z]{2,3}\.)?linkedin\.com\/(in|company)\/[^/?#]+/i;
 
 async function refreshProfile(db, settings, profile) {
@@ -349,8 +372,10 @@ async function refreshProfile(db, settings, profile) {
     if (['READY', 'RUNNING'].includes(run.status)) return;
     if (run.status !== 'SUCCEEDED') throw new Error(`l'analyse a échoué (${run.status})`);
     const posts = await apify.getPosts(settings.apifyToken, run.datasetId || profile.datasetId);
+    if (profile.own) { matchOwnPosts(db, profile, posts); profile.status = 'done'; profile.postCount = posts.length; profile.error = posts.length ? '' : 'Aucun post trouvé sur ce profil.'; profile.updatedAt = now(); return; }
     const known = new Set(db.veille.filter((v) => v.url).map((v) => v.url));
-    const fresh = posts.filter((p) => !p.url || !known.has(p.url));
+    const knownText = new Set(db.veille.map((v) => textKey(v.text)).filter(Boolean));
+    const fresh = posts.filter((p) => (!p.url || !known.has(p.url)) && !knownText.has(textKey(p.text)));
     db.veille.unshift(...fresh.map((p) => ({
       id: newId('vei'), source: 'agent', profileId: profile.id, clientId: profile.clientId || '', niche: profile.niche,
       author: p.author || profile.name, url: p.url, text: p.text.slice(0, 3000), hook: p.text.split('\n').map((l) => l.trim()).find(Boolean)?.slice(0, 300) || '',
@@ -441,7 +466,7 @@ const findModule = (settings, id) => settings.modules.find((m) => m.id === id) |
 // Mode content écrit, Mode hooker retravaille l'accroche.
 const moduleByRole = (settings, role) =>
   settings.modules.find((m) => m.role === role) || settings.modules.find((m) => new RegExp(role === 'hooker' ? 'hook' : 'content', 'i').test(m.name)) || null;
-const nicheItems = (db, niche) => db.veille.filter((v) => niche && (v.niche || '').trim().toLowerCase() === niche.trim().toLowerCase());
+const nicheItems = (db, niche) => db.veille.filter((v) => !v.dupOf && niche && (v.niche || '').trim().toLowerCase() === niche.trim().toLowerCase());
 const byAuthor = (items, author) => (author ? items.filter((v) => (v.author || '').trim().toLowerCase() === author.trim().toLowerCase()) : items);
 // Hooks : ceux de la niche (fond + forme) puis les meilleurs des autres niches (mécanique seulement).
 const topHooks = (db, niche, author = '') => {
@@ -735,7 +760,7 @@ const moduleText = (m, label) => {
 // ---- Fiche ADN éditoriale ----
 const ADN_KEYS = ['profile', 'voice', 'objectives', 'personas', 'proofs', 'forbiddenTopics', 'rules', 'onboarding', 'interview', 'ideas', 'analysis', 'memory'];
 
-const writingReferences = (db, client) => db.veille.filter(ref => ref.text && (ref.clientId === client.id || (!ref.clientId && (!ref.niche || String(ref.niche).trim().toLowerCase() === String(client.niche || '').trim().toLowerCase()))))
+const writingReferences = (db, client) => db.veille.filter(ref => ref.text && !ref.dupOf && (ref.clientId === client.id || (!ref.clientId && (!ref.niche || String(ref.niche).trim().toLowerCase() === String(client.niche || '').trim().toLowerCase()))))
   .sort((a, b) => Number(Boolean(b.classification)) - Number(Boolean(a.classification)) || engagement(b) - engagement(a));
 const writingState = (client, db) => {
   const profile = profileOf(client);
@@ -845,6 +870,83 @@ route('POST', '/api/clients/:id/watch-vote', async ({ db, client, body }) => {
   return json({ refId: ref.id, vote });
 });
 // Préférences confirmées en toutes lettres par le client (prioritaires sur toute déduction).
+// ---------- Profil LinkedIn du client (stats de ses posts publiés) ----------
+route('POST', '/api/clients/:id/own-profile', async ({ db, settings, client, body }) => {
+  const url = String(body.url || '').trim().split('?')[0];
+  if (!LI_PROFILE.test(url)) throw new HttpError(400, 'Colle le lien du profil LinkedIn du client (https://www.linkedin.com/in/…).');
+  let profile = db.profiles.find((p) => p.own && p.clientId === client.id);
+  if (!profile) { profile = { id: newId('pro'), url, clientId: client.id, own: true, niche: '', name: client.name, status: 'new', auto: true, createdAt: now() }; db.profiles.unshift(profile); }
+  profile.url = url;
+  client.linkedinProfileUrl = url;
+  await startProfile(settings, profile, '6months');
+  return json(profile);
+});
+
+// ---------- Validation par le client (lien sans mot de passe, propre à chaque client) ----------
+route('POST', '/api/clients/:id/review-link', async ({ client, body }) => {
+  if (!client.reviewToken || body.rotate) client.reviewToken = crypto.randomBytes(18).toString('hex');
+  return json({ token: client.reviewToken });
+});
+const reviewClient = (db, params) => {
+  const c = db.clients.find((x) => x.id === params.cid);
+  if (!c?.reviewToken || !params.token || !crypto.timingSafeEqual(Buffer.from(c.reviewToken.padEnd(64)), Buffer.from(String(params.token).slice(0, 64).padEnd(64)))) throw new HttpError(404, 'Lien de validation invalide ou expiré.');
+  return c;
+};
+const reviewView = (p) => ({ id: p.id, text: p.text, scheduledAt: p.scheduledAt || '', image: p.image ? `/uploads/${p.image}` : '', hasDocument: !!p.document, status: p.status, clientReview: p.clientReview || null });
+route('GET', '/api/review/:cid/:token', async ({ db, params }) => {
+  const c = reviewClient(db, params);
+  const posts = db.posts.filter((p) => p.clientId === c.id && (p.status === 'review' || (p.clientReview && Date.now() - Date.parse(p.clientReview.at) < 14 * 86400_000 && p.status !== 'published')));
+  return json({ name: c.name, posts: posts.sort((a, b) => String(a.scheduledAt || '9').localeCompare(String(b.scheduledAt || '9'))).map(reviewView) });
+}, { auth: false });
+route('POST', '/api/review/:cid/:token/:pid', async ({ db, params, body }) => {
+  const c = reviewClient(db, params);
+  const post = db.posts.find((p) => p.id === params.pid && p.clientId === c.id);
+  if (!post || post.status === 'published') throw new HttpError(404, 'Post introuvable ou déjà publié.');
+  const decision = body.decision === 'ok' ? 'ok' : 'changes';
+  const comment = String(body.comment || '').trim().slice(0, 1500);
+  if (decision === 'changes' && !comment) throw new HttpError(400, 'Dis en une phrase ce que tu veux changer.');
+  post.clientReview = { decision, comment, at: now() };
+  if (decision === 'ok') {
+    const problem = validateForApproval(post);
+    if (problem) log(post, `Validé par le client (reste à régler : ${problem})`);
+    else { post.status = 'approved'; log(post, 'Validé par le client'); }
+  } else {
+    post.status = 'rejected';
+    post.feedback = `Client : ${comment}`;
+    log(post, `Modifications demandées par le client — « ${comment} »`);
+    c.adn ||= {};
+    c.adn.memory = [...(c.adn.memory || []), { at: now(), postId: post.id, type: 'client-feedback', text: comment, excerpt: post.text.slice(0, 600) }].slice(-60);
+  }
+  return json(reviewView(post));
+}, { auth: false });
+
+// ---------- Mise à jour du 13/11 : profil business de Sami, niche renommée, doublons de veille marqués ----------
+route('POST', '/api/admin/migrate-2026-11', async ({ db, body }) => {
+  const me = db.clients.find((c) => c.id === body.clientId);
+  if (!me) throw new HttpError(404, 'Client introuvable');
+  await getStore({ name: 'studio', consistency: 'strong' }).setJSON(`backup-${Date.now()}`, db); // sauvegarde complète avant toute modification
+  const oldNiche = String(me.niche || '').trim().toLowerCase();
+  const rename = (o) => { if (o && sami.OLD_NICHES.includes(String(o.niche || '').trim().toLowerCase())) o.niche = sami.NICHE; };
+  if (sami.OLD_NICHES.includes(oldNiche)) [...db.veille, ...db.profiles, ...(db.images || []), ...(db.analyses || []), ...(db.banners || [])].forEach(rename);
+  Object.assign(me, sami.client);
+  me.adn ||= {};
+  me.adn.writing ||= {};
+  me.adn.writing.business = { ...(me.adn.writing.business || {}), ...Object.fromEntries(Object.entries(sami.business).filter(([, v]) => v)) };
+  me.adn.voice = { ...(me.adn.voice || {}), address: body.address || me.adn.voice?.address || 'Tutoiement' };
+  // Doublons : on garde l'exemplaire voté ou le plus complet, les autres sont marqués (jamais supprimés).
+  const groups = new Map();
+  for (const v of db.veille) { const k = textKey(v.text); if (!k) continue; (groups.get(k) || groups.set(k, []).get(k)).push(v); }
+  const legacy = (c) => Object.keys(c.adn?.writing?.votes || {}).map((k) => { try { return String(JSON.parse(k)[0] || '').replace(/^ref-/, ''); } catch { return ''; } });
+  const voted = new Set(db.clients.flatMap((c) => [...Object.keys(c.adn?.writing?.refVotes || {}), ...legacy(c), ...(c.adn?.likedPosts || []).map((x) => x.refId || '')]).filter(Boolean));
+  let dups = 0;
+  for (const list of groups.values()) {
+    if (list.length < 2) continue;
+    const keep = [...list].sort((a, b) => (voted.has(b.id) - voted.has(a.id)) || ((b.images?.length || 0) - (a.images?.length || 0)) || (String(b.text).length - String(a.text).length))[0];
+    for (const v of list) if (v !== keep && !voted.has(v.id)) { v.dupOf = keep.id; dups++; } else if (v === keep) delete v.dupOf;
+  }
+  return json({ ok: true, niche: me.niche, dups, fields: Object.keys(me.adn.writing.business).filter((k) => me.adn.writing.business[k]) });
+});
+
 route('PUT', '/api/clients/:id/notes', async ({ client, body }) => {
   client.adn ||= {};
   const profile = (client.adn.writing ||= {});
@@ -1740,6 +1842,17 @@ export async function runJob({ id, token }) {
   await jobs().setJSON(id, { ...j, ...out, token: '', finishedAt: now() });
 }
 
+// Texte écrit par l'IA (aiText) et mesure de réécriture à la validation. Les routes d'édition humaine ne touchent pas aiText.
+const HUMAN_EDIT = /^\/api\/posts(\/[^/]+(\/undo)?)?$/;
+function trackPosts(db, snap, method, path) {
+  const human = (HUMAN_EDIT.test(path) || /\/import$/.test(path)) && (method === 'PUT' || method === 'POST');
+  for (const p of db.posts) {
+    const old = snap.get(p.id);
+    if (!human && p.text && (!old || old[0] !== p.text)) p.aiText = p.text;
+    if (p.aiText && ['approved', 'published'].includes(p.status) && (!old || !['approved', 'published'].includes(old[1]))) rw.measure(p);
+  }
+}
+
 export async function handle(req) {
   const url = new URL(req.url);
   try {
@@ -1760,7 +1873,9 @@ export async function handle(req) {
       if (!ctx.post) throw new HttpError(404, 'Post introuvable');
     }
     const before = JSON.stringify(db);
+    const snap = new Map(db.posts.map((p) => [p.id, [p.text, p.status]]));
     const res = await r.fn(ctx);
+    trackPosts(db, snap, req.method, url.pathname);
     if (JSON.stringify(db) !== before) await mergeSave(before, db);
     return res;
   } catch (e) {
